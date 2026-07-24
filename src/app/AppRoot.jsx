@@ -96,7 +96,7 @@ class AppRoot extends React.Component {
     repositories:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full' },
     content:{ ceo:'View', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
     masters:{ admin:'Full' },
-    users:{ admin:'Full' },
+    users:{ admin:'Full', coo:'Full' },
     config:{ ceo:'View', coo:'View', manager:'View', admin:'Full' },
   };
 
@@ -469,7 +469,7 @@ class AppRoot extends React.Component {
     };
     const page = Object.assign({ canEdit:this.EDIT_LEVELS.includes(lvl) }, PAGES[route]||PAGES.dashboard);
     // masters/users always show action for admin
-    if(route==='users') page.canEdit = rk==='admin';
+    if(route==='users') page.canEdit = ['admin','coo'].includes(rk);
     if(['dashboard','analytics','masters','config','qc','content','effort'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
 
@@ -2838,7 +2838,7 @@ class AppRoot extends React.Component {
         tableRows:this.state.users.map((u,i)=>({
           c0:u.name, c0sub:u.sub, c1:u.dept, c3:u.role,
           ...tag(u.status, u.statusTone==='ok'?'ok':'warn'),
-          ...act(rk==='admin'?'Manage':'View', rk==='admin'
+          ...act(canEdit?'Manage':'View', canEdit
             ? ()=>{ const rkFound=u.roleKey||Object.keys(this.ROLES).find(k=>this.ROLES[k].label===u.role)||'junior';
                 this.setState({ showManageUserModal:true, manageUserIndex:i, manageUserForm:{...u, roleKey:rkFound} }); }
             : ()=>this.flash('View only.'), false),
