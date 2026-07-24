@@ -1,0 +1,742 @@
+import React from 'react';
+import Icon from '../../components/Icon.jsx';
+import { cssTextToObject } from '../../utils/cssText.js';
+
+export default function ContentPageDetailDrawer({ vm }) {
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop } = vm;
+  return (
+    <React.Fragment>
+{Boolean(contentOpen) && (
+<React.Fragment>
+
+  
+<div onClick={closeContent} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"165","display":"flex","justifyContent":"flex-end"}}>
+
+    
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"720px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+
+      
+<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"5"}}>
+
+        
+<div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
+
+          
+<div style={{"minWidth":"0"}}>
+
+            
+<div style={{"display":"flex","alignItems":"center","gap":"9px"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11.5px","color":"var(--ink-400)"}}>
+{cd_id}
+</span>
+<span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${cd_statusBg};color:${cd_statusColor}`)}>
+{cd_status}
+</span>
+</div>
+
+            
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"5px 0 0"}}>
+{cd_name}
+</h3>
+
+            
+<div style={{"fontFamily":"'Space Mono'","fontSize":"12px","color":"var(--info-600)","marginTop":"3px"}}>
+{cd_url}
+</div>
+
+          
+</div>
+
+          
+<button onClick={closeContent} style={{"flex":"none","width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
+</button>
+
+        
+</div>
+
+        
+<div className="blscroll" style={{"display":"flex","gap":"2px","margin":"14px -24px -18px","padding":"0 24px","borderBottom":"1px solid var(--line-200)","overflowX":"auto"}}>
+
+          
+{(cd_tabs || []).map((t, $index) => (
+<React.Fragment key={$index}>
+<button onClick={t.go} style={cssTextToObject(t.style)}>
+{t.label}
+</button>
+</React.Fragment>
+))}
+
+        
+</div>
+
+      
+</div>
+
+      
+<div style={{"padding":"22px 24px"}}>
+
+
+        
+{Boolean(cd_tab0) && (
+<React.Fragment>
+
+          
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px 18px"}}>
+
+            
+{(cd_info || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div>
+<div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
+{f.k}
+</div>
+<div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
+{f.v}
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab1) && (
+<React.Fragment>
+
+          
+{Boolean(cd_isService) && (
+<React.Fragment>
+<div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","color":"var(--orchid-700)","padding":"10px 14px","borderRadius":"12px","fontSize":"12.5px","fontWeight":"600","marginBottom":"16px"}}>
+<Icon name={"link"} style={{"width":"15px","height":"15px"}} />
+Service, sub-service & industry values are reused from the 
+<strong>
+Service Master
+</strong>
+ in Admin — no duplication.
+</div>
+</React.Fragment>
+)}
+
+          
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px 18px"}}>
+
+            
+{(cd_cls || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div>
+<div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
+{f.k}
+</div>
+<div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
+{f.v}
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab2) && (
+<React.Fragment>
+
+          
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"12px 16px","marginBottom":"16px"}}>
+<span style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-700)"}}>
+SEO score
+</span>
+<span style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:22px;color:${cd_seoColor}`)}>
+{cd_seoScore}
+</span>
+</div>
+
+          
+<div style={{"display":"flex","flexDirection":"column","gap":"12px"}}>
+
+            
+{(cd_seo || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"grid","gridTemplateColumns":"180px 1fr","gap":"14px","alignItems":"baseline"}}>
+<div style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-500)"}}>
+{f.k}
+</div>
+<div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
+{f.v}
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+          
+<div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--info-100)","border":"1px solid #CBE3EC","color":"var(--info-600)","padding":"10px 14px","borderRadius":"12px","fontSize":"12.5px","fontWeight":"600","marginTop":"16px"}}>
+<Icon name={"sparkles"} style={{"width":"15px","height":"15px"}} />
+AI SEO suggestions available — 
+<button onClick={contentAINote} style={{"background":"none","border":"none","color":"var(--info-600)","fontWeight":"700","textDecoration":"underline","cursor":"pointer","padding":"0"}}>
+generate
+</button>
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab3) && (
+<React.Fragment>
+
+          
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"14px"}}>
+
+            
+<div style={{"display":"flex","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"10px","padding":"3px"}}>
+
+              
+<button onClick={cdSetEditor} style={cssTextToObject(cdEditorStyle)}>
+<Icon name={"layout-list"} style={{"width":"14px","height":"14px"}} />
+Editor
+</button>
+
+              
+<button onClick={cdSetPreview} style={cssTextToObject(cdPreviewStyle)}>
+<Icon name={"eye"} style={{"width":"14px","height":"14px"}} />
+Preview
+</button>
+
+            
+</div>
+
+            
+<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--orchid-100)","color":"var(--orchid-700)","border":"1px solid var(--orchid-200)","borderRadius":"9px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"sparkles"} style={{"width":"13px","height":"13px"}} />
+AI generate
+</button>
+
+          
+</div>
+
+
+          
+{/* EDITOR (block structure) */}
+
+          
+{Boolean(cdEditorMode) && (
+<React.Fragment>
+
+            
+<div style={{"display":"flex","flexDirection":"column","gap":"8px"}}>
+
+              
+{(cd_blocks || []).map((b, $index) => (
+<React.Fragment key={$index}>
+
+                
+<div style={{"display":"flex","alignItems":"center","gap":"12px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"12px 14px"}}>
+
+                  
+<span style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"10.5px","fontWeight":"800","color":"var(--orchid-600)","background":"var(--orchid-100)","borderRadius":"7px","padding":"4px 8px","flexShrink":"0"}}>
+<Icon name={"grip-vertical"} style={{"width":"12px","height":"12px","color":"var(--ink-400)"}} />
+{b.type}
+{Boolean(b.level) && (
+<React.Fragment>
+· {b.level}
+</React.Fragment>
+)}
+</span>
+
+                  
+<span style={{"flex":"1","fontSize":"13px","color":"var(--ink-700)"}}>
+{b.text}
+</span>
+
+                  
+<Icon name={"pencil"} style={{"width":"14px","height":"14px","color":"var(--ink-400)"}} />
+
+                
+</div>
+
+              
+</React.Fragment>
+))}
+
+              
+<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"7px","justifyContent":"center","padding":"10px","border":"1px dashed var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<Icon name={"plus"} style={{"width":"14px","height":"14px"}} />
+Add block — Heading · Paragraph · Image · CTA · FAQ · Table · Accordion…
+</button>
+
+            
+</div>
+
+          
+</React.Fragment>
+)}
+
+
+          
+{/* PREVIEW (rendered page) */}
+
+          
+{Boolean(cdPreview) && (
+<React.Fragment>
+
+            
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","background":"#fff","padding":"26px 28px","display":"flex","flexDirection":"column","gap":"16px"}}>
+
+              
+{(cd_blocks || []).map((b, $index) => (
+<React.Fragment key={$index}>
+
+                
+{Boolean(b.isHeading) && (
+<React.Fragment>
+<div style={cssTextToObject(`font-family:'Sora';font-weight:${b.hWeight};font-size:${b.hSize};color:var(--beet-700);letter-spacing:-.01em;line-height:1.2`)}>
+{b.text}
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isPara) && (
+<React.Fragment>
+<div style={{"fontSize":"14.5px","color":"var(--ink-700)","lineHeight":"1.6"}}>
+{b.text}
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isImage) && (
+<React.Fragment>
+<div style={{"border":"1px dashed var(--line-300)","borderRadius":"12px","background":"var(--surface-50)","padding":"28px","display":"flex","flexDirection":"column","alignItems":"center","gap":"8px","color":"var(--ink-400)"}}>
+<Icon name={b.icon} style={{"width":"28px","height":"28px"}} />
+<span style={{"fontSize":"12.5px","fontWeight":"600"}}>
+{b.text}
+</span>
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isCTA) && (
+<React.Fragment>
+<div style={{"display":"flex","justifyContent":"center","padding":"6px 0"}}>
+<span style={{"background":"#7A1C46","color":"#fff","borderRadius":"12px","padding":"12px 24px","fontSize":"14px","fontWeight":"700"}}>
+{b.text}
+</span>
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isQuote) && (
+<React.Fragment>
+<div style={{"borderLeft":"3px solid var(--orchid-400)","padding":"6px 0 6px 16px","fontFamily":"'Sora'","fontSize":"16px","fontStyle":"italic","color":"var(--ink-700)"}}>
+{b.text}
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isFAQ) && (
+<React.Fragment>
+<div style={{"border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden"}}>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","padding":"13px 16px","background":"var(--surface-50)","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)"}}>
+{b.text}
+<Icon name={"chevron-down"} style={{"width":"16px","height":"16px","color":"var(--ink-400)"}} />
+</div>
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isTable) && (
+<React.Fragment>
+<div style={{"border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden"}}>
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr 1fr","background":"var(--surface-50)"}}>
+<span style={{"padding":"9px 12px","fontSize":"11px","fontWeight":"700","textTransform":"uppercase","color":"var(--ink-400)"}}>
+Col A
+</span>
+<span style={{"padding":"9px 12px","fontSize":"11px","fontWeight":"700","textTransform":"uppercase","color":"var(--ink-400)"}}>
+Col B
+</span>
+<span style={{"padding":"9px 12px","fontSize":"11px","fontWeight":"700","textTransform":"uppercase","color":"var(--ink-400)"}}>
+Col C
+</span>
+</div>
+<div style={{"padding":"12px","fontSize":"12.5px","color":"var(--ink-500)"}}>
+{b.text}
+</div>
+</div>
+</React.Fragment>
+)}
+
+                
+{Boolean(b.isMisc) && (
+<React.Fragment>
+<div style={{"display":"flex","alignItems":"center","gap":"10px","border":"1px dashed var(--line-300)","borderRadius":"10px","background":"var(--surface-50)","padding":"14px 16px","color":"var(--ink-500)"}}>
+<Icon name={b.icon} style={{"width":"17px","height":"17px"}} />
+<span style={{"fontSize":"13px","fontWeight":"600"}}>
+{b.type}: {b.text}
+</span>
+</div>
+</React.Fragment>
+)}
+
+              
+</React.Fragment>
+))}
+
+            
+</div>
+
+          
+</React.Fragment>
+)}
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab4) && (
+<React.Fragment>
+
+          
+<div style={{"display":"flex","flexDirection":"column","gap":"16px"}}>
+
+            
+{(cd_rel || []).map((g, $index) => (
+<React.Fragment key={$index}>
+
+              
+<div>
+<div style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"8px"}}>
+Related {g.group}
+</div>
+<div style={{"display":"flex","flexWrap":"wrap","gap":"7px"}}>
+{(g.items || []).map((it, $index) => (
+<React.Fragment key={$index}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"12.5px","fontWeight":"600","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"999px","padding":"6px 12px"}}>
+<Icon name={"link-2"} style={{"width":"13px","height":"13px","color":"var(--orchid-500)"}} />
+{it}
+</span>
+</React.Fragment>
+))}
+<button onClick={contentAINote} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-600)","background":"none","border":"1px dashed var(--orchid-200)","borderRadius":"999px","padding":"6px 12px","cursor":"pointer"}}>
++ Link
+</button>
+</div>
+</div>
+
+            
+</React.Fragment>
+))}
+
+            
+<div style={{"fontSize":"12px","color":"var(--ink-400)"}}>
+Relationships link content instead of duplicating it — one source of truth per page.
+</div>
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab5) && (
+<React.Fragment>
+
+          
+<div style={{"background":"linear-gradient(150deg,#3d1024,#7A1C46)","color":"#fff","borderRadius":"14px","padding":"16px 18px","marginBottom":"16px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"8px","fontSize":"12px","fontWeight":"700"}}>
+<Icon name={"sparkles"} style={{"width":"15px","height":"15px","color":"var(--orchid-300)"}} />
+AI SUGGESTED INTERNAL LINKS
+</div>
+
+            
+<div style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"12px"}}>
+
+              
+{(cd_ai || []).map((l, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"flex","alignItems":"center","gap":"12px","background":"rgba(255,255,255,.1)","borderRadius":"10px","padding":"10px 12px"}}>
+<div style={{"flex":"1"}}>
+<div style={{"fontSize":"13px","fontWeight":"600"}}>
+{l.anchor}
+</div>
+<div style={{"fontFamily":"'Space Mono'","fontSize":"11px","color":"rgba(255,255,255,.7)"}}>
+{l.target}
+</div>
+</div>
+<span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-300)"}}>
+Score {l.score}
+</span>
+<button onClick={contentAINote} style={{"background":"#fff","color":"var(--beet-700)","border":"none","borderRadius":"8px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+Accept
+</button>
+</div>
+</React.Fragment>
+))}
+
+            
+</div>
+
+          
+</div>
+
+          
+<div style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"8px"}}>
+Existing internal links
+</div>
+
+          
+<div style={{"border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden"}}>
+<div style={{"display":"grid","gridTemplateColumns":"1.4fr 1.4fr .8fr .8fr","gap":"10px","padding":"9px 14px","background":"var(--surface-50)","fontSize":"10.5px","fontWeight":"700","textTransform":"uppercase","color":"var(--ink-400)"}}>
+<span>
+Anchor
+</span>
+<span>
+Target
+</span>
+<span>
+Type / strength
+</span>
+<span>
+Score
+</span>
+</div>
+
+            
+{(cd_internal || []).map((l, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"grid","gridTemplateColumns":"1.4fr 1.4fr .8fr .8fr","gap":"10px","padding":"10px 14px","borderTop":"1px solid var(--line-200)","alignItems":"center"}}>
+<span style={{"fontSize":"12.5px","color":"var(--ink-900)","fontWeight":"600"}}>
+{l.anchor}
+</span>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11.5px","color":"var(--info-600)"}}>
+{l.target}
+</span>
+<span style={{"fontSize":"12px","color":"var(--ink-700)"}}>
+{l.strength}
+</span>
+<span style={{"fontSize":"12px","fontWeight":"700","color":"var(--verify-600)"}}>
+{l.score}
+</span>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab6) && (
+<React.Fragment>
+
+          
+{Boolean(cd_mediaEmpty) && (
+<React.Fragment>
+<div style={{"textAlign":"center","color":"var(--ink-500)","padding":"36px 0"}}>
+<Icon name={"image"} style={{"width":"24px","height":"24px","color":"var(--ink-400)"}} />
+<div style={{"fontSize":"13.5px","fontWeight":"600","marginTop":"8px"}}>
+No media attached yet.
+</div>
+</div>
+</React.Fragment>
+)}
+
+          
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
+
+            
+{(cd_media || []).map((m, $index) => (
+<React.Fragment key={$index}>
+
+              
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"12px","padding":"14px","display":"flex","gap":"12px","alignItems":"center"}}>
+<span style={{"width":"44px","height":"44px","borderRadius":"10px","background":"var(--surface-50)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={"file"} style={{"width":"20px","height":"20px","color":"var(--orchid-600)"}} />
+</span>
+<div style={{"minWidth":"0"}}>
+<div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
+{m.name}
+</div>
+<div style={{"fontSize":"11.5px","color":"var(--ink-500)"}}>
+{m.type} · {m.size} · used {m.usage}×
+</div>
+<div style={{"fontSize":"11px","color":"var(--ink-400)","marginTop":"2px"}}>
+alt: {m.alt}
+</div>
+</div>
+</div>
+
+            
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab7) && (
+<React.Fragment>
+
+          
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":"20px"}}>
+
+            
+{(cd_wf || []).map((w, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"999px","padding":"6px 12px"}}>
+<span style={cssTextToObject(`width:9px;height:9px;border-radius:99px;background:${w.dotBg}`)} />
+<span style={cssTextToObject(`font-size:12px;font-weight:700;color:${w.color}`)}>
+{w.label}
+</span>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+          
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px 18px"}}>
+
+            
+{(cd_pub || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div>
+<div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
+{f.k}
+</div>
+<div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
+{f.v}
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab8) && (
+<React.Fragment>
+
+          
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
+
+            
+{(cd_analytics || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"14px 16px"}}>
+<div style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
+{f.k}
+</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--beet-700)","marginTop":"5px"}}>
+{f.v}
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+          
+<div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","color":"var(--ink-500)","padding":"11px 14px","borderRadius":"12px","fontSize":"12.5px","marginTop":"14px"}}>
+<Icon name={"line-chart"} style={{"width":"15px","height":"15px"}} />
+Ranking-trend chart & top keywords render here from GA4 / GSC.
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+        
+{Boolean(cd_tab9) && (
+<React.Fragment>
+
+          
+<div style={{"display":"flex","flexDirection":"column","gap":"0"}}>
+
+            
+{(cd_activity || []).map((a, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"flex","gap":"14px"}}>
+<div style={{"display":"flex","flexDirection":"column","alignItems":"center","flexShrink":"0"}}>
+<span style={{"width":"11px","height":"11px","borderRadius":"99px","background":"var(--orchid-500)","marginTop":"4px"}} />
+<span style={{"flex":"1","width":"2px","background":"var(--line-200)"}} />
+</div>
+<div style={{"flex":"1","paddingBottom":"20px"}}>
+<div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-900)"}}>
+{a.action}
+</div>
+<div style={{"fontSize":"12px","color":"var(--ink-500)","marginTop":"2px"}}>
+{a.who} · {a.date}
+</div>
+</div>
+</div>
+</React.Fragment>
+))}
+
+          
+</div>
+
+        
+</React.Fragment>
+)}
+
+
+      
+</div>
+
+    
+</div>
+
+  
+</div>
+
+
+</React.Fragment>
+)}
+    </React.Fragment>
+  );
+}

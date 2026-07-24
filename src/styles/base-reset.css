@@ -1,0 +1,10 @@
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Manrope',system-ui,sans-serif;color:var(--ink-900);-webkit-font-smoothing:antialiased}
+  a{color:var(--orchid-600);text-decoration:none}
+  a:hover{color:var(--orchid-500)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--line-300);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+  input,select,button,textarea{font-family:inherit}
+  .blscroll{scrollbar-width:thin}
+  @keyframes blrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
