@@ -51,14 +51,22 @@ export default async function handler(req, res) {
   const host = req.headers.host;
   const redirectTo = `${proto}://${host}/activate`;
 
-  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: {
-      redirectTo,
-      data: { full_name: fullName, role_key: role, department: department || null, designation: designation || null },
-    },
-  });
+  // Supabase's auth service intermittently fails admin JWT validation with a
+  // "kid unrecognized" error (a key-cache race on their side, not ours) —
+  // retrying almost always succeeds within one or two attempts.
+  let data, error;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    ({ data, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'invite',
+      email,
+      options: {
+        redirectTo,
+        data: { full_name: fullName, role_key: role, department: department || null, designation: designation || null },
+      },
+    }));
+    if (!error || !/unrecognized JWT kid/i.test(error.message || '')) break;
+    await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+  }
 
   if (error) {
     res.status(400).json({ error: error.message });
