@@ -2958,6 +2958,8 @@ class AppRoot extends React.Component {
       const { error } = await supabase.auth.updateUser({ password:this.state.newPass });
       this.setState({ authBusy:false });
       if(error){ this.flash('Could not activate: '+error.message); return; }
+      const { error: statusErr } = await supabase.from('profiles').update({ status:'Active' }).eq('id', session.user.id);
+      if(statusErr) console.warn('[supabase] profile activation status update failed:', statusErr.message);
       await this._loadProfile(session.user);
       this.flash('Account activated. Welcome to Beetloop.');
       return;

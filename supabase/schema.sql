@@ -24,18 +24,21 @@ drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id);
 
--- auto-create a profile row whenever a new auth user is created
+-- auto-create a profile row whenever a new auth user is created.
+-- New accounts start as "Pending Invitation" until they actually complete
+-- activation (see doActivate() in the app, which flips this to "Active").
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name, role_key, department, designation)
+  insert into public.profiles (id, email, full_name, role_key, department, designation, status)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     coalesce(new.raw_user_meta_data->>'role_key', 'junior'),
     new.raw_user_meta_data->>'department',
-    new.raw_user_meta_data->>'designation'
+    new.raw_user_meta_data->>'designation',
+    'Pending Invitation'
   )
   on conflict (id) do nothing;
   return new;
