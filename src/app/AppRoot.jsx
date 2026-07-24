@@ -23,6 +23,7 @@ class AppRoot extends React.Component {
     okrForm: { title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' },
     recordsAdded: [], showRecordModal: false, recordKind: 'projects',
     recordForm: { name:'', type:'', owner:'', status:'On track' },
+    recordOverrides: {}, recordEditKey: null, recordIsReal: false,
     showManageUserModal: false, manageUserIndex: null, manageUserForm: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
@@ -478,7 +479,7 @@ class AppRoot extends React.Component {
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
       else if(route==='okr') this.setState({ showOkrPanel:true });
-      else if(route==='projects'||route==='campaigns') this.setState({ showRecordModal:true, recordKind:route,
+      else if(route==='projects'||route==='campaigns') this.setState({ showRecordModal:true, recordKind:route, recordEditKey:null, recordIsReal:false,
         recordForm:{ name:'', type:'', owner:'', status: route==='campaigns'?'Live':'On track' } });
       else this.flash('Draft created — opening editor…');
     };
@@ -551,6 +552,7 @@ class AppRoot extends React.Component {
       recordSetOwner:e=>this.setState({ recordForm:{...this.state.recordForm, owner:e.target.value} }),
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
       saveRecord:()=>this._saveRecord(),
+      recordEditKey:this.state.recordEditKey, deleteRecord:()=>this._deleteRecord(),
       showManageUserModal:this.state.showManageUserModal, manageUserForm:this.state.manageUserForm,
       closeManageUserModal:()=>this.setState({ showManageUserModal:false }),
       manageUserSetName:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, name:e.target.value} }),
@@ -2120,16 +2122,53 @@ class AppRoot extends React.Component {
   _saveRecord(){
     const f=this.state.recordForm||{};
     const kind=this.state.recordKind;
+    const editKey=this.state.recordEditKey;
     if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
-    const rec={ id:kind+'-local-'+Date.now(), kind, name:f.name.trim(), type:f.type||'', owner:f.owner||'', status:f.status||'Draft' };
-    this.setState({ recordsAdded:[...(this.state.recordsAdded||[]), rec], showRecordModal:false });
-    this.flash((kind==='campaigns'?'Campaign':'Project')+' "'+rec.name+'" created.');
-    supabase.from('records').insert({
-      kind, name:rec.name, type:rec.type, owner:rec.owner, status:rec.status,
-      created_by:this.state.authUser?this.state.authUser.id:null,
-    }).then(({error})=>{
-      if(error) console.warn('[supabase] record insert failed:', error.message);
-    });
+    const label=kind==='campaigns'?'Campaign':'Project';
+
+    if(editKey==null){
+      // create
+      const rec={ id:kind+'-local-'+Date.now(), kind, name:f.name.trim(), type:f.type||'', owner:f.owner||'', status:f.status||'Draft' };
+      this.setState({ recordsAdded:[...(this.state.recordsAdded||[]), rec], showRecordModal:false });
+      this.flash(label+' "'+rec.name+'" created.');
+      supabase.from('records').insert({
+        kind, name:rec.name, type:rec.type, owner:rec.owner, status:rec.status,
+        created_by:this.state.authUser?this.state.authUser.id:null,
+      }).then(({error})=>{
+        if(error) console.warn('[supabase] record insert failed:', error.message);
+      });
+      return;
+    }
+
+    if(this.state.recordIsReal){
+      // edit a Supabase-backed record
+      const recordsAdded=this.state.recordsAdded.map(r=>r.id===editKey?{...r,name:f.name.trim(),type:f.type,owner:f.owner,status:f.status}:r);
+      this.setState({ recordsAdded, showRecordModal:false });
+      this.flash(label+' "'+f.name.trim()+'" updated.');
+      supabase.from('records').update({ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status }).eq('id', editKey).then(({error})=>{
+        if(error) console.warn('[supabase] record update failed:', error.message);
+      });
+    } else {
+      // edit a demo/seed record — local override only
+      const recordOverrides={...this.state.recordOverrides, [editKey]:{ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status }};
+      this.setState({ recordOverrides, showRecordModal:false });
+      this.flash(label+' "'+f.name.trim()+'" updated (demo record — local only).');
+    }
+  }
+
+  _deleteRecord(){
+    const kind=this.state.recordKind;
+    const editKey=this.state.recordEditKey;
+    if(editKey==null) return;
+    if(this.state.recordIsReal){
+      this.setState({ recordsAdded:this.state.recordsAdded.filter(r=>r.id!==editKey), showRecordModal:false });
+      supabase.from('records').delete().eq('id', editKey).then(({error})=>{
+        if(error) console.warn('[supabase] record delete failed:', error.message);
+      });
+    } else {
+      this.setState({ recordOverrides:{...this.state.recordOverrides, [editKey]:{deleted:true}}, showRecordModal:false });
+    }
+    this.flash((kind==='campaigns'?'Campaign':'Project')+' deleted.');
   }
 
   _saveManageUser(){
@@ -2811,26 +2850,36 @@ class AppRoot extends React.Component {
     const editor = (m)=>()=>this.flash(m);
 
     const statusTone=(s)=>({'On track':'ok','Live':'ok','In progress':'info','Scheduled':'info','Planned':'info','At risk':'warn','Draft':'draft'}[s]||'info');
+    const seedRows=(kind, tuples)=> tuples.map((r,idx)=>{
+      const key=kind+'#seed#'+idx;
+      const ov=(this.state.recordOverrides||{})[key];
+      if(ov && ov.deleted) return null;
+      return { key, name:ov&&ov.name!=null?ov.name:r[0], type:ov&&ov.type!=null?ov.type:r[1], owner:ov&&ov.owner!=null?ov.owner:r[2], status:ov&&ov.status!=null?ov.status:r[3], isReal:false };
+    }).filter(Boolean);
+    const addedRows=(kind)=> (this.state.recordsAdded||[]).filter(r=>r.kind===kind && !r.deleted)
+      .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true }));
+    const editAction=(kind,row)=>()=>this.setState({ showRecordModal:true, recordKind:kind, recordEditKey:row.key, recordIsReal:row.isReal,
+      recordForm:{ name:row.name, type:row.type==='—'?'':row.type, owner:row.owner==='—'?'':row.owner, status:row.status } });
     if(route==='projects'){
-      const added=(this.state.recordsAdded||[]).filter(r=>r.kind==='projects').map(r=>[r.name,r.type||'—',r.owner||'—',tag(r.status,statusTone(r.status))]);
-      const rows = scoped(added.concat([
-        ['Pubrica SEO program','12-month retainer','SEO · Aditi Rao',tag('On track','ok')],
-        ['Food Research Lab — content','Editorial retainer','Content · Karan Shah',tag('In progress','info')],
-        ['Statswork website rebuild','Landing pages','Web Dev · Web team',tag('At risk','warn')],
-        ['PepCreations launch','Nutraceutical','Cross-dept · Priya Nair',tag('Planned','info')],
-        ['Tutors India local SEO','Local search','SEO · Sameer Iyer',tag('On track','ok')],
-      ]));
-      return { tableCols:['Project','Type','Owner','Status','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[2],...r[3],c3:'',...act(canEdit?'Edit':'View',canEdit?editor('Opening project editor…'):viewer,canEdit)})) };
+      const rows = scoped(addedRows('projects').concat(seedRows('projects', [
+        ['Pubrica SEO program','12-month retainer','SEO · Aditi Rao','On track'],
+        ['Food Research Lab — content','Editorial retainer','Content · Karan Shah','In progress'],
+        ['Statswork website rebuild','Landing pages','Web Dev · Web team','At risk'],
+        ['PepCreations launch','Nutraceutical','Cross-dept · Priya Nair','Planned'],
+        ['Tutors India local SEO','Local search','SEO · Sameer Iyer','On track'],
+      ])));
+      return { tableCols:['Project','Type','Owner','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:'',c1:row.owner,...tag(row.status,statusTone(row.status)),c3:'',
+        ...act(canEdit?'Edit':'View', canEdit?editAction('projects',row):viewer, canEdit)})) };
     }
     if(route==='campaigns'){
-      const added=(this.state.recordsAdded||[]).filter(r=>r.kind==='campaigns').map(r=>[r.name,r.type||'—',r.owner||'—',tag(r.status,statusTone(r.status))]);
-      const rows = scoped(added.concat([
-        ['Q3 SEO push — Pubrica','SEO Campaign','Live',tag('Live','ok')],
-        ['Reel series — Statswork','SMM Campaign','Live',tag('Live','ok')],
-        ['Whitepaper funnel — FRL','Content Campaign','Draft',tag('Draft','draft')],
-        ['Backlink outreach — Tutors','SEO Campaign','Scheduled',tag('Scheduled','info')],
-      ]));
-      return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[1],...r[3],c3:r[2],...act(canEdit?'Edit':'View',canEdit?editor('Opening campaign…'):viewer,canEdit)})) };
+      const rows = scoped(addedRows('campaigns').concat(seedRows('campaigns', [
+        ['Q3 SEO push — Pubrica','SEO Campaign','Live','Live'],
+        ['Reel series — Statswork','SMM Campaign','Live','Live'],
+        ['Whitepaper funnel — FRL','Content Campaign','Draft','Draft'],
+        ['Backlink outreach — Tutors','SEO Campaign','Scheduled','Scheduled'],
+      ])));
+      return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:'',c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
+        ...act(canEdit?'Edit':'View', canEdit?editAction('campaigns',row):viewer, canEdit)})) };
     }
     if(route==='tasks'){
       const own = ['junior','senior'].includes(rk);
