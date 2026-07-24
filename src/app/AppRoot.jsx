@@ -21,6 +21,8 @@ class AppRoot extends React.Component {
     okrExpanded: [], showOkrPanel: false, okrRecord: null, okrSection: 'okrA', okrOpen: null,
     okrAdded: [],
     okrForm: { title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' },
+    recordsAdded: [], showRecordModal: false, recordKind: 'projects',
+    recordForm: { name:'', type:'', owner:'', status:'On track' },
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
@@ -151,6 +153,16 @@ class AppRoot extends React.Component {
       provider, options:{ redirectTo: window.location.origin + '/app/dashboard' },
     });
     if(error) this.flash('Could not start '+provider+' sign-in: '+error.message);
+  }
+
+  async _forgotPassword(){
+    const em=(this.state.email||'').trim().toLowerCase();
+    if(!em){ this.flash('Enter your work email above first, then click "Forgot password?".'); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(em, {
+      redirectTo: window.location.origin + '/activate',
+    });
+    if(error) this.flash('Could not send reset email: '+error.message);
+    else this.flash('Password reset link sent to '+em+' (if an account exists).');
   }
   componentDidUpdate(prevProps, prevState){
     if(prevProps.screenParam!==this.props.screenParam || prevProps.routeParam!==this.props.routeParam){
@@ -465,6 +477,8 @@ class AppRoot extends React.Component {
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
       else if(route==='okr') this.setState({ showOkrPanel:true });
+      else if(route==='projects'||route==='campaigns') this.setState({ showRecordModal:true, recordKind:route,
+        recordForm:{ name:'', type:'', owner:'', status: route==='campaigns'?'Live':'On track' } });
       else this.flash('Draft created — opening editor…');
     };
 
@@ -497,6 +511,7 @@ class AppRoot extends React.Component {
       doLogin:()=>this.doLogin(), goActivate:e=>{e&&e.preventDefault();this.setState({screen:'activate'});},
       oauthGoogle:e=>{e&&e.preventDefault();this._oauthLogin('google');},
       oauthMicrosoft:e=>{e&&e.preventDefault();this._oauthLogin('azure');},
+      forgotPassword:e=>{e&&e.preventDefault();this._forgotPassword();},
       backToLogin:e=>{e&&e.preventDefault();this.setState({screen:'login'});},
       noop:e=>{e&&e.preventDefault();this.flash('Demo — connect your identity provider to enable.');},
       demoAccounts: Object.entries(this.DEMO).map(([em,r])=>({ label:this.ROLES[r].label, short:this.ROLES[r].short, color:this.ROLES[r].color, pick:()=>this.setState({email:em,password:'demo123',loginError:''}) })),
@@ -528,6 +543,13 @@ class AppRoot extends React.Component {
       showUserModal:this.state.showUserModal, showMasterModal:this.state.showMasterModal,
       closeUserModal:()=>this.setState({showUserModal:false}), stop:e=>e.stopPropagation(),
       submitUser:()=>this.submitUser(),
+      showRecordModal:this.state.showRecordModal, recordKind:this.state.recordKind, recordForm:this.state.recordForm,
+      closeRecordModal:()=>this.setState({ showRecordModal:false }),
+      recordSetName:e=>this.setState({ recordForm:{...this.state.recordForm, name:e.target.value} }),
+      recordSetType:e=>this.setState({ recordForm:{...this.state.recordForm, type:e.target.value} }),
+      recordSetOwner:e=>this.setState({ recordForm:{...this.state.recordForm, owner:e.target.value} }),
+      recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
+      saveRecord:()=>this._saveRecord(),
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
@@ -2086,6 +2108,28 @@ class AppRoot extends React.Component {
     if(mapped.length) this.setState({ users:mapped });
   }
 
+  _saveRecord(){
+    const f=this.state.recordForm||{};
+    const kind=this.state.recordKind;
+    if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
+    const rec={ id:kind+'-local-'+Date.now(), kind, name:f.name.trim(), type:f.type||'', owner:f.owner||'', status:f.status||'Draft' };
+    this.setState({ recordsAdded:[...(this.state.recordsAdded||[]), rec], showRecordModal:false });
+    this.flash((kind==='campaigns'?'Campaign':'Project')+' "'+rec.name+'" created.');
+    supabase.from('records').insert({
+      kind, name:rec.name, type:rec.type, owner:rec.owner, status:rec.status,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] record insert failed:', error.message);
+    });
+  }
+
+  async _loadRecords(){
+    const { data, error } = await supabase.from('records').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] records load failed:', error.message); return; }
+    const mapped=(data||[]).map(r=>({ id:'record-'+r.id, kind:r.kind, name:r.name, type:r.type||'', owner:r.owner||'', status:r.status||'Draft' }));
+    this.setState({ recordsAdded:mapped });
+  }
+
   checkinView(){
     const rk = this.state.roleKey;
     const person = this.ROLES[rk].person;
@@ -2734,23 +2778,26 @@ class AppRoot extends React.Component {
     const viewer = ()=>this.flash('View only — your role can’t change this.');
     const editor = (m)=>()=>this.flash(m);
 
+    const statusTone=(s)=>({'On track':'ok','Live':'ok','In progress':'info','Scheduled':'info','Planned':'info','At risk':'warn','Draft':'draft'}[s]||'info');
     if(route==='projects'){
-      const rows = scoped([
+      const added=(this.state.recordsAdded||[]).filter(r=>r.kind==='projects').map(r=>[r.name,r.type||'—',r.owner||'—',tag(r.status,statusTone(r.status))]);
+      const rows = scoped(added.concat([
         ['Pubrica SEO program','12-month retainer','SEO · Aditi Rao',tag('On track','ok')],
         ['Food Research Lab — content','Editorial retainer','Content · Karan Shah',tag('In progress','info')],
         ['Statswork website rebuild','Landing pages','Web Dev · Web team',tag('At risk','warn')],
         ['PepCreations launch','Nutraceutical','Cross-dept · Priya Nair',tag('Planned','info')],
         ['Tutors India local SEO','Local search','SEO · Sameer Iyer',tag('On track','ok')],
-      ]);
+      ]));
       return { tableCols:['Project','Type','Owner','Status','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[2],...r[3],c3:'',...act(canEdit?'Edit':'View',canEdit?editor('Opening project editor…'):viewer,canEdit)})) };
     }
     if(route==='campaigns'){
-      const rows = scoped([
+      const added=(this.state.recordsAdded||[]).filter(r=>r.kind==='campaigns').map(r=>[r.name,r.type||'—',r.owner||'—',tag(r.status,statusTone(r.status))]);
+      const rows = scoped(added.concat([
         ['Q3 SEO push — Pubrica','SEO Campaign','Live',tag('Live','ok')],
         ['Reel series — Statswork','SMM Campaign','Live',tag('Live','ok')],
         ['Whitepaper funnel — FRL','Content Campaign','Draft',tag('Draft','draft')],
         ['Backlink outreach — Tutors','SEO Campaign','Scheduled',tag('Scheduled','info')],
-      ]);
+      ]));
       return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[1],...r[3],c3:r[2],...act(canEdit?'Edit':'View',canEdit?editor('Opening campaign…'):viewer,canEdit)})) };
     }
     if(route==='tasks'){
@@ -2870,6 +2917,7 @@ class AppRoot extends React.Component {
     this._loadTasks();
     this._loadOkrs();
     this._loadTeam();
+    this._loadRecords();
     this._subscribeRealtime();
   }
 
@@ -2901,6 +2949,10 @@ class AppRoot extends React.Component {
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'profiles' }, (payload)=>{
         push('New team member: '+(payload.new.full_name||payload.new.email));
         this._loadTeam();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'records' }, (payload)=>{
+        push('New '+payload.new.kind.slice(0,-1)+': '+payload.new.name);
+        this._loadRecords();
       })
       .subscribe();
   }

@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function LoginPage({ vm }) {
-  const { demoAccounts, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft } = vm;
+  const { demoAccounts, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword } = vm;
   return (
     <React.Fragment>
 
@@ -147,7 +147,7 @@ Password
 </label>
 
         
-<a href="#" onClick={noop} style={{"fontSize":"12.5px","fontWeight":"600"}}>
+<a href="#" onClick={forgotPassword} style={{"fontSize":"12.5px","fontWeight":"600"}}>
 Forgot password?
 </a>
 

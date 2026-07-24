@@ -128,6 +128,33 @@ drop policy if exists "okrs_update_authenticated" on public.okrs;
 create policy "okrs_update_authenticated" on public.okrs
   for update using (auth.role() = 'authenticated');
 
+-- ============ records (projects / campaigns) ============
+create table if not exists public.records (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('projects','campaigns')),
+  name text not null,
+  type text,
+  owner text,
+  status text not null default 'Draft',
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.records enable row level security;
+
+drop policy if exists "records_select_authenticated" on public.records;
+create policy "records_select_authenticated" on public.records
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "records_insert_authenticated" on public.records;
+create policy "records_insert_authenticated" on public.records
+  for insert with check (auth.role() = 'authenticated');
+
+drop policy if exists "records_update_authenticated" on public.records;
+create policy "records_update_authenticated" on public.records
+  for update using (auth.role() = 'authenticated');
+
 -- keep updated_at fresh
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -145,9 +172,16 @@ drop trigger if exists okrs_set_updated_at on public.okrs;
 create trigger okrs_set_updated_at before update on public.okrs
   for each row execute procedure public.set_updated_at();
 
+drop trigger if exists records_set_updated_at on public.records;
+create trigger records_set_updated_at before update on public.records
+  for each row execute procedure public.set_updated_at();
+
 -- ============ realtime (powers the live notification bell) ============
 do $$
 begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
   if not exists (
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'tasks'
@@ -165,5 +199,11 @@ begin
     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'profiles'
   ) then
     alter publication supabase_realtime add table public.profiles;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'records'
+  ) then
+    alter publication supabase_realtime add table public.records;
   end if;
 end $$;
