@@ -70,7 +70,12 @@ export default async function handler(req, res) {
 
   if (!smtpHost || !smtpUser || !smtpPass) {
     // User account is created either way — just flag that the email couldn't be sent.
-    res.status(200).json({ ok: true, userId: data.user ? data.user.id : null, emailSent: false, actionLink });
+    res.status(200).json({
+      ok: true, userId: data.user ? data.user.id : null, emailSent: false, actionLink,
+      missingEnvVars: {
+        SMTP_HOST: !smtpHost, SMTP_PORT: !process.env.SMTP_PORT, SMTP_USER: !smtpUser, SMTP_PASS: !smtpPass,
+      },
+    });
     return;
   }
 
