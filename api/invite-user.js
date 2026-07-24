@@ -81,7 +81,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Beetloop <onboarding@resend.dev>',
+        from: process.env.RESEND_FROM || 'Beetloop Marketing Module <onboarding@resend.dev>',
         to: [email],
         subject: 'You’ve been invited to Beetloop',
         html: `
