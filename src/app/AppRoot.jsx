@@ -23,6 +23,7 @@ class AppRoot extends React.Component {
     okrForm: { title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' },
     recordsAdded: [], showRecordModal: false, recordKind: 'projects',
     recordForm: { name:'', type:'', owner:'', status:'On track' },
+    showManageUserModal: false, manageUserIndex: null, manageUserForm: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
@@ -550,6 +551,14 @@ class AppRoot extends React.Component {
       recordSetOwner:e=>this.setState({ recordForm:{...this.state.recordForm, owner:e.target.value} }),
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
       saveRecord:()=>this._saveRecord(),
+      showManageUserModal:this.state.showManageUserModal, manageUserForm:this.state.manageUserForm,
+      closeManageUserModal:()=>this.setState({ showManageUserModal:false }),
+      manageUserSetName:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, name:e.target.value} }),
+      manageUserSetDept:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, dept:e.target.value} }),
+      manageUserSetDesignation:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, designation:e.target.value} }),
+      manageUserSetRole:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, roleKey:e.target.value} }),
+      manageUserSetStatus:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, status:e.target.value} }),
+      saveManageUser:()=>this._saveManageUser(),
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
@@ -2101,9 +2110,9 @@ class AppRoot extends React.Component {
     if(error){ console.warn('[supabase] team load failed:', error.message); return; }
     const roleLabel=r=> (this.ROLES[r]&&this.ROLES[r].label) || r;
     const mapped=(data||[]).map(p=>({
-      name:p.full_name||p.email, sub:(p.designation||roleLabel(p.role_key))+' · '+(p.department||'—'),
-      role:roleLabel(p.role_key), dept:p.department||'—', status:p.status||'Active',
-      statusTone: (p.status||'Active')==='Active'?'ok':'warn',
+      id:p.id, email:p.email, name:p.full_name||p.email, sub:(p.designation||roleLabel(p.role_key))+' · '+(p.department||'—'),
+      roleKey:p.role_key||'junior', role:roleLabel(p.role_key), dept:p.department||'—', designation:p.designation||'',
+      status:p.status||'Active', statusTone: (p.status||'Active')==='Active'?'ok':'warn',
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -2121,6 +2130,26 @@ class AppRoot extends React.Component {
     }).then(({error})=>{
       if(error) console.warn('[supabase] record insert failed:', error.message);
     });
+  }
+
+  _saveManageUser(){
+    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
+    if(!f || i==null) return;
+    if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
+    const roleLabel=(this.ROLES[f.roleKey]&&this.ROLES[f.roleKey].label)||f.roleKey;
+    const updated={ ...f, name:f.name.trim(), role:roleLabel, sub:(f.designation||roleLabel)+' · '+f.dept,
+      statusTone: f.status==='Active'?'ok':'warn' };
+    const users=[...this.state.users]; users[i]=updated;
+    this.setState({ users, showManageUserModal:false });
+    this.flash('Updated '+updated.name+'.');
+    if(f.id){
+      supabase.from('profiles').update({
+        full_name:updated.name, department:updated.dept, designation:updated.designation||null,
+        role_key:updated.roleKey, status:updated.status,
+      }).eq('id', f.id).then(({error})=>{
+        if(error) console.warn('[supabase] profile update failed:', error.message);
+      });
+    }
   }
 
   async _loadRecords(){
@@ -2767,10 +2796,13 @@ class AppRoot extends React.Component {
     if(route==='users'){
       return {
         tableCols:['User','Department','Status','Role','Actions'],
-        tableRows:this.state.users.map(u=>({
+        tableRows:this.state.users.map((u,i)=>({
           c0:u.name, c0sub:u.sub, c1:u.dept, c3:u.role,
           ...tag(u.status, u.statusTone==='ok'?'ok':'warn'),
-          ...act(rk==='admin'?'Manage':'View', ()=>this.flash(rk==='admin'?'Opening user record…':'View only.'), false),
+          ...act(rk==='admin'?'Manage':'View', rk==='admin'
+            ? ()=>{ const rkFound=u.roleKey||Object.keys(this.ROLES).find(k=>this.ROLES[k].label===u.role)||'junior';
+                this.setState({ showManageUserModal:true, manageUserIndex:i, manageUserForm:{...u, roleKey:rkFound} }); }
+            : ()=>this.flash('View only.'), false),
         })),
       };
     }
