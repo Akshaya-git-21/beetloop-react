@@ -2,20 +2,21 @@
 //
 // Supabase's own /auth/v1/invite endpoint (used by supabase-js's
 // inviteUserByEmail) currently rejects this project's new-format secret key
-// with a JWT validation error ("unrecognized JWT kid ... ES256"). Gmail SMTP
-// direct-from-serverless also proved unreliable (Google blocks/challenges
-// SMTP logins from cloud IPs regardless of valid credentials). Instead:
-// generate the invite link via the admin API (works fine with the new key
-// format) and send the email via Resend's HTTPS API — built for sending
-// from servers/serverless functions, no SMTP involved.
+// with a JWT validation error ("unrecognized JWT kid ... ES256"). Generating
+// the link via the admin API works fine with the new key format, so we use
+// that instead and send the email ourselves.
+//
+// Email sends via Gmail SMTP if SMTP_* env vars are present (can send to any
+// recipient), falling back to Resend's HTTPS API otherwise (only sends to
+// the Resend account's own address until a domain is verified there).
 //
 // Required Vercel env vars (server-side only, never VITE_-prefixed):
 //   SUPABASE_URL, SUPABASE_SECRET_KEY
-//   RESEND_API_KEY
-//   RESEND_FROM (optional — defaults to Resend's shared test sender, which
-//     works immediately with no domain setup, but is best replaced with a
-//     verified sender on your own domain for production use)
+//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM (optional)
+//   -- or, as a fallback --
+//   RESEND_API_KEY, RESEND_FROM (optional)
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 const ROLE_KEYS = ['admin', 'ceo', 'coo', 'manager', 'team_lead', 'senior', 'junior', 'qc'];
 const ROLE_LABELS = {
@@ -74,12 +75,49 @@ export default async function handler(req, res) {
   }
 
   const actionLink = data.properties && data.properties.action_link;
-  const resendKey = process.env.RESEND_API_KEY;
+  const userId = data.user ? data.user.id : null;
+  const subject = 'You’ve been invited to Beetloop';
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+      <h2 style="color:#7A1C46;margin:0 0 12px">Welcome to Beetloop</h2>
+      <p>${fullName}, you've been invited as <strong>${ROLE_LABELS[role] || role}</strong>${department ? ` in ${department}` : ''}.</p>
+      <p>Click below to set your password and activate your account:</p>
+      <p style="margin:24px 0">
+        <a href="${actionLink}" style="background:#7A1C46;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Activate your account</a>
+      </p>
+      <p style="color:#888;font-size:13px">If the button doesn't work, copy this link: ${actionLink}</p>
+    </div>
+  `;
 
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    try {
+      const smtpPort = Number(process.env.SMTP_PORT || 465);
+      const transporter = nodemailer.createTransport({
+        host: smtpHost, port: smtpPort, secure: smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+      await transporter.sendMail({ from: process.env.SMTP_FROM || smtpUser, to: email, subject, html });
+      res.status(200).json({ ok: true, userId, emailSent: true, via: 'smtp' });
+      return;
+    } catch (mailErr) {
+      // Fall through to Resend if SMTP fails at send time.
+      const resendKey = process.env.RESEND_API_KEY;
+      if (!resendKey) {
+        res.status(200).json({ ok: true, userId, emailSent: false, mailError: mailErr.message, actionLink, via: 'smtp' });
+        return;
+      }
+    }
+  }
+
+  const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     res.status(200).json({
-      ok: true, userId: data.user ? data.user.id : null, emailSent: false, actionLink,
-      missingEnvVars: { RESEND_API_KEY: true },
+      ok: true, userId, emailSent: false, actionLink,
+      missingEnvVars: { SMTP_or_RESEND: true },
     });
     return;
   }
@@ -88,30 +126,15 @@ export default async function handler(req, res) {
     const resendResp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Beetloop Marketing Module <onboarding@resend.dev>',
-        to: [email],
-        subject: 'You’ve been invited to Beetloop',
-        html: `
-          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-            <h2 style="color:#7A1C46;margin:0 0 12px">Welcome to Beetloop</h2>
-            <p>${fullName}, you've been invited as <strong>${ROLE_LABELS[role] || role}</strong>${department ? ` in ${department}` : ''}.</p>
-            <p>Click below to set your password and activate your account:</p>
-            <p style="margin:24px 0">
-              <a href="${actionLink}" style="background:#7A1C46;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Activate your account</a>
-            </p>
-            <p style="color:#888;font-size:13px">If the button doesn't work, copy this link: ${actionLink}</p>
-          </div>
-        `,
-      }),
+      body: JSON.stringify({ from: process.env.RESEND_FROM || 'Beetloop Marketing Module <onboarding@resend.dev>', to: [email], subject, html }),
     });
     const resendBody = await resendResp.json();
     if (!resendResp.ok) {
-      res.status(200).json({ ok: true, userId: data.user ? data.user.id : null, emailSent: false, mailError: resendBody.message || JSON.stringify(resendBody), actionLink });
+      res.status(200).json({ ok: true, userId, emailSent: false, mailError: resendBody.message || JSON.stringify(resendBody), actionLink, via: 'resend' });
       return;
     }
-    res.status(200).json({ ok: true, userId: data.user ? data.user.id : null, emailSent: true, resendId: resendBody.id });
+    res.status(200).json({ ok: true, userId, emailSent: true, resendId: resendBody.id, via: 'resend' });
   } catch (mailErr) {
-    res.status(200).json({ ok: true, userId: data.user ? data.user.id : null, emailSent: false, mailError: mailErr.message, actionLink });
+    res.status(200).json({ ok: true, userId, emailSent: false, mailError: mailErr.message, actionLink, via: 'resend' });
   }
 }
