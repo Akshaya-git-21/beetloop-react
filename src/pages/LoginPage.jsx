@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function LoginPage({ vm }) {
-  const { demoAccounts, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password } = vm;
+  const { demoAccounts, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft } = vm;
   return (
     <React.Fragment>
 
@@ -188,13 +188,13 @@ OR
 <div style={{"display":"flex","gap":"10px"}}>
 
         
-<button onClick={noop} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
+<button onClick={oauthGoogle} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
 <Icon name={"globe"} style={{"width":"16px","height":"16px"}} />
  Google
 </button>
 
         
-<button onClick={noop} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
+<button onClick={oauthMicrosoft} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
 <Icon name={"grid-3x3"} style={{"width":"16px","height":"16px"}} />
  Microsoft
 </button>

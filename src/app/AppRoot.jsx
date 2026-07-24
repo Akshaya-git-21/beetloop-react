@@ -1,4 +1,5 @@
 import React from 'react';
+import { supabase } from '../utils/supabaseClient.js';
 
 const LoginPage = React.lazy(() => import('../pages/LoginPage.jsx'));
 const ActivatePage = React.lazy(() => import('../pages/ActivatePage.jsx'));
@@ -9,6 +10,8 @@ class AppRoot extends React.Component {
     screen: 'login',
     roleKey: 'admin',
     route: 'dashboard',
+    authUser: null, authProfile: null, authBusy: false, authReady: false,
+    notifications: [], showNotifications: false,
     email: '', password: '', loginError: '',
     newPass: '', confirmPass: '', mfa: true,
     toast: '',
@@ -16,6 +19,8 @@ class AppRoot extends React.Component {
     activeMaster: null,
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
     okrExpanded: [], showOkrPanel: false, okrRecord: null, okrSection: 'okrA', okrOpen: null,
+    okrAdded: [],
+    okrForm: { title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' },
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
@@ -116,8 +121,37 @@ class AppRoot extends React.Component {
     try{ const saved=localStorage.getItem('beetloop_content_pages'); if(saved){ const arr=JSON.parse(saved); if(Array.isArray(arr)&&arr.length) this.setState({ cAdded:arr }); } }catch(e){}
     this._syncStateFromLocation();
     this._syncLocationFromState();
+
+    supabase.auth.getSession().then(({ data:{ session } })=>{
+      this.setState({ authReady:true });
+      if(session && session.user && this.state.screen!=='activate'){
+        this._loadProfile(session.user);
+      }
+    });
+    this._authSub = supabase.auth.onAuthStateChange((event, session)=>{
+      if(event==='SIGNED_OUT'){
+        this.setState({ authUser:null, authProfile:null });
+      }
+    }).data.subscription;
   }
-  componentWillUnmount(){ clearTimeout(this._t); }
+  componentWillUnmount(){
+    clearTimeout(this._t);
+    if(this._authSub) this._authSub.unsubscribe();
+    if(this._realtimeChannel) supabase.removeChannel(this._realtimeChannel);
+  }
+
+  async doLogout(){
+    if(this.state.authUser) await supabase.auth.signOut();
+    if(this._realtimeChannel){ supabase.removeChannel(this._realtimeChannel); this._realtimeChannel=null; }
+    this.setState({ screen:'login', email:'', password:'', authUser:null, authProfile:null, notifications:[] });
+  }
+
+  async _oauthLogin(provider){
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider, options:{ redirectTo: window.location.origin + '/app/dashboard' },
+    });
+    if(error) this.flash('Could not start '+provider+' sign-in: '+error.message);
+  }
   componentDidUpdate(prevProps, prevState){
     if(prevProps.screenParam!==this.props.screenParam || prevProps.routeParam!==this.props.routeParam){
       this._syncStateFromLocation();
@@ -366,7 +400,11 @@ class AppRoot extends React.Component {
 
   renderVals(){
     const rk = this.state.roleKey;
-    const role = this.ROLES[rk];
+    const profile = this.state.authProfile;
+    const role = profile
+      ? { ...this.ROLES[rk], person: profile.full_name||profile.email, tag: profile.designation||this.ROLES[rk].tag,
+          short: (profile.full_name||profile.email||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() }
+      : this.ROLES[rk];
     const route = this.state.route;
     const acc = this.ACCESS;
     const showMyKpi = route==='okr' && ['team_lead','senior','junior'].includes(rk);
@@ -457,6 +495,8 @@ class AppRoot extends React.Component {
       email:this.state.email, password:this.state.password, loginError:this.state.loginError,
       onEmail:e=>this.setState({email:e.target.value}), onPassword:e=>this.setState({password:e.target.value}),
       doLogin:()=>this.doLogin(), goActivate:e=>{e&&e.preventDefault();this.setState({screen:'activate'});},
+      oauthGoogle:e=>{e&&e.preventDefault();this._oauthLogin('google');},
+      oauthMicrosoft:e=>{e&&e.preventDefault();this._oauthLogin('azure');},
       backToLogin:e=>{e&&e.preventDefault();this.setState({screen:'login'});},
       noop:e=>{e&&e.preventDefault();this.flash('Demo — connect your identity provider to enable.');},
       demoAccounts: Object.entries(this.DEMO).map(([em,r])=>({ label:this.ROLES[r].label, short:this.ROLES[r].short, color:this.ROLES[r].color, pick:()=>this.setState({email:em,password:'demo123',loginError:''}) })),
@@ -469,9 +509,16 @@ class AppRoot extends React.Component {
       ...this.pwStrength(),
       // shell
       role, roleKey:rk, nav, adminNav, hasAdmin,
-      roleOptions:['admin','ceo','coo','manager','team_lead','senior','junior','qc'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
+      roleOptions:['admin','ceo','coo'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
       onRoleChange:e=>{ const k=e.target.value; const allowed = this.ACCESS[route]&&this.ACCESS[route][k]; this.setState({ roleKey:k, route: allowed?route:'dashboard' }); },
-      logout:()=>this.setState({screen:'login',email:'',password:''}),
+      notifications:this.state.notifications, unreadCount:(this.state.notifications||[]).filter(n=>!n.read).length,
+      showNotifications:this.state.showNotifications,
+      toggleNotifications:()=>{
+        const opening=!this.state.showNotifications;
+        this.setState({ showNotifications:opening,
+          notifications: opening ? this.state.notifications.map(n=>({...n, read:true})) : this.state.notifications });
+      },
+      logout:()=>this.doLogout(),
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
@@ -1664,6 +1711,18 @@ class AppRoot extends React.Component {
     const upd={...(this.state.tkUpd||{})};
     upd[id]={ ...(upd[id]||{}), ...patch, activity:[...(t.activity||[]), [this.ROLES[this.state.roleKey].person, act, this.todayStr()]] };
     this.setState({ tkUpd:upd });
+    this._persistTaskPatch(id, patch);
+  }
+  // Fire-and-forget: syncs to Supabase when this task exists there (created
+  // via tkSubmitNew). No-ops harmlessly for the built-in demo-only tasks.
+  _persistTaskPatch(code, patch){
+    const dbPatch={};
+    if('status' in patch) dbPatch.status=patch.status;
+    if('checklist' in patch) dbPatch.checklist=patch.checklist;
+    if(!Object.keys(dbPatch).length) return;
+    supabase.from('tasks').update(dbPatch).eq('code', code).then(({error})=>{
+      if(error) console.warn('[supabase] task update failed:', error.message);
+    });
   }
   tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   relDate(n){ const d=new Date(Date.now()+n*86400000); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; return m+' '+d.getDate()+', '+d.getFullYear(); }
@@ -1934,6 +1993,97 @@ class AppRoot extends React.Component {
     const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:id });
     this.flash('Task '+id+' created and assigned to '+task.assignee+'.');
+    supabase.from('tasks').insert({
+      code:id, name:task.name, description:task.desc, priority:task.priority, status:task.status,
+      division:task.division, project:task.project, campaign:task.campaign,
+      assignee_name:task.assignee, reviewer_name:task.reviewer,
+      start_date:f.start||null, end_date:f.end||null,
+      effort_estimate:task.estH, effort_actual:task.actH, recurrence:task.recurrence, checklist:task.checklist,
+      linked_kpi:task.kpi, kpi_id:task.kpiId, units:task.units, unit:task.unit,
+      dependency:task.dep, effort_plan:task.effortPlan, effort_row:task.effortType, dep_mode:task.depMode,
+      evidence:task.evidence, comments:[], activity:task.activity,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] task insert failed:', error.message);
+    });
+  }
+
+  // Loads every Supabase-backed task and replaces tkAdded with the persisted
+  // set, so created/edited tasks survive reloads and are shared across users.
+  async _loadTasks(){
+    const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] task load failed:', error.message); return; }
+    const mapped=(data||[]).map(r=>({
+      id:r.code, name:r.name, desc:r.description||'—', template:'Custom task',
+      project:r.project||'—', campaign:r.campaign||'—',
+      start:this.fmtDate(r.start_date)||this.todayStr(), end:this.fmtDate(r.end_date)||'—',
+      priority:r.priority||'Medium', assignee:r.assignee_name||'Unassigned',
+      kpiId:r.kpi_id||'', kpi:r.linked_kpi||'Not linked', units:r.units||0, unit:r.unit||'',
+      estH:r.effort_estimate||0, actH:r.effort_actual||0, recurrence:r.recurrence||'None',
+      reviewer:r.reviewer_name||'—', effortPlan:r.effort_plan||'', effortType:r.effort_row||'',
+      depMode:r.dep_mode||'Parallel', division:r.division||'Content',
+      checklist:r.checklist||[], dep:r.dependency||'—', evidence:r.evidence||[],
+      comments:r.comments||[], status:r.status||'Assigned', activity:r.activity||[],
+      qcFeedback:r.qc_feedback||'',
+    }));
+    this.setState({ tkAdded:mapped, tkUpd:{} });
+  }
+
+  _saveOkr(activate, wOk, wTotal, existingCount, rk){
+    const f=this.state.okrForm||{};
+    if(!f.title||!f.title.trim()){ this.flash('Enter an objective title.'); return; }
+    if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
+    const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
+    const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
+      t:'Key result '+(i+1), kpi:'KPI '+(i+1), baseline:'0', target:'100', current:'0', unit:'units',
+      weight:parseInt(k.weight,10)||0, who:f.owner, freq:'Monthly', due:'Mar 31', status:'Active',
+    }));
+    const okr={
+      id:'okr-local-'+Date.now(), code, v:'v1.0', scope:'Department', title:f.title.trim(), desc:f.desc||'',
+      owner:f.owner, team:'', cycle:'Q1 2026', brand:f.brand, dept:f.dept, campaign:'', category:f.category||f.dept,
+      progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
+      status: activate?'Active':'Draft', weight:100, reviewer:this.ROLES[rk].person, approver:this.ROLES[rk].person,
+      krs,
+    };
+    this.setState({ okrAdded:[...(this.state.okrAdded||[]), okr], showOkrPanel:false,
+      okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
+    this.flash(activate ? 'OKR '+code+' saved & activated.' : 'OKR '+code+' saved as draft.');
+    supabase.from('okrs').insert({
+      code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
+      status:okr.status, key_results:krs, created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] okr insert failed:', error.message);
+    });
+  }
+
+  // Loads every Supabase-backed OKR and replaces okrAdded, so created OKRs
+  // survive reloads and are shared across users.
+  async _loadOkrs(){
+    const { data, error } = await supabase.from('okrs').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] okr load failed:', error.message); return; }
+    const mapped=(data||[]).map(r=>({
+      id:'okr-'+r.id, code:r.code, v:'v1.0', scope:r.scope||'Department', title:r.title, desc:r.description||'',
+      owner:(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—', team:'', cycle:'Q1 2026',
+      brand:'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
+      progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
+      status:r.status||'Draft', weight:100, reviewer:'', approver:'',
+      krs:r.key_results||[],
+    }));
+    this.setState({ okrAdded:mapped });
+  }
+
+  // Loads real Supabase-backed team members (profiles) and merges them into
+  // the users list so newly invited/created accounts show up in User Management.
+  async _loadTeam(){
+    const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] team load failed:', error.message); return; }
+    const roleLabel=r=> (this.ROLES[r]&&this.ROLES[r].label) || r;
+    const mapped=(data||[]).map(p=>({
+      name:p.full_name||p.email, sub:(p.designation||roleLabel(p.role_key))+' · '+(p.department||'—'),
+      role:roleLabel(p.role_key), dept:p.department||'—', status:p.status||'Active',
+      statusTone: (p.status||'Active')==='Active'?'ok':'warn',
+    }));
+    if(mapped.length) this.setState({ users:mapped });
   }
 
   checkinView(){
@@ -2434,7 +2584,7 @@ class AppRoot extends React.Component {
   okrView(){
     const rk = this.state.roleKey;
     const canEdit = ['manager','admin'].includes(rk);
-    const all = this.OKR_DATA();
+    const all = this.OKR_DATA().concat(this.state.okrAdded||[]);
     const F = this.state.okrFilters;
     const fq=F.kpiFreq||'All', dueF=F.due||'All';
     const dueMatch=(o)=>{ if(dueF==='All') return true; if(dueF==='Overdue') return o.daysLeft<0&&o.status!=='Completed'; if(dueF==='Due this week') return o.daysLeft>=0&&o.daysLeft<=7; if(dueF==='Due this month') return o.daysLeft>=0&&o.daysLeft<=31; if(dueF==='Due this quarter') return o.daysLeft>=0&&o.daysLeft<=92; return true; };
@@ -2542,10 +2692,16 @@ class AppRoot extends React.Component {
       okrClearSel:()=>this.setState({ okrSelected:[] }),
       okrBulkReviewer:this.okrBulkAct('Assigned reviewer to'), okrBulkOwner:this.okrBulkAct('Changed owner for'), okrBulkArchive:this.okrBulkAct('Archived'), okrBulkExport:this.okrBulkAct('Exported'),
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
-      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA' }); else this.flash('Only Managers and Admin can create OKRs.'); },
+      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrForm:{ title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' } }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false }),
-      saveOkr:()=>{ if(!wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; } this.setState({ showOkrPanel:false }); this.flash('OKR saved & activated (demo).'); },
-      saveOkrDraft:()=>{ this.setState({ showOkrPanel:false }); this.flash('OKR saved as draft.'); },
+      okrForm:this.state.okrForm,
+      okrSetTitle:e=>this.setState({ okrForm:{...this.state.okrForm, title:e.target.value} }),
+      okrSetDesc:e=>this.setState({ okrForm:{...this.state.okrForm, desc:e.target.value} }),
+      okrSetOwner:e=>this.setState({ okrForm:{...this.state.okrForm, owner:e.target.value} }),
+      okrSetDept:e=>this.setState({ okrForm:{...this.state.okrForm, dept:e.target.value} }),
+      okrSetBrand:e=>this.setState({ okrForm:{...this.state.okrForm, brand:e.target.value} }),
+      saveOkr:()=>this._saveOkr(true, wOk, wTotal, list.length, rk),
+      saveOkrDraft:()=>this._saveOkr(false, wOk, wTotal, list.length, rk),
       okrSteps, kpiOptions, okrDraftKRs,
       okrTplOptions, okrTplPick, okrTplVal:this.state.okrTpl||'',
       okrTaskOptions:this.allTasks().slice(0,10).map(t=>t.id+' — '+t.name),
@@ -2634,12 +2790,25 @@ class AppRoot extends React.Component {
   }
 
   uf(k,e){ this.setState({ uf:{...this.state.uf,[k]:e.target.value} }); }
-  submitUser(){
+  async submitUser(){
     const f=this.state.uf;
     if(!f.first.trim()||!f.email.trim()){ this.flash('First name and email are required.'); return; }
-    const u={ name:(f.first+' '+f.last).trim(), sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn' };
+    const name=(f.first+' '+f.last).trim();
+    const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn' };
     this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive' } });
-    this.flash('User created — activation link sent to '+f.email+'.');
+    const roleKey=Object.entries(this.ROLES).find(([,r])=>r.label===f.role);
+    try{
+      const resp=await fetch('/api/invite-user', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey:roleKey?roleKey[0]:'junior', department:f.dept, designation:f.designation }),
+      });
+      const body=await resp.json();
+      if(!resp.ok) throw new Error(body.error||'Invite failed');
+      this.flash('User created — activation link sent to '+f.email+'.');
+      this._loadTeam();
+    }catch(err){
+      this.flash('Could not send invite ('+err.message+'). The user still appears locally.');
+    }
   }
 
   pwStrength(){
@@ -2650,20 +2819,90 @@ class AppRoot extends React.Component {
     const labels=['Enter a password','Weak','Fair','Good','Strong'];
     return { pw1:c(1),pw2:c(2),pw3:c(3),pw4:c(4), pwLabel:labels[s] };
   }
-  doActivate(){
+  async doActivate(){
     if(this.state.newPass.length<12){ this.flash('Password must be at least 12 characters.'); return; }
     if(this.state.newPass!==this.state.confirmPass){ this.flash('Passwords do not match.'); return; }
-    this.setState({ screen:'app', roleKey:'junior', route:'dashboard' });
+    this.setState({ authBusy:true });
+    // A real invite link (sent via Supabase Auth) signs the browser into a
+    // temporary session automatically; activating just sets the real password.
+    const { data: { session } } = await supabase.auth.getSession();
+    if(session && session.user){
+      const { error } = await supabase.auth.updateUser({ password:this.state.newPass });
+      this.setState({ authBusy:false });
+      if(error){ this.flash('Could not activate: '+error.message); return; }
+      await this._loadProfile(session.user);
+      this.flash('Account activated. Welcome to Beetloop.');
+      return;
+    }
+    // No invite session present (e.g. opened this screen directly, demo path).
+    this.setState({ screen:'app', roleKey:'junior', route:'dashboard', authBusy:false });
     this.flash('Account activated. Welcome to Beetloop.');
   }
-  doLogin(){
+  async doLogin(){
     const em=this.state.email.trim().toLowerCase();
-    const r=this.DEMO[em];
-    if(r && this.state.password==='demo123'){
-      this.setState({ screen:'app', roleKey:r, route:'dashboard', loginError:'' });
-    } else {
-      this.setState({ loginError:'Invalid credentials. Pick a demo account below to sign in.' });
+    const pw=this.state.password;
+    this.setState({ authBusy:true, loginError:'' });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
+    if(!error && data.user){
+      await this._loadProfile(data.user);
+      this.setState({ authBusy:false });
+      return;
     }
+    // Fall back to the built-in demo accounts (no real Supabase user needed).
+    const r=this.DEMO[em];
+    if(r && pw==='demo123'){
+      this.setState({ screen:'app', roleKey:r, route:'dashboard', loginError:'', authBusy:false, authUser:null, authProfile:null });
+    } else {
+      this.setState({ loginError: error ? error.message : 'Invalid credentials. Pick a demo account below to sign in.', authBusy:false });
+    }
+  }
+
+  async _loadProfile(user){
+    const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if(error || !profile){
+      this.setState({ authUser:user, authProfile:null, screen:'app', roleKey:'junior', route:'dashboard', loginError:'' });
+    } else {
+      this.setState({
+        authUser:user, authProfile:profile,
+        screen:'app', roleKey:profile.role_key||'junior', route:'dashboard', loginError:'',
+      });
+    }
+    this._loadTasks();
+    this._loadOkrs();
+    this._loadTeam();
+    this._subscribeRealtime();
+  }
+
+  // Live notifications: pushes a toast-style entry whenever a task or OKR is
+  // created/updated by anyone, so multi-user changes show up without a reload.
+  _subscribeRealtime(){
+    if(this._realtimeChannel) return;
+    const push=(text)=>{
+      const entry={ id:Date.now()+Math.random(), text, time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), read:false };
+      this.setState(s=>({ notifications:[entry, ...(s.notifications||[])].slice(0,30) }));
+    };
+    this._realtimeChannel = supabase.channel('beetloop-changes')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'tasks' }, (payload)=>{
+        push('New task created: '+(payload.new.name||payload.new.code));
+        this._loadTasks();
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tasks' }, (payload)=>{
+        push('Task '+payload.new.code+' updated — status: '+payload.new.status);
+        this._loadTasks();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'okrs' }, (payload)=>{
+        push('New OKR created: '+payload.new.title);
+        this._loadOkrs();
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'okrs' }, (payload)=>{
+        push('OKR '+payload.new.code+' updated — status: '+payload.new.status);
+        this._loadOkrs();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'profiles' }, (payload)=>{
+        push('New team member: '+(payload.new.full_name||payload.new.email));
+        this._loadTeam();
+      })
+      .subscribe();
   }
 
   _syncStateFromLocation(){
