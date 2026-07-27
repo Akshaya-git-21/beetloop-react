@@ -188,8 +188,22 @@ class AppRoot extends React.Component {
     return { bg:'var(--info-100)', color:'var(--info-600)' };
   }
 
+  // User Master (Master Data) mirrors the real Supabase-backed team list —
+  // the same data shown in User Management — instead of its own static demo
+  // rows, so the two screens never disagree about who's actually a user.
+  _userMasterRows(){
+    return (this.state.users||[]).map(u=>({
+      Employee_ID: u.id ? 'EMP-'+String(u.id).slice(0,6).toUpperCase() : '—',
+      Full_Name:u.name, Official_Email:u.email||'—', Mobile:u.mobile||'—',
+      Department:u.dept||'—', Designation:u.designation||'—', Team:u.team||'—',
+      Reporting_Manager:u.reportingManager||'—', Team_Lead:u.teamLead||'—',
+      Office_Location:u.officeLocation||'—', Role:u.role,
+      Employment_Type:u.employmentType||'Full-time', Joining_Date:u.joiningDate||'—',
+      Status:u.status,
+    }));
+  }
   MASTERS_REG(){
-    if(this._masters) return this._masters;
+    if(this._masters){ this._masters.user.rows = this._userMasterRows(); return this._masters; }
     const st = (s)=>{ const m={Live:'ok',Active:'ok','On track':'ok',Approved:'ok',Draft:'draft',Deprecated:'danger','Merge Candidate':'warn',Pending:'warn'}; return m[s]||'info'; };
     this._masters = {
       service: {
@@ -245,12 +259,7 @@ class AppRoot extends React.Component {
         desc:'Platform users with department, designation, reporting hierarchy and role.',
         cols:[ {k:'Employee_ID',l:'Emp ID',mono:1}, {k:'Full_Name',l:'Name'}, {k:'Department',l:'Dept'}, {k:'Designation',l:'Designation'}, {k:'Role',l:'Role'}, {k:'Status',l:'Status',tag:1} ],
         fields:['Employee_ID','Full_Name','Official_Email','Mobile','Department','Designation','Team','Reporting_Manager','Team_Lead','Office_Location','Role','Employment_Type','Joining_Date','Status'],
-        rows:[
-          {Employee_ID:'EMP-001',Full_Name:'Aditi Rao',Official_Email:'aditi.rao@beetloop.com',Mobile:'+91 98400 11223',Department:'SEO',Designation:'SEO Team Lead',Team:'SEO Alpha',Reporting_Manager:'Priya Nair',Team_Lead:'—',Office_Location:'Chennai',Role:'Team Lead',Employment_Type:'Full-time',Joining_Date:'2022-06-14',Status:'Active'},
-          {Employee_ID:'EMP-014',Full_Name:'Sameer Iyer',Official_Email:'sameer.iyer@beetloop.com',Mobile:'+91 98400 55471',Department:'SEO',Designation:'Senior SEO Executive',Team:'SEO Alpha',Reporting_Manager:'Priya Nair',Team_Lead:'Aditi Rao',Office_Location:'Chennai',Role:'Senior Executive',Employment_Type:'Full-time',Joining_Date:'2023-02-01',Status:'Active'},
-          {Employee_ID:'EMP-022',Full_Name:'Neha Verma',Official_Email:'neha.verma@beetloop.com',Mobile:'+91 98400 90210',Department:'SEO',Designation:'Junior SEO Executive',Team:'SEO Alpha',Reporting_Manager:'Priya Nair',Team_Lead:'Aditi Rao',Office_Location:'Remote',Role:'Junior Executive',Employment_Type:'Full-time',Joining_Date:'2024-09-30',Status:'Pending Invitation'},
-          {Employee_ID:'EMP-007',Full_Name:'Farhan Ali',Official_Email:'farhan.ali@beetloop.com',Mobile:'+91 98400 33189',Department:'Quality',Designation:'QC Reviewer',Team:'Quality',Reporting_Manager:'Rahul Menon',Team_Lead:'—',Office_Location:'Chennai',Role:'QC Reviewer',Employment_Type:'Full-time',Joining_Date:'2022-11-20',Status:'Active'},
-        ],
+        rows:[], // populated live from this.state.users on every MASTERS_REG() call — see below
       },
       department: {
         label:'Department Master', icon:'building', group:'Organization & Security',
@@ -381,6 +390,7 @@ class AppRoot extends React.Component {
     };
     // attach status-tone helper on registry
     this._masters._st = st;
+    this._masters.user.rows = this._userMasterRows();
     return this._masters;
   }
 
@@ -851,6 +861,7 @@ class AppRoot extends React.Component {
   }
   submitMasterRecord(){
     const { mrKey, mrIndex, mrForm } = this.state;
+    if(mrKey==='user'){ this._submitUserMasterRow(mrIndex, mrForm); return; }
     const m = this.MASTERS_REG()[mrKey];
     if(!m) return;
     const idField = m.fields[0];
@@ -865,8 +876,48 @@ class AppRoot extends React.Component {
     this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
     this.flash((mrIndex!=null?'Updated ':'Added ')+m.label+' entry: '+row[labelField]+'.');
   }
+  // User Master edits write straight into the real Supabase-backed user
+  // list (and the profiles table), not a disposable local row — so changes
+  // made here show up in User Management too, and vice versa.
+  _submitUserMasterRow(mrIndex, mrForm){
+    if(!String(mrForm.Full_Name||'').trim()){ this.flash('Enter a name to save.'); return; }
+    const roleEntry = Object.entries(this.ROLES).find(([,r])=>r.label===mrForm.Role);
+    const roleKey = roleEntry?roleEntry[0]:'junior';
+    const status = mrForm.Status||'Active';
+    const userPatch = {
+      name:mrForm.Full_Name.trim(), email:mrForm.Official_Email||'', mobile:mrForm.Mobile||'',
+      dept:mrForm.Department||'—', designation:mrForm.Designation||'', team:mrForm.Team||'',
+      reportingManager:mrForm.Reporting_Manager||'', teamLead:mrForm.Team_Lead||'',
+      officeLocation:mrForm.Office_Location||'', role:mrForm.Role||this.ROLES[roleKey].label, roleKey,
+      employmentType:mrForm.Employment_Type||'Full-time', joiningDate:mrForm.Joining_Date||'',
+      status, statusTone: status==='Active'?'ok':'warn',
+    };
+    userPatch.sub = (userPatch.designation||userPatch.role)+' · '+userPatch.dept;
+    if(mrIndex!=null && this.state.users[mrIndex]){
+      const existing = this.state.users[mrIndex];
+      const updated = { ...existing, ...userPatch };
+      const users=[...this.state.users]; users[mrIndex]=updated;
+      this.setState({ users, showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
+      this.flash('Updated User Master entry: '+updated.name+'.');
+      if(existing.id){
+        supabase.from('profiles').update({
+          full_name:updated.name, department:updated.dept, designation:updated.designation||null,
+          role_key:updated.roleKey, status:updated.status, mobile:updated.mobile||null, team:updated.team||null,
+          reporting_manager:updated.reportingManager||null, team_lead:updated.teamLead||null,
+          office_location:updated.officeLocation||null, employment_type:updated.employmentType||null,
+          joining_date:updated.joiningDate||null,
+        }).eq('id', existing.id).then(({error})=>{
+          if(error) console.warn('[supabase] profile update failed:', error.message);
+        });
+      }
+    } else {
+      this.setState({ users:[userPatch, ...this.state.users], showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
+      this.flash('Added User Master entry: '+userPatch.name+' — local only, since this doesn\'t send a real invite. Use "Add user" in User Management to create a real account.');
+    }
+  }
   deleteMasterRecord(){
     const { mrKey, mrIndex } = this.state;
+    if(mrKey==='user'){ this._deleteUserMasterRow(mrIndex); return; }
     const m = this.MASTERS_REG()[mrKey];
     if(!m || mrIndex==null) return;
     const labelField = m.fields[1]||m.fields[0];
@@ -874,6 +925,18 @@ class AppRoot extends React.Component {
     m.rows.splice(mrIndex,1);
     this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{}, masterRecord:null });
     this.flash('Deleted '+m.label+' entry: '+removedLabel+'.');
+  }
+  _deleteUserMasterRow(mrIndex){
+    if(mrIndex==null) return;
+    const existing = this.state.users[mrIndex];
+    const users = this.state.users.filter((_,i)=>i!==mrIndex);
+    this.setState({ users, showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{}, masterRecord:null });
+    this.flash('Deleted User Master entry: '+(existing?existing.name:'')+'.');
+    if(existing && existing.id){
+      supabase.from('profiles').delete().eq('id', existing.id).then(({error})=>{
+        if(error) console.warn('[supabase] profile delete failed:', error.message);
+      });
+    }
   }
 
   masterDetailData(){
@@ -2226,6 +2289,8 @@ class AppRoot extends React.Component {
       id:p.id, email:p.email, name:p.full_name||p.email, sub:(p.designation||roleLabel(p.role_key))+' · '+(p.department||'—'),
       roleKey:p.role_key||'junior', role:roleLabel(p.role_key), dept:p.department||'—', designation:p.designation||'',
       status:p.status||'Active', statusTone: (p.status||'Active')==='Active'?'ok':'warn',
+      mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
+      officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
     }));
     if(mapped.length) this.setState({ users:mapped });
   }

@@ -14,6 +14,16 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+-- User Master (Master Data) mirrors this table directly, so it needs the
+-- same extra fields the User Master screen displays/edits.
+alter table public.profiles add column if not exists mobile text;
+alter table public.profiles add column if not exists team text;
+alter table public.profiles add column if not exists reporting_manager text;
+alter table public.profiles add column if not exists team_lead text;
+alter table public.profiles add column if not exists office_location text;
+alter table public.profiles add column if not exists employment_type text default 'Full-time';
+alter table public.profiles add column if not exists joining_date date;
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles_select_authenticated" on public.profiles;
