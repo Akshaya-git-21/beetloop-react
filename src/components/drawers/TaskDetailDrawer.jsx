@@ -317,13 +317,23 @@ Details
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","justifyContent":"space-between","gap":"10px","borderBottom":"1px dashed var(--line-200)","paddingBottom":"7px"}}>
+<div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"10px","borderBottom":"1px dashed var(--line-200)","paddingBottom":"7px"}}>
 <span style={{"fontSize":"12px","color":"var(--ink-500)"}}>
 {m.k}
 </span>
+{m.isSelect ? (
+<select value={m.v} onChange={m.onChange} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 8px","background":"#fff"}}>
+{(m.options || []).map((o, $oi) => (
+<React.Fragment key={$oi}>
+<option value={o}>{o}</option>
+</React.Fragment>
+))}
+</select>
+) : (
 <span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right"}}>
 {m.v}
 </span>
+)}
 </div>
 
             

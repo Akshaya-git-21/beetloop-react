@@ -9,7 +9,7 @@ const DEPT_OPTIONS = ['SEO', 'Content', 'SMM', 'Web Development', 'Design', 'Ana
 const STATUS_OPTIONS = ['Active', 'Pending Invitation', 'Suspended'];
 
 export default function ManageUserModal({ vm }) {
-  const { showManageUserModal, manageUserForm, closeManageUserModal, saveManageUser,
+  const { showManageUserModal, manageUserForm, closeManageUserModal, deleteManageUser, saveManageUser,
     manageUserSetName, manageUserSetDept, manageUserSetDesignation, manageUserSetRole, manageUserSetStatus, stop } = vm;
   const f = manageUserForm || {};
   return (
@@ -70,9 +70,12 @@ export default function ManageUserModal({ vm }) {
                 )}
               </div>
 
-              <div style={{ padding: '16px 26px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10, position: 'sticky', bottom: 0, background: '#fff', borderRadius: '0 0 22px 22px' }}>
-                <button onClick={closeManageUserModal} style={{ padding: '10px 18px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', color: 'var(--ink-700)' }}>Cancel</button>
-                <button onClick={saveManageUser} style={{ padding: '10px 18px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Save changes</button>
+              <div style={{ padding: '16px 26px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, position: 'sticky', bottom: 0, background: '#fff', borderRadius: '0 0 22px 22px' }}>
+                <button onClick={deleteManageUser} style={{ padding: '10px 16px', border: '1px solid var(--danger-300, #e5a3a3)', background: '#fff', color: 'var(--danger-600)', borderRadius: 11, fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>Remove employee</button>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={closeManageUserModal} style={{ padding: '10px 18px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', color: 'var(--ink-700)' }}>Cancel</button>
+                  <button onClick={saveManageUser} style={{ padding: '10px 18px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>Save changes</button>
+                </div>
               </div>
             </div>
           </div>

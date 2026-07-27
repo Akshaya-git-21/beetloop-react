@@ -531,7 +531,7 @@ class AppRoot extends React.Component {
     };
     const page = Object.assign({ canEdit:this.EDIT_LEVELS.includes(lvl) }, PAGES[route]||PAGES.dashboard);
     // masters/users always show action for admin
-    if(route==='users') page.canEdit = ['admin','coo'].includes(rk);
+    if(route==='users') page.canEdit = ['admin','coo','ceo'].includes(rk);
     if(['dashboard','analytics','masters','config','qc','content','effort','profile'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
 
@@ -625,6 +625,7 @@ class AppRoot extends React.Component {
       manageUserSetRole:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, roleKey:e.target.value} }),
       manageUserSetStatus:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, status:e.target.value} }),
       saveManageUser:()=>this._saveManageUser(),
+      deleteManageUser:()=>this._deleteManageUser(),
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
@@ -2004,6 +2005,7 @@ class AppRoot extends React.Component {
     const dbPatch={};
     if('status' in patch) dbPatch.status=patch.status;
     if('checklist' in patch) dbPatch.checklist=patch.checklist;
+    if('assignee' in patch) dbPatch.assignee_name=patch.assignee;
     if(!Object.keys(dbPatch).length) return;
     supabase.from('tasks').update(dbPatch).eq('code', code).then(({error})=>{
       if(error) console.warn('[supabase] task update failed:', error.message);
@@ -2141,6 +2143,7 @@ class AppRoot extends React.Component {
     const rk=this.state.roleKey, person=this.ROLES[rk].person;
     const isAssignee=t.assignee===person;
     const isApprover=['manager','team_lead','admin'].includes(rk);
+    const canReassign=['manager','team_lead','admin','ceo'].includes(rk);
     const tn=this.tkTone(t.status);
     const meta=[['Project',t.project],['Campaign',t.campaign],['Start date',t.start],['End date',t.end],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
@@ -2211,7 +2214,10 @@ class AppRoot extends React.Component {
         };
       })(),
       tkFbBg: t.status==='Rework'?'var(--danger-100)':'var(--verify-100)', tkFbBorder: t.status==='Rework'?'#F1C9CF':'#BFE3D0', tkFbColor: t.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
-      tkMeta:meta.map(m=>({k:m[0],v:m[1]})), tkChecklist:checklist, tkEvidence:evidence, tkHasEvidence:evidence.length>0,
+      tkMeta:meta.map(m=>m[0]==='Assignee'&&canReassign?{
+        k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
+        onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
+      }:{k:m[0],v:m[1]}), tkChecklist:checklist, tkEvidence:evidence, tkHasEvidence:evidence.length>0,
       tkActions:actions, tkHasActions:actions.length>0, tkCanAttach:canAttach,
       tkAttach:()=>{ const ev=(this.tkOv(t).evidence||[]); this.tkPatch(t.id,{evidence:[...ev,'evidence-'+(ev.length+1)+'.png']},'Attached evidence'); },
       tkActivity:(this.tkOv(t).activity||[]).slice().reverse().map(a=>({who:a[0],what:a[1],when:a[2]})),
@@ -2455,6 +2461,18 @@ class AppRoot extends React.Component {
         role_key:updated.roleKey, status:updated.status,
       }).eq('id', f.id).then(({error})=>{
         if(error) console.warn('[supabase] profile update failed:', error.message);
+      });
+    }
+  }
+  _deleteManageUser(){
+    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
+    if(!f || i==null) return;
+    const users=this.state.users.filter((_,x)=>x!==i);
+    this.setState({ users, showManageUserModal:false, manageUserIndex:null, manageUserForm:null });
+    this.flash('Removed '+f.name+' from the team.');
+    if(f.id){
+      supabase.from('profiles').delete().eq('id', f.id).then(({error})=>{
+        if(error) console.warn('[supabase] profile delete failed:', error.message);
       });
     }
   }
@@ -3302,44 +3320,70 @@ class AppRoot extends React.Component {
 
   // Live notifications: pushes a toast-style entry whenever a task or OKR is
   // created/updated by anyone, so multi-user changes show up without a reload.
+  // Live notifications — scoped to what's actually relevant to whoever is
+  // logged in, not a global firehose of every change in the system:
+  //   - your own tasks/OKRs/projects/profile → always notified, worded as "you"
+  //   - things you manage (as reviewer, or via role-based edit access) → notified
+  //   - everything else → silent for you, still refreshes the underlying data
   _subscribeRealtime(){
     if(this._realtimeChannel) return;
     const push=(text)=>{
       const entry={ id:Date.now()+Math.random(), text, time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), read:false };
       this.setState(s=>({ notifications:[entry, ...(s.notifications||[])].slice(0,30) }));
     };
+    const me=()=>this.ROLES[this.state.roleKey].person;
+    const myId=()=>this.state.authUser&&this.state.authUser.id;
+    const canManageTasks=()=>['manager','team_lead','admin','ceo'].includes(this.state.roleKey);
+    const canManageOkrs=()=>['manager','admin','ceo'].includes(this.state.roleKey);
+    const canManageUsers=()=>['admin','coo','ceo'].includes(this.state.roleKey);
+    const canManageRecords=()=>['manager','admin','ceo'].includes(this.state.roleKey);
+
     this._realtimeChannel = supabase.channel('beetloop-changes')
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'tasks' }, (payload)=>{
-        push('New task created: '+(payload.new.name||payload.new.code));
+        const t=payload.new;
+        if(t.assignee_name===me()) push('You were assigned a new task: '+(t.name||t.code));
+        else if(canManageTasks()) push('New task created: '+(t.name||t.code)+' — assigned to '+(t.assignee_name||'Unassigned'));
         this._loadTasks();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tasks' }, (payload)=>{
-        push('Task '+payload.new.code+' updated — status: '+payload.new.status);
+        const t=payload.new;
+        if(t.assignee_name===me()) push('Your task '+t.code+' was updated — status: '+t.status);
+        else if(t.reviewer_name===me()) push('Task '+t.code+' you\'re reviewing — status: '+t.status);
+        else if(canManageTasks()) push('Task '+t.code+' updated — status: '+t.status+' (assignee: '+(t.assignee_name||'Unassigned')+')');
         this._loadTasks();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'okrs' }, (payload)=>{
-        push('New OKR created: '+payload.new.title);
+        const o=payload.new; const owner=o.key_results&&o.key_results[0]&&o.key_results[0].who;
+        if(owner===me()) push('You were set as owner on a new OKR: '+o.title);
+        else if(canManageOkrs()) push('New OKR created: '+o.title);
         this._loadOkrs();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'okrs' }, (payload)=>{
-        push('OKR '+payload.new.code+' updated — status: '+payload.new.status);
+        const o=payload.new; const owner=o.key_results&&o.key_results[0]&&o.key_results[0].who;
+        if(owner===me()) push('Your OKR '+o.code+' was updated — status: '+o.status);
+        else if(canManageOkrs()) push('OKR '+o.code+' updated — status: '+o.status);
         this._loadOkrs();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'profiles' }, (payload)=>{
-        push('New team member: '+(payload.new.full_name||payload.new.email));
+        if(canManageUsers()) push('New team member: '+(payload.new.full_name||payload.new.email));
         this._loadTeam();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles' }, (payload)=>{
         const roleLabel=(this.ROLES[payload.new.role_key]&&this.ROLES[payload.new.role_key].label)||payload.new.role_key;
-        push((payload.new.full_name||payload.new.email)+' updated — role: '+roleLabel+', status: '+payload.new.status);
+        if(payload.new.id===myId()) push('Your profile was updated — role: '+roleLabel+', status: '+payload.new.status);
+        else if(canManageUsers()) push((payload.new.full_name||payload.new.email)+' updated — role: '+roleLabel+', status: '+payload.new.status);
         this._loadTeam();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'records' }, (payload)=>{
-        push('New '+payload.new.kind.slice(0,-1)+': '+payload.new.name);
+        const r=payload.new;
+        if(r.owner===me()) push('You were set as owner on a new '+r.kind.slice(0,-1)+': '+r.name);
+        else if(canManageRecords()) push('New '+r.kind.slice(0,-1)+': '+r.name);
         this._loadRecords();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'records' }, (payload)=>{
-        push((payload.new.kind==='campaigns'?'Campaign':'Project')+' updated: '+payload.new.name+' — status: '+payload.new.status);
+        const r=payload.new; const label=r.kind==='campaigns'?'Campaign':'Project';
+        if(r.owner===me()) push('Your '+label.toLowerCase()+' '+r.name+' was updated — status: '+r.status);
+        else if(canManageRecords()) push(label+' updated: '+r.name+' — status: '+r.status);
         this._loadRecords();
       })
       .subscribe();
