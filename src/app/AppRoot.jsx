@@ -969,7 +969,7 @@ class AppRoot extends React.Component {
       const seg=(v,label,icon)=>({ label, icon, active:view===v, go:()=>this.setState({blView:v, blRecord:null}),
         style:'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(view===v?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)') });
       out.blSegs=[seg('dash','Dashboard','layout-dashboard'), seg('repo','Domain Repository','database')];
-      out.mdAdd=()=>this.setState({ blRecord:'new', blTab:0, blView:'repo' });
+      out.mdAdd=()=>this.setState({ blRecord:'new', blTab:0, blView:'repo', blForm:this.blankBacklinkDomain() });
       if(out.blShowDash) Object.assign(out, this.backlinkDashData());
       if(out.blShowRepo) Object.assign(out, this.backlinkRepoData());
       if(rec) Object.assign(out, this.backlinkDetailData(rec, recIdx==='new'));
@@ -1045,7 +1045,7 @@ class AppRoot extends React.Component {
           status:d.status, statusBg:st.bg, statusColor:st.color,
           activeLabel:d.active, activeDot:d.active==='Active'?'var(--verify-500)':'var(--danger-500)',
           found:d.found, accounts:String(d.accounts), live:String(d.live), lastVerified:d.lastChecked,
-          open:()=>this.setState({ blRecord:idx, blTab:0 }) }; });
+          open:()=>this.setState({ blRecord:idx, blTab:0, blForm:{...this.BACKLINK_DOMAINS()[idx]} }) }; });
     return { blRepoRows:rows, blRepoCount:rows.length+' of '+all.length+' domains',
       blQuery:this.state.blQuery||'', blOnQuery:e=>this.setState({blQuery:e.target.value}),
       blFStatus:fS, blOnFStatus:e=>this.setState({blFStatus:e.target.value}),
@@ -1057,27 +1057,68 @@ class AppRoot extends React.Component {
 
   backlinkDetailData(d, isNew){
     const tab=this.state.blTab||0;
-    const st=this.blStatusTone(d.status);
+    const f=this.state.blForm||d;
+    const st=this.blStatusTone(f.status);
+    const set=(key)=>e=>this.setState({ blForm:{...(this.state.blForm||d), [key]:e.target.value} });
     const tabs=['Domain Details','Quality Metrics','Platform Rules','Linked Services','Notes','Activity Log'];
+    const editableRow=(k,v,key)=>({ k, v: v==null||v===''?'':v, onChange: set(key) });
     return {
-      bd_name:isNew?'New domain':d.name, bd_url:d.url||'—', bd_isNew:!!isNew,
-      bd_status:d.status, bd_statusBg:st.bg, bd_statusColor:st.color,
-      bd_sub:[d.platform,d.category,d.industry].filter(Boolean).join(' · ')||'Fill in the details below',
+      bd_name:isNew?'New domain':f.name, bd_url:f.url||'—', bd_isNew:!!isNew,
+      bd_status:f.status, bd_statusBg:st.bg, bd_statusColor:st.color,
+      bd_sub:[f.platform,f.category,f.industry].filter(Boolean).join(' · ')||'Fill in the details below',
       bd_tabs:tabs.map((t,i)=>({ label:t, go:()=>this.setState({blTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===tab?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===tab?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       bd_tab0:tab===0, bd_tab1:tab===1, bd_tab2:tab===2, bd_tab3:tab===3, bd_tab4:tab===4, bd_tab5:tab===5,
-      bd_ident:[['Domain Name',d.name],['Domain URL',d.url],['Platform Type',d.platform],['Category',d.category],['Industry',d.industry],['Target Country',d.country],['Language',d.language],['Description',d.description]].map(x=>({k:x[0],v:x[1]||'—'})),
-      bd_dates:[['Status',d.status],['Active Status',d.active],['Found Date',d.found],['Verified Date',d.verified],['Last Checked',d.lastChecked],['Checked By',d.checkedBy],['Next Check',d.nextCheck],['Verification Frequency',d.freq]].map(x=>({k:x[0],v:x[1]||'—'})),
+      bd_ident:[
+        editableRow('Domain Name',f.name,'name'), editableRow('Domain URL',f.url,'url'),
+        editableRow('Platform Type',f.platform,'platform'), editableRow('Category',f.category,'category'),
+        editableRow('Industry',f.industry,'industry'), editableRow('Target Country',f.country,'country'),
+        editableRow('Language',f.language,'language'), editableRow('Description',f.description,'description'),
+      ],
+      bd_dates:[
+        editableRow('Status',f.status,'status'), editableRow('Active Status',f.active,'active'),
+        {k:'Found Date',v:f.found||'—'}, {k:'Verified Date',v:f.verified||'—'},
+        {k:'Last Checked',v:f.lastChecked||'—'}, {k:'Checked By',v:f.checkedBy||'—'},
+        {k:'Next Check',v:f.nextCheck||'—'}, {k:'Verification Frequency',v:f.freq||'—'},
+      ],
       bd_tags:d.tags, bd_hasTags:d.tags.length>0,
-      bd_quality:[['Domain Authority (DA)',d.da+(d.da==='—'?'':'/100'),this.blScoreColor(d.da)],['Domain Rating (DR)',d.dr+(d.dr==='—'?'':'/100'),this.blScoreColor(d.dr)],['Spam Score',d.spam+(d.spam==='—'?'':'%'),this.blScoreColor(d.spam,true)],['Traffic (est.)',d.traffic,'var(--beet-700)'],['Backlinks (est.)',d.backlinks,'var(--beet-700)']].map(x=>({k:x[0],v:String(x[1]),color:x[2]})),
-      bd_qmeta:[['Follow Type',d.followType],['Link Placement',d.placement],['Paid / Free',d.paid],['Approval Required',d.approval],['Est. Approval Time',d.approvalTime]].map(x=>({k:x[0],v:x[1]||'—'})),
+      bd_quality:[
+        {...editableRow('Domain Authority (DA)',f.da,'da'), color:this.blScoreColor(f.da)},
+        {...editableRow('Domain Rating (DR)',f.dr,'dr'), color:this.blScoreColor(f.dr)},
+        {...editableRow('Spam Score',f.spam,'spam'), color:this.blScoreColor(f.spam,true)},
+        {...editableRow('Traffic (est.)',f.traffic,'traffic'), color:'var(--beet-700)'},
+        {...editableRow('Backlinks (est.)',f.backlinks,'backlinks'), color:'var(--beet-700)'},
+      ],
+      bd_qmeta:[
+        editableRow('Follow Type',f.followType,'followType'), editableRow('Link Placement',f.placement,'placement'),
+        editableRow('Paid / Free',f.paid,'paid'), editableRow('Approval Required',f.approval,'approval'),
+        editableRow('Est. Approval Time',f.approvalTime,'approvalTime'),
+      ],
       bd_features:Object.entries(d.features).map(([k,v])=>({ label:k, on:v, icon:v?'check-square':'square', color:v?'var(--verify-600)':'var(--ink-400)' })),
-      bd_notes:d.notes||'No notes yet.',
+      bd_notes:f.notes||'', bd_setNotes:set('notes'),
       bd_brands:d.brands, bd_services:d.services, bd_hasBrands:d.brands.length>0, bd_hasServices:d.services.length>0,
       bd_linkStats:[['Submitted URLs',String(d.submittedUrls)],['Live Backlinks',String(d.liveBacklinks)],['Last Live Check',d.lastLiveCheck],['Success Rate',d.successRate]].map(x=>({k:x[0],v:x[1]})),
       bd_activity:d.activity.map(a=>({action:a[0],who:a[1],when:a[2]})),
-      bd_back:()=>this.setState({ blRecord:null, blView:'repo' }),
-      bd_edit:()=>this.flash(isNew?'Fill the form and save (demo).':'Edit mode (demo) — fields become editable.'),
-      bd_save:()=>{ this.setState({blRecord:null, blView:'repo'}); this.flash(isNew?'Domain added to repository (Draft).':'Changes saved.'); },
+      bd_canDelete:!isNew,
+      bd_back:()=>this.setState({ blRecord:null, blView:'repo', blForm:null }),
+      bd_save:()=>{
+        const form=this.state.blForm||d;
+        if(!String(form.name||'').trim()){ this.flash('Enter a domain name to save.'); return; }
+        this.BACKLINK_DOMAINS(); // ensure this._bld is initialized
+        if(isNew){
+          this._bld.unshift({...form, activity:[['Domain added', this.ROLES[this.state.roleKey].person, this.todayStr()], ...(form.activity||[])]});
+        } else {
+          this._bld[this.state.blRecord] = {...form};
+        }
+        this.setState({ blRecord:null, blView:'repo', blForm:null });
+        this.flash(isNew?'Domain "'+form.name+'" added to the repository.':'Changes saved for "'+form.name+'".');
+      },
+      bd_delete:()=>{
+        if(isNew) return;
+        const name=f.name;
+        this._bld.splice(this.state.blRecord,1);
+        this.setState({ blRecord:null, blView:'repo', blForm:null });
+        this.flash('Deleted domain "'+name+'".');
+      },
     };
   }
 

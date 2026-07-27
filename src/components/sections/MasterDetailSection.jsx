@@ -3,7 +3,8 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function MasterDetailSection({ vm }) {
-  const { bd_activity, bd_back, bd_brands, bd_dates, bd_edit, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_notes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail } = vm;
+  const { bd_activity, bd_back, bd_brands, bd_canDelete, bd_dates, bd_delete, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_notes, bd_setNotes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail } = vm;
+  const fieldInputStyle = { width: '100%', padding: '6px 9px', border: '1px solid var(--line-300)', borderRadius: 8, fontSize: 13.5, outline: 'none', color: 'var(--ink-900)' };
   return (
     <React.Fragment>
 {Boolean(showMasterDetail) && (
@@ -577,13 +578,21 @@ No domains match these filters.
               
 <div style={{"display":"flex","gap":"9px"}}>
 
-                
+
 <button onClick={bd_back} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"arrow-left"} style={{"width":"14px","height":"14px"}} />
 Back to list
 </button>
 
-                
+
+{Boolean(bd_canDelete) && (
+<button onClick={bd_delete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />
+Delete
+</button>
+)}
+
+
 <button onClick={bd_save} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"11px","padding":"10px 17px","fontSize":"13px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 18px -8px rgba(122,28,70,.55)"}}>
 <Icon name={"check"} style={{"width":"14px","height":"14px"}} />
 Save
@@ -636,9 +645,13 @@ Domain identification
 <div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
 {f.k}
 </div>
+{f.onChange ? (
+<input value={f.v} onChange={f.onChange} style={fieldInputStyle} />
+) : (
 <div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
-{f.v}
+{f.v||'—'}
 </div>
+)}
 </div>
 </React.Fragment>
 ))}
@@ -667,9 +680,13 @@ Status & dates
 <div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
 {f.k}
 </div>
+{f.onChange ? (
+<input value={f.v} onChange={f.onChange} style={fieldInputStyle} />
+) : (
 <div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
-{f.v}
+{f.v||'—'}
 </div>
+)}
 </div>
 </React.Fragment>
 ))}
@@ -722,9 +739,13 @@ Tags
 <div style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
 {qm.k}
 </div>
+{qm.onChange ? (
+<input value={qm.v} onChange={qm.onChange} style={{...fieldInputStyle, marginTop: 6, fontWeight: 800, fontSize: 16}} />
+) : (
 <div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:22px;color:${qm.color};margin-top:6px`)}>
 {qm.v}
 </div>
+)}
 </div>
 </React.Fragment>
 ))}
@@ -745,9 +766,13 @@ Tags
 <div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"4px"}}>
 {f.k}
 </div>
+{f.onChange ? (
+<input value={f.v} onChange={f.onChange} style={fieldInputStyle} />
+) : (
 <div style={{"fontSize":"13.5px","color":"var(--ink-900)"}}>
-{f.v}
+{f.v||'—'}
 </div>
+)}
 </div>
 </React.Fragment>
 ))}
@@ -907,30 +932,23 @@ Applicable services
 Notes
 </h3>
 
-                
-<div style={{"fontSize":"13.5px","color":"var(--ink-700)","lineHeight":"1.6","marginBottom":"14px"}}>
-{bd_notes}
+
+<textarea value={bd_notes} onChange={bd_setNotes} rows="5" placeholder="Add a note for this domain…" style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical"}} />
+
+
+<div style={{"fontSize":"11.5px","color":"var(--ink-400)","marginTop":"8px"}}>
+Saved when you click Save above.
 </div>
 
-                
-<textarea rows="3" placeholder="Add a note for this domain…" style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical"}} />
 
-                
-<div style={{"display":"flex","justifyContent":"flex-end","marginTop":"10px"}}>
-<button onClick={bd_edit} style={{"background":"#7A1C46","color":"#fff","border":"none","borderRadius":"10px","padding":"9px 16px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
-Add note
-</button>
 </div>
 
-              
-</div>
 
-            
 </React.Fragment>
 )}
 
 
-            
+
 {Boolean(bd_tab5) && (
 <React.Fragment>
 
