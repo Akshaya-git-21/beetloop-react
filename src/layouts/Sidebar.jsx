@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function Sidebar({ vm }) {
-  const { adminNav, hasAdmin, logout, nav, role } = vm;
+  const { adminNav, hasAdmin, logout, nav, openProfile, role } = vm;
   return (
     <React.Fragment>
 <aside style={{"width":"256px","flexShrink":"0","background":"linear-gradient(180deg,#1F0814 0%,#3d1024 60%,#4E1631 100%)","color":"#fff","display":"flex","flexDirection":"column","position":"sticky","top":"0","height":"100vh"}}>
@@ -98,23 +98,23 @@ Administration
     
 <div style={{"padding":"12px","borderTop":"1px solid rgba(255,255,255,.08)"}}>
 
-      
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"8px 10px","borderRadius":"12px","background":"rgba(255,255,255,.05)"}}>
 
-        
-<span style={cssTextToObject(`width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;background:${role.color}`)}>
-{role.short}
-</span>
 
-        
-<div style={{"flex":"1","minWidth":"0"}}>
-<div style={{"fontSize":"13px","fontWeight":"700","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
+<button onClick={openProfile} title="My Profile" style={cssTextToObject(`width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;background:${role.color};border:none;cursor:pointer`)}>
+{role.short}
+</button>
+
+
+<button onClick={openProfile} style={{"flex":"1","minWidth":"0","background":"none","border":"none","cursor":"pointer","textAlign":"left","padding":"0"}}>
+<div style={{"fontSize":"13px","fontWeight":"700","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","color":"#fff"}}>
 {role.person}
 </div>
 <div style={{"fontSize":"11px","color":"rgba(255,255,255,.55)"}}>
 {role.tag}
 </div>
-</div>
+</button>
 
         
 <button onClick={logout} title="Sign out" style={{"background":"none","border":"none","color":"rgba(255,255,255,.6)","cursor":"pointer","padding":"4px"}}>

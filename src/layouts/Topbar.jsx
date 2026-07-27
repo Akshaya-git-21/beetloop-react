@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function Topbar({ vm }) {
-  const { role, notifications, unreadCount, showNotifications, toggleNotifications } = vm;
+  const { role, notifications, unreadCount, showNotifications, toggleNotifications, openProfile } = vm;
   return (
     <React.Fragment>
 <header style={{"height":"64px","flexShrink":"0","background":"rgba(252,250,251,.85)","backdropFilter":"blur(12px)","borderBottom":"1px solid var(--line-300)","display":"flex","alignItems":"center","gap":"16px","padding":"0 24px","position":"sticky","top":"0","zIndex":"30"}}>
@@ -45,10 +45,10 @@ export default function Topbar({ vm }) {
 )}
 </div>
 
-      
-<span style={cssTextToObject(`width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;background:${role.color}`)}>
+
+<button onClick={openProfile} title="My Profile" style={cssTextToObject(`width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;background:${role.color};border:none;cursor:pointer`)}>
 {role.short}
-</span>
+</button>
 
     
 </header>

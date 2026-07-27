@@ -15,6 +15,7 @@ import AnalyticsSection from '../components/sections/AnalyticsSection.jsx';
 import MastersHubSection from '../components/sections/MastersHubSection.jsx';
 import MasterDetailSection from '../components/sections/MasterDetailSection.jsx';
 import MyKpisSection from '../components/sections/MyKpisSection.jsx';
+import MyProfileSection from '../components/sections/MyProfileSection.jsx';
 import OkrSection from '../components/sections/OkrSection.jsx';
 import ContentIdeaQcDrawer from '../components/drawers/ContentIdeaQcDrawer.jsx';
 import TaskTemplateFormDrawer from '../components/drawers/TaskTemplateFormDrawer.jsx';
@@ -84,8 +85,15 @@ export default function AppShell({ vm }) {
         
 {/* DASHBOARD */}
 
-        
+
 <DashboardSection vm={vm} />
+
+
+
+{/* MY PROFILE */}
+
+
+<MyProfileSection vm={vm} />
 
 
         

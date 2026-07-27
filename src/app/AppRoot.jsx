@@ -92,6 +92,7 @@ class AppRoot extends React.Component {
     masters:{ admin:'Full', ceo:'Full' },
     users:{ admin:'Full', coo:'Full', ceo:'Full' },
     config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full' },
+    profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View' },
   };
 
   // CEO/COO/Admin get broad, near-identical access across every module — so
@@ -526,11 +527,12 @@ class AppRoot extends React.Component {
       masters:{ eyebrow:'Administration', icon:'boxes', title:'Master Data', sub:'Admin-owned reference data that powers the platform.' },
       users:{ eyebrow:'Administration', icon:'users', title:'User Management', sub:'Create accounts, assign roles and manage the hierarchy.', actionLabel:'Add user', actionIcon:'user-plus' },
       config:{ eyebrow:'Administration', icon:'settings-2', title:'Configuration', sub:'Platform settings, security and integrations.' },
+      profile:{ eyebrow:'Account', icon:'user', title:'My Profile', sub:'Your account details.' },
     };
     const page = Object.assign({ canEdit:this.EDIT_LEVELS.includes(lvl) }, PAGES[route]||PAGES.dashboard);
     // masters/users always show action for admin
     if(route==='users') page.canEdit = ['admin','coo'].includes(rk);
-    if(['dashboard','analytics','masters','config','qc','content','effort'].includes(route)) page.canEdit = false;
+    if(['dashboard','analytics','masters','config','qc','content','effort','profile'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
 
     const primaryAction = ()=>{
@@ -560,6 +562,7 @@ class AppRoot extends React.Component {
     const showFiles = route==='files';
     const showEffort = route==='effort';
     const showIdeas = route==='ideas';
+    const showProfile = route==='profile';
     const showTable = ['projects','campaigns','repositories','users'].includes(route);
     const showPageHead = !showMasterDetail;
 
@@ -595,10 +598,11 @@ class AppRoot extends React.Component {
           notifications: opening ? this.state.notifications.map(n=>({...n, read:true})) : this.state.notifications });
       },
       logout:()=>this.doLogout(),
+      openProfile:()=>this.setState({ route:'profile' }),
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -650,6 +654,7 @@ class AppRoot extends React.Component {
       })(),
     };
 
+    if(showProfile) Object.assign(out, this.myProfileData(rk, role));
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
@@ -683,6 +688,36 @@ class AppRoot extends React.Component {
   dashTitle(b){ return ({exec:'Executive Dashboard',ops:'Operations Dashboard',manager:'Department Dashboard',lead:'Team Dashboard',senior:'My Workspace',junior:'My Workspace',qc:'QC Dashboard',admin:'Platform Dashboard'})[b]; }
   dashSub(b){ return ({exec:'Company-wide performance and strategic health.',ops:'Delivery, capacity and resource utilization.',manager:'Your department’s projects, campaigns and KPIs.',lead:'Your team’s workload, progress and quality.',senior:'Your assigned work, deliverables and KPIs.',junior:'Your assigned tasks and deadlines only.',qc:'Items awaiting review and quality metrics.',admin:'System health, users and configuration.'})[b]; }
 
+  // Read-only "My Profile" — the account details for whoever is currently
+  // logged in. Prefers the real Supabase profile (has every column,
+  // including the extended User Master fields); falls back to the matching
+  // entry in the team list for a role persona without a linked account.
+  myProfileData(rk, role){
+    const authP = this.state.authProfile;
+    const match = authP || (this.state.users||[]).find(u=>u.name===role.person) || {};
+    const name = match.full_name||match.name||role.person;
+    const roleLabel = this.ROLES[rk].label;
+    const fields = [
+      ['Full name', name],
+      ['Email', match.email||'—'],
+      ['Mobile', match.mobile||'—'],
+      ['Department', match.department||match.dept||'—'],
+      ['Designation', match.designation||role.tag||'—'],
+      ['Team', match.team||'—'],
+      ['Reporting manager', match.reporting_manager||match.reportingManager||'—'],
+      ['Team lead', match.team_lead||match.teamLead||'—'],
+      ['Office location', match.office_location||match.officeLocation||'—'],
+      ['Role', roleLabel],
+      ['Employment type', match.employment_type||match.employmentType||'Full-time'],
+      ['Joining date', match.joining_date||match.joiningDate||'—'],
+      ['Status', match.status||'Active'],
+    ];
+    return {
+      pfName:name, pfRoleLabel:roleLabel, pfColor:role.color,
+      pfShort:(name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(),
+      pfFields:fields.map(([k,v])=>({k,v})),
+    };
+  }
   dashData(rk, role){
     const b = role.bucket;
     const K = (label,value,delta,tone,icon)=>({label,value,delta,icon,
@@ -3294,8 +3329,17 @@ class AppRoot extends React.Component {
         push('New team member: '+(payload.new.full_name||payload.new.email));
         this._loadTeam();
       })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles' }, (payload)=>{
+        const roleLabel=(this.ROLES[payload.new.role_key]&&this.ROLES[payload.new.role_key].label)||payload.new.role_key;
+        push((payload.new.full_name||payload.new.email)+' updated — role: '+roleLabel+', status: '+payload.new.status);
+        this._loadTeam();
+      })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'records' }, (payload)=>{
         push('New '+payload.new.kind.slice(0,-1)+': '+payload.new.name);
+        this._loadRecords();
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'records' }, (payload)=>{
+        push((payload.new.kind==='campaigns'?'Campaign':'Project')+' updated: '+payload.new.name+' — status: '+payload.new.status);
         this._loadRecords();
       })
       .subscribe();
