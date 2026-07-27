@@ -106,6 +106,17 @@ class AppRoot extends React.Component {
     }));
   }
 
+  // The name of whoever is actually logged in — real accounts must resolve
+  // to their own name/email, never the role bucket's demo persona (e.g. a
+  // real "junior" account is not "Neha Verma"). Getting this wrong breaks
+  // every self-reference in the app: "my tasks" filtering, "you were
+  // assigned" notifications, activity-log authorship, OKR/template
+  // ownership, etc. — all of which compare against this value.
+  currentPerson(){
+    const p = this.state.authProfile;
+    if(p) return p.full_name || p.email;
+    return this.currentPerson();
+  }
   MODMETA = {
     dashboard:{ label:'Dashboard', icon:'layout-dashboard' },
     projects:{ label:'Projects', icon:'folder-kanban' },
@@ -1064,7 +1075,7 @@ class AppRoot extends React.Component {
       features:{'Guest Post Accepted':false,'Do-follow Links':false,'High Authority':false,'No-follow Links':false,'Sponsored Content':false,'Dofollow Possible':false,'User Profile':false,'Directory Listing':false,'Forum':false},
       notes:'', dr:'—', traffic:'—', backlinks:'—', followType:'Dofollow Possible', placement:'In Content', paid:'Free', approval:'Yes', approvalTime:'—',
       brands:[], services:[], submittedUrls:0, liveBacklinks:0, lastLiveCheck:'—', successRate:'—', tags:[],
-      activity:[['Record created', this.ROLES[this.state.roleKey].person, this.todayStr()]] };
+      activity:[['Record created', this.currentPerson(), this.todayStr()]] };
   }
   blStatusTone(s){ return { Approved:{bg:'var(--verify-100)',color:'var(--verify-600)'}, 'Under Review':{bg:'var(--warn-100)',color:'var(--warn-600)'}, Rejected:{bg:'var(--danger-100)',color:'var(--danger-600)'}, Blacklisted:{bg:'#EAE4E8',color:'var(--ink-700)'}, Draft:{bg:'var(--surface-50)',color:'var(--ink-500)'}, Inactive:{bg:'var(--surface-50)',color:'var(--ink-500)'} }[s]||{bg:'var(--surface-50)',color:'var(--ink-500)'}; }
   blScoreColor(v,inv){ if(v==='—')return 'var(--ink-400)'; return inv? (v<=5?'var(--verify-600)':v<=20?'var(--warn-600)':'var(--danger-600)') : (v>=80?'var(--verify-600)':v>=60?'var(--warn-600)':'var(--danger-600)'); }
@@ -1148,7 +1159,7 @@ class AppRoot extends React.Component {
         if(!String(form.name||'').trim()){ this.flash('Enter a domain name to save.'); return; }
         this.BACKLINK_DOMAINS(); // ensure this._bld is initialized
         if(isNew){
-          this._bld.unshift({...form, activity:[['Domain added', this.ROLES[this.state.roleKey].person, this.todayStr()], ...(form.activity||[])]});
+          this._bld.unshift({...form, activity:[['Domain added', this.currentPerson(), this.todayStr()], ...(form.activity||[])]});
         } else {
           this._bld[this.state.blRecord] = {...form};
         }
@@ -1379,7 +1390,7 @@ class AppRoot extends React.Component {
   fmtMonth(v){ if(!v) return v; const m=String(v).match(/^(\d{4})-(\d{2})$/); if(!m) return v; const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return M[parseInt(m[2],10)-1]+' '+m[1]; }
   filesView(){
     const rk=this.state.roleKey;
-    const me=this.ROLES[rk].person;
+    const me=this.currentPerson();
     const own=['senior','junior'].includes(rk);
     const fileType=(n)=>{ const e=String(n).split('.').pop().toLowerCase();
       if(['png','jpg','jpeg','gif','webp','svg'].includes(e)) return {t:'Image',icon:'image',color:'var(--orchid-600)',bg:'var(--orchid-100)'};
@@ -1549,7 +1560,7 @@ class AppRoot extends React.Component {
     const rows=this.state.epRows||this.EP_DIV_ROWS(this.state.epDivision||'SEO');
     const totalW=rows.reduce((s,r)=>s+(r.weight||0),0);
     if(totalW!==100){ this.flash('Rebalance first — weightages must total 100%.'); return; }
-    const who=this.ROLES[this.state.roleKey].person;
+    const who=this.currentPerson();
     const division=this.state.epDivision||'SEO';
     const added=[...(this.state.tkAdded||[])];
     const startFmt=this.fmtDate(f.start)||'Jul 1, 2026';
@@ -1597,7 +1608,7 @@ class AppRoot extends React.Component {
   ideaTone(s){ return {'Idea Captured':{bg:'var(--surface-50)',c:'var(--ink-500)'},'Submitted for QC':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},'Approved':{bg:'var(--verify-100)',c:'var(--verify-600)'},'Rework':{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   ideaToTask(i){
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
-    const who=this.ROLES[this.state.roleKey].person;
+    const who=this.currentPerson();
     const task={ id, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'), template:'Write Article', project:i.service||'Content', campaign:i.effortPlan||'—', start:this.relDate(0), end:this.relDate(14), priority:i.priority||'Medium', assignee: i.owner==='Neha Verma'?'Neha Verma':'Sameer Iyer', kpiId:'sr3', kpi:'Content Published', units:1, unit:'articles', estH:10, actH:0, recurrence:'None', reviewer:'Priya Nair (Manager)', effortPlan:i.effortPlan||'', effortType:'Content idea', contentIdea:i.id, checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}], dep:'—', evidence:[], status:'Assigned', activity:[[who,'Created from approved content idea '+i.id,this.todayStr()]] };
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task] });
     this.ideaPatch(i.id,{ taskId:id });
@@ -1830,7 +1841,7 @@ class AppRoot extends React.Component {
         statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
         priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[t.priority]||'var(--ink-400)',
         edit:()=>this.setState({ ttNew:true, ttEditId:t.id, ttForm:{...t, checklist:t.checklist.slice()} }),
-        duplicate:()=>{ const nid='TPL-'+String(100+all.length+1).slice(-3); this.setState({ ttAdded:[...(this.state.ttAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.ROLES[rk].person,updated:this.todayStr()}] }); this.flash('Template duplicated as '+nid+' (Draft).'); },
+        duplicate:()=>{ const nid='TPL-'+String(100+all.length+1).slice(-3); this.setState({ ttAdded:[...(this.state.ttAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('Template duplicated as '+nid+' (Draft).'); },
         toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ ttUpd:{...(this.state.ttUpd||{}),[t.id]:{...(this.state.ttUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.id+' '+(ns==='Active'?'activated':'archived')+'.'); },
         statusAction:t.status==='Active'?'Archive':'Activate',
       };
@@ -1852,7 +1863,7 @@ class AppRoot extends React.Component {
       used:String(ktUsage(t)),
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       edit:()=>this.setState({ ktNew:true, ktEditId:t.id, ktForm:{...t} }),
-      duplicate:()=>{ const nid='kt'+(allK.length+1)+'c'; this.setState({ ktAdded:[...(this.state.ktAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.ROLES[rk].person,updated:this.todayStr()}] }); this.flash('KPI template duplicated (Draft).'); },
+      duplicate:()=>{ const nid='kt'+(allK.length+1)+'c'; this.setState({ ktAdded:[...(this.state.ktAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('KPI template duplicated (Draft).'); },
       toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ ktUpd:{...(this.state.ktUpd||{}),[t.id]:{...(this.state.ktUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.'); },
       statusAction:t.status==='Active'?'Archive':'Activate',
     })),8);
@@ -1868,7 +1879,7 @@ class AppRoot extends React.Component {
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       use:()=>{ this.setState({ route:'okr', showOkrPanel:true, okrSection:'okrA', okrTpl:t.id, okrDraftKRs:t.krs.map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:'0', target:k.target, current:'0', weight:k.weight })), okrKRSeq:t.krs.length+1 }); this.flash('Create OKR opened from "'+t.name+'" — objective & KRs pre-filled.'); },
       edit:()=>this.setState({ otNew:true, otEditId:t.id, otForm:{...t, krs:t.krs.map(k=>({...k}))} }),
-      duplicate:()=>{ const nid='ot'+(allO.length+1)+'c'; this.setState({ otAdded:[...(this.state.otAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.ROLES[rk].person,updated:this.todayStr()}] }); this.flash('OKR template duplicated (Draft).'); },
+      duplicate:()=>{ const nid='ot'+(allO.length+1)+'c'; this.setState({ otAdded:[...(this.state.otAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('OKR template duplicated (Draft).'); },
       toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ otUpd:{...(this.state.otUpd||{}),[t.id]:{...(this.state.otUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.'); },
       statusAction:t.status==='Active'?'Archive':'Activate',
     })),8);
@@ -1896,7 +1907,7 @@ class AppRoot extends React.Component {
         if(!(of2.name&&of2.name.trim())){ this.flash('Enter a template name.'); return; }
         const krs=(of2.krs||[]).filter(k=>k.t&&k.t.trim());
         if(!krs.length){ this.flash('Add at least one key result.'); return; }
-        const rec={ name:of2.name.trim(), category:of2.category||'SEO', scope:of2.scope||'Department', division:of2.division||'SEO', objective:of2.objective||'', desc:of2.desc||'', status:of2.status||'Active', krs, owner:this.ROLES[rk].person, updated:this.todayStr() };
+        const rec={ name:of2.name.trim(), category:of2.category||'SEO', scope:of2.scope||'Department', division:of2.division||'SEO', objective:of2.objective||'', desc:of2.desc||'', status:of2.status||'Active', krs, owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.otEditId){ this.setState({ otUpd:{...(this.state.otUpd||{}),[this.state.otEditId]:rec}, otNew:false, otEditId:null, otForm:{} }); this.flash('OKR template updated.'); }
         else { const nid='ot'+(this.allOkrTemplates().length+1); this.setState({ otAdded:[...(this.state.otAdded||[]),{id:nid,...rec}], otNew:false, otForm:{} }); this.flash('OKR template created — pull it from Create New OKR.'); }
       },
@@ -1907,7 +1918,7 @@ class AppRoot extends React.Component {
       ktSetName:setKf('name'), ktSetCategory:setKf('category'), ktSetDivision:setKf('division'), ktSetUnit:setKf('unit'), ktSetDirection:setKf('direction'), ktSetDefTarget:setKf('defTarget'), ktSetFreq:setKf('freq'), ktSetSource:setKf('source'), ktSetDesc:setKf('desc'), ktSetStatus:setKf('status'),
       ktSave:()=>{
         if(!(kf.name&&kf.name.trim())){ this.flash('Enter a KPI name.'); return; }
-        const rec={ name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.ROLES[rk].person, updated:this.todayStr() };
+        const rec={ name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.ktEditId){ this.setState({ ktUpd:{...(this.state.ktUpd||{}),[this.state.ktEditId]:rec}, ktNew:false, ktEditId:null, ktForm:{} }); this.flash('KPI template updated.'); }
         else { const nid='kt'+(this.allKpiTemplates().length+1); this.setState({ ktAdded:[...(this.state.ktAdded||[]),{id:nid,...rec}], ktNew:false, ktForm:{} }); this.flash('KPI template created — now available in Create Task, OKR key results and Effort plans.'); }
       },
@@ -1931,7 +1942,7 @@ class AppRoot extends React.Component {
         if(!(f.name&&f.name.trim())){ this.flash('Enter a template name.'); return; }
         const steps=(f.checklist||[]).map(s=>s.trim()).filter(Boolean);
         if(!steps.length){ this.flash('Add at least one checklist step.'); return; }
-        const rec={ name:f.name.trim(), division:f.division||'SEO', desc:f.desc||'', kpiId:f.kpiId||'', unit:f.unit||'', estH:parseInt(f.estH,10)||0, priority:f.priority||'Medium', recurrence:f.recurrence||'None', status:f.status||'Active', checklist:steps, owner:this.ROLES[rk].person, updated:this.todayStr() };
+        const rec={ name:f.name.trim(), division:f.division||'SEO', desc:f.desc||'', kpiId:f.kpiId||'', unit:f.unit||'', estH:parseInt(f.estH,10)||0, priority:f.priority||'Medium', recurrence:f.recurrence||'None', status:f.status||'Active', checklist:steps, owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.ttEditId){
           this.setState({ ttUpd:{...(this.state.ttUpd||{}),[this.state.ttEditId]:rec}, ttNew:false, ttEditId:null, ttForm:{} });
           this.flash('Template updated — changes apply to new tasks created from it.');
@@ -1995,7 +2006,7 @@ class AppRoot extends React.Component {
   tkPatch(id, patch, act){
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
     const upd={...(this.state.tkUpd||{})};
-    upd[id]={ ...(upd[id]||{}), ...patch, activity:[...(t.activity||[]), [this.ROLES[this.state.roleKey].person, act, this.todayStr()]] };
+    upd[id]={ ...(upd[id]||{}), ...patch, activity:[...(t.activity||[]), [this.currentPerson(), act, this.todayStr()]] };
     this.setState({ tkUpd:upd });
     this._persistTaskPatch(id, patch);
   }
@@ -2045,7 +2056,7 @@ class AppRoot extends React.Component {
   }
 
   tasksView(){
-    const rk=this.state.roleKey, person=this.ROLES[rk].person;
+    const rk=this.state.roleKey, person=this.currentPerson();
     const canCreate=['manager','team_lead','admin'].includes(rk);
     const isOwn=['junior','senior'].includes(rk);
     let list=this.allTasks(); if(isOwn) list=list.filter(t=>t.assignee===person);
@@ -2140,7 +2151,7 @@ class AppRoot extends React.Component {
   tkDetailData(){
     const id=this.state.tkOpen; if(!id) return { tkDrawerOpen:false };
     const t=this.allTasks().find(x=>x.id===id); if(!t) return { tkDrawerOpen:false };
-    const rk=this.state.roleKey, person=this.ROLES[rk].person;
+    const rk=this.state.roleKey, person=this.currentPerson();
     const isAssignee=t.assignee===person;
     const isApprover=['manager','team_lead','admin'].includes(rk);
     const canReassign=['manager','team_lead','admin','ceo'].includes(rk);
@@ -2284,7 +2295,7 @@ class AppRoot extends React.Component {
     const k=kpiPool.find(x=>x.id===f.kpiId);
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
-    const who=this.ROLES[this.state.roleKey].person;
+    const who=this.currentPerson();
     const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:id });
     this.flash('Task '+id+' created and assigned to '+task.assignee+'.');
@@ -2338,7 +2349,7 @@ class AppRoot extends React.Component {
       id:'okr-local-'+Date.now(), code, v:'v1.0', scope:'Department', title:f.title.trim(), desc:f.desc||'',
       owner:f.owner, team:'', cycle:'Q1 2026', brand:f.brand, dept:f.dept, campaign:'', category:f.category||f.dept,
       progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
-      status: activate?'Active':'Draft', weight:100, reviewer:this.ROLES[rk].person, approver:this.ROLES[rk].person,
+      status: activate?'Active':'Draft', weight:100, reviewer:this.currentPerson(), approver:this.currentPerson(),
       krs,
     };
     this.setState({ okrAdded:[...(this.state.okrAdded||[]), okr], showOkrPanel:false,
@@ -2486,7 +2497,7 @@ class AppRoot extends React.Component {
 
   checkinView(){
     const rk = this.state.roleKey;
-    const person = this.ROLES[rk].person;
+    const person = this.currentPerson();
     const base = (this.MY_KPIS()[rk]||[]);
     const pc = (p)=> p>=70?'var(--verify-500)': p>=40?'var(--warn-500)':'var(--danger-500)';
     const num = (v)=>parseFloat(String(v).replace(/,/g,''))||0;
@@ -2880,7 +2891,7 @@ class AppRoot extends React.Component {
       npAddMedia:()=>this.setState({ npMedia:[...(this.state.npMedia&&this.state.npMedia.length?this.state.npMedia:[{name:'',alt:'',type:'Image'}]),{name:'',alt:'',type:'Image'}] }),
       npTabs:['Page Info','Classification','SEO','Content','Relationships','Links','Media','Publishing','Analytics','Activity'].map((t,i)=>({ label:t, go:()=>this.setState({npTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===(this.state.npTab||0)?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===(this.state.npTab||0)?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       npTab0:(this.state.npTab||0)===0, npTab1:this.state.npTab===1, npTab2:this.state.npTab===2, npTab3:this.state.npTab===3, npTab4:this.state.npTab===4, npTab5:this.state.npTab===5, npTab6:this.state.npTab===6, npTab7:this.state.npTab===7, npTab8:this.state.npTab===8, npTab9:this.state.npTab===9,
-      npOwnerName: f.owner||this.ROLES[this.state.roleKey].person, npToday:this.todayStr(),
+      npOwnerName: f.owner||this.currentPerson(), npToday:this.todayStr(),
       npNext:()=>this.setState({ npTab: Math.min(9,(this.state.npTab||0)+1) }),
       npBack:()=>this.setState({ npTab: Math.max(0,(this.state.npTab||0)-1) }),
       npNotLast:(this.state.npTab||0)<9, npNotFirst:(this.state.npTab||0)>0,
@@ -2903,7 +2914,7 @@ class AppRoot extends React.Component {
     const repoPath={ service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' }[repo]||'/';
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
     const url = parentPage ? (parentPage.url+'/'+slug) : (repoPath+slug);
-    const owner=f.owner||this.ROLES[this.state.roleKey].person; const reviewer=f.reviewer||'—';
+    const owner=f.owner||this.currentPerson(); const reviewer=f.reviewer||'—';
     const metaTitle=f.metaTitle||name; const metaDesc=f.metaDesc||'—';
     const seo = (f.metaTitle&&f.metaDesc)? (f.keyword?68:58) : (f.metaTitle||f.metaDesc?42:28);
     const today=this.todayStr();
@@ -3108,7 +3119,7 @@ class AppRoot extends React.Component {
       okrAddKR:()=>this.setState({ okrDraftKRs:[...this.state.okrDraftKRs,{id:this.state.okrKRSeq,weight:'0'}], okrKRSeq:this.state.okrKRSeq+1 }),
       okrWeightTotal:wTotal, okrWeightBg: wOk?'var(--verify-100)':'var(--warn-100)', okrWeightColor: wOk?'var(--verify-600)':'var(--warn-600)',
       okrNewCode:'OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(list.length+1).padStart(3,'0'),
-      okrAuditUser:this.ROLES[rk].person+' ('+this.ROLES[rk].label+')',
+      okrAuditUser:this.currentPerson()+' ('+this.ROLES[rk].label+')',
     };
   }
 
@@ -3331,7 +3342,7 @@ class AppRoot extends React.Component {
       const entry={ id:Date.now()+Math.random(), text, time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), read:false };
       this.setState(s=>({ notifications:[entry, ...(s.notifications||[])].slice(0,30) }));
     };
-    const me=()=>this.ROLES[this.state.roleKey].person;
+    const me=()=>this.currentPerson();
     const myId=()=>this.state.authUser&&this.state.authUser.id;
     const canManageTasks=()=>['manager','team_lead','admin','ceo'].includes(this.state.roleKey);
     const canManageOkrs=()=>['manager','admin','ceo'].includes(this.state.roleKey);
