@@ -3327,6 +3327,27 @@ class AppRoot extends React.Component {
     this._loadTeam();
     this._loadRecords();
     this._subscribeRealtime();
+    this._catchUpNotifications();
+  }
+
+  // The realtime feed below only fires for changes that happen while a
+  // session is already connected — someone assigned a task to you while you
+  // were offline gets nothing from it. This runs once at login and surfaces
+  // anything already sitting on your plate as notifications too, so logging
+  // in itself catches you up instead of only live-going-forward changes.
+  async _catchUpNotifications(){
+    const person = this.currentPerson();
+    if(!person) return;
+    const { data, error } = await supabase.from('tasks').select('code,name,status')
+      .eq('assignee_name', person).eq('status', 'Assigned');
+    if(error || !data || !data.length) return;
+    const entries = data.map(t=>({
+      id:'catchup-task-'+t.code,
+      text:'You have a task assigned: '+(t.name||t.code),
+      time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
+      read:false,
+    }));
+    this.setState(s=>({ notifications:[...entries, ...(s.notifications||[])].slice(0,30) }));
   }
 
   // Live notifications: pushes a toast-style entry whenever a task or OKR is
