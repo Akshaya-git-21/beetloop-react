@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function MasterDetailSection({ vm }) {
-  const { bd_activity, bd_back, bd_brands, bd_canDelete, bd_dates, bd_delete, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_notes, bd_setNotes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail } = vm;
+  const { bd_activity, bd_addBrand, bd_addService, bd_back, bd_brands, bd_canDelete, bd_dates, bd_delete, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_newBrand, bd_newService, bd_notes, bd_setNewBrand, bd_setNewService, bd_setNotes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail } = vm;
   const fieldInputStyle = { width: '100%', padding: '6px 9px', border: '1px solid var(--line-300)', borderRadius: 8, fontSize: 13.5, outline: 'none', color: 'var(--ink-900)' };
   return (
     <React.Fragment>
@@ -806,12 +806,12 @@ Platform features
                   
 {(bd_features || []).map((ft, $index) => (
 <React.Fragment key={$index}>
-<div style={{"display":"flex","alignItems":"center","gap":"9px","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"10px 13px"}}>
+<button onClick={ft.toggle} style={{"display":"flex","alignItems":"center","gap":"9px","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"10px 13px","background":"#fff","cursor":"pointer","textAlign":"left","width":"100%"}}>
 <Icon name={ft.icon} style={cssTextToObject(`width:16px;height:16px;color:${ft.color}`)} />
 <span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--ink-800)"}}>
 {ft.label}
 </span>
-</div>
+</button>
 </React.Fragment>
 ))}
 
@@ -860,36 +860,48 @@ Applicable brands / websites
 </div>
 
                 
-<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":"16px"}}>
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":"10px"}}>
 {(bd_brands || []).map((b, $index) => (
 <React.Fragment key={$index}>
-<span style={{"fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)"}}>
-{b}
+<span onClick={b.remove} title="Click to remove" style={{"display":"flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)","cursor":"pointer"}}>
+{b.label}
+<Icon name={"x"} style={{"width":"11px","height":"11px"}} />
 </span>
 </React.Fragment>
 ))}
-<span style={{"fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","border":"1px dashed var(--orchid-300)","color":"var(--orchid-700)"}}>
-+ Add
-</span>
 </div>
 
-                
+
+<div style={{"display":"flex","gap":"8px","marginBottom":"16px"}}>
+<input value={bd_newBrand} onChange={bd_setNewBrand} placeholder="Add a brand / website…" style={{"flex":"1","padding":"7px 11px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
+<button onClick={bd_addBrand} style={{"padding":"7px 14px","border":"none","background":"var(--info-100)","color":"var(--info-600)","borderRadius":"9px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+Add
+</button>
+</div>
+
+
 <div style={{"fontSize":"11px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".04em","color":"var(--ink-400)","marginBottom":"7px"}}>
 Applicable services
 </div>
 
-                
-<div style={{"display":"flex","flexWrap":"wrap","gap":"6px"}}>
+
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":"10px"}}>
 {(bd_services || []).map((s, $index) => (
 <React.Fragment key={$index}>
-<span style={{"fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
-{s}
+<span onClick={s.remove} title="Click to remove" style={{"display":"flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)","cursor":"pointer"}}>
+{s.label}
+<Icon name={"x"} style={{"width":"11px","height":"11px"}} />
 </span>
 </React.Fragment>
 ))}
-<span style={{"fontSize":"11.5px","fontWeight":"700","padding":"5px 12px","borderRadius":"999px","border":"1px dashed var(--orchid-300)","color":"var(--orchid-700)"}}>
-+ Add
-</span>
+</div>
+
+
+<div style={{"display":"flex","gap":"8px"}}>
+<input value={bd_newService} onChange={bd_setNewService} placeholder="Add a service…" style={{"flex":"1","padding":"7px 11px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
+<button onClick={bd_addService} style={{"padding":"7px 14px","border":"none","background":"var(--orchid-100)","color":"var(--orchid-700)","borderRadius":"9px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+Add
+</button>
 </div>
 
               
