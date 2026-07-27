@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetProject, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkNew, tkPlanInfo, tkProjectOptions, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetProject, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -116,15 +116,31 @@ Description
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Project
 </label>
-<input value={tkf.project} onInput={tkSetProject} placeholder="e.g. Pubrica SEO program" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={tkf.project} onChange={tkSetProject} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(tkProjectOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
-          
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Campaign
 </label>
-<input value={tkf.campaign} onInput={tkSetCampaign} placeholder="e.g. Q3 SEO push" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={tkf.campaign} onChange={tkSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(tkCampaignOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
           

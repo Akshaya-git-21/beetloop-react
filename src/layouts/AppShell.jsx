@@ -30,7 +30,8 @@ import Toast from '../components/drawers/Toast.jsx';
 import CreateRecordModal from '../components/drawers/CreateRecordModal.jsx';
 import ManageUserModal from '../components/drawers/ManageUserModal.jsx';
 import AddUserModal from '../components/drawers/AddUserModal.jsx';
-import AddMasterRowModal from '../components/drawers/AddMasterRowModal.jsx';
+import EditMasterRecordModal from '../components/drawers/EditMasterRecordModal.jsx';
+import ConfirmRoleModal from '../components/drawers/ConfirmRoleModal.jsx';
 import MasterRecordSlideOver from '../components/drawers/MasterRecordSlideOver.jsx';
 import NewPageForm from '../components/drawers/NewPageForm.jsx';
 import ContentPageDetailDrawer from '../components/drawers/ContentPageDetailDrawer.jsx';
@@ -278,10 +279,16 @@ export default function AppShell({ vm }) {
 
 
 
-{/* ADD MASTER ROW MODAL */}
+{/* EDIT MASTER RECORD MODAL */}
 
 
-<AddMasterRowModal vm={vm} />
+<EditMasterRecordModal vm={vm} />
+
+
+{/* CONFIRM ROLE MODAL */}
+
+
+<ConfirmRoleModal vm={vm} />
 
 
 

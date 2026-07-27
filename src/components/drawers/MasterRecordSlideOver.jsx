@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function MasterRecordSlideOver({ vm }) {
-  const { mdHasRecord, mdHasTabs, mdRecClose, mdRecFields, mdRecSub, mdRecTitle, mdShowComp, mdShowFields, mdShowLinked, mdShowUrls, mdShowUsage, mdSubComp, mdSubLinked, mdSubUrls, mdSubUsage, mdTabs, stop } = vm;
+  const { mdHasRecord, mdHasTabs, mdRecClose, mdRecEdit, mdRecFields, mdRecSub, mdRecTitle, mdShowComp, mdShowFields, mdShowLinked, mdShowUrls, mdShowUsage, mdSubComp, mdSubLinked, mdSubUrls, mdSubUsage, mdTabs, stop } = vm;
   return (
     <React.Fragment>
 {Boolean(mdHasRecord) && (
@@ -28,15 +28,21 @@ export default function MasterRecordSlideOver({ vm }) {
 </h3>
 </div>
 
-        
+
+<div style={{"display":"flex","gap":"8px"}}>
+<button onClick={mdRecEdit} style={{"padding":"0 14px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","gap":"6px","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)"}}>
+<Icon name={"pencil"} style={{"width":"14px","height":"14px"}} />
+Edit
+</button>
 <button onClick={mdRecClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
-
-      
 </div>
 
-      
+
+</div>
+
+
 {Boolean(mdHasTabs) && (
 <React.Fragment>
 

@@ -1,9 +1,8 @@
 import React from 'react';
 import Icon from '../components/Icon.jsx';
-import { cssTextToObject } from '../utils/cssText.js';
 
 export default function LoginPage({ vm }) {
-  const { demoAccounts, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword } = vm;
+  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword } = vm;
   return (
     <React.Fragment>
 
@@ -212,52 +211,6 @@ Activate your account
 </p>
 
 
-      
-<div style={{"marginTop":"22px","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"16px","padding":"14px 16px"}}>
-
-        
-<div style={{"display":"flex","alignItems":"center","gap":"7px","fontSize":"11.5px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--ink-500)","marginBottom":"10px"}}>
-<Icon name={"user-round-cog"} style={{"width":"14px","height":"14px"}} />
- Demo accounts — click to sign in
-</div>
-
-        
-<div style={{"display":"flex","flexWrap":"wrap","gap":"7px"}}>
-
-          
-{(demoAccounts || []).map((d, $index) => (
-<React.Fragment key={$index}>
-
-            
-<button onClick={d.pick} style={{"display":"flex","alignItems":"center","gap":"7px","padding":"6px 10px 6px 6px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"999px","cursor":"pointer","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-700)"}}>
-
-              
-<span style={cssTextToObject(`width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;background:${d.color}`)}>
-{d.short}
-</span>
-{d.label}
-            
-</button>
-
-          
-</React.Fragment>
-))}
-
-        
-</div>
-
-        
-<div style={{"fontSize":"11.5px","color":"var(--ink-400)","marginTop":"9px"}}>
-Password for all demo users: 
-<span style={{"fontFamily":"'Space Mono'","color":"var(--ink-700)"}}>
-demo123
-</span>
-</div>
-
-      
-</div>
-
-    
 </div>
 
   

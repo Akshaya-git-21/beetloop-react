@@ -5,9 +5,10 @@ const STATUS_OPTIONS = ['On track', 'In progress', 'At risk', 'Planned', 'Live',
 
 export default function CreateRecordModal({ vm }) {
   const { showRecordModal, recordKind, recordForm, recordSetName, recordSetType, recordSetOwner, recordSetStatus,
-    closeRecordModal, saveRecord, deleteRecord, recordEditKey, stop } = vm;
+    closeRecordModal, saveRecord, deleteRecord, recordEditKey, recordOwnerOptions, stop } = vm;
   const title = recordKind === 'campaigns' ? 'Campaign' : 'Project';
   const ownerLabel = recordKind === 'campaigns' ? 'Phase / owner' : 'Owner';
+  const isProjectOwner = recordKind !== 'campaigns';
   const isEdit = recordEditKey != null;
   return (
     <React.Fragment>
@@ -36,7 +37,14 @@ export default function CreateRecordModal({ vm }) {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 6 }}>{ownerLabel}</label>
-                  <input value={recordForm.owner} onChange={recordSetOwner} placeholder="e.g. Aditi Rao" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, outline: 'none' }} />
+                  {isProjectOwner ? (
+                    <select value={recordForm.owner} onChange={recordSetOwner} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, background: '#fff' }}>
+                      <option value="">Unassigned</option>
+                      {(recordOwnerOptions || []).map(o => <option key={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input value={recordForm.owner} onChange={recordSetOwner} placeholder="e.g. Live" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, outline: 'none' }} />
+                  )}
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 6 }}>Status</label>

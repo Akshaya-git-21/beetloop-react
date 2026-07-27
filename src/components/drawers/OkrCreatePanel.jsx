@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrEffortOptions, okrNewCode, okrSteps, okrTaskOptions, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand } = vm;
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrEffortOptions, okrNewCode, okrOwnerOptions, okrSteps, okrTaskOptions, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand } = vm;
   return (
     <React.Fragment>
 {Boolean(showOkrPanel) && (
@@ -132,15 +132,13 @@ Description
 Owner *
 </label>
 <select value={okrForm.owner} onChange={okrSetOwner} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-Sarah Johnson
+{(okrOwnerOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
 </option>
-<option>
-Mike Chen
-</option>
-<option>
-Alex Martinez
-</option>
+</React.Fragment>
+))}
 </select>
 </div>
 
@@ -604,19 +602,14 @@ Weight %
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 KR owner
 </label>
-<select style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
-<option>
-Sameer Iyer
+<select value={k.who} onChange={k.setWho} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+{(okrOwnerOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
 </option>
-<option>
-Neha Verma
-</option>
-<option>
-Aditi Rao
-</option>
-<option>
-Priya Nair
-</option>
+</React.Fragment>
+))}
 </select>
 </div>
 

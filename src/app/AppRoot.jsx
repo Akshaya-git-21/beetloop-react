@@ -15,8 +15,8 @@ class AppRoot extends React.Component {
     email: '', password: '', loginError: '',
     newPass: '', confirmPass: '', mfa: true,
     toast: '',
-    showUserModal: false, showMasterModal: false,
-    activeMaster: null,
+    showUserModal: false,
+    showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
     okrExpanded: [], showOkrPanel: false, okrRecord: null, okrSection: 'okrA', okrOpen: null,
     okrAdded: [],
@@ -25,6 +25,7 @@ class AppRoot extends React.Component {
     recordForm: { name:'', type:'', owner:'', status:'On track' },
     recordOverrides: {}, recordEditKey: null, recordIsReal: false,
     showManageUserModal: false, manageUserIndex: null, manageUserForm: null,
+    showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
@@ -38,7 +39,6 @@ class AppRoot extends React.Component {
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [],
     uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive' },
-    mf: { a:'', b:'' },
     users: [
       { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
       { name:'Rahul Menon', sub:'COO · Operations', role:'COO', dept:'Operations', status:'Active', statusTone:'ok' },
@@ -75,12 +75,6 @@ class AppRoot extends React.Component {
     qc:{ label:'QC Reviewer', short:'QC', tag:'Quality Reviewer', person:'Farhan Ali', color:'#D69327', bucket:'qc' },
   };
 
-  DEMO = {
-    'admin@beetloop.com':'admin', 'ceo@beetloop.com':'ceo', 'coo@beetloop.com':'coo',
-    'manager@beetloop.com':'manager', 'lead@beetloop.com':'team_lead', 'senior@beetloop.com':'senior',
-    'junior@beetloop.com':'junior', 'qc@beetloop.com':'qc',
-  };
-
   ACCESS = {
     dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All' },
     projects:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
@@ -99,6 +93,17 @@ class AppRoot extends React.Component {
     users:{ admin:'Full', coo:'Full', ceo:'Full' },
     config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full' },
   };
+
+  // CEO/COO/Admin get broad, near-identical access across every module — so
+  // assigning one of these roles is a high-impact action that needs an
+  // explicit confirmation step before it's applied. Every other role only
+  // ever gets its own scoped access per ACCESS above, so no gate is needed.
+  HIGH_PRIVILEGE_ROLES = ['ceo','coo','admin'];
+  roleAccessSummary(roleKey){
+    return Object.keys(this.ACCESS).filter(m=>this.ACCESS[m][roleKey]).map(m=>({
+      module:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:this.ACCESS[m][roleKey],
+    }));
+  }
 
   MODMETA = {
     dashboard:{ label:'Dashboard', icon:'layout-dashboard' },
@@ -381,6 +386,51 @@ class AppRoot extends React.Component {
 
   humanize(k){ return String(k).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()).replace(/\bId\b/,'ID').replace(/\bUrl\b/,'URL').replace(/\bCpc\b/,'CPC').replace(/\bSeo\b/,'SEO').replace(/\bQc\b/,'QC').replace(/\bKpi\b/,'KPI').replace(/\bH1\b/,'H1').replace(/\bSerp\b/,'SERP'); }
 
+  // Field-level master-to-master relationships: a field on one master that
+  // actually points at a record in another master (or at Users), so editing
+  // it should be a picker over the real related records instead of free text.
+  // Scoped per master key (not just field name) — e.g. Role Master's own
+  // "Role" field is the thing itself and must stay free text, while User
+  // Master's "Role" field is a genuine reference into Role Master. Keying
+  // only by field name would make a master's identity field a picker over
+  // itself, blocking new entries entirely.
+  MASTER_FIELD_RELATIONS = {
+    service: {
+      Parent_Service_ID:{ toMaster:'service', valueField:'Service_ID', labelField:'Service_Name', none:'—' },
+      Content_Owner:{ toUsers:true }, Tech_Owner:{ toUsers:true },
+    },
+    keyword: {
+      Parent_Keyword:{ toMaster:'keyword', valueField:'Keyword', labelField:'Keyword', none:'—' },
+      Industry_Name:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' },
+      Service_Name:{ toMaster:'service', valueField:'Service_Name', labelField:'Service_Name' },
+    },
+    user: {
+      Department:{ toMaster:'department', valueField:'Department', labelField:'Department' },
+      Reporting_Manager:{ toUsers:true }, Team_Lead:{ toUsers:true },
+      Role:{ toMaster:'role', valueField:'Role', labelField:'Role' },
+    },
+    department: { Head:{ toUsers:true } },
+    client: { Industry:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' } },
+    competitor: { Industry:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' } },
+    contentType: {
+      Default_Owner:{ toUsers:true },
+      QC_Checklist:{ toMaster:'qcChecklist', valueField:'Checklist', labelField:'Checklist' },
+    },
+    kpi: { Department:{ toMaster:'department', valueField:'Department', labelField:'Department' } },
+  };
+  // Returns null for a plain text/number field, or an array of {value,label}
+  // options when the field is a relation into another master or Users.
+  masterFieldOptions(masterKey, fieldKey){
+    const rel = this.MASTER_FIELD_RELATIONS[masterKey] && this.MASTER_FIELD_RELATIONS[masterKey][fieldKey];
+    if(!rel) return null;
+    if(rel.toUsers) return (this.state.users||[]).map(u=>({ value:u.name, label:u.name }));
+    const reg = this.MASTERS_REG();
+    const target = reg[rel.toMaster];
+    if(!target) return null;
+    const opts = target.rows.map(r=>({ value:r[rel.valueField], label:r[rel.labelField]+(rel.labelField!==rel.valueField?' ('+r[rel.valueField]+')':'') }));
+    return rel.none!=null ? [{ value:rel.none, label:rel.none }].concat(opts) : opts;
+  }
+
   OKR_DATA(){
     return [
       { id:'1', code:'OKR-SEO-Q1-001', v:'v1.2', scope:'Organization', title:'Increase Organic Traffic by 50%', desc:'Drive significant growth in organic search visitors through SEO optimization.', owner:'Sarah Johnson', team:'+1', cycle:'Q1 2025', brand:'Food Research Lab', dept:'SEO', campaign:'Organic Growth Q1', category:'SEO', progress:68, due:'Mar 31, 2025', start:'Jan 1, 2025', daysLeft:15, cycleElapsed:75, status:'Active', weight:30, reviewer:'John Smith', approver:'Rahul Menon',
@@ -475,7 +525,7 @@ class AppRoot extends React.Component {
 
     const primaryAction = ()=>{
       if(route==='users') this.setState({ showUserModal:true });
-      else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:'Neha Verma', recurrence:'None' } });
+      else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
       else if(route==='okr') this.setState({ showOkrPanel:true });
@@ -516,7 +566,6 @@ class AppRoot extends React.Component {
       forgotPassword:e=>{e&&e.preventDefault();this._forgotPassword();},
       backToLogin:e=>{e&&e.preventDefault();this.setState({screen:'login'});},
       noop:e=>{e&&e.preventDefault();this.flash('Demo — connect your identity provider to enable.');},
-      demoAccounts: Object.entries(this.DEMO).map(([em,r])=>({ label:this.ROLES[r].label, short:this.ROLES[r].short, color:this.ROLES[r].color, pick:()=>this.setState({email:em,password:'demo123',loginError:''}) })),
       // activate
       newPass:this.state.newPass, confirmPass:this.state.confirmPass,
       onNewPass:e=>this.setState({newPass:e.target.value}), onConfirm:e=>this.setState({confirmPass:e.target.value}),
@@ -542,7 +591,7 @@ class AppRoot extends React.Component {
       showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
-      showUserModal:this.state.showUserModal, showMasterModal:this.state.showMasterModal,
+      showUserModal:this.state.showUserModal,
       closeUserModal:()=>this.setState({showUserModal:false}), stop:e=>e.stopPropagation(),
       submitUser:()=>this.submitUser(),
       showRecordModal:this.state.showRecordModal, recordKind:this.state.recordKind, recordForm:this.state.recordForm,
@@ -550,6 +599,7 @@ class AppRoot extends React.Component {
       recordSetName:e=>this.setState({ recordForm:{...this.state.recordForm, name:e.target.value} }),
       recordSetType:e=>this.setState({ recordForm:{...this.state.recordForm, type:e.target.value} }),
       recordSetOwner:e=>this.setState({ recordForm:{...this.state.recordForm, owner:e.target.value} }),
+      recordOwnerOptions:(this.state.users||[]).map(u=>u.name),
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
       saveRecord:()=>this._saveRecord(),
       recordEditKey:this.state.recordEditKey, deleteRecord:()=>this._deleteRecord(),
@@ -564,10 +614,30 @@ class AppRoot extends React.Component {
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
-      activeMaster:this.state.activeMaster, closeMasterModal:()=>this.setState({showMasterModal:false}),
-      masterField1:'Name', masterField2:'Description',
-      mf:this.state.mf, mfA:e=>this.setState({mf:{...this.state.mf,a:e.target.value}}), mfB:e=>this.setState({mf:{...this.state.mf,b:e.target.value}}),
-      submitMaster:()=>this.submitMaster(),
+      showRoleConfirm:this.state.showRoleConfirm,
+      roleConfirmLabel:this.state.roleConfirmKey?this.ROLES[this.state.roleConfirmKey].label:'',
+      roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
+      roleConfirmCancel:()=>this.cancelRoleAssignment(),
+      roleConfirmOk:()=>this.confirmRoleAssignment(),
+      showMasterRecordEdit:this.state.showMasterRecordEdit,
+      mrCancel:()=>this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} }),
+      mrSave:()=>this.submitMasterRecord(),
+      mrCanDelete:this.state.mrIndex!=null,
+      mrDelete:()=>this.deleteMasterRecord(),
+      ...(()=>{
+        const mk = this.state.mrKey;
+        const m = mk && this.MASTERS_REG()[mk];
+        if(!m) return { mrTitle:'', mrFieldRows:[] };
+        const form = this.state.mrForm||{};
+        return {
+          mrTitle: (this.state.mrIndex!=null?'Edit ':'Add ')+m.label+' entry',
+          mrFieldRows: m.fields.map(f=>{
+            const options = this.masterFieldOptions(mk, f);
+            return { key:f, label:this.humanize(f), value:form[f]!=null?form[f]:'', isSelect:!!options, options:options||[],
+              onChange:e=>this.setState({ mrForm:{...this.state.mrForm, [f]:e.target.value} }) };
+          }),
+        };
+      })(),
     };
 
     if(showDash) Object.assign(out, this.dashData(rk, role));
@@ -768,8 +838,43 @@ class AppRoot extends React.Component {
     }));
   }
 
-  openMaster(name){ this.setState({ showMasterModal:true, activeMaster:name, mf:{a:'',b:''} }); }
-  submitMaster(){ if(!this.state.mf.a.trim()){ this.flash('Enter a name to save.'); return; } this.setState({ showMasterModal:false, mf:{a:'',b:''} }); this.flash('Entry added to '+(this.state.activeMaster||'master')+'.'); }
+  // Opens the full multi-field master record editor. idx===null means a new
+  // record (all fields blank); otherwise pre-fills from the existing row so
+  // relational fields (Parent Service, Owner, Department, etc.) show as
+  // pickers over the real related records/users, not free text.
+  openMasterRecordEdit(key, idx){
+    const m = this.MASTERS_REG()[key];
+    if(!m) return;
+    const form = {};
+    m.fields.forEach(f=>{ form[f] = (idx!=null && m.rows[idx] && m.rows[idx][f]!=null) ? m.rows[idx][f] : ''; });
+    this.setState({ showMasterRecordEdit:true, mrKey:key, mrIndex:idx, mrForm:form });
+  }
+  submitMasterRecord(){
+    const { mrKey, mrIndex, mrForm } = this.state;
+    const m = this.MASTERS_REG()[mrKey];
+    if(!m) return;
+    const idField = m.fields[0];
+    const labelField = m.fields[1]||idField;
+    if(!String(mrForm[labelField]||'').trim()){ this.flash('Enter a value for '+this.humanize(labelField)+' to save.'); return; }
+    const row = { ...mrForm };
+    if(!String(row[idField]||'').trim()){
+      row[idField] = m.label.replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'X')+String(m.rows.length+1).padStart(3,'0');
+    }
+    if(mrIndex!=null && m.rows[mrIndex]) m.rows[mrIndex] = row;
+    else m.rows.push(row);
+    this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
+    this.flash((mrIndex!=null?'Updated ':'Added ')+m.label+' entry: '+row[labelField]+'.');
+  }
+  deleteMasterRecord(){
+    const { mrKey, mrIndex } = this.state;
+    const m = this.MASTERS_REG()[mrKey];
+    if(!m || mrIndex==null) return;
+    const labelField = m.fields[1]||m.fields[0];
+    const removedLabel = m.rows[mrIndex] ? m.rows[mrIndex][labelField] : '';
+    m.rows.splice(mrIndex,1);
+    this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{}, masterRecord:null });
+    this.flash('Deleted '+m.label+' entry: '+removedLabel+'.');
+  }
 
   masterDetailData(){
     const reg = this.MASTERS_REG();
@@ -787,7 +892,7 @@ class AppRoot extends React.Component {
       mdLabel:m.label, mdIcon:m.icon, mdDesc:m.desc, mdCount:m.rows.length+' records',
       mdCols:m.cols.map(c=>c.l), ...(()=>{ const pg=this.pgData('md-'+key,rows,8); return { mdRows:pg.rows, mdPg:pg }; })(),
       mdBack:()=>this.setState({ masterKey:null, masterRecord:null }),
-      mdAdd:()=>this.flash('New '+m.label+' entry — form opens here in the live build.'),
+      mdAdd:()=>this.openMasterRecordEdit(key, null),
       mdQuery:this.state.masterQuery, mdOnQuery:e=>this.setState({ masterQuery:e.target.value }),
       mdHasRecord: this.state.masterRecord!==null,
       mdShowTable:true,
@@ -812,6 +917,7 @@ class AppRoot extends React.Component {
         out.mdRecTitle = rec[m.cols[1].k] || rec[m.cols[0].k];
         out.mdRecSub = rec[m.cols[0].k];
         out.mdRecClose = ()=>this.setState({ masterRecord:null });
+        out.mdRecEdit = ()=>this.openMasterRecordEdit(key, this.state.masterRecord);
         out.mdRecFields = m.fields.map(f=>({ label:this.humanize(f), value: (rec[f]===undefined||rec[f]===''||rec[f]===null)?'—':String(rec[f]) }));
         const ti = this.state.masterTab;
         const tabStyle = (active)=> 'padding:9px 14px;border:none;background:none;border-bottom:2px solid '+(active?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(active?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px';
@@ -1879,7 +1985,7 @@ class AppRoot extends React.Component {
       tkPrevDisabled:page===0, tkNextDisabled:page>=pageCount-1,
       tkPrevStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:'+(page===0?'var(--ink-300)':'var(--ink-700)'),
       tkNextStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:'+(page>=pageCount-1?'var(--ink-300)':'var(--ink-700)'),
-      tkNewOpen:()=>this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:'Neha Verma', recurrence:'None' } }),
+      tkNewOpen:()=>this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } }),
       ...this.tkDetailData(), ...this.tkFormData() };
   }
 
@@ -1992,11 +2098,15 @@ class AppRoot extends React.Component {
       tkCloseNew:()=>this.setState({ tkNew:false }),
       tkTplOptions:this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name})),
       tkKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
-      tkAssigneeOptions:['Neha Verma','Sameer Iyer'],
+      tkProjectOptions:['—'].concat(this.recordsFor('projects').map(r=>r.name)),
+      tkCampaignOptions:['—'].concat(this.recordsFor('campaigns').map(r=>r.name)),
+      tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetProject:set('project'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
       tkDivisionOptions:['Content','Graphics','Web Developers','SMM','SEO'],
-      tkReviewerOptions:['Aditi Rao (Team Lead)','Priya Nair (Manager)','Farhan Ali (QC Reviewer)'],
+      tkReviewerOptions:(this.state.users||[])
+        .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
+        .map(u=>u.name+' ('+u.role+')'),
       tkEffortOptions:[{v:'',label:'None — standalone task'}].concat(this.allEpPlans().map(p=>({ v:p.name, label:p.name+' · '+p.division }))),
       ...(()=>{
         const plan=this.allEpPlans().find(p=>p.name===f.effortPlan);
@@ -2068,8 +2178,9 @@ class AppRoot extends React.Component {
     if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
     const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
     const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
-      t:'Key result '+(i+1), kpi:'KPI '+(i+1), baseline:'0', target:'100', current:'0', unit:'units',
-      weight:parseInt(k.weight,10)||0, who:f.owner, freq:'Monthly', due:'Mar 31', status:'Active',
+      t:k.kr&&k.kr.trim()?k.kr.trim():'Key result '+(i+1), kpi:k.kpiSel||'KPI '+(i+1),
+      baseline:k.baseline||'0', target:k.target||'100', current:k.current||'0', unit:k.unit||'units',
+      weight:parseInt(k.weight,10)||0, who:k.who||f.owner, freq:'Monthly', due:'Mar 31', status:'Active',
     }));
     const okr={
       id:'okr-local-'+Date.now(), code, v:'v1.0', scope:'Department', title:f.title.trim(), desc:f.desc||'',
@@ -2175,8 +2286,17 @@ class AppRoot extends React.Component {
     const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
     if(!f || i==null) return;
     if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
-    const roleLabel=(this.ROLES[f.roleKey]&&this.ROLES[f.roleKey].label)||f.roleKey;
-    const updated={ ...f, name:f.name.trim(), role:roleLabel, sub:(f.designation||roleLabel)+' · '+f.dept,
+    if(this.HIGH_PRIVILEGE_ROLES.includes(f.roleKey)){
+      this.setState({ showRoleConfirm:true, roleConfirmKey:f.roleKey, roleConfirmAction:'manage' });
+      return;
+    }
+    this._applyManageUser(f.roleKey);
+  }
+  _applyManageUser(roleKey){
+    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
+    if(!f || i==null) return;
+    const roleLabel=(this.ROLES[roleKey]&&this.ROLES[roleKey].label)||roleKey;
+    const updated={ ...f, roleKey, name:f.name.trim(), role:roleLabel, sub:(f.designation||roleLabel)+' · '+f.dept,
       statusTone: f.status==='Active'?'ok':'warn' };
     const users=[...this.state.users]; users[i]=updated;
     this.setState({ users, showManageUserModal:false });
@@ -2762,8 +2882,8 @@ class AppRoot extends React.Component {
     const wTotal = drafts.reduce((s,k)=>s+(parseInt(k.weight,10)||0),0);
     const wOk = wTotal===100;
     const setDraft=(id,field)=>(e)=>{ const v=e.target.value; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===id?{...x,[field]:v}:x) }); };
-    const okrDraftKRs = drafts.map((k,i)=>({ n:i+1, weight:k.weight, kr:k.kr||'', kpiSel:k.kpiSel||'', unit:k.unit||'', baseline:k.baseline||'', target:k.target||'', current:k.current||'',
-      setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'),
+    const okrDraftKRs = drafts.map((k,i)=>({ n:i+1, weight:k.weight, kr:k.kr||'', kpiSel:k.kpiSel||'', unit:k.unit||'', baseline:k.baseline||'', target:k.target||'', current:k.current||'', who:k.who||'',
+      setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'), setWho:setDraft(k.id,'who'),
       setWeight:(e)=>{ const v=e.target.value; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x,weight:v}:x) }); },
       remove:()=>{ if(this.state.okrDraftKRs.length>1) this.setState({ okrDraftKRs:this.state.okrDraftKRs.filter(x=>x.id!==k.id) }); } }));
     const okrTpls=this.allOkrTemplates().filter(t=>t.status==='Active');
@@ -2804,12 +2924,13 @@ class AppRoot extends React.Component {
       okrClearSel:()=>this.setState({ okrSelected:[] }),
       okrBulkReviewer:this.okrBulkAct('Assigned reviewer to'), okrBulkOwner:this.okrBulkAct('Changed owner for'), okrBulkArchive:this.okrBulkAct('Archived'), okrBulkExport:this.okrBulkAct('Exported'),
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
-      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrForm:{ title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' } }); else this.flash('Only Managers and Admin can create OKRs.'); },
+      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO' } }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false }),
       okrForm:this.state.okrForm,
       okrSetTitle:e=>this.setState({ okrForm:{...this.state.okrForm, title:e.target.value} }),
       okrSetDesc:e=>this.setState({ okrForm:{...this.state.okrForm, desc:e.target.value} }),
       okrSetOwner:e=>this.setState({ okrForm:{...this.state.okrForm, owner:e.target.value} }),
+      okrOwnerOptions:(this.state.users||[]).map(u=>u.name),
       okrSetDept:e=>this.setState({ okrForm:{...this.state.okrForm, dept:e.target.value} }),
       okrSetBrand:e=>this.setState({ okrForm:{...this.state.okrForm, brand:e.target.value} }),
       saveOkr:()=>this._saveOkr(true, wOk, wTotal, list.length, rk),
@@ -2825,6 +2946,40 @@ class AppRoot extends React.Component {
     };
   }
 
+  RECORDS_SEED(kind){
+    const seeds = {
+      projects: [
+        ['Pubrica SEO program','12-month retainer','SEO · Aditi Rao','On track'],
+        ['Food Research Lab — content','Editorial retainer','Content · Karan Shah','In progress'],
+        ['Statswork website rebuild','Landing pages','Web Dev · Web team','At risk'],
+        ['PepCreations launch','Nutraceutical','Cross-dept · Priya Nair','Planned'],
+        ['Tutors India local SEO','Local search','SEO · Sameer Iyer','On track'],
+      ],
+      campaigns: [
+        ['Q3 SEO push — Pubrica','SEO Campaign','Live','Live'],
+        ['Reel series — Statswork','SMM Campaign','Live','Live'],
+        ['Whitepaper funnel — FRL','Content Campaign','Draft','Draft'],
+        ['Backlink outreach — Tutors','SEO Campaign','Scheduled','Scheduled'],
+      ],
+    };
+    return seeds[kind]||[];
+  }
+  // Single source of truth for Projects/Campaigns records (real Supabase-backed
+  // rows plus the demo seed rows), so any screen that needs to reference a
+  // project/campaign by name — like the Task creation form — stays in sync
+  // with what Projects/Campaigns actually shows.
+  recordsFor(kind){
+    const tuples = this.RECORDS_SEED(kind);
+    const seedRows = tuples.map((r,idx)=>{
+      const key=kind+'#seed#'+idx;
+      const ov=(this.state.recordOverrides||{})[key];
+      if(ov && ov.deleted) return null;
+      return { key, name:ov&&ov.name!=null?ov.name:r[0], type:ov&&ov.type!=null?ov.type:r[1], owner:ov&&ov.owner!=null?ov.owner:r[2], status:ov&&ov.status!=null?ov.status:r[3], isReal:false };
+    }).filter(Boolean);
+    const addedRows = (this.state.recordsAdded||[]).filter(r=>r.kind===kind && !r.deleted)
+      .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true }));
+    return addedRows.concat(seedRows);
+  }
   tableData(route, rk, lvl, readOnly){
     const canEdit = this.EDIT_LEVELS.includes(lvl);
     const tag=(t,tone)=>({tag:t,tagBg:{ok:'var(--verify-100)',warn:'var(--warn-100)',info:'var(--info-100)',draft:'var(--surface-50)'}[tone],tagColor:{ok:'var(--verify-600)',warn:'var(--warn-600)',info:'var(--info-600)',draft:'var(--ink-500)'}[tone]});
@@ -2850,35 +3005,18 @@ class AppRoot extends React.Component {
     const editor = (m)=>()=>this.flash(m);
 
     const statusTone=(s)=>({'On track':'ok','Live':'ok','In progress':'info','Scheduled':'info','Planned':'info','At risk':'warn','Draft':'draft'}[s]||'info');
-    const seedRows=(kind, tuples)=> tuples.map((r,idx)=>{
-      const key=kind+'#seed#'+idx;
-      const ov=(this.state.recordOverrides||{})[key];
-      if(ov && ov.deleted) return null;
-      return { key, name:ov&&ov.name!=null?ov.name:r[0], type:ov&&ov.type!=null?ov.type:r[1], owner:ov&&ov.owner!=null?ov.owner:r[2], status:ov&&ov.status!=null?ov.status:r[3], isReal:false };
-    }).filter(Boolean);
-    const addedRows=(kind)=> (this.state.recordsAdded||[]).filter(r=>r.kind===kind && !r.deleted)
-      .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true }));
     const editAction=(kind,row)=>()=>this.setState({ showRecordModal:true, recordKind:kind, recordEditKey:row.key, recordIsReal:row.isReal,
       recordForm:{ name:row.name, type:row.type==='—'?'':row.type, owner:row.owner==='—'?'':row.owner, status:row.status } });
+    const linkedTasks=(name)=>this.allTasks().filter(t=>t.project===name||t.campaign===name).length;
+    const linkedSub=(name)=>{ const n=linkedTasks(name); return n+' linked task'+(n===1?'':'s'); };
     if(route==='projects'){
-      const rows = scoped(addedRows('projects').concat(seedRows('projects', [
-        ['Pubrica SEO program','12-month retainer','SEO · Aditi Rao','On track'],
-        ['Food Research Lab — content','Editorial retainer','Content · Karan Shah','In progress'],
-        ['Statswork website rebuild','Landing pages','Web Dev · Web team','At risk'],
-        ['PepCreations launch','Nutraceutical','Cross-dept · Priya Nair','Planned'],
-        ['Tutors India local SEO','Local search','SEO · Sameer Iyer','On track'],
-      ])));
-      return { tableCols:['Project','Type','Owner','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:'',c1:row.owner,...tag(row.status,statusTone(row.status)),c3:'',
+      const rows = scoped(this.recordsFor('projects'));
+      return { tableCols:['Project','Type','Status','Owner','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:linkedSub(row.name),c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
         ...act(canEdit?'Edit':'View', canEdit?editAction('projects',row):viewer, canEdit)})) };
     }
     if(route==='campaigns'){
-      const rows = scoped(addedRows('campaigns').concat(seedRows('campaigns', [
-        ['Q3 SEO push — Pubrica','SEO Campaign','Live','Live'],
-        ['Reel series — Statswork','SMM Campaign','Live','Live'],
-        ['Whitepaper funnel — FRL','Content Campaign','Draft','Draft'],
-        ['Backlink outreach — Tutors','SEO Campaign','Scheduled','Scheduled'],
-      ])));
-      return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:'',c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
+      const rows = scoped(this.recordsFor('campaigns'));
+      return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:linkedSub(row.name),c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
         ...act(canEdit?'Edit':'View', canEdit?editAction('campaigns',row):viewer, canEdit)})) };
     }
     if(route==='tasks'){
@@ -2918,17 +3056,26 @@ class AppRoot extends React.Component {
   }
 
   uf(k,e){ this.setState({ uf:{...this.state.uf,[k]:e.target.value} }); }
-  async submitUser(){
+  submitUser(){
     const f=this.state.uf;
     if(!f.first.trim()||!f.email.trim()){ this.flash('First name and email are required.'); return; }
+    const roleEntry=Object.entries(this.ROLES).find(([,r])=>r.label===f.role);
+    const roleKey=roleEntry?roleEntry[0]:'junior';
+    if(this.HIGH_PRIVILEGE_ROLES.includes(roleKey)){
+      this.setState({ showRoleConfirm:true, roleConfirmKey:roleKey, roleConfirmAction:'add' });
+      return;
+    }
+    this._createUser(roleKey);
+  }
+  async _createUser(roleKey){
+    const f=this.state.uf;
     const name=(f.first+' '+f.last).trim();
     const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn' };
     this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive' } });
-    const roleKey=Object.entries(this.ROLES).find(([,r])=>r.label===f.role);
     try{
       const resp=await fetch('/api/invite-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey:roleKey?roleKey[0]:'junior', department:f.dept, designation:f.designation }),
+        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation }),
       });
       const body=await resp.json();
       if(!resp.ok) throw new Error(body.error||'Invite failed');
@@ -2938,6 +3085,13 @@ class AppRoot extends React.Component {
       this.flash('Could not send invite ('+err.message+'). The user still appears locally.');
     }
   }
+  confirmRoleAssignment(){
+    const { roleConfirmKey, roleConfirmAction } = this.state;
+    this.setState({ showRoleConfirm:false, roleConfirmKey:null, roleConfirmAction:null });
+    if(roleConfirmAction==='add') this._createUser(roleConfirmKey);
+    else if(roleConfirmAction==='manage') this._applyManageUser(roleConfirmKey);
+  }
+  cancelRoleAssignment(){ this.setState({ showRoleConfirm:false, roleConfirmKey:null, roleConfirmAction:null }); }
 
   pwStrength(){
     const p=this.state.newPass; let s=0;
@@ -2978,13 +3132,7 @@ class AppRoot extends React.Component {
       this.setState({ authBusy:false });
       return;
     }
-    // Fall back to the built-in demo accounts (no real Supabase user needed).
-    const r=this.DEMO[em];
-    if(r && pw==='demo123'){
-      this.setState({ screen:'app', roleKey:r, route:'dashboard', loginError:'', authBusy:false, authUser:null, authProfile:null });
-    } else {
-      this.setState({ loginError: error ? error.message : 'Invalid credentials. Pick a demo account below to sign in.', authBusy:false });
-    }
+    this.setState({ loginError: error ? error.message : 'Invalid credentials.', authBusy:false });
   }
 
   async _loadProfile(user){
