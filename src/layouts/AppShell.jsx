@@ -16,6 +16,8 @@ import MastersHubSection from '../components/sections/MastersHubSection.jsx';
 import MasterDetailSection from '../components/sections/MasterDetailSection.jsx';
 import MyKpisSection from '../components/sections/MyKpisSection.jsx';
 import MyProfileSection from '../components/sections/MyProfileSection.jsx';
+import CampaignsSection from '../components/sections/CampaignsSection.jsx';
+import MessagesSection from '../components/sections/MessagesSection.jsx';
 import OkrSection from '../components/sections/OkrSection.jsx';
 import ContentIdeaQcDrawer from '../components/drawers/ContentIdeaQcDrawer.jsx';
 import TaskTemplateFormDrawer from '../components/drawers/TaskTemplateFormDrawer.jsx';
@@ -37,6 +39,9 @@ import MasterRecordSlideOver from '../components/drawers/MasterRecordSlideOver.j
 import NewPageForm from '../components/drawers/NewPageForm.jsx';
 import ContentPageDetailDrawer from '../components/drawers/ContentPageDetailDrawer.jsx';
 import OkrCreatePanel from '../components/drawers/OkrCreatePanel.jsx';
+import CampaignDetailDrawer from '../components/drawers/CampaignDetailDrawer.jsx';
+import CreateCampaignModal from '../components/drawers/CreateCampaignModal.jsx';
+import NewThreadModal from '../components/drawers/NewThreadModal.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -94,6 +99,18 @@ export default function AppShell({ vm }) {
 
 
 <MyProfileSection vm={vm} />
+
+
+{/* CAMPAIGNS */}
+
+
+<CampaignsSection vm={vm} />
+
+
+{/* MESSAGES */}
+
+
+<MessagesSection vm={vm} />
 
 
         
@@ -325,6 +342,14 @@ export default function AppShell({ vm }) {
 
 
 <OkrCreatePanel vm={vm} />
+
+
+{/* CAMPAIGN DETAIL & CREATE/EDIT */}
+
+
+<CampaignDetailDrawer vm={vm} />
+<CreateCampaignModal vm={vm} />
+<NewThreadModal vm={vm} />
 
 
 

@@ -111,20 +111,12 @@ Description
         
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px"}}>
 
-          
-<div>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Project
-</label>
-<select value={tkf.project} onChange={tkSetProject} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-{(tkProjectOptions || []).map((o, $index) => (
-<React.Fragment key={$index}>
-<option value={o}>
-{o}
-</option>
-</React.Fragment>
-))}
-</select>
+
+{/* Projects module was retired in favor of Campaigns — field kept
+    (not rendered) so existing tasks that still reference a project
+    by name don't lose that data. */}
+<div style={{"display":"none"}}>
+<input value={tkf.project} onInput={tkSetProject} />
 </div>
 
 

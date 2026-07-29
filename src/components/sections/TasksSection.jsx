@@ -1,15 +1,29 @@
 import React from 'react';
 import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
+import TimeReportSection from './TimeReportSection.jsx';
+import ContentCalendarSection from './ContentCalendarSection.jsx';
 
 export default function TasksSection({ vm }) {
-  const { showTasks2, tkFilterActive, tkFilterOptions, tkFilterVal, tkHasPending, tkHasQueue, tkHasToday, tkNext, tkNextStyle, tkNote, tkOnFilter, tkPageLabel, tkPeriodBtns, tkPeriodLabel, tkPrev, tkPrevStyle, tkQueuePending, tkQueueToday, tkRows, tkStats, tkSubFilters, tkWeek } = vm;
+  const { showTasks2, tkTabList, tkTabTime, tkTabCal, tkSegListStyle, tkSegTimeStyle, tkSegCalStyle, tkShowList, tkShowTime, tkShowCal, tkFilterActive, tkFilterOptions, tkFilterVal, tkHasPending, tkHasQueue, tkHasToday, tkNext, tkNextStyle, tkNote, tkOnFilter, tkPageLabel, tkPeriodBtns, tkPeriodLabel, tkPrev, tkPrevStyle, tkQueuePending, tkQueueToday, tkRows, tkStats, tkSubFilters, tkWeek } = vm;
   return (
     <React.Fragment>
 {Boolean(showTasks2) && (
 <React.Fragment>
 
-          
+<div style={{"display":"inline-flex","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"3px","marginBottom":"16px"}}>
+<button onClick={tkShowList} style={cssTextToObject(tkSegListStyle)}><Icon name="list-checks" style={{"width":"15px","height":"15px"}} />Task list</button>
+<button onClick={tkShowTime} style={cssTextToObject(tkSegTimeStyle)}><Icon name="timer" style={{"width":"15px","height":"15px"}} />Time &amp; effort report</button>
+<button onClick={tkShowCal} style={cssTextToObject(tkSegCalStyle)}><Icon name="calendar-days" style={{"width":"15px","height":"15px"}} />Content calendar</button>
+</div>
+
+<TimeReportSection vm={vm} />
+<ContentCalendarSection vm={vm} />
+
+{Boolean(tkTabList) && (
+<React.Fragment>
+
+
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"10px"}}>
 
             
@@ -430,10 +444,13 @@ Next
             
 </div>
 
-          
+
 </div>
 
-        
+</React.Fragment>
+)}
+
+
 </React.Fragment>
 )}
     </React.Fragment>

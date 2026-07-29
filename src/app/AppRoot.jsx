@@ -24,6 +24,10 @@ class AppRoot extends React.Component {
     recordsAdded: [], showRecordModal: false, recordKind: 'projects',
     recordForm: { name:'', type:'', owner:'', status:'On track' },
     recordOverrides: {}, recordEditKey: null, recordIsReal: false,
+    cmpFilters: {status:'All',type:'All',dept:'All'}, cmpOpen: null, cmpTab: 'overview',
+    cmpNew: false, cmpEditId: null, cmpForm: {}, cmpSection: 'cmpA', cmpEffExpanded: [],
+    thOpen: null, thAdded: {}, thNew: [], thForm: null, msgDraft: '', msgFiles: [], msgLink: null,
+    tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
     showManageUserModal: false, manageUserIndex: null, manageUserForm: null,
     showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
@@ -77,11 +81,11 @@ class AppRoot extends React.Component {
 
   ACCESS = {
     dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All' },
-    projects:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
     campaigns:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Assign & monitor', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
     tasks:{ ceo:'Full', coo:'View', manager:'All', team_lead:'Assign / edit', senior:'Update own', junior:'Update own', qc:'QC tasks', admin:'Full' },
     templates:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full' },
+    messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full' },
     effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
     qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
@@ -119,11 +123,11 @@ class AppRoot extends React.Component {
   }
   MODMETA = {
     dashboard:{ label:'Dashboard', icon:'layout-dashboard' },
-    projects:{ label:'Projects', icon:'folder-kanban' },
     campaigns:{ label:'Campaigns', icon:'megaphone' },
     tasks:{ label:'Tasks', icon:'list-checks' },
     templates:{ label:'Templates', icon:'layout-template' },
     files:{ label:'Document Repository', icon:'folder-open' },
+    messages:{ label:'Messages', icon:'message-square' },
     qc:{ label:'QC Review', icon:'shield-check' },
     okr:{ label:'OKR & KPI', icon:'target' },
     effort:{ label:'Effort Planner', icon:'gauge' },
@@ -453,6 +457,413 @@ class AppRoot extends React.Component {
     return rel.none!=null ? [{ value:rel.none, label:rel.none }].concat(opts) : opts;
   }
 
+  // ============ Campaigns (redesigned — replaces the old Projects module) ============
+  // Campaign → linked KPIs → effort lines → tasks: a campaign sets the goal and
+  // audience, its KPIs become measurable targets, effort lines set the output
+  // volume, and the Effort Planner generates the assignable tasks.
+  CAMPAIGNS_SEED(){
+    if(this._campaigns) return this._campaigns;
+    this._campaigns = [
+      { id:'CMP-101', name:'Q3 SEO push — Pubrica', type:'SEO Campaign', status:'Live', brand:'Pubrica', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026',
+        start:'Jul 1, 2026', end:'Sep 30, 2026', owner:'Aditi Rao', budget:'₹6,00,000', spend:'₹3,40,000',
+        goal:'Grow organic, non-branded traffic to service pages and convert visits into qualified demo requests.',
+        countries:'India, USA, UK', industries:'Healthcare, Life Sciences', audience:'Research heads, publication managers', persona:'Director of Research Operations', companySize:'50–500 employees',
+        kpis:[
+          { kpi:'Organic Sessions', target:'100000', current:'68000', unit:'visitors', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[{kind:'Internal',url:'/services/cloud-migration',title:'Cloud Migration Services',contrib:'+18,000 sessions'}] },
+          { kpi:'Keywords in Top 10', target:'50', current:'34', unit:'keywords', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[] },
+        ],
+        efforts:[
+          { name:'On-page SEO — Content Writer', qty:'12', unit:'pages', cadence:'12 /month', division:'Content Writer', owner:'Karan Shah', kpi:'Organic Sessions', tasks:'12', tasksDone:'8', mode:'direct', driverKpi:'Organic Sessions', perUnit:'450', conv:'6' },
+          { name:'Backlink outreach — SEO', qty:'20', unit:'links', cadence:'20 /month', division:'SEO', owner:'Aditi Rao', kpi:'Keywords in Top 10', tasks:'20', tasksDone:'11', mode:'enabler', driverKpi:'Domain Authority', gate:'65', gateCurrent:'62', gateMet:false },
+        ],
+        team:[{who:'Aditi Rao',role:'Campaign Owner'},{who:'Sameer Iyer',role:'SEO Executive'},{who:'Karan Shah',role:'Content Lead'}],
+        taskCount:32, taskDone:19, outcomeKpi:'Organic Sessions', outcomeUnit:'visitors', outcomeTarget:100000, outcomeCurrent:68000,
+      },
+      { id:'CMP-102', name:'Reel series — Statswork', type:'SMM Campaign', status:'Live', brand:'Statswork', dept:'SMM', objective:'Brand Awareness', cycle:'Q3 2026',
+        start:'Jul 15, 2026', end:'Sep 15, 2026', owner:'Priya Nair', budget:'₹2,50,000', spend:'₹1,10,000',
+        goal:'Build short-form video presence across Instagram and LinkedIn to lift brand recall among academic researchers.',
+        countries:'India, UK, Australia', industries:'Education, Research', audience:'PhD scholars, research students', persona:'Research Scholar', companySize:'N/A — individual researchers',
+        kpis:[ { kpi:'Social Impressions', target:'500000', current:'180000', unit:'impressions', okrCode:'OKR-SMM-Q1-004', okrTitle:'Grow Social Engagement 3×', pages:[] } ],
+        efforts:[ { name:'Reel production — Graphics', qty:'16', unit:'reels', cadence:'16 /month', division:'Graphics', owner:'Neha Verma', kpi:'Social Impressions', tasks:'16', tasksDone:'9', mode:'direct', driverKpi:'Social Impressions', perUnit:'8500', conv:'100' } ],
+        team:[{who:'Priya Nair',role:'Campaign Owner'},{who:'Neha Verma',role:'Design Executive'}],
+        taskCount:16, taskDone:9, outcomeKpi:'Social Impressions', outcomeUnit:'impressions', outcomeTarget:500000, outcomeCurrent:180000,
+      },
+      { id:'CMP-103', name:'Whitepaper funnel — FRL', type:'Content Campaign', status:'Draft', brand:'Food Research Lab', dept:'Content', objective:'Lead Generation', cycle:'Q4 2026',
+        start:'Oct 1, 2026', end:'Dec 31, 2026', owner:'Karan Shah', budget:'₹3,20,000', spend:'₹0',
+        goal:'Publish a gated whitepaper on food-safety compliance and drive qualified downloads via organic and email.',
+        countries:'UK, EU', industries:'Food & Beverage', audience:'Compliance managers, QA heads', persona:'Head of Quality Assurance', companySize:'200–2000 employees',
+        kpis:[ { kpi:'Content Published', target:'30', current:'13', unit:'articles', okrCode:'OKR-CNT-Q1-002', okrTitle:'Launch 30 High-Quality Content Pieces', pages:[] } ],
+        efforts:[ { name:'Whitepaper drafting — Content Writer', qty:'1', unit:'whitepaper', cadence:'1 /quarter', division:'Content Writer', owner:'Karan Shah', kpi:'Content Published', tasks:'6', tasksDone:'2', mode:'direct', driverKpi:'Content Published', perUnit:'1', conv:'100' } ],
+        team:[{who:'Karan Shah',role:'Campaign Owner'}],
+        taskCount:6, taskDone:2, outcomeKpi:'Content Published', outcomeUnit:'articles', outcomeTarget:30, outcomeCurrent:13,
+      },
+      { id:'CMP-104', name:'Backlink outreach — Tutors', type:'SEO Campaign', status:'Scheduled', brand:'Tutors India', dept:'SEO', objective:'Domain Authority', cycle:'Q4 2026',
+        start:'Oct 15, 2026', end:'Nov 30, 2026', owner:'Sameer Iyer', budget:'₹1,80,000', spend:'₹0',
+        goal:'Secure high-authority editorial backlinks to lift domain rating ahead of the Q1 local-SEO push.',
+        countries:'India', industries:'Education', audience:'Local students, parents', persona:'Parent researching tutoring services', companySize:'N/A',
+        kpis:[ { kpi:'Referring Domains', target:'200', current:'135', unit:'backlinks', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[] } ],
+        efforts:[ { name:'Outreach — SEO', qty:'15', unit:'links', cadence:'15 /month', division:'SEO', owner:'Sameer Iyer', kpi:'Referring Domains', tasks:'15', tasksDone:'0', mode:'direct', driverKpi:'Referring Domains', perUnit:'1', conv:'100' } ],
+        team:[{who:'Sameer Iyer',role:'Campaign Owner'}],
+        taskCount:15, taskDone:0, outcomeKpi:'Referring Domains', outcomeUnit:'backlinks', outcomeTarget:200, outcomeCurrent:135,
+      },
+    ];
+    return this._campaigns;
+  }
+  allCampaigns(){ return this.CAMPAIGNS_SEED(); }
+  cmpNum(v){ if(v==null||v==='') return 0; const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
+  cmpProgress(c){
+    const rows=(c.kpis||[]).map(k=>{ const t=this.cmpNum(k.target); return t?Math.min(100,Math.round(this.cmpNum(k.current)/t*100)):0; });
+    return rows.length?Math.round(rows.reduce((s,x)=>s+x,0)/rows.length):0;
+  }
+  cmpKpiPool(){
+    const okrs = this.OKR_DATA().concat(this.state.okrAdded||[]);
+    const out=[];
+    okrs.forEach(o=>(o.krs||[]).forEach(k=>{
+      out.push({ key:o.code+'::'+k.kpi, kpi:k.kpi, unit:k.unit, target:k.target, current:k.current, okrId:o.id, okrCode:o.code, okrTitle:o.title, freq:k.freq });
+    }));
+    return out;
+  }
+  cmpEffortPool(){
+    const kpiPool=this.cmpKpiPool();
+    const out=[];
+    this.allEpPlans().forEach(p=>{
+      (p.rows||[]).forEach(r=>{
+        const k=kpiPool.find(x=>x.kpi&&r.kpiId&&this.epKpiPool().some(e=>e.id===r.kpiId&&e.kpi===x.kpi));
+        const kpiName=k?k.kpi:((this.epKpiPool().find(e=>e.id===r.kpiId)||{}).kpi||'');
+        const tasks=this.allTasks().filter(t=>t.template===r.type||t.name===r.type);
+        out.push({ key:p.id+' :: '+r.type,
+          name:r.type, planId:p.id, planName:p.name, division:p.division, dept:p.dept, owner:p.owner,
+          qty:String(r.monthly), unit:r.unit, cadence:Math.round(r.monthly/(r.days||1))+' /day · '+r.monthly+' /'+(p.type==='Monthly'?'month':'cycle'),
+          kpiId:r.kpiId||'', kpi:kpiName, tasks:String(r.days||r.monthly), tasksDone:String(tasks.filter(t=>['Approved','Closed'].includes(t.status)).length),
+          label:r.type+' — '+p.division+' · '+r.monthly+' '+r.unit+(kpiName?(' → '+kpiName):' (effort only)')+' · '+p.id });
+      });
+    });
+    return out;
+  }
+  cmpOutcomeModel(c){
+    const n=(v)=>this.cmpNum(v);
+    const fmt=(v)=>Math.round(v).toLocaleString('en-IN');
+    const target=n(c.outcomeTarget), current=n(c.outcomeCurrent);
+    const rows=(c.efforts||[]).map(e=>{
+      const qty=n(e.qty), tasks=n(e.tasks)||qty, done=n(e.tasksDone);
+      const taskPct=tasks?Math.round(done/tasks*100):0;
+      if(e.mode==='enabler'){
+        return { ...e, isEnabler:true, isDirect:false,
+          chain:qty+' '+e.unit+' → '+e.driverKpi+' '+e.gate,
+          projected:'—', projectedNum:0, delivered:'—',
+          gateLabel:(e.gateMet?'Met':'Not met')+' · now '+e.gateCurrent+' (needs '+e.gate+')',
+          gateBg:e.gateMet?'var(--verify-100)':'var(--warn-100)', gateColor:e.gateMet?'var(--verify-600)':'var(--warn-600)',
+          tasksLabel:done+' / '+tasks+' tasks', taskPctW:taskPct+'%', taskPct:taskPct+'%',
+          taskColor:taskPct>=70?'var(--verify-500)':taskPct>=40?'var(--warn-500)':'var(--danger-500)',
+          note:'Quality gate — unlocks the direct lines above; contributes no '+c.outcomeUnit+' on its own.' };
+      }
+      const perUnit=n(e.perUnit), conv=n(e.conv);
+      const reach=qty*perUnit, projected=reach*(conv/100), delivered=(done/(tasks||1))*projected;
+      return { ...e, isEnabler:false, isDirect:true,
+        chain:qty+' '+e.unit+' × '+fmt(perUnit)+' '+(e.driverKpi||'').toLowerCase().replace(/ per .*/,'')+' × '+e.conv+'% = '+fmt(projected)+' '+c.outcomeUnit,
+        reach:fmt(reach), projected:fmt(projected)+' '+c.outcomeUnit, projectedNum:projected,
+        delivered:fmt(delivered)+' '+c.outcomeUnit,
+        tasksLabel:done+' / '+tasks+' tasks', taskPctW:taskPct+'%', taskPct:taskPct+'%',
+        taskColor:taskPct>=70?'var(--verify-500)':taskPct>=40?'var(--warn-500)':'var(--danger-500)',
+        note:e.division+' · '+e.owner+' — '+tasks+' tasks generated from this effort target.' };
+    });
+    const planned=rows.reduce((s,r)=>s+r.projectedNum,0);
+    const gap=planned-target;
+    const gapOk=gap>=0;
+    const blockers=rows.filter(r=>r.isEnabler&&!r.gateMet);
+    return { rows, target, current,
+      outcomeKpi:c.outcomeKpi||'Outcome', outcomeUnit:c.outcomeUnit||'',
+      targetLabel:fmt(target)+' '+(c.outcomeUnit||''),
+      currentLabel:fmt(current)+' '+(c.outcomeUnit||''),
+      plannedLabel:fmt(planned)+' '+(c.outcomeUnit||''),
+      currentPctW:Math.min(100,Math.round(current/(target||1)*100))+'%',
+      plannedPctW:Math.min(100,Math.round(planned/(target||1)*100))+'%',
+      gapLabel:(gapOk?'Plan covers target with +':'Plan short by ')+fmt(Math.abs(gap))+' '+(c.outcomeUnit||''),
+      gapBg:gapOk?'var(--verify-100)':'var(--danger-100, #F7E3E6)', gapColor:gapOk?'var(--verify-600)':'var(--danger-600)',
+      blockerLabel:blockers.length?(blockers.length+' quality gate'+(blockers.length===1?'':'s')+' not met — '+blockers.map(b=>b.driverKpi).join(', ')):'All quality gates met',
+      blockerBg:blockers.length?'var(--warn-100)':'var(--verify-100)', blockerColor:blockers.length?'var(--warn-600)':'var(--verify-600)',
+      hasBlockers:blockers.length>0 };
+  }
+  cmpStatusTone(s){ return {Live:{bg:'var(--verify-100)',c:'var(--verify-600)'},Planning:{bg:'var(--info-100)',c:'var(--info-600)'},Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},Paused:{bg:'var(--warn-100)',c:'var(--warn-600)'},Scheduled:{bg:'var(--info-100)',c:'var(--info-600)'},Completed:{bg:'var(--orchid-100)',c:'var(--orchid-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  campaignsView(){
+    const rk=this.state.roleKey;
+    const lvl=(this.ACCESS.campaigns&&this.ACCESS.campaigns[rk])||'No access';
+    const canEdit=this.EDIT_LEVELS.includes(lvl);
+    const me=this.currentPerson();
+    const own=['senior','junior'].includes(rk);
+    const F=this.state.cmpFilters||{status:'All',type:'All',dept:'All'};
+    const setF=(k)=>(e)=>this.setState({ cmpFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),cmp:0} });
+    let all=this.allCampaigns();
+    if(own) all=all.filter(c=>(c.team||[]).some(t=>t.who===me));
+    const tone=(s)=>this.cmpStatusTone(s);
+    const list=all.filter(c=> (F.status==='All'||c.status===F.status) && (F.type==='All'||c.type===F.type) && (F.dept==='All'||c.dept===F.dept) );
+    const pg=this.pgData('cmp',list.map(c=>{ const t=tone(c.status); const p=this.cmpProgress(c);
+      return { ...c, statusBg:t.bg, statusColor:t.c, progress:p+'%', progressW:p+'%',
+        progressColor:p>=70?'var(--verify-500)':p>=40?'var(--warn-500)':'var(--danger-500)',
+        kpiCount:(c.kpis||[]).length+' KPIs', effortCount:(c.efforts||[]).length+' effort lines', taskLabel:c.taskDone+' / '+c.taskCount+' tasks done',
+        teamNames:(c.team||[]).map(x=>x.who).join(', '), teamSize:String((c.team||[]).length),
+        dates:c.start+' → '+c.end,
+        open:()=>this.setState({ cmpOpen:c.id, cmpTab:'overview' }),
+        edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('Only Managers and Admin can edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
+      }; }),6);
+    const K=(label,value,color)=>({label,value,color});
+    const stats=[K('Campaigns',String(all.length),'var(--beet-700)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>['Planning','Draft','Scheduled'].includes(c.status)).length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
+    const out={ cmpStats:stats, cmpRows:pg.rows, cmpPg:pg, cmpCanEdit:canEdit, cmpEmpty:list.length===0, cmpOwnNote:own,
+      cmpFilterDefs:[
+        {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Scheduled','Completed']},
+        {label:'Type',value:F.type,onChange:setF('type'),options:['All','SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']},
+        {label:'Department',value:F.dept,onChange:setF('dept'),options:['All','SEO','Content','SMM','Web Development','Design']},
+      ],
+      cmpReset:()=>this.setState({ cmpFilters:{status:'All',type:'All',dept:'All'} }),
+    };
+    Object.assign(out, this.cmpDetailData(tone), this.cmpFormData());
+    return out;
+  }
+  cmpDetailData(tone){
+    const id=this.state.cmpOpen; if(!id) return { cmpDrawerOpen:false };
+    const c=this.allCampaigns().find(x=>x.id===id); if(!c) return { cmpDrawerOpen:false };
+    const t=tone(c.status); const p=this.cmpProgress(c);
+    const tab=this.state.cmpTab||'overview';
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:none;background:'+(on?'#fff':'transparent')+';color:'+(on?'var(--beet-700)':'var(--ink-500)')+';box-shadow:'+(on?'var(--shadow-sm)':'none');
+    return {
+      cmpDrawerOpen:true,
+      cmpD:{ ...c, statusBg:t.bg, statusColor:t.c, progress:p+'%', progressW:p+'%', progressColor:p>=70?'var(--verify-500)':p>=40?'var(--warn-500)':'var(--danger-500)', dates:c.start+' → '+c.end, taskLabel:c.taskDone+' / '+c.taskCount },
+      cmpClose:()=>this.setState({ cmpOpen:null }),
+      cmpStop:(e)=>e.stopPropagation(),
+      cmpTabOverview:tab==='overview', cmpTabAudience:tab==='audience', cmpTabChain:tab==='chain', cmpTabTeam:tab==='team', cmpTabModel:tab==='model',
+      cmpSegOverview:seg(tab==='overview'), cmpSegAudience:seg(tab==='audience'), cmpSegChain:seg(tab==='chain'), cmpSegTeam:seg(tab==='team'), cmpSegModel:seg(tab==='model'),
+      cmpGoOverview:()=>this.setState({ cmpTab:'overview' }), cmpGoAudience:()=>this.setState({ cmpTab:'audience' }), cmpGoChain:()=>this.setState({ cmpTab:'chain' }), cmpGoTeam:()=>this.setState({ cmpTab:'team' }), cmpGoModel:()=>this.setState({ cmpTab:'model' }),
+      cmpModel:this.cmpOutcomeModel(c),
+      cmpMeta:[['Campaign ID',c.id],['Type',c.type],['Objective',c.objective],['Brand',c.brand],['Department',c.dept],['Cycle',c.cycle],['Start → End',c.start+' → '+c.end],['Owner',c.owner],['Budget',c.budget],['Spend to date',c.spend]],
+      cmpAudienceMeta:[['Target countries',c.countries],['Target industries',c.industries],['Target audience',c.audience],['Decision-making persona',c.persona],['Company size',c.companySize]],
+      cmpGoal:c.goal,
+      cmpKpiRows:(c.kpis||[]).map(k=>{ const pc=Math.round(Math.min(100,this.cmpNum(k.current)/(this.cmpNum(k.target)||1)*100));
+        const src=this.cmpKpiPool().find(x=>x.kpi===k.kpi&&x.okrCode);
+        const okrCode=k.okrCode||(src?src.okrCode:''), okrTitle=k.okrTitle||(src?src.okrTitle:'');
+        return { ...k, pct:pc+'%', pctW:pc+'%', pctColor:pc>=70?'var(--verify-500)':pc>=40?'var(--warn-500)':'var(--danger-500)',
+          okrLabel:okrCode?(okrCode+' · '+okrTitle):'No linked OKR', okrCode:okrCode,
+          pages:(k.pages||[]).filter(p=>p.url).map(p=>({ ...p, isExternal:p.kind==='External',
+            label:(p.title||p.url), sub:p.url+(p.contrib?(' · expected '+p.contrib):''),
+            icon:p.kind==='External'?'external-link':'file-text',
+            bg:p.kind==='External'?'var(--info-100)':'var(--orchid-100)', color:p.kind==='External'?'var(--info-600)':'var(--orchid-600)' })),
+          hasPages:(k.pages||[]).filter(p=>p.url).length>0,
+          openOkr:()=>{ const o=this.OKR_DATA().concat(this.state.okrAdded||[]).find(x=>x.code===okrCode); if(o) this.setState({ cmpOpen:null, route:'okr', okrOpen:o.id }); else this.flash('This KPI is not linked to an OKR yet.'); } }; }),
+      cmpEffortRows:c.efforts||[],
+      cmpTeamRows:(c.team||[]).map(x=>({ ...x, initials:x.who.split(' ').map(s=>s[0]).join('').slice(0,2) })),
+      cmpTaskLabel:c.taskDone+' of '+c.taskCount+' tasks completed',
+      cmpTaskPctW:Math.round((c.taskDone/(c.taskCount||1))*100)+'%',
+      cmpGoTasks:()=>this.setState({ route:'tasks', cmpOpen:null, tkFilter:c.name }),
+      cmpGoEffort:()=>this.setState({ route:'effort', cmpOpen:null, epView:'list' }),
+      cmpGoOkr:()=>this.setState({ route:'okr', cmpOpen:null }),
+    };
+  }
+  // Simplified vs. the source design: KPI/effort/team rows are plain manual
+  // fields here rather than auto-linking to Effort Planner pools and
+  // auto-counting tasks as you pick — that auto-link magic is deferred (see
+  // implementation report). The 6-section structure, validation-free
+  // add/remove rows, and section-jump nav all work as designed.
+  cmpFormData(){
+    const f=this.state.cmpForm||{};
+    const set=(k)=>(e)=>this.setState({ cmpForm:{...f,[k]:e.target.value} });
+    const sec=this.state.cmpSection||'cmpA';
+    const sections=[['cmpA','A','Campaign basics'],['cmpB','B','Goal & scope'],['cmpC','C','Target audience'],['cmpD','D','Linked KPIs'],['cmpE','E','Effort lines'],['cmpF','F','Campaign team']];
+    const rowset=(key,blank,fields)=>{ const arr=f[key]||[blank];
+      return { rows:arr.map((r,i)=>({ i, ...r,
+          ...Object.fromEntries(fields.map(field=>[ 'set'+field.charAt(0).toUpperCase()+field.slice(1),
+            (e)=>{ const a=arr.map((x,j)=>j===i?{...x,[field]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); } ])),
+          remove:()=>{ const a=arr.slice(); a.splice(i,1); this.setState({ cmpForm:{...f,[key]:a.length?a:[blank]} }); },
+          canRemove:arr.length>1 })),
+        add:()=>this.setState({ cmpForm:{...f,[key]:[...arr,blank]} }) }; };
+    const kpis=rowset('kpis',{kpi:'',target:'',current:'0',unit:''},['kpi','target','current','unit']);
+    const efforts=rowset('efforts',{name:'',qty:'',unit:'',cadence:'',mode:'direct'},['name','qty','unit','cadence','mode']);
+    const team=rowset('team',{who:'',role:''},['who','role']);
+    return {
+      cmpFormOpen:this.state.cmpNew,
+      cmpf:f,
+      cmpFormTitle:this.state.cmpEditId?'Edit campaign':'Create new campaign',
+      cmpFormCode:this.state.cmpEditId||('CMP-'+String(100+this.allCampaigns().length+1).slice(-3)),
+      cmpFormSaveLabel:this.state.cmpEditId?'Save changes':'Create campaign',
+      cmpFormClose:()=>this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} }),
+      cmpCanDelete:!!this.state.cmpEditId,
+      cmpFormDelete:()=>this._deleteCampaign(),
+      cmpFormSave:()=>this._saveCampaign(),
+      cmpSections:sections.map(([id,letter,name])=>({ letter, name, active:sec===id,
+        go:(e)=>{ if(e)e.preventDefault(); this.setState({ cmpSection:id }); },
+        badgeBg:sec===id?'var(--beet-700)':'var(--surface-50)', badgeColor:sec===id?'#fff':'var(--ink-500)' })),
+      cmpSetName:set('name'), cmpSetType:set('type'), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
+      cmpSetCountries:set('countries'), cmpSetIndustries:set('industries'), cmpSetAudience:set('audience'), cmpSetPersona:set('persona'), cmpSetCompanySize:set('companySize'),
+      cmpPeopleNames:(this.state.users||[]).map(u=>u.name),
+      cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
+      cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortEmpty:(f.efforts||[]).length===0,
+      cmpTeamForm:team.rows, cmpAddTeam:team.add,
+    };
+  }
+  _saveCampaign(){
+    const f=this.state.cmpForm||{};
+    if(!f.name||!f.name.trim()){ this.flash('Enter a campaign name.'); return; }
+    const all=this.allCampaigns();
+    if(this.state.cmpEditId){
+      const idx=all.findIndex(c=>c.id===this.state.cmpEditId);
+      if(idx>-1) all[idx] = {...all[idx], ...f, id:this.state.cmpEditId};
+      this.flash('Campaign "'+f.name+'" updated.');
+    } else {
+      const id='CMP-'+String(100+all.length+1).slice(-3);
+      const firstKpi=(f.kpis||[])[0];
+      all.unshift({ id, taskCount:0, taskDone:0, spend:'₹0',
+        outcomeKpi:firstKpi?firstKpi.kpi:'Outcome', outcomeUnit:firstKpi?firstKpi.unit:'',
+        outcomeTarget:firstKpi?this.cmpNum(firstKpi.target):0, outcomeCurrent:firstKpi?this.cmpNum(firstKpi.current):0,
+        ...f, kpis:f.kpis||[], efforts:f.efforts||[], team:f.team||[] });
+      this.flash('Campaign "'+f.name+'" created.');
+    }
+    this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} });
+  }
+  _deleteCampaign(){
+    const all=this.allCampaigns();
+    const idx=all.findIndex(c=>c.id===this.state.cmpEditId);
+    if(idx>-1){ const name=all[idx].name; all.splice(idx,1); this.flash('Deleted campaign: '+name+'.'); }
+    this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} });
+  }
+
+  // ============ Messages (new module) ============
+  THREADS_SEED(){
+    if(this._threads) return this._threads;
+    this._threads = [
+      { id:'TH-001', kind:'channel', name:'#seo-team', members:['Aditi Rao','Sameer Iyer','Priya Nair'],
+        msgs:[
+          { id:'M1', who:'Priya Nair', role:'Manager', when:'Jul 28, 2026 · 09:12', text:'Backlink outreach numbers are behind plan this week — can we push harder on Pubrica?' },
+          { id:'M2', who:'Aditi Rao', role:'Team Lead', when:'Jul 28, 2026 · 09:20', text:'On it — I\'ll reassign two outreach slots to Sameer today.', taskId:'TSK-2061' },
+          { id:'M3', who:'Sameer Iyer', role:'Senior Executive', when:'Jul 28, 2026 · 10:05', text:'Picked those up. Sharing the prospect list I found for the enterprise cloud vertical.', files:['prospect-list-q3.csv'] },
+        ] },
+      { id:'TH-002', kind:'dm', name:'Karan Shah', members:['Karan Shah'],
+        msgs:[
+          { id:'M4', who:'Karan Shah', role:'Content Lead', when:'Jul 27, 2026 · 15:40', text:'Whitepaper draft for Food Research Lab is ready for review.', files:['whitepaper-draft-v2.pdf'] },
+          { id:'M5', who:'Karan Shah', role:'Content Lead', when:'Jul 27, 2026 · 15:41', text:'Let me know if the compliance section needs another pass before QC.' },
+        ] },
+      { id:'TH-003', kind:'channel', name:'#smm-content', members:['Neha Verma','Priya Nair'],
+        msgs:[
+          { id:'M6', who:'Neha Verma', role:'Junior Executive', when:'Jul 26, 2026 · 11:02', text:'Reel scripts for the Statswork series are drafted — should I create tasks for the shoot days?' },
+        ] },
+    ];
+    return this._threads;
+  }
+  allThreads(){
+    const added=(this.state.thAdded||{});
+    const base=this.THREADS_SEED().concat(this.state.thNew||[]);
+    return base.map(t=>({ ...t, msgs:[...t.msgs, ...(added[t.id]||[])] }));
+  }
+  messagesView(){
+    const rk=this.state.roleKey, me=this.currentPerson();
+    const threads=this.allThreads();
+    const curId=this.state.thOpen||threads[0].id;
+    const cur=threads.find(t=>t.id===curId)||threads[0];
+    const tasks=this.allTasks();
+    return {
+      msgThreads:threads.map(t=>{ const last=t.msgs[t.msgs.length-1]||{};
+        const active=t.id===cur.id;
+        return { id:t.id, name:t.name, isChannel:t.kind==='channel',
+          icon:t.kind==='channel'?'hash':'user',
+          preview:(last.who||'')+': '+String(last.text||'').slice(0,52)+'…',
+          when:String(last.when||'').split(' · ')[1]||'',
+          count:t.msgs.length+' message'+(t.msgs.length===1?'':'s'),
+          style:'display:flex;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid '+(active?'var(--orchid-300)':'transparent')+';background:'+(active?'var(--orchid-100)':'transparent'),
+          open:()=>this.setState({ thOpen:t.id }) }; }),
+      msgCurName:cur.name, msgCurIcon:cur.kind==='channel'?'hash':'user',
+      msgCurMembers:cur.members.join(', '),
+      msgRows:cur.msgs.map(m=>{ const linked=m.taskId&&tasks.find(t=>t.id===m.taskId);
+        const mine=m.who===me;
+        return { ...m, initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
+          bubbleBg:mine?'var(--orchid-100)':'var(--surface-50)',
+          avatarBg:mine?'var(--orchid-500)':'var(--beet-700)',
+          hasTask:!!linked,
+          taskLabel:linked?(linked.id+' · '+linked.name):'',
+          taskStatus:linked?linked.status:'',
+          taskBg:linked?this.tkTone(linked.status).bg:'', taskColor:linked?this.tkTone(linked.status).c:'',
+          taskKpi:linked?(linked.kpi||'Not linked'):'', taskEffort:linked?(linked.effortPlan||'No effort plan'):'',
+          hasFiles:(m.files||[]).length>0,
+          fileRows:(m.files||[]).map(n=>({ name:n,
+            icon:/\.(png|jpe?g|gif|webp|svg)$/i.test(n)?'image':(/\.(mp4|mov|webm)$/i.test(n)?'video':(/\.pdf$/i.test(n)?'file-text':'file')),
+            openRepo:()=>this.setState({ route:'files' }) })),
+          openTask:()=>this.setState({ route:'tasks', tkOpen:m.taskId }),
+          convert:()=>{
+            this.setState({ tkNew:true,
+              tkForm:{ template:'Custom task', name:String(m.text).slice(0,60), desc:'From '+cur.name+' — '+m.who+': "'+m.text+'"',
+                priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
+            this.flash('Creating a task from this message — link its effort plan and KPI to complete the chain.'); },
+          linkOpen:()=>this.setState({ msgLink:m.id }),
+          linkPicker:this.state.msgLink===m.id,
+          linkOptions:[{v:'',label:'— Select an existing task —'}].concat(tasks.map(t=>({ v:t.id, label:t.id+' · '+t.name }))),
+          linkPick:(e)=>{ const v=e.target.value; if(!v) return;
+            // Seed/new-thread messages are mutated in place (same pattern used
+            // for Master Data and Backlink rows); messages sent this session
+            // live in thAdded and get patched there instead.
+            const seedThread=this.THREADS_SEED().find(x=>x.id===cur.id) || (this.state.thNew||[]).find(x=>x.id===cur.id);
+            const seedMsg=seedThread && seedThread.msgs.find(x=>x.id===m.id);
+            if(seedMsg){ seedMsg.taskId=v; }
+            else {
+              const add={...(this.state.thAdded||{})};
+              add[cur.id]=(add[cur.id]||[]).map(x=>x.id===m.id?{...x,taskId:v}:x);
+              this.setState({ thAdded:add });
+            }
+            this.setState({ msgLink:null });
+            const t=tasks.find(x=>x.id===v); this.flash('Message linked to '+v+(t?(' — '+t.name):'')+'.'); },
+          linkCancel:()=>this.setState({ msgLink:null }) }; }),
+      msgDraft:this.state.msgDraft||'',
+      msgOnDraft:(e)=>this.setState({ msgDraft:e.target.value }),
+      msgDraftFiles:(this.state.msgFiles||[]).map((n,i)=>({ name:n,
+        icon:/\.(png|jpe?g|gif|webp|svg)$/i.test(n)?'image':(/\.(mp4|mov|webm)$/i.test(n)?'video':(/\.pdf$/i.test(n)?'file-text':'file')),
+        remove:()=>{ const a=(this.state.msgFiles||[]).slice(); a.splice(i,1); this.setState({ msgFiles:a }); } })),
+      msgHasFiles:(this.state.msgFiles||[]).length>0,
+      msgAttach:()=>{ const n='attachment-'+(Date.now()%10000)+'.pdf'; this.setState({ msgFiles:[...(this.state.msgFiles||[]),n] }); },
+      msgAttachImage:()=>{ const n='image-'+(Date.now()%10000)+'.png'; this.setState({ msgFiles:[...(this.state.msgFiles||[]),n] }); },
+      msgSend:()=>{ const txt=(this.state.msgDraft||'').trim();
+        const files=this.state.msgFiles||[];
+        if(!txt&&!files.length){ this.flash('Type a message or attach a file first.'); return; }
+        const id='M'+Date.now();
+        const now=new Date();
+        const msg={ id, who:me, role:this.ROLES[rk].label, when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt||'(attachment)', files };
+        const add={...(this.state.thAdded||{})}; add[cur.id]=[...(add[cur.id]||[]), msg];
+        this.setState({ thAdded:add, msgDraft:'', msgFiles:[] });
+        if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.'); },
+      msgCanAct:['manager','team_lead','admin','ceo'].includes(rk),
+      ...(()=>{ const nf=this.state.thForm;
+        const people=(this.state.users||[]).map(u=>u.name).filter(p=>p!==me);
+        const set=(k)=>(e)=>this.setState({ thForm:{...nf,[k]:e.target.value} });
+        return {
+          msgNewGroup:()=>this.setState({ thForm:{ kind:'channel', name:'', members:[], first:'' } }),
+          msgNewDm:()=>this.setState({ thForm:{ kind:'dm', name:'', members:[], first:'' } }),
+          thFormOpen:!!nf, thf:nf||{},
+          thIsChannel:!!nf&&nf.kind==='channel', thIsDm:!!nf&&nf.kind==='dm',
+          thFormTitle:nf?(nf.kind==='channel'?'New group':'New direct message'):'',
+          thClose:()=>this.setState({ thForm:null }),
+          thStop:(e)=>e.stopPropagation(),
+          thSetName:set('name'), thSetFirst:set('first'),
+          thKindBtns:['channel','dm'].map(k=>({ label:k==='channel'?'Group channel':'Direct message', active:!!nf&&nf.kind===k,
+            set:()=>this.setState({ thForm:{...nf, kind:k, members:[]} }) })),
+          thPeople:people.map(p=>{ const on=!!nf&&(nf.members||[]).includes(p);
+            return { name:p, initials:p.split(' ').map(s=>s[0]).join('').slice(0,2), on,
+              toggle:()=>{ const cur2=(nf.members||[]); const next=on?cur2.filter(x=>x!==p):(nf.kind==='dm'?[p]:[...cur2,p]);
+                this.setState({ thForm:{...nf, members:next} }); } }; }),
+          thMemberNote:nf?((nf.members||[]).length?((nf.members||[]).length+' member'+((nf.members||[]).length===1?'':'s')+' selected'+(nf.kind==='dm'?'':' — you are added automatically')):(nf.kind==='dm'?'Pick one person':'Pick the people for this group')):'',
+          thSave:()=>{
+            const k=nf.kind;
+            const mem=nf.members||[];
+            if(k==='dm'&&!mem.length){ this.flash('Pick the person to message.'); return; }
+            if(k==='channel'&&!(nf.name||'').trim()){ this.flash('Name the group.'); return; }
+            if(k==='channel'&&!mem.length){ this.flash('Add at least one member.'); return; }
+            const id='TH-'+String(100+threads.length+1).slice(-3);
+            const name=k==='channel'?('#'+String(nf.name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):mem[0];
+            const msgs=[];
+            if((nf.first||'').trim()){ const now=new Date();
+              msgs.push({ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
+                when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+                text:nf.first.trim() }); }
+            this.setState({ thNew:[{ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem, msgs }].concat(this.state.thNew||[]),
+              thForm:null, thOpen:id });
+            this.flash((k==='channel'?'Group ':'Conversation ')+name+' created.');
+          } }; })(),
+    };
+  }
+
   OKR_DATA(){
     return [
       { id:'1', code:'OKR-SEO-Q1-001', v:'v1.2', scope:'Organization', title:'Increase Organic Traffic by 50%', desc:'Drive significant growth in organic search visitors through SEO optimization.', owner:'Sarah Johnson', team:'+1', cycle:'Q1 2025', brand:'Food Research Lab', dept:'SEO', campaign:'Organic Growth Q1', category:'SEO', progress:68, due:'Mar 31, 2025', start:'Jan 1, 2025', daysLeft:15, cycleElapsed:75, status:'Active', weight:30, reviewer:'John Smith', approver:'Rahul Menon',
@@ -509,7 +920,7 @@ class AppRoot extends React.Component {
                  : 'background:transparent;color:rgba(255,255,255,.72);'),
       };
     });
-    const nav = buildNav(['dashboard','projects','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files']);
+    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages']);
     const adminNav = buildNav(['masters','users','config']);
     const hasAdmin = adminNav.length>0;
 
@@ -523,11 +934,11 @@ class AppRoot extends React.Component {
     // page head
     const PAGES = {
       dashboard:{ eyebrow:'Overview', icon:'layout-dashboard', title:this.dashTitle(role.bucket), sub:this.dashSub(role.bucket) },
-      projects:{ eyebrow:'Delivery', icon:'folder-kanban', title:'Projects', sub:'Client initiatives across brands and departments.', actionLabel:'New project', actionIcon:'plus' },
-      campaigns:{ eyebrow:'Delivery', icon:'megaphone', title:'Campaigns', sub:'Active marketing campaigns and their status.', actionLabel:'New campaign', actionIcon:'plus' },
+      campaigns:{ eyebrow:'Delivery', icon:'megaphone', title:'Campaigns', sub:'Goal → audience → KPIs → effort → tasks. Every campaign is team work with one accountable owner.', actionLabel:'New campaign', actionIcon:'plus' },
       tasks:{ eyebrow:'Execution', icon:'list-checks', title:'Tasks', sub:'Work items assigned across the team.', actionLabel:'Assign task', actionIcon:'plus' },
       templates:{ eyebrow:'Execution', icon:'layout-template', title:'Templates', sub:'Task, KPI & OKR Masters — reusable definitions to pull from everywhere.', actionLabel:{task:'New task template',kpi:'New KPI template',okr:'New OKR template'}[this.state.ttTab||'task'], actionIcon:'plus' },
       files:{ eyebrow:'Assets', icon:'folder-open', title:'Document Repository', sub:'Every document, image and video uploaded across tasks — with QC status and deadlines in one view.' },
+      messages:{ eyebrow:'Collaboration', icon:'message-square', title:'Messages', sub:'Team conversations — turn any message into a task, or attach it to an existing one.' },
       effort:{ eyebrow:'Planning', icon:'gauge', title:'Create Effort Plan', sub:'Define effort targets, convert them to KPIs and auto-generate tasks for the period.' },
       ideas:{ eyebrow:'Repositories', icon:'lightbulb', title:'Content Repository — Ideas', sub:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks and stay stored for reuse.', actionLabel:'Add Content Idea', actionIcon:'plus' },
       qc:{ eyebrow:'Quality', icon:'shield-check', title:'QC Review', sub:'Independent quality validation and approvals.' },
@@ -552,12 +963,12 @@ class AppRoot extends React.Component {
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
       else if(route==='okr') this.setState({ showOkrPanel:true });
-      else if(route==='projects'||route==='campaigns') this.setState({ showRecordModal:true, recordKind:route, recordEditKey:null, recordIsReal:false,
-        recordForm:{ name:'', type:'', owner:'', status: route==='campaigns'?'Live':'On track' } });
+      else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
+        cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
       else this.flash('Draft created — opening editor…');
     };
 
-    const readOnly = !this.EDIT_LEVELS.includes(lvl) && ['projects','campaigns','tasks','okr','repositories'].includes(route);
+    const readOnly = !this.EDIT_LEVELS.includes(lvl) && ['campaigns','tasks','okr','repositories'].includes(route);
     const readOnlyMsg = `Your role (${role.label}) has ${lvl.toLowerCase()} access here. Actions that change data are hidden.`;
 
     // screen flags
@@ -574,7 +985,9 @@ class AppRoot extends React.Component {
     const showEffort = route==='effort';
     const showIdeas = route==='ideas';
     const showProfile = route==='profile';
-    const showTable = ['projects','campaigns','repositories','users'].includes(route);
+    const showCampaigns = route==='campaigns';
+    const showMessages = route==='messages';
+    const showTable = ['repositories','users'].includes(route);
     const showPageHead = !showMasterDetail;
 
     const out = {
@@ -613,7 +1026,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -667,6 +1080,8 @@ class AppRoot extends React.Component {
     };
 
     if(showProfile) Object.assign(out, this.myProfileData(rk, role));
+    if(showCampaigns) Object.assign(out, this.campaignsView());
+    if(showMessages){ Object.assign(out, this.messagesView()); Object.assign(out, this.tkFormData()); }
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
@@ -687,7 +1102,16 @@ class AppRoot extends React.Component {
       out.tblQuery=this.state.tblQuery||'';
       out.tblOnQuery=(e)=>this.setState({ tblQuery:e.target.value, pg:{...(this.state.pg||{}),['tbl-'+route]:0} });
     }
-    if(showTasks2) Object.assign(out, this.tasksView());
+    if(showTasks2){ Object.assign(out, this.tasksView());
+      const tkTab=this.state.tkTab||'list';
+      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      Object.assign(out, { tkTabList:tkTab==='list', tkTabTime:tkTab==='time', tkTabCal:tkTab==='cal',
+        tkSegListStyle:seg(tkTab==='list'), tkSegTimeStyle:seg(tkTab==='time'), tkSegCalStyle:seg(tkTab==='cal'),
+        tkShowList:()=>this.setState({ tkTab:'list' }), tkShowTime:()=>this.setState({ tkTab:'time' }),
+        tkShowCal:()=>this.setState({ tkTab:'cal' }) });
+      if(tkTab==='time') Object.assign(out, this.timeReportData());
+      if(tkTab==='cal') Object.assign(out, this.calendarData(rk));
+    }
     if(showTemplates) Object.assign(out, this.templatesView());
     if(showFiles) Object.assign(out, this.filesView());
     if(showEffort) Object.assign(out, this.effortView());
@@ -2001,6 +2425,17 @@ class AppRoot extends React.Component {
     return map[t.template]||'Content';
   }
   tkDivTone(d){ return { Content:{bg:'var(--orchid-100)',c:'var(--orchid-700)'}, Graphics:{bg:'var(--warn-100)',c:'var(--warn-600)'}, 'Web Dev':{bg:'var(--info-100)',c:'var(--info-600)'}, 'Web Developers':{bg:'var(--info-100)',c:'var(--info-600)'}, SMM:{bg:'var(--danger-100)',c:'var(--danger-600)'}, SEO:{bg:'var(--verify-100)',c:'var(--verify-600)'} }[d]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  // Tasks store start/end as formatted strings ("Jul 1, 2026") — same parsing
+  // convention as dayDiff(), just returning ISO for calendar day-bucketing.
+  isoDate(s){
+    if(!s||s==='—') return null;
+    const d=new Date(/\d{4}/.test(s)?s:(s+', 2026'));
+    if(isNaN(d)) return null;
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  dailyCapacity(){ return 8; } // flat placeholder — no per-person capacity model yet
+  campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
+  campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
   tkOv(t){ const o=((this.state.tkUpd||{})[t.id])||{}; return {...t, ...o}; }
   allTasks(){ return this.WTASKS().concat(this.state.tkAdded||[]).map(t=>this.tkOv(t)); }
   tkPatch(id, patch, act){
@@ -2148,6 +2583,217 @@ class AppRoot extends React.Component {
       ...this.tkDetailData(), ...this.tkFormData() };
   }
 
+  // ============ Time & Effort report (new tab on Tasks) ============
+  // Simplified vs. source: no live start/stop task timer exists in this app,
+  // so "actual hours" reads t.actH directly instead of a running-timer
+  // computation — the report math (variance, grouping, utilization) is
+  // otherwise a verbatim port.
+  timeReportData(){
+    const rk=this.state.roleKey, person=this.currentPerson();
+    const isOwn=['junior','senior'].includes(rk);
+    let list=this.allTasks(); if(isOwn) list=list.filter(t=>t.assignee===person);
+    const F=this.state.trFilters||{group:'assignee',assignee:'All',campaign:'All',period:'All'};
+    const setF=(k)=>(e)=>this.setState({ trFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),tr:0} });
+    if(F.assignee!=='All') list=list.filter(t=>t.assignee===F.assignee);
+    if(F.campaign!=='All') list=list.filter(t=>this.campaignOpt(t.campaign)===F.campaign);
+    if(F.period!=='All'){ const win=F.period==='This week'?7:31;
+      list=list.filter(t=>{ const df=this.dayDiff(t); return df===null?true:Math.abs(df)<=win; }); }
+    const rows=list.map(t=>{ const act=Math.round((parseFloat(t.actH)||0)*100)/100, est=parseFloat(t.estH)||0, v=Math.round((act-est)*100)/100;
+      const tn=this.tkTone(t.status);
+      return { id:t.id, name:t.name, assignee:t.assignee, division:this.tkDivision(t), campaign:this.campaignOpt(t.campaign),
+        est:est?est+' h':'—', act:act?act+' h':'0 h', actNum:act, estNum:est,
+        variance:(v>0?'+':'')+v+' h', varianceColor:v>0?'var(--danger-600)':(v<0?'var(--verify-600)':'var(--ink-500)'),
+        pct:est?Math.round(act/est*100)+'%':'—', pctW:est?Math.min(100,Math.round(act/est*100))+'%':'0%',
+        pctColor:est&&act>est?'var(--danger-500)':act>=est*0.8?'var(--verify-500)':'var(--info-500)',
+        running:false,
+        status:t.status, statusBg:tn.bg, statusColor:tn.c,
+        open:()=>this.setState({ tkOpen:t.id }) }; });
+    const pg=this.pgData('tr',rows,10);
+    const sumEst=rows.reduce((s,r)=>s+r.estNum,0), sumAct=rows.reduce((s,r)=>s+r.actNum,0);
+    const groupKey=F.group==='campaign'?'campaign':(F.group==='division'?'division':'assignee');
+    const groups={}; rows.forEach(r=>{ const k=r[groupKey]||'—'; groups[k]=groups[k]||{est:0,act:0,n:0}; groups[k].est+=r.estNum; groups[k].act+=r.actNum; groups[k].n++; });
+    const groupRows=Object.entries(groups).sort((a,b)=>b[1].act-a[1].act).map(([k,g])=>{
+      const v=Math.round((g.act-g.est)*100)/100;
+      return { label:k, tasks:g.n+' task'+(g.n===1?'':'s'), est:Math.round(g.est*100)/100+' h', act:Math.round(g.act*100)/100+' h',
+        variance:(v>0?'+':'')+v+' h', varianceColor:v>0?'var(--danger-600)':(v<0?'var(--verify-600)':'var(--ink-500)'),
+        pctW:g.est?Math.min(100,Math.round(g.act/g.est*100))+'%':'0%',
+        pctColor:g.est&&g.act>g.est?'var(--danger-500)':'var(--verify-500)',
+        util:g.est?Math.round(g.act/g.est*100)+'% of estimate':'no estimate' }; });
+    const K=(label,value,color)=>({label,value,color});
+    const withOpts=(defs)=>defs.map(d=>({...d, opts:d.options.map(o=>({ v:o, label:(d.labels&&d.labels[o])||o }))}));
+    return {
+      trStats:[K('Tasks in scope',String(rows.length),'var(--beet-700)'),K('Estimated',Math.round(sumEst*10)/10+' h','var(--info-600)'),K('Actual logged',Math.round(sumAct*10)/10+' h','var(--verify-600)'),K('Variance',((sumAct-sumEst)>0?'+':'')+Math.round((sumAct-sumEst)*10)/10+' h',(sumAct>sumEst)?'var(--danger-600)':'var(--verify-600)'),K('Avg per task',(rows.length?Math.round(sumAct/rows.length*100)/100:0)+' h','var(--orchid-600)')],
+      trRows:pg.rows, trPg:pg, trGroupRows:groupRows, trEmpty:rows.length===0,
+      trGroupTitle:'Totals by '+({assignee:'assignee',division:'division',campaign:'campaign'}[groupKey]),
+      trFilterDefs:withOpts([
+        {label:'Group by',value:F.group,onChange:setF('group'),options:['assignee','division','campaign'],
+          labels:{assignee:'Assignee',division:'Division',campaign:'Campaign'}},
+        {label:'Assignee',value:F.assignee,onChange:setF('assignee'),options:['All'].concat([...new Set(this.allTasks().map(t=>t.assignee))])},
+        {label:'Campaign',value:F.campaign,onChange:setF('campaign'),options:['All'].concat([...new Set(this.campaignNames(false).concat(this.allTasks().map(t=>this.campaignOpt(t.campaign))).filter(x=>x&&x!=='— None —'))])},
+        {label:'Period',value:F.period,onChange:setF('period'),options:['All','This week','This month']},
+      ]),
+      trReset:()=>this.setState({ trFilters:{group:'assignee',assignee:'All',campaign:'All',period:'All'} }),
+    };
+  }
+
+  // ============ Content calendar (new tab on Tasks) ============
+  calendarData(rk){
+    const me=this.currentPerson();
+    const orgView=['ceo','coo','manager','team_lead','admin','qc'].includes(rk);
+    const F=this.state.calF||{ scope:orgView?'Organisation':'Mine', person:'All', type:'All', view:'Month' };
+    const setF=(k)=>(e)=>this.setState({ calF:{...F,[k]:e.target.value} });
+    const off=this.state.calOff||0;
+    const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const today=new Date(); today.setHours(0,0,0,0);
+    const iso=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const ganttView=F.view==='Timeline';
+    const weekView=F.view==='Week';
+    let pool=this.allTasks();
+    if(!orgView || F.scope==='Mine') pool=pool.filter(t=>t.assignee===me);
+    if(orgView && F.scope==='Organisation' && F.person!=='All') pool=pool.filter(t=>t.assignee===F.person);
+    if(F.type!=='All') pool=pool.filter(t=>this.tkDivision(t)===F.type);
+    const byDay={};
+    const unscheduled=[];
+    pool.forEach(t=>{
+      const s=this.isoDate(t.start), e=this.isoDate(t.end);
+      if(!e){ unscheduled.push(t); return; }
+      const from=s?new Date(s+'T00:00:00'):new Date(e+'T00:00:00');
+      const to=new Date(e+'T00:00:00');
+      if(to<from){ (byDay[e]=byDay[e]||[]).push({t,isDue:true}); return; }
+      for(let d=new Date(from); d<=to; d.setDate(d.getDate()+1)){
+        const k=iso(d);
+        (byDay[k]=byDay[k]||[]).push({ t, isDue:k===e, isStart:k===s });
+      }
+    });
+    let gridStart, gridDays, title;
+    if(weekView){
+      const base=new Date(today); base.setDate(base.getDate()+off*7);
+      const dow=(base.getDay()+6)%7;
+      gridStart=new Date(base); gridStart.setDate(base.getDate()-dow);
+      gridDays=7;
+      const endW=new Date(gridStart); endW.setDate(gridStart.getDate()+6);
+      title=SHORT[gridStart.getMonth()]+' '+gridStart.getDate()+' – '+SHORT[endW.getMonth()]+' '+endW.getDate()+', '+endW.getFullYear();
+    } else {
+      const first=new Date(today.getFullYear(), today.getMonth()+off, 1);
+      const dow=(first.getDay()+6)%7;
+      gridStart=new Date(first); gridStart.setDate(first.getDate()-dow);
+      const last=new Date(first.getFullYear(), first.getMonth()+1, 0);
+      gridDays=Math.ceil((dow+last.getDate())/7)*7;
+      title=MON[first.getMonth()]+' '+first.getFullYear();
+    }
+    const curMonth=weekView?null:new Date(today.getFullYear(), today.getMonth()+off, 1).getMonth();
+    const dTone=(d)=>this.tkDivTone(d);
+    const cells=[];
+    for(let i=0;i<gridDays;i++){
+      const d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
+      const k=iso(d);
+      const items=(byDay[k]||[]);
+      const dueItems=items.filter(x=>x.isDue);
+      const hrs=dueItems.reduce((s,x)=>s+(parseFloat(x.t.estH)||0),0);
+      const cap=(F.scope==='Mine'||!orgView)?this.dailyCapacity(me):0;
+      const over=cap>0&&hrs>cap;
+      const isToday=k===iso(today);
+      const isPast=d<today;
+      const weekend=[0,6].includes(d.getDay());
+      const overdue=dueItems.filter(x=>isPast&&!['Approved','Closed'].includes(x.t.status)).length;
+      cells.push({
+        key:k, day:String(d.getDate()),
+        dim:!weekView&&curMonth!==null&&d.getMonth()!==curMonth,
+        isToday, weekend,
+        bg:isToday?'var(--orchid-100)':(weekend?'var(--surface-50)':'#fff'),
+        dayColor:isToday?'var(--orchid-700)':(d.getMonth()!==curMonth&&!weekView?'var(--ink-400)':'var(--ink-900)'),
+        hasItems:items.length>0,
+        count:items.length?String(items.length):'',
+        hoursLabel:hrs?(Math.round(hrs*10)/10+' h due'):'',
+        hoursColor:over?'var(--danger-600)':'var(--ink-400)',
+        over, overCap:over?('over '+cap+' h capacity'):'',
+        overdueLabel:overdue?(overdue+' overdue'):'',
+        items:items.slice(0,weekView?8:3).map(x=>{ const tn=dTone(this.tkDivision(x.t)); const st=this.tkTone(x.t.status);
+          return { id:x.t.id, name:x.t.name, who:x.t.assignee, div:this.tkDivision(x.t),
+            bg:tn.bg, color:tn.c, isDue:x.isDue, isStart:x.isStart,
+            marker:x.isDue?'▸ due':(x.isStart?'▪ start':'·'),
+            statusBg:st.bg, statusColor:st.c, status:x.t.status,
+            open:(e)=>{ if(e)e.stopPropagation(); this.setState({ tkTab:'list', tkOpen:x.t.id }); } }; }),
+        more:items.length>(weekView?8:3)?('+'+(items.length-(weekView?8:3))+' more'):'',
+      });
+    }
+    const inRange=cells.filter(c=>!c.dim);
+    const dueCount=inRange.reduce((s,c)=>s+c.items.filter(i=>i.isDue).length,0);
+    const K=(label,value,sub,color)=>({label,value,sub,color});
+    const people=[...new Set(this.allTasks().map(t=>t.assignee))];
+    return {
+      calTitle:title,
+      calScopeLabel:(F.scope==='Mine'||!orgView)?('My calendar — '+me):(F.person==='All'?'Organisation calendar — all staff':('Calendar — '+F.person)),
+      calDows:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      calCells:cells, calWeekView:weekView,
+      calCols:'repeat(7,minmax(0,1fr))',
+      calPrev:()=>this.setState({ calOff:off-1 }),
+      calNext:()=>this.setState({ calOff:off+1 }),
+      calToday:()=>this.setState({ calOff:0 }),
+      calTodayLabel:off===0?'Today':'Back to today',
+      calFilters:[
+        ...(orgView?[{label:'Scope',value:F.scope,onChange:setF('scope'),options:['Organisation','Mine']}]:[]),
+        ...(orgView&&F.scope==='Organisation'?[{label:'Staff',value:F.person,onChange:setF('person'),options:['All'].concat(people)}]:[]),
+        {label:'Type',value:F.type,onChange:setF('type'),options:['All','Content','Graphics','Web Developers','SMM','SEO']},
+        {label:'View',value:F.view,onChange:setF('view'),options:['Month','Week','Timeline']},
+      ],
+      ...(()=>{
+        if(!ganttView) return { calIsGantt:false, calIsGrid:true };
+        const first=new Date(today.getFullYear(), today.getMonth()+off, 1);
+        const last=new Date(first.getFullYear(), first.getMonth()+1, 0);
+        const span=last.getDate();
+        const dayOf=(d)=>Math.floor((d-first)/86400000)+1;
+        const groups={};
+        pool.forEach(t=>{
+          const e=this.isoDate(t.end); if(!e) return;
+          const s=this.isoDate(t.start)||e;
+          const sd=new Date(s+'T00:00:00'), ed=new Date(e+'T00:00:00');
+          if(ed<first||sd>last) return;
+          const from=Math.max(1, dayOf(sd)), to=Math.min(span, dayOf(ed));
+          const key=(F.scope==='Mine'||!orgView)?this.tkDivision(t):t.assignee;
+          const tn=this.tkDivTone(this.tkDivision(t)), st=this.tkTone(t.status);
+          const late=ed<today&&!['Approved','Closed'].includes(t.status);
+          (groups[key]=groups[key]||[]).push({
+            id:t.id, name:t.name, div:this.tkDivision(t), status:t.status,
+            statusBg:st.bg, statusColor:st.c,
+            left:((from-1)/span*100)+'%', width:(Math.max(1,to-from+1)/span*100)+'%',
+            bg:late?'var(--danger-500)':tn.c, label:t.id,
+            dates:t.start+' → '+t.end,
+            hours:(t.estH||0)+' h',
+            late, lateNote:late?'overdue':'',
+            open:()=>this.setState({ tkTab:'list', tkOpen:t.id }) });
+        });
+        const ticks=[]; for(let d=1;d<=span;d++){ const dd=new Date(first.getFullYear(),first.getMonth(),d);
+          ticks.push({ d:String(d), weekend:[0,6].includes(dd.getDay()), isToday:iso(dd)===iso(today),
+            w:(100/span)+'%',
+            bg:iso(dd)===iso(today)?'var(--orchid-100)':([0,6].includes(dd.getDay())?'var(--surface-50)':'transparent') }); }
+        const todayLeft=(first.getMonth()===today.getMonth()&&first.getFullYear()===today.getFullYear())
+          ?(((dayOf(today)-0.5)/span)*100)+'%':null;
+        return {
+          calIsGantt:true, calIsGrid:false,
+          calGanttTicks:ticks,
+          calGanttTodayLeft:todayLeft, calGanttHasToday:!!todayLeft,
+          calGanttGroupBy:(F.scope==='Mine'||!orgView)?'By work type':'By assignee',
+          calGanttRows:Object.entries(groups).sort((a,b2)=>b2[1].length-a[1].length).map(([k,bars])=>({
+            label:k, count:bars.length+' task'+(bars.length===1?'':'s'),
+            late:bars.filter(b=>b.late).length?(bars.filter(b=>b.late).length+' overdue'):'',
+            bars })),
+          calGanttEmpty:Object.keys(groups).length===0,
+        }; })(),
+      calReset:()=>this.setState({ calF:{ scope:orgView?'Organisation':'Mine', person:'All', type:'All', view:'Month' }, calOff:0 }),
+      calStats:[K('Tasks due',String(dueCount),weekView?'this week':'this month','var(--beet-700)'),
+        K('Overdue',String(inRange.reduce((s,c)=>s+(parseInt(c.overdueLabel)||0),0)),'past due, not approved','var(--danger-600)'),
+        K('Overloaded days',String(inRange.filter(c=>c.over).length),'beyond daily capacity','var(--warn-600)'),
+        K('Unscheduled',String(unscheduled.length),'no due date set','var(--info-600)')],
+      calLegend:['Content','Graphics','Web Developers','SMM','SEO'].map(d=>({ label:d, bg:dTone(d).bg, color:dTone(d).c })),
+      calUnscheduled:unscheduled.slice(0,6).map(t=>({ id:t.id, name:t.name, who:t.assignee,
+        open:()=>this.setState({ tkTab:'list', tkOpen:t.id }) })),
+      calHasUnscheduled:unscheduled.length>0,
+      calExport:()=>{ this.flash('Calendar feed ready — '+dueCount+' tasks exported as .ics for Outlook / Google Calendar.'); },
+    };
+  }
+
   tkDetailData(){
     const id=this.state.tkOpen; if(!id) return { tkDrawerOpen:false };
     const t=this.allTasks().find(x=>x.id===id); if(!t) return { tkDrawerOpen:false };
@@ -2262,7 +2908,7 @@ class AppRoot extends React.Component {
       tkTplOptions:this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name})),
       tkKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
       tkProjectOptions:['—'].concat(this.recordsFor('projects').map(r=>r.name)),
-      tkCampaignOptions:['—'].concat(this.recordsFor('campaigns').map(r=>r.name)),
+      tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetProject:set('project'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
