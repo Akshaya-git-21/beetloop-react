@@ -119,7 +119,7 @@ class AppRoot extends React.Component {
   currentPerson(){
     const p = this.state.authProfile;
     if(p) return p.full_name || p.email;
-    return this.currentPerson();
+    return this.ROLES[this.state.roleKey].person;
   }
   MODMETA = {
     dashboard:{ label:'Dashboard', icon:'layout-dashboard' },
@@ -1200,14 +1200,68 @@ class AppRoot extends React.Component {
       admin:{eyebrow:'Platform scope',big:'Full',sub:'Configuration & security',note:'You manage users, masters, roles and integrations — but business decisions like OKRs and campaign approvals belong to leadership.'},
     };
     const scopeBox = scopeMap[b];
-    const modsFor = ['dashboard','projects','tasks','qc','analytics','masters'];
+    const modsFor = ['dashboard','campaigns','tasks','qc','analytics','masters'];
     const accessSummary = modsFor.map(m=>{
       const l = (this.ACCESS[m]&&this.ACCESS[m][rk]) || 'No access';
       const t = l==='No access' ? {bg:'var(--danger-100)',color:'var(--danger-600)'} : this.levelTone(l);
-      return { mod:this.MODMETA[m].label, level:l, bg:t.bg, color:t.color };
+      return { mod:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:l, bg:t.bg, color:t.color };
     });
 
-    return { kpis:KPI[b]||KPI.manager, dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary };
+    // "Needs attention" tiles — computed live from Tasks/OKRs, which already
+    // exist. SOPs/Support/Leads-dependent stats show 0 until those modules
+    // are built (SOPs and Support aren't implemented yet; the Leads/CRM
+    // pipeline panel below is hidden entirely rather than shown empty).
+    const X=(label,value,sub,color)=>({label,value,sub,color});
+    const tasks=this.allTasks(), me=this.currentPerson();
+    const mineT=tasks.filter(t=>t.assignee===me);
+    const overdue=(list)=>list.filter(t=>{ const d=this.dayDiff(t); return d!==null&&d<0&&!['Approved','Closed'].includes(t.status); }).length;
+    const okrs=this.allOkrs();
+    const atRisk=okrs.filter(o=>this.okrHealth(o).label!=='On Track'&&o.status!=='Completed').length;
+    const sopOverdue=0, sopUnack=0; // SOPs module not built yet
+    const tOpen=0, tUnassigned=0; // Support module not built yet
+    const inQC=tasks.filter(t=>t.status==='Submitted').length;
+    const rework=tasks.filter(t=>t.status==='Rework').length;
+    const overCap=(this.state.users||[]).filter(u=>{ const wk=this.weeklyCapacity(u.name);
+      const open=tasks.filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
+      return open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)>wk; }).length;
+    const EXTRA={
+      exec:[X('OKRs at risk',String(atRisk),'need leadership attention',atRisk?'var(--danger-600)':'var(--verify-600)'),
+        X('Avg OKR progress',(okrs.length?Math.round(okrs.reduce((s,o)=>s+o.progress,0)/okrs.length):0)+'%','across '+okrs.length+' objectives','var(--beet-700)'),
+        X('Awaiting QC',String(inQC),'deliverables in review','var(--info-600)'),
+        X('Overdue tasks',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)')],
+      ops:[X('Over capacity',String(overCap),'people beyond shift hours',overCap?'var(--danger-600)':'var(--verify-600)'),
+        X('Rework queue',String(rework),'sent back by QC',rework?'var(--warn-600)':'var(--verify-600)'),
+        X('Open tickets',String(tOpen),tUnassigned+' unassigned','var(--info-600)'),
+        X('Overdue tasks',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)')],
+      manager:[X('Awaiting QC',String(inQC),'in the review queue','var(--info-600)'),
+        X('Rework',String(rework),'needs correction',rework?'var(--warn-600)':'var(--verify-600)'),
+        X('OKRs at risk',String(atRisk),'in your scope',atRisk?'var(--danger-600)':'var(--verify-600)'),
+        X('SOPs overdue review',String(sopOverdue),'governance debt',sopOverdue?'var(--danger-600)':'var(--verify-600)')],
+      lead:[X('Awaiting QC',String(inQC),'from your team','var(--info-600)'),
+        X('Rework',String(rework),'to reassign',rework?'var(--warn-600)':'var(--verify-600)'),
+        X('Overdue in team',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)'),
+        X('Over capacity',String(overCap),'people to rebalance',overCap?'var(--warn-600)':'var(--verify-600)')],
+      senior:[X('My overdue',String(overdue(mineT)),'clear these first',overdue(mineT)?'var(--danger-600)':'var(--verify-600)'),
+        X('In QC',String(mineT.filter(t=>t.status==='Submitted').length),'awaiting review','var(--info-600)'),
+        X('My rework',String(mineT.filter(t=>t.status==='Rework').length),'QC comments to address',mineT.filter(t=>t.status==='Rework').length?'var(--warn-600)':'var(--verify-600)'),
+        X('SOPs to acknowledge',String(sopUnack),'read and sign off',sopUnack?'var(--warn-600)':'var(--verify-600)')],
+      junior:[X('My overdue',String(overdue(mineT)),'blocks today’s work',overdue(mineT)?'var(--danger-600)':'var(--verify-600)'),
+        X('In QC',String(mineT.filter(t=>t.status==='Submitted').length),'awaiting review','var(--info-600)'),
+        X('My rework',String(mineT.filter(t=>t.status==='Rework').length),'fix and resubmit',mineT.filter(t=>t.status==='Rework').length?'var(--warn-600)':'var(--verify-600)'),
+        X('SOPs to acknowledge',String(sopUnack),'read and sign off',sopUnack?'var(--warn-600)':'var(--verify-600)')],
+      qc:[X('In my queue',String(inQC),'submitted for review','var(--info-600)'),
+        X('Rework raised',String(rework),'awaiting the doer',rework?'var(--warn-600)':'var(--verify-600)'),
+        X('Overdue submissions',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)'),
+        X('SOPs to acknowledge',String(sopUnack),'standards you review against',sopUnack?'var(--warn-600)':'var(--verify-600)')],
+      admin:[X('Over capacity',String(overCap),'users beyond shift hours',overCap?'var(--danger-600)':'var(--verify-600)'),
+        X('Open tickets',String(tOpen),tUnassigned+' need triage','var(--info-600)'),
+        X('SOPs overdue review',String(sopOverdue),'governance debt',sopOverdue?'var(--danger-600)':'var(--verify-600)'),
+        X('Rework queue',String(rework),'quality returns',rework?'var(--warn-600)':'var(--verify-600)')],
+    };
+
+    return { kpis:KPI[b]||KPI.manager, dashExtras:EXTRA[b]||EXTRA.manager,
+      dashExtrasLabel:'Needs attention · '+role.label+' scope',
+      dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary, dashHasLeads:false };
   }
 
   qcData(rk){
@@ -2434,6 +2488,8 @@ class AppRoot extends React.Component {
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
   dailyCapacity(){ return 8; } // flat placeholder — no per-person capacity model yet
+  weeklyCapacity(){ return 40; } // flat placeholder — no per-person capacity model yet
+  allOkrs(){ return this.OKR_DATA().concat(this.state.okrAdded||[]); }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
   campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
   tkOv(t){ const o=((this.state.tkUpd||{})[t.id])||{}; return {...t, ...o}; }

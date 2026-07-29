@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function DashboardSection({ vm }) {
-  const { accessSummary, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash } = vm;
+  const { accessSummary, dashExtras, dashExtrasLabel, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash } = vm;
   return (
     <React.Fragment>
 {Boolean(showDash) && (
@@ -47,10 +47,28 @@ export default function DashboardSection({ vm }) {
 </React.Fragment>
 ))}
 
-          
+
 </div>
 
-          
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"14px 18px","marginBottom":"20px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"11px"}}>
+<Icon name="bell-ring" style={{"width":"13px","height":"13px","color":"var(--orchid-600)"}} />
+<span style={{"fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>{dashExtrasLabel}</span>
+</div>
+<div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(128px,1fr))","gap":"14px"}}>
+{(dashExtras || []).map((x, $index) => (
+<React.Fragment key={$index}>
+<div style={{"minWidth":"0"}}>
+<div style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>{x.label}</div>
+<div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:21px;color:${x.color};margin-top:2px`)}>{x.value}</div>
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"1px","lineHeight":"1.4"}}>{x.sub}</div>
+</div>
+</React.Fragment>
+))}
+</div>
+</div>
+
+
 <div style={{"display":"grid","gridTemplateColumns":"1.6fr 1fr","gap":"16px"}}>
 
             
