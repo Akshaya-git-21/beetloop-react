@@ -84,28 +84,30 @@ class AppRoot extends React.Component {
     senior:{ label:'Senior Executive', short:'SR', tag:'Senior SEO Executive', person:'Sameer Iyer', color:'#3C8BB0', bucket:'senior' },
     junior:{ label:'Junior Executive', short:'JR', tag:'Junior SEO Executive', person:'Neha Verma', color:'#2E9A6C', bucket:'junior' },
     qc:{ label:'QC Reviewer', short:'QC', tag:'Quality Reviewer', person:'Farhan Ali', color:'#D69327', bucket:'qc' },
+    dm:{ label:'Digital Marketing Executive', short:'DM', tag:'Digital Marketing', person:'Ritu Malhotra', color:'#3C6FBD', bucket:'dm' },
+    sales:{ label:'Sales Executive', short:'SL', tag:'Sales Executive', person:'Vikram Singh', color:'#C77B3E', bucket:'sales', brand:'Food Research Lab' },
   };
 
   ACCESS = {
-    dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All' },
-    campaigns:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Assign & monitor', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
-    tasks:{ ceo:'Full', coo:'View', manager:'All', team_lead:'Assign / edit', senior:'Update own', junior:'Update own', qc:'QC tasks', admin:'Full' },
+    dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All', dm:'Own', sales:'Own' },
+    campaigns:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Assign & monitor', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'View' },
+    tasks:{ ceo:'Full', coo:'View', manager:'All', team_lead:'Assign / edit', senior:'Update own', junior:'Update own', qc:'QC tasks', admin:'Full', dm:'Update own', sales:'Update own' },
     templates:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
-    files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full' },
-    messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full' },
-    sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full' },
-    support:{ ceo:'Full', coo:'View', manager:'Team tickets', team_lead:'Team tickets', senior:'Own tickets', junior:'Own tickets', qc:'Own tickets', admin:'Full' },
+    files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full', dm:'Own files', sales:'Own files' },
+    messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full', dm:'Own', sales:'Own' },
+    sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full', dm:'View', sales:'View' },
+    support:{ ceo:'Full', coo:'View', manager:'Team tickets', team_lead:'Team tickets', senior:'Own tickets', junior:'Own tickets', qc:'Own tickets', admin:'Full', dm:'Own tickets', sales:'Own tickets' },
     effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
     qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
-    okr:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', qc:'View', admin:'Full' },
-    analytics:{ ceo:'Full', coo:'Operational', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'Full' },
-    repositories:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full' },
-    content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full' },
+    okr:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', qc:'View', admin:'Full', dm:'View own', sales:'Leads & pipeline' },
+    analytics:{ ceo:'Full', coo:'Operational', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'Full', dm:'Own' },
+    repositories:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full', dm:'View', sales:'View' },
+    content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'Assigned only' },
     masters:{ admin:'Full', ceo:'Full' },
     users:{ admin:'Full', coo:'Full', ceo:'Full' },
     config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full' },
-    profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View' },
+    profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View', dm:'View', sales:'View' },
   };
 
   // CEO/COO/Admin get broad, near-identical access across every module — so
@@ -1066,8 +1068,8 @@ class AppRoot extends React.Component {
       : this.ROLES[rk];
     const route = this.state.route;
     const acc = this.ACCESS;
-    const leadFull = ['admin','manager'].includes(rk);
-    const leadView = ['ceo','coo','team_lead','senior','junior'].includes(rk);
+    const leadFull = ['admin','manager','sales'].includes(rk);
+    const leadView = ['ceo','coo','team_lead','senior','junior','dm'].includes(rk);
     const leadAccess = leadFull || leadView;
     const otabRaw = this.state.okrModTab||'okrs';
     const otab2 = (leadAccess && route==='okr')?otabRaw:'okrs';
@@ -1377,6 +1379,16 @@ class AppRoot extends React.Component {
       junior:[K('My tasks','4','-1','info','list-checks'),K('Due today','1','0','warn','calendar-clock'),K('Completed','18','+3','ok','check-circle-2'),K('QC comments','2','','brand','message-square')],
       qc:[K('Awaiting review','5','+2','warn','clock'),K('Approved today','8','+3','ok','check-circle-2'),K('Rework raised','2','0','warn','rotate-ccw'),K('Rejection rate','7%','-2%','ok','x-circle')],
       admin:[K('Total users','48','+3','info','users'),K('Active sessions','21','','brand','activity'),K('Masters','36','','info','boxes'),K('Integrations','6','+1','ok','plug')],
+      dm:(()=>{ const c=this.allContacts(); const today=this.todayStr();
+        return [K('Campaigns tracked','9','+1','brand','megaphone'),
+          K('Leads today',String(this.allLeads().filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0)),'','info','users'),
+          K('Pipeline total',String(c.length),'','brand','filter'),
+          K('Won this month',String(c.filter(x=>x.stage==='Won').length),'','ok','check-circle-2')]; })(),
+      sales:(()=>{ const brand=this.ROLES.sales.brand; const c=this.allContacts().filter(x=>!x.brand||x.brand===brand); const today=this.todayStr();
+        return [K('Leads today',String(this.allLeads().filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0)),'','info','users'),
+          K('My pipeline',String(c.length),'','brand','filter'),
+          K('Won this month',String(c.filter(x=>x.stage==='Won').length),'','ok','check-circle-2'),
+          K('My brand',brand,'','info','tag')]; })(),
     };
     const rowsMap = {
       exec:[['CEO strategy review','Q3 board deck · Leadership','On track','ok','target'],['Food Research Lab retainer','Renewal · ₹18L','Won','ok','folder-kanban'],['Nutraceutical vertical launch','Cross-department','At risk','warn','alert-triangle'],['Pubrica SEO program','12-month · SEO','On track','ok','search']],
@@ -1385,6 +1397,8 @@ class AppRoot extends React.Component {
       senior:[['Keyword research — Tech vertical','Client A · due Jan 20','In progress','info','search'],['SEO audit — E-commerce','Client C · due Jan 18','Review','warn','file-check'],['On-page — Statswork','Client B','In progress','info','file-text']],
       junior:[['Update meta descriptions — 12 pages','Due today','In progress','warn','file-text'],['Fix broken links — Pubrica','Due Jan 22','Assigned','info','link'],['Add alt text — blog images','Due Jan 24','Assigned','info','image']],
       admin:[['New user: Neha Verma','Pending invitation','Action','warn','user-plus'],['Semrush integration','Connected','Active','ok','plug'],['Role Master updated','by Meera Krishnan','Logged','info','shield'],['Nightly backup','02:00 IST','Success','ok','database']],
+      dm:[['Q3 SEO push — Pubrica','Live campaign','On track','ok','megaphone'],['Reel series — Statswork','Design team','In progress','info','clapperboard'],['Content calendar — Pepcreations','Karan Shah · due Mon','Review','warn','file-text']],
+      sales:[['New enquiries today','Lead Pipeline','Action','warn','users'],['Follow up — SQL stage','Your pipeline','In progress','info','filter'],['Won this week','Your pipeline','Won','ok','check-circle-2']],
     };
     const rowsKey = ({ops:'exec',qc:'lead'})[b] || b;
     const rows = (rowsMap[rowsKey]||rowsMap.manager).map(r=>({
@@ -1393,7 +1407,7 @@ class AppRoot extends React.Component {
       tagBg:{ok:'var(--verify-100)',warn:'var(--warn-100)',info:'var(--info-100)'}[r[3]],
       tagColor:{ok:'var(--verify-600)',warn:'var(--warn-600)',info:'var(--info-600)'}[r[3]],
     }));
-    const panelTitle = {exec:'Strategic initiatives',ops:'Delivery pipeline',manager:'Department work',lead:'Team tasks',senior:'My tasks',junior:'My tasks today',qc:'Recent reviews',admin:'System activity'}[b];
+    const panelTitle = {exec:'Strategic initiatives',ops:'Delivery pipeline',manager:'Department work',lead:'Team tasks',senior:'My tasks',junior:'My tasks today',qc:'Recent reviews',admin:'System activity',dm:'Marketing activity',sales:'Lead pipeline activity'}[b];
 
     // scope box + access summary
     const scopeMap = {
@@ -1405,6 +1419,8 @@ class AppRoot extends React.Component {
       junior:{eyebrow:'Personal scope',big:'My tasks',sub:'Assigned only',note:'You see only your own assigned tasks and deadlines. Analytics, competitor data and company dashboards are hidden.'},
       qc:{eyebrow:'Quality scope',big:'QC only',sub:'Independent review',note:'You approve, reject or request rework and view Gold Standards. You cannot modify task content or masters.'},
       admin:{eyebrow:'Platform scope',big:'Full',sub:'Configuration & security',note:'You manage users, masters, roles and integrations — but business decisions like OKRs and campaign approvals belong to leadership.'},
+      dm:{eyebrow:'Marketing scope',big:'Digital Marketing',sub:'View across campaigns',note:'You view campaigns, content and your own tasks. Lead contact details (phone/email) are restricted — only stage and volume are visible.'},
+      sales:{eyebrow:'Personal scope',big:this.ROLES.sales.brand,sub:'Assigned brand only',note:'You create and manage leads and pipeline contacts for your assigned brand only. Other brands are hidden.'},
     };
     const scopeBox = scopeMap[b];
     const modsFor = ['dashboard','campaigns','tasks','qc','analytics','support','masters'];
@@ -1467,10 +1483,15 @@ class AppRoot extends React.Component {
         X('Open tickets',String(tOpen),tUnassigned+' need triage','var(--info-600)'),
         X('SOPs overdue review',String(sopOverdue),'governance debt',sopOverdue?'var(--danger-600)':'var(--verify-600)'),
         X('Rework queue',String(rework),'quality returns',rework?'var(--warn-600)':'var(--verify-600)')],
+      dm:[X('My overdue',String(overdue(mineT)),'clear these first',overdue(mineT)?'var(--danger-600)':'var(--verify-600)'),
+        X('In QC',String(mineT.filter(t=>t.status==='Submitted').length),'awaiting review','var(--info-600)'),
+        X('SOPs to acknowledge',String(sopUnack),'read and sign off',sopUnack?'var(--warn-600)':'var(--verify-600)')],
+      sales:[X('My overdue',String(overdue(mineT)),'clear these first',overdue(mineT)?'var(--danger-600)':'var(--verify-600)'),
+        X('SOPs to acknowledge',String(sopUnack),'read and sign off',sopUnack?'var(--warn-600)':'var(--verify-600)')],
     };
 
     // Lead pipeline snapshot on the dashboard, computed from real lead/contact records
-    const leadRoles=['admin','manager','ceo','coo','team_lead','senior','junior'];
+    const leadRoles=['admin','manager','ceo','coo','team_lead','senior','junior','dm','sales'];
     let leadPanel={ dashHasLeads:false };
     if(leadRoles.includes(rk)){
       const contacts=this.allContacts();
@@ -3363,7 +3384,7 @@ class AppRoot extends React.Component {
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
-      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin'],
+      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive'],
       umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
@@ -6134,12 +6155,12 @@ class AppRoot extends React.Component {
   servicePageOf(name){ return this.SERVICE_PAGES().find(s=>s.name===name)||null; }
   leadSourceList(){ return ['Organic Search','Paid Search','Social Media','Email Campaign','Referral','Direct','Guest Post / External','Webinar','Trade Enquiry']; }
   LEAD_SEED(){ const d=(n)=>this.relDate(-n); return [
-    { id:'LD-001', date:d(0), service:'New Product Development', source:'Organic Search', visitors:1240, count:4, qualified:3, value:'₹4,20,000', who:'Neha Verma', notes:'2 enquiries from the NPD services page.' },
-    { id:'LD-002', date:d(0), service:'Nutraceutical Formulation', source:'Paid Search', visitors:860, count:2, qualified:1, value:'₹1,10,000', who:'Neha Verma', notes:'' },
-    { id:'LD-003', date:d(1), service:'New Product Development', source:'Referral', visitors:410, count:3, qualified:3, value:'₹3,60,000', who:'Sameer Iyer', notes:'Referred by existing FRL client.' },
-    { id:'LD-004', date:d(1), service:'Regulatory & Compliance', source:'Email Campaign', visitors:520, count:5, qualified:2, value:'₹95,000', who:'Sameer Iyer', notes:'' },
-    { id:'LD-005', date:d(2), service:'New Product Development', source:'Guest Post / External', visitors:290, count:2, qualified:2, value:'₹2,40,000', who:'Neha Verma', notes:'From the Medium guest article.' },
-    { id:'LD-006', date:d(3), service:'Clinical Trial Support', source:'Organic Search', visitors:180, count:1, qualified:1, value:'₹80,000', who:'Aditi Rao', notes:'' },
+    { id:'LD-001', date:d(0), service:'New Product Development', source:'Organic Search', visitors:1240, count:4, qualified:3, value:'₹4,20,000', who:'Neha Verma', notes:'2 enquiries from the NPD services page.', brand:'Food Research Lab' },
+    { id:'LD-002', date:d(0), service:'Nutraceutical Formulation', source:'Paid Search', visitors:860, count:2, qualified:1, value:'₹1,10,000', who:'Neha Verma', notes:'', brand:'Food Research Lab' },
+    { id:'LD-003', date:d(1), service:'New Product Development', source:'Referral', visitors:410, count:3, qualified:3, value:'₹3,60,000', who:'Sameer Iyer', notes:'Referred by existing FRL client.', brand:'Food Research Lab' },
+    { id:'LD-004', date:d(1), service:'Regulatory & Compliance', source:'Email Campaign', visitors:520, count:5, qualified:2, value:'₹95,000', who:'Sameer Iyer', notes:'', brand:'Statswork' },
+    { id:'LD-005', date:d(2), service:'New Product Development', source:'Guest Post / External', visitors:290, count:2, qualified:2, value:'₹2,40,000', who:'Neha Verma', notes:'From the Medium guest article.', brand:'Food Research Lab' },
+    { id:'LD-006', date:d(3), service:'Clinical Trial Support', source:'Organic Search', visitors:180, count:1, qualified:1, value:'₹80,000', who:'Aditi Rao', notes:'', brand:'Food Research Lab' },
   ]; }
   serviceTargeting(name){
     const sp=this.servicePageOf(name); const url=sp&&sp.url;
@@ -6148,21 +6169,26 @@ class AppRoot extends React.Component {
     const worked=this.allTasks().some(x=>String(x.name||'').toLowerCase().indexOf(String(name).toLowerCase())>=0);
     return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
   }
-  allLeads(){ return (this.state.leadAdded||[]).concat(this.LEAD_SEED()); }
+  allLeads(){ const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED());
+    if(this.state.roleKey==='sales'){ const b=this.ROLES.sales.brand; return all.filter(l=>!l.brand||l.brand===b); }
+    return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
     Lost:{bg:'var(--danger-100, #F7E3E6)',c:'var(--danger-600)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   CONTACT_SEED(){ const d=(n)=>this.relDate(-n); return [
-    { id:'CN-001', leadId:'LD-001', name:'Dr. Ananya Krishnan', phone:'+91 98400 22114', email:'ananya.k@vitalfoods.in', country:'India', company:'VitalFoods Pvt Ltd', service:'New Product Development', source:'Organic Search', stage:'SQL', value:'₹4,20,000', date:d(0), owner:'Neha Verma', desc:'Needs a protein bar formulation for the Indian market, FSSAI compliant.', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)],['Moved to SQL — budget confirmed','Neha Verma',d(0)]] },
-    { id:'CN-002', leadId:'LD-001', name:'Rahul Bhatt', phone:'+91 99620 77410', email:'rahul@nutrigen.co', country:'India', company:'NutriGen', service:'New Product Development', source:'Organic Search', stage:'MQL', value:'₹1,80,000', date:d(0), owner:'Neha Verma', desc:'Exploring plant-protein RTD beverage development.', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)]] },
-    { id:'CN-003', leadId:'LD-003', name:'Sarah Whitfield', phone:'+44 7700 900321', email:'s.whitfield@purelabs.uk', country:'United Kingdom', company:'PureLabs', service:'New Product Development', source:'Referral', stage:'Won', value:'₹3,60,000', date:d(1), owner:'Sameer Iyer', desc:'Referred by FRL. Signed for a 3-month formulation sprint.', log:[['Enquiry received','Referral',d(1)],['Qualified as SQL','Sameer Iyer',d(1)],['Proposal sent','Sameer Iyer',d(1)],['Won — contract signed','Sameer Iyer',d(0)]] },
-    { id:'CN-004', leadId:'LD-004', name:'Mohammed Al-Rashid', phone:'+971 50 123 4567', email:'m.rashid@gulfnutra.ae', country:'UAE', company:'Gulf Nutra', service:'Regulatory & Compliance', source:'Email Campaign', stage:'UQL', value:'—', date:d(1), owner:'Sameer Iyer', desc:'General query on GCC labelling rules — no budget indicated.', log:[['Enquiry received','Email Campaign',d(1)]] },
-    { id:'CN-005', leadId:'LD-005', name:'Priya Deshmukh', phone:'+91 90040 55231', email:'priya@wellcorenutra.com', country:'India', company:'WellCore', service:'New Product Development', source:'Guest Post / External', stage:'Opportunity', value:'₹2,40,000', date:d(2), owner:'Neha Verma', desc:'Read the Medium article; wants a gummy supplement line.', log:[['Enquiry received','Guest Post',d(2)],['Qualified as SQL','Neha Verma',d(2)],['Proposal in review','Neha Verma',d(1)]] },
-    { id:'CN-006', leadId:'LD-006', name:'Dr. Kenji Tanaka', phone:'+81 90 1234 5678', email:'k.tanaka@bioclin.jp', country:'Japan', company:'BioClin', service:'Clinical Trial Support', source:'Organic Search', stage:'Lost', value:'₹80,000', date:d(3), owner:'Aditi Rao', desc:'Timeline mismatch — needed delivery in 3 weeks.', log:[['Enquiry received','Organic Search',d(3)],['Lost — timeline mismatch','Aditi Rao',d(2)]] },
+    { id:'CN-001', leadId:'LD-001', name:'Dr. Ananya Krishnan', phone:'+91 98400 22114', email:'ananya.k@vitalfoods.in', country:'India', company:'VitalFoods Pvt Ltd', service:'New Product Development', source:'Organic Search', stage:'SQL', value:'₹4,20,000', date:d(0), owner:'Neha Verma', desc:'Needs a protein bar formulation for the Indian market, FSSAI compliant.', brand:'Food Research Lab', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)],['Moved to SQL — budget confirmed','Neha Verma',d(0)]] },
+    { id:'CN-002', leadId:'LD-001', name:'Rahul Bhatt', phone:'+91 99620 77410', email:'rahul@nutrigen.co', country:'India', company:'NutriGen', service:'New Product Development', source:'Organic Search', stage:'MQL', value:'₹1,80,000', date:d(0), owner:'Neha Verma', desc:'Exploring plant-protein RTD beverage development.', brand:'Food Research Lab', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)]] },
+    { id:'CN-003', leadId:'LD-003', name:'Sarah Whitfield', phone:'+44 7700 900321', email:'s.whitfield@purelabs.uk', country:'United Kingdom', company:'PureLabs', service:'New Product Development', source:'Referral', stage:'Won', value:'₹3,60,000', date:d(1), owner:'Sameer Iyer', desc:'Referred by FRL. Signed for a 3-month formulation sprint.', brand:'Food Research Lab', log:[['Enquiry received','Referral',d(1)],['Qualified as SQL','Sameer Iyer',d(1)],['Proposal sent','Sameer Iyer',d(1)],['Won — contract signed','Sameer Iyer',d(0)]] },
+    { id:'CN-004', leadId:'LD-004', name:'Mohammed Al-Rashid', phone:'+971 50 123 4567', email:'m.rashid@gulfnutra.ae', country:'UAE', company:'Gulf Nutra', service:'Regulatory & Compliance', source:'Email Campaign', stage:'UQL', value:'—', date:d(1), owner:'Sameer Iyer', desc:'General query on GCC labelling rules — no budget indicated.', brand:'Statswork', log:[['Enquiry received','Email Campaign',d(1)]] },
+    { id:'CN-005', leadId:'LD-005', name:'Priya Deshmukh', phone:'+91 90040 55231', email:'priya@wellcorenutra.com', country:'India', company:'WellCore', service:'New Product Development', source:'Guest Post / External', stage:'Opportunity', value:'₹2,40,000', date:d(2), owner:'Neha Verma', desc:'Read the Medium article; wants a gummy supplement line.', brand:'Food Research Lab', log:[['Enquiry received','Guest Post',d(2)],['Qualified as SQL','Neha Verma',d(2)],['Proposal in review','Neha Verma',d(1)]] },
+    { id:'CN-006', leadId:'LD-006', name:'Dr. Kenji Tanaka', phone:'+81 90 1234 5678', email:'k.tanaka@bioclin.jp', country:'Japan', company:'BioClin', service:'Clinical Trial Support', source:'Organic Search', stage:'Lost', value:'₹80,000', date:d(3), owner:'Aditi Rao', desc:'Timeline mismatch — needed delivery in 3 weeks.', brand:'Food Research Lab', log:[['Enquiry received','Organic Search',d(3)],['Lost — timeline mismatch','Aditi Rao',d(2)]] },
   ]; }
-  allContacts(){ const upd=this.state.contactUpd||{}; return (this.state.contactAdded||[]).concat(this.CONTACT_SEED()).map(c=>upd[c.id]?{...c,...upd[c.id]}:c); }
+  allContacts(){ const upd=this.state.contactUpd||{};
+    let list=(this.state.contactAdded||[]).concat(this.CONTACT_SEED()).map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
+    if(this.state.roleKey==='sales'){ const b=this.ROLES.sales.brand; list=list.filter(c=>!c.brand||c.brand===b); }
+    return list; }
   pipelineView(canWrite){
     const me=this.currentPerson();
     const all=this.allContacts();
@@ -6188,12 +6214,12 @@ class AppRoot extends React.Component {
       return { ...c, stageBg:t.bg, stageColor:t.c,
         canWrite:!!canWrite,
         phoneShown:canWrite?c.phone:'•••• ••••', emailShown:canWrite?c.email:'restricted',
-        setStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin and Manager.'); return; }
+        setStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin, Manager and Sales.'); return; }
           const v=e.target.value; const u={...(this.state.contactUpd||{})};
           const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
           u[c.id]={...(u[c.id]||{}), stage:v, log};
           this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); },
-        open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin and Manager.'); return; }
+        open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin, Manager and Sales.'); return; }
           this.setState({ cnOpen:c.id }); } }; }),8);
     return {
       pipeStats:[K('Total leads',String(total),'in pipeline','var(--beet-700)'),
@@ -6213,8 +6239,8 @@ class AppRoot extends React.Component {
       ],
       pipeReset:()=>this.setState({ pipeFilters:{stage:'All',service:'All',country:'All',owner:'All'} }),
       pipeCanWrite:!!canWrite, pipeReadOnly:!canWrite,
-      pipeMaskNote:'Contact details are restricted — visible to Admin and Manager only.',
-      pipeNew:()=>{ if(!canWrite){ this.flash('View only — lead entry is restricted to Admin and Manager.'); return; }
+      pipeMaskNote:'Contact details are restricted — visible to Admin, Manager and Sales only.',
+      pipeNew:()=>{ if(!canWrite){ this.flash('View only — lead entry is restricted to Admin, Manager and Sales.'); return; }
         this.setState({ cnNew:true, cnForm:{ stage:'New', country:'India', date:'' } }); },
       ...this.contactFormData(), ...this.contactDetailData(),
     };
@@ -6233,6 +6259,8 @@ class AppRoot extends React.Component {
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
       cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
+      cnBrandLocked: this.state.roleKey==='sales',
+      cnBrandNote: this.state.roleKey==='sales' ? ('Brand: '+this.ROLES.sales.brand+' — your assigned brand.') : '',
       cnSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
         if(!(f.email&&f.email.trim())&&!(f.phone&&f.phone.trim())){ this.flash('Enter a phone number or email.'); return; }
@@ -6241,6 +6269,7 @@ class AppRoot extends React.Component {
         const rec={ id, leadId:f.leadId||'', name:f.name.trim(), phone:f.phone||'—', email:f.email||'—', country:f.country||'India',
           company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
           stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
+          brand: this.state.roleKey==='sales'?this.ROLES.sales.brand:(f.brand||''),
           log:[['Lead created',me,this.todayStr()]] };
         this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
         this.flash(rec.id+' — '+rec.name+' added to the lead pipeline as '+rec.stage+'.');
@@ -6410,7 +6439,8 @@ class AppRoot extends React.Component {
         const id='LD-'+String(all.length+1).padStart(3,'0');
         const sp=this.servicePageOf(f.service);
         const rec={ id, date:this.fmtDate(f.date)||today, service:f.service, servicePage:(sp&&sp.url)||'', source:f.source||'Organic Search',
-          visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'' };
+          visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'',
+          brand: rk==='sales'?this.ROLES.sales.brand:(f.brand||'') };
         this.setState({ leadAdded:[rec,...(this.state.leadAdded||[])], ldForm:{} });
         this.flash(n+' lead'+(n===1?'':'s')+' logged for '+f.service+' — counted toward today’s KPI.');
       },

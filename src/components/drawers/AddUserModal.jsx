@@ -239,6 +239,12 @@ QC Reviewer
 <option>
 Admin
 </option>
+<option>
+Digital Marketing Executive
+</option>
+<option>
+Sales Executive
+</option>
 </select>
 </div>
 
