@@ -42,6 +42,8 @@ import OkrCreatePanel from '../components/drawers/OkrCreatePanel.jsx';
 import CampaignDetailDrawer from '../components/drawers/CampaignDetailDrawer.jsx';
 import CreateCampaignModal from '../components/drawers/CreateCampaignModal.jsx';
 import NewThreadModal from '../components/drawers/NewThreadModal.jsx';
+import SopSection from '../components/sections/SopSection.jsx';
+import SopDetailDrawer from '../components/drawers/SopDetailDrawer.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -111,6 +113,12 @@ export default function AppShell({ vm }) {
 
 
 <MessagesSection vm={vm} />
+
+
+{/* SOPs */}
+
+
+<SopSection vm={vm} />
 
 
         
@@ -350,6 +358,12 @@ export default function AppShell({ vm }) {
 <CampaignDetailDrawer vm={vm} />
 <CreateCampaignModal vm={vm} />
 <NewThreadModal vm={vm} />
+
+
+{/* SOP DETAIL DRAWER */}
+
+
+<SopDetailDrawer vm={vm} />
 
 
 

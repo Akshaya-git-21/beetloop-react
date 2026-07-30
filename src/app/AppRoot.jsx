@@ -86,6 +86,7 @@ class AppRoot extends React.Component {
     templates:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full' },
     messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full' },
+    sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full' },
     effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
     qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
@@ -128,6 +129,7 @@ class AppRoot extends React.Component {
     templates:{ label:'Templates', icon:'layout-template' },
     files:{ label:'Document Repository', icon:'folder-open' },
     messages:{ label:'Messages', icon:'message-square' },
+    sop:{ label:'SOPs', icon:'book-open-check' },
     qc:{ label:'QC Review', icon:'shield-check' },
     okr:{ label:'OKR & KPI', icon:'target' },
     effort:{ label:'Effort Planner', icon:'gauge' },
@@ -920,7 +922,7 @@ class AppRoot extends React.Component {
                  : 'background:transparent;color:rgba(255,255,255,.72);'),
       };
     });
-    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages']);
+    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages','sop']);
     const adminNav = buildNav(['masters','users','config']);
     const hasAdmin = adminNav.length>0;
 
@@ -939,6 +941,7 @@ class AppRoot extends React.Component {
       templates:{ eyebrow:'Execution', icon:'layout-template', title:'Templates', sub:'Task, KPI & OKR Masters — reusable definitions to pull from everywhere.', actionLabel:{task:'New task template',kpi:'New KPI template',okr:'New OKR template'}[this.state.ttTab||'task'], actionIcon:'plus' },
       files:{ eyebrow:'Assets', icon:'folder-open', title:'Document Repository', sub:'Every document, image and video uploaded across tasks — with QC status and deadlines in one view.' },
       messages:{ eyebrow:'Collaboration', icon:'message-square', title:'Messages', sub:'Team conversations — turn any message into a task, or attach it to an existing one.' },
+      sop:{ eyebrow:'Governance', icon:'book-open-check', title:'SOPs', sub:'The documented way work is done, tied to gold standards and QC.', actionLabel:'New SOP', actionIcon:'plus' },
       effort:{ eyebrow:'Planning', icon:'gauge', title:'Create Effort Plan', sub:'Define effort targets, convert them to KPIs and auto-generate tasks for the period.' },
       ideas:{ eyebrow:'Repositories', icon:'lightbulb', title:'Content Repository — Ideas', sub:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks and stay stored for reuse.', actionLabel:'Add Content Idea', actionIcon:'plus' },
       qc:{ eyebrow:'Quality', icon:'shield-check', title:'QC Review', sub:'Independent quality validation and approvals.' },
@@ -965,6 +968,7 @@ class AppRoot extends React.Component {
       else if(route==='okr') this.setState({ showOkrPanel:true });
       else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
+      else if(route==='sop') this.flash('SOP creation form is coming in a follow-up phase — browse and manage existing SOPs here for now.');
       else this.flash('Draft created — opening editor…');
     };
 
@@ -987,6 +991,7 @@ class AppRoot extends React.Component {
     const showProfile = route==='profile';
     const showCampaigns = route==='campaigns';
     const showMessages = route==='messages';
+    const showSop = route==='sop';
     const showTable = ['repositories','users'].includes(route);
     const showPageHead = !showMasterDetail;
 
@@ -1026,7 +1031,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -1082,6 +1087,7 @@ class AppRoot extends React.Component {
     if(showProfile) Object.assign(out, this.myProfileData(rk, role));
     if(showCampaigns) Object.assign(out, this.campaignsView());
     if(showMessages){ Object.assign(out, this.messagesView()); Object.assign(out, this.tkFormData()); }
+    if(showSop) Object.assign(out, this.sopView(rk));
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
@@ -2847,6 +2853,469 @@ class AppRoot extends React.Component {
         open:()=>this.setState({ tkTab:'list', tkOpen:t.id }) })),
       calHasUnscheduled:unscheduled.length>0,
       calExport:()=>{ this.flash('Calendar feed ready — '+dueCount+' tasks exported as .ics for Outlook / Google Calendar.'); },
+    };
+  }
+
+  // ---- SOPs — the documented way work is done, tied to gold standards and QC ----
+  SOP_CATS(){ return ['Content production','SEO execution','Social media','Web development','Design & creative','Quality control','Lead & pipeline','Reporting & analytics','Client onboarding','Platform administration']; }
+  SOP_FREQ(){ return ['Daily','Weekly','Monthly','Per project','One-time','On trigger']; }
+  SOP_PRIORITIES(){ return ['Critical','High','Medium','Low']; }
+  SOP_EVIDENCE(){ return ['File upload','URL','Screenshot','PDF','Document']; }
+  SOP_REL(){ return ['Requires completion of','Related SOP','Parent SOP','Child SOP']; }
+  sopPriTone(p){ return { Critical:{bg:'var(--danger-100)',c:'var(--danger-600)'}, High:{bg:'var(--warn-100)',c:'var(--warn-600)'},
+    Medium:{bg:'var(--info-100)',c:'var(--info-600)'}, Low:{bg:'var(--surface-50)',c:'var(--ink-500)'} }[p]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  SOP_SEED(){ const d=(n)=>this.relDate(-n); const f=(n)=>this.relDate(n);
+    const S=(t,desc,outcome,dur,ev,subs,links,notes)=>({ t, d:desc, outcome:outcome||'', dur:dur||'', ev:ev||[], subs:subs||[], links:links||[], notes:notes||'', files:[] });
+    return [
+    { id:'SOP-001', title:'Publishing a service page', division:'Content', category:'Content production',
+      version:'v3.2', status:'Published', priority:'Critical', estTime:'6 h', frequency:'Per project',
+      owner:'Priya Nair', approver:'Aarav Kapoor', updated:d(6), updatedBy:'Priya Nair', review:f(80), lastReviewed:d(40),
+      lastExecuted:d(2), execCount:34, avgTime:'6.4 h', trend:'+8% faster than last quarter',
+      tags:['service page','seo','launch'],
+      trigger:'A new or refreshed service is approved for market',
+      applicability:'Any service page on a Beetloop-group domain, all markets',
+      purpose:'Every service page ships with complete SEO metadata, internal links and QC sign-off before it goes live.',
+      scope:'Covers drafting through publication. Excludes paid landing pages (see SOP-006).',
+      inputs:['Approved service brief','Target keyword set','Two competitor references'],
+      outputs:['Published page URL','Completed compliance checklist','Logged KPI actual'],
+      resources:['Website Content Repository','Turnitin','Grammarly','Yoast SEO'],
+      docs:[{ name:'service-page-outline-v4.docx', kind:'Template' },{ name:'seo-metadata-checklist.pdf', kind:'Document' },{ name:'page-walkthrough.mp4', kind:'Video' },{ name:'Gold standard reference', kind:'Link' }],
+      successCriteria:'Approved by QC on first pass with on-page score ≥ 85 and originality ≥ 95%.',
+      risks:'Pages go live with thin metadata, lose ranking, and require a costly retrofit.',
+      escalation:'Priya Nair → Rahul Menon',
+      standards:['On-page SEO score ≥ 85','Plagiarism ≤ 5%','Meta title ≤ 60 characters'],
+      templates:['Write Service Page'], roles:['Content Writer','SEO Lead','QC Reviewer'],
+      kpis:[{ name:'Organic Sessions', owner:'Aditi Rao', status:'On track' },{ name:'Qualified Leads', owner:'Priya Nair', status:'At risk' }],
+      sops:[{ rel:'Requires completion of', id:'SOP-007' },{ rel:'Related SOP', id:'SOP-002' },{ rel:'Child SOP', id:'SOP-006' }],
+      steps:[
+        S('Create the page record','Website Content Repository → New page. Complete Page Info and Classification before writing.','A page record exists with a permanent slug','20 m',['Screenshot'],[['Confirm the slug against Naming Conventions','Lowercase, hyphenated, no dates'],['Set the parent page','So the hierarchy renders correctly in the repository']],[{label:'Naming Conventions',url:'/sop/naming'}],'Slugs are permanent — a change later needs a redirect.'),
+        S('Draft against the outline','Use the approved H1/H2/H3 scaffold. Minimum 1,200 words for a service page.','A complete draft matching the outline','3 h',['Document'],[['Write the intro to the ICP','Name the pain in the first 40 words'],['Add the proof section','At least one measurable outcome']],[],''),
+        S('Complete SEO metadata','Meta title, description, focus and secondary keywords, canonical, schema type.','All 12 metadata rows populated','30 m',['Screenshot'],[],[],'Character counters must be green before you continue.'),
+        S('Add relationships and links','Link one related insight and two internal service pages with descriptive anchors.','Links resolve, anchors are descriptive','20 m',[],[],[],''),
+        S('Run the quality tools','Turnitin, Grammarly, Yoast. Attach each report to the task.','Three reports attached','40 m',['PDF','File upload'],[],[],'Reports below the gold standard must be fixed before submission, not explained.'),
+        S('Self-assess the checklist','Fill every compliance line with its value and evidence, then submit for QC.','Checklist submitted and locked','30 m',['File upload'],[],[],''),
+        S('QC review','QC verifies each line and returns Compliant / Accept conditional / Rework.','A recorded QC verdict per line','1 h',[],[],[],'QC never edits the page.'),
+        S('Publish and log the KPI','On approval, publish and close the task — the KPI actual logs automatically.','Page live, task closed, KPI updated','20 m',['URL'],[],[],''),
+      ],
+      versions:[
+        { v:'v3.2', by:'Priya Nair', date:d(6), summary:'Added evidence requirement to the quality-tools step.', reason:'Two pages published without Turnitin reports last cycle.', published:d(6), review:f(80) },
+        { v:'v3.1', by:'Aditi Rao', date:d(60), summary:'Raised on-page score threshold from 80 to 85.', reason:'Competitor benchmark moved.', published:d(60), review:d(6) },
+        { v:'v3.0', by:'Priya Nair', date:d(150), summary:'Restructured into eight steps with sub-steps.', reason:'Writers were skipping metadata.', published:d(150), review:d(60) },
+      ],
+      audit:[['Created','Priya Nair',d(300)],['Published','Priya Nair',d(150)],['Version updated','Aditi Rao',d(60)],['Reviewed','Aarav Kapoor',d(40)],['Version updated','Priya Nair',d(6)]],
+      comments:[
+        { by:'Sameer Iyer', when:d(4), step:'Complete SEO metadata', text:'Should secondary keywords be capped at three? Pages with six read badly.' },
+        { by:'Priya Nair', when:d(3), step:'', text:'Yes — three is the cap. Adding it to the next revision.' },
+      ],
+      ack:['Sameer Iyer','Neha Verma'] },
+    { id:'SOP-002', title:'Backlink outreach and verification', division:'SEO', category:'SEO execution',
+      version:'v2.0', status:'Published', priority:'High', estTime:'2 h', frequency:'Weekly',
+      owner:'Aditi Rao', approver:'Priya Nair', updated:d(12), updatedBy:'Aditi Rao', review:f(60), lastReviewed:d(30),
+      lastExecuted:d(1), execCount:112, avgTime:'1.8 h', trend:'stable',
+      tags:['backlinks','outreach','verification'],
+      trigger:'Weekly link-building cycle opens, or a new target page is published',
+      applicability:'All link acquisition across group domains',
+      purpose:'Only qualified domains are used, and every placed link is verified live on a weekly cycle.',
+      scope:'Covers qualification, submission and verification. Excludes paid placements.',
+      inputs:['Target page URL','Approved anchor list','Domain shortlist'],
+      outputs:['Live link record','Updated domain repository entry'],
+      resources:['Backlink Domain Repository','Ahrefs','Moz'],
+      docs:[{ name:'outreach-email-templates.docx', kind:'Template' },{ name:'domain-qualification-rules.pdf', kind:'Document' }],
+      successCriteria:'Link live, correct anchor and target, verified within seven days.',
+      risks:'Toxic domains damage the profile and take months to disavow.',
+      escalation:'Aditi Rao → Priya Nair',
+      standards:['Referring domain authority ≥ 40','Spam score ≤ 3%','DoFollow where possible'],
+      templates:['Backlink Outreach'], roles:['SEO Executive','SEO Lead'],
+      kpis:[{ name:'Referring Domains', owner:'Aditi Rao', status:'On track' }],
+      sops:[{ rel:'Related SOP', id:'SOP-001' }],
+      steps:[
+        S('Qualify the domain','Confirm it exists in the repository with DA ≥ 40 and spam ≤ 3%.','A qualified domain record','20 m',['Screenshot'],[['Check the industry match','Off-topic domains are rejected regardless of DA']],[],''),
+        S('Record the submission','Log the submitted URL and account against the domain record.','Submission logged','15 m',[],[],[],''),
+        S('Verify placement','Confirm the link is live with the correct anchor and target.','Verified live link','20 m',['Screenshot','URL'],[],[],''),
+        S('Weekly re-verification','Re-check live status weekly; mark broken links immediately.','Verification queue cleared','45 m',['File upload'],[],[],''),
+      ],
+      versions:[
+        { v:'v2.0', by:'Aditi Rao', date:d(12), summary:'Added weekly re-verification as a required step.', reason:'14% of links were silently removed.', published:d(12), review:f(60) },
+        { v:'v1.0', by:'Aditi Rao', date:d(200), summary:'Initial procedure.', reason:'New function.', published:d(200), review:d(12) },
+      ],
+      audit:[['Created','Aditi Rao',d(210)],['Published','Aditi Rao',d(200)],['Reviewed','Priya Nair',d(30)],['Version updated','Aditi Rao',d(12)]],
+      comments:[], ack:['Sameer Iyer','Arjun Pillai'] },
+    { id:'SOP-003', title:'QC review and rework loop', division:'Quality', category:'Quality control',
+      version:'v1.4', status:'Published', priority:'Critical', estTime:'1 h', frequency:'Daily',
+      owner:'Farhan Ali', approver:'Rahul Menon', updated:d(3), updatedBy:'Farhan Ali', review:f(95), lastReviewed:d(20),
+      lastExecuted:d(0), execCount:486, avgTime:'52 m', trend:'+12% faster',
+      tags:['qc','review','independence'],
+      trigger:'A task is submitted for QC',
+      applicability:'Every deliverable across all functions',
+      purpose:'QC stays independent: reviewers verify against the gold standards and never edit the work themselves.',
+      scope:'All QC verdicts and rework routing.',
+      inputs:['Submitted task','Self-assessed checklist','Attached evidence'],
+      outputs:['QC verdict per line','Written rework reason where applicable'],
+      resources:['QC Review queue','Compliance checklist','Gold Standard master'],
+      docs:[{ name:'qc-verdict-guidance.pdf', kind:'Document' }],
+      successCriteria:'Every line has a verdict, and every rework carries a written reason.',
+      risks:'QC becomes a rubber stamp and defects reach clients.',
+      escalation:'Farhan Ali → Rahul Menon',
+      standards:['QC first-pass approval ≥ 90%','Every rework carries a written reason'],
+      templates:[], roles:['QC Reviewer','Team Lead'],
+      kpis:[{ name:'QC First-Pass Rate', owner:'Farhan Ali', status:'On track' }],
+      sops:[{ rel:'Parent SOP', id:'SOP-001' }],
+      steps:[
+        S('Open the QC queue','Work oldest-first within SLA. Confirm evidence is attached before reviewing.','Queue triaged','10 m',[],[],[],''),
+        S('Verify each checklist line','Enter your own measured value beside the self score.','Independent value recorded per line','25 m',['Screenshot'],[],[],''),
+        S('Decide per line','Compliant, Accept conditional, or Rework — the last two require a comment.','A verdict per line','15 m',[],[],[],''),
+        S('Return or approve','Approve only when every line is Compliant or conditionally accepted.','Task routed','5 m',[],[],[],''),
+        S('Never edit the deliverable','Request the change; the doer makes it.','Independence preserved','—',[],[],[],'This is a principle, not a preference.'),
+      ],
+      versions:[
+        { v:'v1.4', by:'Farhan Ali', date:d(3), summary:'Clarified the conditional-acceptance path.', reason:'Reviewers were rejecting minor issues outright.', published:d(3), review:f(95) },
+        { v:'v1.3', by:'Farhan Ali', date:d(90), summary:'Added the no-editing rule explicitly.', reason:'An audit finding.', published:d(90), review:d(3) },
+      ],
+      audit:[['Created','Farhan Ali',d(240)],['Published','Farhan Ali',d(230)],['Version updated','Farhan Ali',d(90)],['Reviewed','Rahul Menon',d(20)],['Version updated','Farhan Ali',d(3)]],
+      comments:[], ack:['Aditi Rao'] },
+    { id:'SOP-004', title:'Daily lead logging', division:'Marketing', category:'Lead & pipeline',
+      version:'v1.1', status:'Published', priority:'High', estTime:'20 m', frequency:'Daily',
+      owner:'Priya Nair', approver:'Rahul Menon', updated:d(2), updatedBy:'Priya Nair', review:f(70), lastReviewed:d(25),
+      lastExecuted:d(0), execCount:180, avgTime:'16 m', trend:'stable',
+      tags:['leads','attribution','daily'],
+      trigger:'End of each working day',
+      applicability:'All inbound enquiries across group brands',
+      purpose:'Leads are attributed to the service page that produced them, on the day they arrive.',
+      scope:'Logging and attribution only. Qualification is covered by the pipeline process.',
+      inputs:['Enquiry records','Analytics visitor counts'],
+      outputs:['Daily lead entry','Named contact records'],
+      resources:['OKR & KPI → Daily leads','GA4'],
+      docs:[], successCriteria:'Every lead in the count has a named contact and a service page.',
+      risks:'Attribution is lost and channel investment cannot be justified.',
+      escalation:'Priya Nair → Rahul Menon',
+      standards:['Logged same day','Every lead attributed to a service page'],
+      templates:[], roles:['Manager','Admin'],
+      kpis:[{ name:'Qualified Leads', owner:'Priya Nair', status:'At risk' }],
+      sops:[],
+      steps:[
+        S('Log before end of day','OKR & KPI → Daily leads. Never backdate more than one day.','Entry saved for today','5 m',[],[],[],''),
+        S('Attribute to a service page','Pick the page from the repository — the campaign auto-fills.','Lead linked to a page','5 m',[],[],[],''),
+        S('Record visitors alongside leads','So conversion rate is computable per page.','Visitors captured','5 m',['Screenshot'],[],[],''),
+        S('Add the contact record','Each lead needs a named contact with a qualification stage.','Contacts created','5 m',[],[],[],''),
+      ],
+      versions:[{ v:'v1.1', by:'Priya Nair', date:d(2), summary:'Added the visitors field as mandatory.', reason:'Conversion rate was not computable.', published:d(2), review:f(70) }],
+      audit:[['Created','Priya Nair',d(120)],['Published','Priya Nair',d(115)],['Reviewed','Rahul Menon',d(25)],['Version updated','Priya Nair',d(2)]],
+      comments:[], ack:[] },
+    { id:'SOP-005', title:'Reel production and scheduling', division:'SMM', category:'Social media',
+      version:'v0.6', status:'Draft', priority:'Medium', estTime:'4 h', frequency:'Weekly',
+      owner:'Neha Verma', approver:'Priya Nair', updated:d(1), updatedBy:'Neha Verma', review:f(120), lastReviewed:'',
+      lastExecuted:'', execCount:0, avgTime:'—', trend:'no data yet',
+      tags:['reels','video','smm'],
+      trigger:'Weekly content calendar slot',
+      applicability:'Instagram, YouTube Shorts, LinkedIn video',
+      purpose:'Draft — standardise reel specs, caption format and posting windows across platforms.',
+      scope:'Production and scheduling. Paid promotion excluded.',
+      inputs:['Approved hook','Brand asset kit'],
+      outputs:['Scheduled reel','Caption and hashtag set'],
+      resources:['Asset library','Buffer'],
+      docs:[{ name:'reel-spec-sheet.pdf', kind:'Document' }],
+      successCriteria:'Published on schedule at spec with brand check passed.',
+      risks:'Off-spec assets get cropped and the brand looks careless.',
+      escalation:'Neha Verma → Priya Nair',
+      standards:['Brand guideline adherence ≥ 90','Asset spec compliance 100%'],
+      templates:['Create Reel'], roles:['Graphic Designer','SMM Executive'],
+      kpis:[{ name:'Engagement Rate', owner:'Neha Verma', status:'No data' }],
+      sops:[{ rel:'Related SOP', id:'SOP-003' }],
+      steps:[
+        S('Confirm the brief','Hook, payoff and CTA agreed before production.','Signed-off brief','30 m',[],[],[],''),
+        S('Produce to platform specs','9:16, safe margins, captions burned in.','Export at spec','2 h',['File upload'],[],[],''),
+        S('QC the asset','Brand check plus spec check before scheduling.','QC approval','30 m',['Screenshot'],[],[],''),
+      ],
+      versions:[{ v:'v0.6', by:'Neha Verma', date:d(1), summary:'Working draft.', reason:'New channel.', published:'', review:f(120) }],
+      audit:[['Created','Neha Verma',d(10)],['Edited','Neha Verma',d(1)]],
+      comments:[{ by:'Priya Nair', when:d(1), step:'Produce to platform specs', text:'Add the LinkedIn 4:5 variant before this goes to review.' }],
+      ack:[] },
+    { id:'SOP-006', title:'Campaign landing page build', division:'Web Development', category:'Web development',
+      version:'v1.2', status:'In review', priority:'High', estTime:'8 h', frequency:'Per project',
+      owner:'Rohit Sharma', approver:'Priya Nair', updated:d(4), updatedBy:'Rohit Sharma', review:f(20), lastReviewed:d(70),
+      lastExecuted:d(9), execCount:11, avgTime:'8.6 h', trend:'-4% slower',
+      tags:['landing page','campaign','performance'],
+      trigger:'A campaign is approved with a paid or outbound component',
+      applicability:'All /lp/ campaign pages',
+      purpose:'Landing pages load fast, track correctly and convert — before spend starts.',
+      scope:'Build, instrumentation and pre-launch checks.',
+      inputs:['Campaign brief','Approved copy','UTM plan'],
+      outputs:['Live landing page','Verified tracking','Performance report'],
+      resources:['Lighthouse','PageSpeed Insights','GA4'],
+      docs:[{ name:'lp-build-checklist.pdf', kind:'Document' },{ name:'lp-starter.zip', kind:'Template' }],
+      successCriteria:'LCP ≤ 2.5s, Lighthouse ≥ 90, conversion tracking verified end to end.',
+      risks:'Spend starts against a page that does not track — the budget is unattributable.',
+      escalation:'Rohit Sharma → Priya Nair',
+      standards:['Lighthouse performance ≥ 90','Core Web Vitals — LCP ≤ 2.5s','Broken links 0'],
+      templates:[], roles:['Web Developer','SEO Lead'],
+      kpis:[{ name:'Landing Page Conversion', owner:'Rohit Sharma', status:'On track' }],
+      sops:[{ rel:'Parent SOP', id:'SOP-001' }],
+      steps:[
+        S('Build from the starter','Use the approved starter, not a copied page.','Page scaffolded','2 h',[],[],[],''),
+        S('Instrument tracking','UTMs, events and goal verified in GA4 before launch.','Tracking verified','2 h',['Screenshot'],[['Fire a test conversion','Confirm it lands in GA4']],[],''),
+        S('Run performance checks','Lighthouse and PageSpeed against the gold standards.','Reports attached','1 h',['PDF'],[],[],''),
+        S('Pre-launch QC','Links, forms, mobile layout, consent banner.','QC approval','1 h',['Screenshot'],[],[],''),
+      ],
+      versions:[
+        { v:'v1.2', by:'Rohit Sharma', date:d(4), summary:'Added the test-conversion sub-step.', reason:'A campaign ran three days untracked.', published:'', review:f(20) },
+        { v:'v1.1', by:'Rohit Sharma', date:d(100), summary:'Added Core Web Vitals thresholds.', reason:'Google update.', published:d(100), review:d(4) },
+      ],
+      audit:[['Created','Rohit Sharma',d(180)],['Published','Rohit Sharma',d(170)],['Version updated','Rohit Sharma',d(100)],['Reviewed','Priya Nair',d(70)],['Edited','Rohit Sharma',d(4)]],
+      comments:[], ack:['Arjun Pillai'] },
+    { id:'SOP-007', title:'Keyword research and mapping', division:'SEO', category:'SEO execution',
+      version:'v2.1', status:'Published', priority:'High', estTime:'5 h', frequency:'Monthly',
+      owner:'Aditi Rao', approver:'Priya Nair', updated:d(18), updatedBy:'Sameer Iyer', review:d(5), lastReviewed:d(110),
+      lastExecuted:d(6), execCount:26, avgTime:'5.2 h', trend:'stable',
+      tags:['keywords','research','mapping'],
+      trigger:'Monthly planning cycle, or a new service is added',
+      applicability:'All group domains and markets',
+      purpose:'Every target page has one primary keyword and no two pages compete for it.',
+      scope:'Research, clustering and page mapping.',
+      inputs:['Service list','Competitor set','Market'],
+      outputs:['Keyword master entries','Page-to-keyword map'],
+      resources:['Semrush','Google Search Console','Keyword master'],
+      docs:[{ name:'clustering-method.pdf', kind:'Document' }],
+      successCriteria:'Zero cannibalisation and every priority page mapped.',
+      risks:'Two pages compete, both rank lower, and effort is wasted.',
+      escalation:'Aditi Rao → Priya Nair',
+      standards:['Focus keyword usage 1–2%'],
+      templates:['Keyword Research'], roles:['SEO Executive','SEO Lead'],
+      kpis:[{ name:'Keywords in Top 10', owner:'Aditi Rao', status:'On track' }],
+      sops:[{ rel:'Child SOP', id:'SOP-001' }],
+      steps:[
+        S('Pull the seed set','Search Console plus Semrush for the market.','Seed list exported','1 h',['File upload'],[],[],''),
+        S('Cluster by intent','Group by what the searcher is trying to do, not by string similarity.','Intent clusters','2 h',[],[],[],''),
+        S('Map one keyword per page','Check the existing map for conflicts before assigning.','Conflict-free map','1 h',['Document'],[],[],''),
+        S('Update the keyword master','Volume, difficulty, intent, priority, landing page.','Master updated','1 h',[],[],[],''),
+      ],
+      versions:[
+        { v:'v2.1', by:'Sameer Iyer', date:d(18), summary:'Added the cannibalisation check before assignment.', reason:'Two service pages competed in Q1.', published:d(18), review:d(5) },
+        { v:'v2.0', by:'Aditi Rao', date:d(140), summary:'Switched from volume-first to intent-first clustering.', reason:'Better conversion on lower-volume terms.', published:d(140), review:d(18) },
+      ],
+      audit:[['Created','Aditi Rao',d(260)],['Published','Aditi Rao',d(250)],['Version updated','Aditi Rao',d(140)],['Reviewed','Priya Nair',d(110)],['Version updated','Sameer Iyer',d(18)]],
+      comments:[], ack:['Sameer Iyer'] },
+  ]; }
+  allSops(){ const upd=this.state.sopUpd||{};
+    return (this.state.sopAdded||[]).concat(this.SOP_SEED()).map(s=>upd[s.id]?{...s,...upd[s.id]}:s); }
+  sopTone(s){ return { Published:{bg:'var(--verify-100)',c:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},
+    'In review':{bg:'var(--warn-100)',c:'var(--warn-600)'}, Retired:{bg:'#EAE4E8',c:'var(--beet-700)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  sopReviewState(s){
+    const iso=this.isoDate(s.review); if(!iso) return { label:'no review set', color:'var(--ink-400)', overdue:false, soon:false };
+    const days=Math.round((new Date(iso+'T00:00:00')-Date.now())/86400000);
+    if(days<0) return { label:'overdue by '+Math.abs(days)+' d', color:'var(--danger-600)', overdue:true, soon:false, days };
+    if(days<=30) return { label:'due in '+days+' d', color:'var(--warn-600)', overdue:false, soon:true, days };
+    return { label:s.review, color:'var(--ink-500)', overdue:false, soon:false, days };
+  }
+  // bi-directional: which SOPs contribute to a given KPI name
+  sopsForKpi(name){ return this.allSops().filter(s=>(s.kpis||[]).some(k=>k.name===name)); }
+  sopFormData(){ return { sopFormOpen:false }; }
+  sopView(rk){
+    const me=this.ROLES[rk].person;
+    const canAuthor=['manager','team_lead','admin'].includes(rk);
+    const all=this.allSops();
+    const F=this.state.sopF||{ division:'All', status:'All', mine:'All', category:'All', priority:'All', frequency:'All', approver:'All', tag:'All' };
+    const setF=(k)=>(e)=>this.setState({ sopF:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),sop:0} });
+    let list=all.filter(s=>
+      (F.division==='All'||s.division===F.division) &&
+      (F.status==='All'||s.status===F.status) &&
+      (F.category==='All'||s.category===F.category) &&
+      (F.priority==='All'||s.priority===F.priority) &&
+      (F.frequency==='All'||s.frequency===F.frequency) &&
+      (F.approver==='All'||s.approver===F.approver) &&
+      (F.tag==='All'||(s.tags||[]).includes(F.tag)));
+    if(F.mine==='Needs my acknowledgement') list=list.filter(s=>s.status==='Published'&&!(s.ack||[]).includes(me));
+    if(F.mine==='Owned by me') list=list.filter(s=>s.owner===me);
+    if(F.mine==='Review due or overdue') list=list.filter(s=>{ const r=this.sopReviewState(s); return r.overdue||r.soon; });
+    const q=(this.state.sopQuery||'').toLowerCase();
+    if(q) list=list.filter(s=>[s.id,s.title,s.purpose,s.category,s.division,(s.tags||[]).join(' '),
+      (s.kpis||[]).map(k=>k.name).join(' '), (s.sops||[]).map(x=>x.id).join(' '), (s.resources||[]).join(' ')]
+      .join(' ').toLowerCase().indexOf(q)>=0);
+    const K=(label,value,sub,color)=>({label,value,sub,color});
+    const unack=all.filter(s=>s.status==='Published'&&!(s.ack||[]).includes(me));
+    const overdue=all.filter(s=>this.sopReviewState(s).overdue);
+    const soon=all.filter(s=>this.sopReviewState(s).soon);
+    const expanded=this.state.sopExp||[];
+    const pg=this.pgData('sop',list.map(s=>{ const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
+      const rv=this.sopReviewState(s); const acked=(s.ack||[]).includes(me);
+      const exp=expanded.includes(s.id);
+      return { id:s.id, title:s.title, division:s.division, category:s.category, version:s.version, owner:s.owner,
+        approver:s.approver, updated:s.updated, frequency:s.frequency, estTime:s.estTime,
+        lastExecuted:s.lastExecuted||'never', trigger:s.trigger,
+        status:s.status, statusBg:tn.bg, statusColor:tn.c,
+        priority:s.priority, priBg:pt.bg, priColor:pt.c,
+        stepCount:(s.steps||[]).length+' steps', stdCount:(s.standards||[]).length+' standards',
+        kpiCount:(s.kpis||[]).length?((s.kpis||[]).length+' KPI'+((s.kpis||[]).length===1?'':'s')):'No KPI',
+        kpiNames:(s.kpis||[]).map(k=>k.name).join(', ')||'—',
+        sopCount:(s.sops||[]).length?((s.sops||[]).length+' linked SOP'+((s.sops||[]).length===1?'':'s')):'No linked SOPs',
+        sopNames:(s.sops||[]).map(x=>x.rel+' '+x.id).join(' · ')||'—',
+        tagList:(s.tags||[]).map(t=>({ label:t })),
+        acked, ackLabel:acked?'Acknowledged':'Not acknowledged',
+        ackBg:acked?'var(--verify-100)':'var(--warn-100)', ackColor:acked?'var(--verify-600)':'var(--warn-600)',
+        reviewLabel:rv.label, reviewColor:rv.color,
+        expanded:exp,
+        toggle:(e)=>{ if(e)e.stopPropagation(); const cur=this.state.sopExp||[];
+          this.setState({ sopExp:cur.includes(s.id)?cur.filter(x=>x!==s.id):[...cur,s.id] }); },
+        open:()=>this.setState({ sopOpen:s.id, sopTabD:'overview' }) }; }),8);
+    return {
+      sopIsList:true,
+      sopStats:[K('Published',String(all.filter(s=>s.status==='Published').length),'in force','var(--verify-600)'),
+        K('In review / draft',String(all.filter(s=>['Draft','In review'].includes(s.status)).length),'not yet in force','var(--ink-500)'),
+        K('Needs my sign-off',String(unack.length),unack.length?'read and acknowledge':'all acknowledged',unack.length?'var(--warn-600)':'var(--verify-600)'),
+        K('Reviews overdue',String(overdue.length),'past review date','var(--danger-600)'),
+        K('Reviews due soon',String(soon.length),'within 30 days','var(--warn-600)'),
+        K('Categories',String([...new Set(all.map(s=>s.category))].length),'covered','var(--beet-700)')],
+      sopRows:pg.rows, sopPg:pg, sopEmpty:list.length===0,
+      sopCanAuthor:canAuthor,
+      sopQuery:this.state.sopQuery||'', sopSetQuery:(e)=>this.setState({ sopQuery:e.target.value }),
+      sopSearchHint:'Searches ID, title, tags, purpose, category, linked KPIs, linked SOPs and resources',
+      sopFilters:[
+        {label:'Category',value:F.category,onChange:setF('category'),options:['All'].concat([...new Set(all.map(s=>s.category))])},
+        {label:'Function',value:F.division,onChange:setF('division'),options:['All'].concat([...new Set(all.map(s=>s.division))])},
+        {label:'Status',value:F.status,onChange:setF('status'),options:['All','Published','In review','Draft','Retired']},
+        {label:'Priority',value:F.priority,onChange:setF('priority'),options:['All'].concat(this.SOP_PRIORITIES())},
+        {label:'Frequency',value:F.frequency,onChange:setF('frequency'),options:['All'].concat(this.SOP_FREQ())},
+        {label:'Approver',value:F.approver,onChange:setF('approver'),options:['All'].concat([...new Set(all.map(s=>s.approver))])},
+        {label:'Tag',value:F.tag,onChange:setF('tag'),options:['All'].concat([...new Set(all.reduce((a,s)=>a.concat(s.tags||[]),[]))])},
+        {label:'Show',value:F.mine,onChange:setF('mine'),options:['All','Needs my acknowledgement','Owned by me','Review due or overdue']},
+      ],
+      sopReset:()=>this.setState({ sopF:{ division:'All', status:'All', mine:'All', category:'All', priority:'All', frequency:'All', approver:'All', tag:'All' }, sopQuery:'' }),
+      sopNewBtn:()=>this.flash('SOP creation form is coming in a follow-up phase — browse and manage existing SOPs here for now.'),
+      ...this.sopFormData(), ...this.sopDetailData(rk),
+    };
+  }
+  sopDetailData(rk){
+    const id=this.state.sopOpen; if(!id) return { sopDrawerOpen:false };
+    const s=this.allSops().find(x=>x.id===id); if(!s) return { sopDrawerOpen:false };
+    const me=this.ROLES[rk].person;
+    const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
+    const acked=(s.ack||[]).includes(me);
+    const canAuthor=['manager','team_lead','admin'].includes(rk)&&(s.owner===me||rk==='admin');
+    const rv=this.sopReviewState(s);
+    const patch=(p,msg,auditRow)=>{ const u={...(this.state.sopUpd||{})};
+      const cur={...(u[s.id]||{})};
+      const nx={...s,...cur,...p};
+      if(auditRow) nx.audit=[...(nx.audit||[]),auditRow];
+      u[s.id]={...cur,...p, audit:nx.audit};
+      this.setState({ sopUpd:u }); if(msg) this.flash(msg); };
+    const tab=this.state.sopTabD||'overview';
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const byId=(x)=>this.allSops().find(y=>y.id===x);
+    const relTone=(r)=>({ 'Requires completion of':{bg:'var(--danger-100)',c:'var(--danger-600)',icon:'lock'},
+      'Related SOP':{bg:'var(--info-100)',c:'var(--info-600)',icon:'link'},
+      'Parent SOP':{bg:'var(--orchid-100)',c:'var(--orchid-700)',icon:'corner-left-up'},
+      'Child SOP':{bg:'var(--surface-50)',c:'var(--ink-500)',icon:'corner-right-down'} }[r]||{bg:'var(--surface-50)',c:'var(--ink-500)',icon:'link'});
+    const kpiTone=(st)=>({ 'On track':{bg:'var(--verify-100)',c:'var(--verify-600)'},'At risk':{bg:'var(--warn-100)',c:'var(--warn-600)'},
+      'Off track':{bg:'var(--danger-100)',c:'var(--danger-600)'},'No data':{bg:'var(--surface-50)',c:'var(--ink-500)'} }[st]||{bg:'var(--surface-50)',c:'var(--ink-500)'});
+    const cmt=this.state.sopCmt||'';
+    return { sopDrawerOpen:true,
+      sopD:{ id:s.id, title:s.title, division:s.division, category:s.category, version:s.version, status:s.status,
+        statusBg:tn.bg, statusColor:tn.c, priority:s.priority, priBg:pt.bg, priColor:pt.c,
+        owner:s.owner, approver:s.approver, updated:s.updated, updatedBy:s.updatedBy||s.owner,
+        review:s.review, reviewLabel:rv.label, reviewColor:rv.color,
+        purpose:s.purpose, hasPurpose:!!(s.purpose&&String(s.purpose).trim()),
+        ackCount:(s.ack||[]).length+' acknowledged' },
+      sopDClose:()=>this.setState({ sopOpen:null }),
+      sopDStop:(e)=>e.stopPropagation(),
+      sopTabs:[['overview','Overview','info'],['exec','Execution','list-checks'],['rel','Relationships','git-branch'],
+        ['gov','Governance','shield-check'],['hist','History','activity'],['cmt','Comments','message-square']]
+        .map(x=>({ label:x[1], icon:x[2], style:seg(tab===x[0]), go:()=>this.setState({ sopTabD:x[0] }) })),
+      sopTabOverview:tab==='overview', sopTabExec:tab==='exec', sopTabRel:tab==='rel',
+      sopTabGov:tab==='gov', sopTabHist:tab==='hist', sopTabCmt:tab==='cmt',
+      // overview
+      sopOv:[['Category',s.category],['Function',s.division],['Priority',s.priority],['Estimated time',s.estTime],
+        ['Frequency',s.frequency],['Trigger',s.trigger||'—'],['Applicability',s.applicability||'—'],
+        ['Owner',s.owner],['Approver',s.approver],['Escalation',s.escalation||'—']].map(x=>({k:x[0],v:x[1]||'—'})),
+      sopScope:s.scope||'', sopHasScope:!!s.scope,
+      sopInputs:(s.inputs||[]).map(x=>({ text:x })), sopHasInputs:(s.inputs||[]).length>0,
+      sopOutputs:(s.outputs||[]).map(x=>({ text:x })), sopHasOutputs:(s.outputs||[]).length>0,
+      sopResources:(s.resources||[]).map(x=>({ text:x })), sopHasResources:(s.resources||[]).length>0,
+      sopTagsD:(s.tags||[]).map(x=>({ label:x })), sopHasTags:(s.tags||[]).length>0,
+      sopSuccess:s.successCriteria||'', sopHasSuccess:!!s.successCriteria,
+      sopRisks:s.risks||'', sopHasRisks:!!s.risks,
+      sopDStandards:(s.standards||[]).map(x=>({ label:x })), sopHasStandards:(s.standards||[]).length>0,
+      // execution
+      sopDSteps:(s.steps||[]).map((st,i)=>({ n:String(i+1), t:st.t, d:st.d, outcome:st.outcome||'', dur:st.dur||'—',
+        notes:st.notes||'', hasNotes:!!st.notes, hasOutcome:!!st.outcome,
+        evList:(st.ev||[]).map(e=>({ label:e })), needsEv:(st.ev||[]).length>0,
+        subs:(st.subs||[]).map((sb,j)=>({ n:(i+1)+'.'+(j+1), t:(sb[0]||sb.t||''), d:(sb[1]||sb.d||'') })),
+        hasSubs:(st.subs||[]).length>0,
+        links:(st.links||[]).map(l=>({ label:l.label, url:l.url })), hasLinks:(st.links||[]).length>0 })),
+      sopStepTotal:(s.steps||[]).length+' steps · '+((s.steps||[]).filter(x=>(x.ev||[]).length).length)+' require evidence',
+      // resources
+      sopDocs:(s.docs||[]).map(d=>({ name:d.name, kind:d.kind,
+        icon:d.kind==='Video'?'video':(d.kind==='Template'?'layout-template':(d.kind==='Link'?'external-link':'file-text')),
+        open:()=>this.flash('Opening '+d.name+' from the Document Repository.') })),
+      sopHasDocs:(s.docs||[]).length>0,
+      sopDTemplates:(s.templates||[]).map(x=>({ label:x, open:()=>this.setState({ sopOpen:null, route:'templates' }) })),
+      sopHasTemplates:(s.templates||[]).length>0,
+      sopDRoles:(s.roles||[]).map(x=>({ label:x })), sopHasRoles:(s.roles||[]).length>0,
+      // relationships
+      sopKpiRowsD:(s.kpis||[]).map(k=>{ const t=kpiTone(k.status);
+        return { name:k.name, owner:k.owner, status:k.status, bg:t.bg, color:t.c,
+          contributing:(()=>{ const n=this.sopsForKpi(k.name).length; return n+' SOP'+(n===1?' contributes':'s contribute'); })(),
+          open:()=>this.setState({ sopOpen:null, route:'okr', okrModTab:'okrs' }) }; }),
+      sopHasKpisD:(s.kpis||[]).length>0,
+      sopRelRowsD:(s.sops||[]).map(r=>{ const t=relTone(r.rel); const o=byId(r.id);
+        return { rel:r.rel, id:r.id, title:o?o.title:'(not found)', status:o?o.status:'—',
+          bg:t.bg, color:t.c, icon:t.icon,
+          blocking:r.rel==='Requires completion of',
+          open:()=>o?this.setState({ sopOpen:o.id, sopTabD:'overview' }):this.flash('That SOP no longer exists.') }; }),
+      sopHasRelD:(s.sops||[]).length>0,
+      sopUsedBy:this.allSops().filter(x=>(x.sops||[]).some(r=>r.id===s.id))
+        .map(x=>({ id:x.id, title:x.title, open:()=>this.setState({ sopOpen:x.id, sopTabD:'overview' }) })),
+      sopHasUsedBy:this.allSops().some(x=>(x.sops||[]).some(r=>r.id===s.id)),
+      // governance
+      sopVersions:(s.versions||[]).map((v,i)=>({ v:v.v, by:v.by, date:v.date, summary:v.summary, reason:v.reason,
+        published:v.published||'not published', review:v.review||'—', current:i===0,
+        dotBg:i===0?'var(--orchid-500)':'var(--line-300)' })),
+      sopHasVersions:(s.versions||[]).length>0,
+      sopGov:[['Current version',s.version],['Last updated',s.updated+' by '+(s.updatedBy||s.owner)],
+        ['Last reviewed',s.lastReviewed||'never'],['Next review',s.review+((rv.overdue||rv.soon)?(' — '+rv.label):'')],
+        ['Approver',s.approver],['Acknowledgements',(s.ack||[]).length+' of team']].map(x=>({k:x[0],v:x[1]})),
+      // execution history
+      sopHist:[['Last executed',s.lastExecuted||'never'],['Times executed',String(s.execCount||0)],
+        ['Average completion',s.avgTime||'—'],['Estimated time',s.estTime||'—'],['Trend',s.trend||'—']].map(x=>({k:x[0],v:x[1]})),
+      sopAudit:(s.audit||[]).slice().reverse().map(a=>({ what:a[0], who:a[1], when:a[2],
+        icon:{Created:'plus',Edited:'pencil',Published:'upload-cloud','Version updated':'git-branch',Reviewed:'eye',Retired:'archive'}[a[0]]||'dot',
+        color:{Created:'var(--ink-500)',Edited:'var(--ink-500)',Published:'var(--verify-600)','Version updated':'var(--orchid-600)',Reviewed:'var(--info-600)',Retired:'var(--ink-400)'}[a[0]]||'var(--ink-500)' })),
+      // comments
+      sopComments:(s.comments||[]).slice().reverse().map(c=>({ by:c.by, when:c.when, text:c.text,
+        step:c.step||'', hasStep:!!c.step, mine:c.by===me,
+        bg:c.by===me?'var(--orchid-100)':'var(--surface-50)' })),
+      sopHasComments:(s.comments||[]).length>0,
+      sopCmt:cmt, sopSetCmt:(e)=>this.setState({ sopCmt:e.target.value }),
+      sopCmtStep:this.state.sopCmtStep||'', sopSetCmtStep:(e)=>this.setState({ sopCmtStep:e.target.value }),
+      sopStepOptions:[''].concat((s.steps||[]).map(x=>x.t)),
+      sopAddComment:()=>{ const v=(this.state.sopCmt||'').trim(); if(!v){ this.flash('Type a comment first.'); return; }
+        patch({ comments:[...(s.comments||[]),{ by:me, when:this.todayStr(), step:this.state.sopCmtStep||'', text:v }] },
+          'Comment added'+(this.state.sopCmtStep?(' on “'+this.state.sopCmtStep+'”.'):'.'));
+        this.setState({ sopCmt:'', sopCmtStep:'' }); },
+      // actions
+      sopAckedByMe:acked, sopNeedsAck:s.status==='Published'&&!acked,
+      sopAck:()=>patch({ ack:[...(s.ack||[]), me] }, 'You acknowledged '+s.id+' '+s.version+'.'),
+      sopAckList:(s.ack||[]).map(n=>({ name:n, initials:n.split(' ').map(x=>x[0]).join('').slice(0,2) })),
+      sopCanAuthorD:canAuthor,
+      sopPublish:()=>patch({ status:'Published', updated:this.todayStr(), updatedBy:me, ack:[] },
+        s.id+' published as '+s.version+' — acknowledgements reset, everyone must read it again.',
+        ['Published',me,this.todayStr()]),
+      sopPublishLabel:s.status==='Published'?'Re-publish current version':'Publish',
+      sopBump:()=>{ const p=String(s.version||'v1.0').replace('v','').split('.');
+        const nv='v'+p[0]+'.'+((parseInt(p[1],10)||0)+1);
+        const entry={ v:nv, by:me, date:this.todayStr(),
+          summary:'Revision — change summary pending.', reason:'Recorded on version bump.',
+          published:s.status==='Published'?this.todayStr():'', review:s.review };
+        patch({ version:nv, updated:this.todayStr(), updatedBy:me, ack:[],
+          versions:[entry].concat(s.versions||[]) },
+          s.id+' → '+nv+' · previous versions kept in history, acknowledgements reset.',
+          ['Version updated',me,this.todayStr()]); },
+      sopMarkReviewed:()=>patch({ lastReviewed:this.todayStr(), review:this.relDate(90) },
+        s.id+' marked reviewed — next review in 90 days.', ['Reviewed',me,this.todayStr()]),
+      sopRetire:()=>patch({ status:s.status==='Retired'?'Published':'Retired' },
+        s.status==='Retired'?(s.id+' reinstated.'):(s.id+' retired — kept for audit, no longer in force.'),
+        [s.status==='Retired'?'Published':'Retired',me,this.todayStr()]),
+      sopRetireLabel:s.status==='Retired'?'Reinstate':'Retire',
+      sopDuplicate:()=>this.flash('SOP duplication is coming in a follow-up phase alongside the full create/edit form.'),
+      sopSaveAsTemplate:()=>this.flash('“'+s.title+'” saved as a reusable SOP template — available in the New SOP duplicate list.'),
     };
   }
 
