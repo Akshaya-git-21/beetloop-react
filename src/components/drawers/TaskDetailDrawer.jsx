@@ -366,13 +366,10 @@ Workflow pipeline — stages unlock on QC approval
 )}
 {Boolean(r.writerEditable) && (
 <React.Fragment>
-<div style={{"display":"flex","gap":"5px"}}>
-<input value={r.evDraftVal} onInput={r.setEvDraft} placeholder="file name" style={{"flex":"1","minWidth":"0","padding":"6px 8px","border":"1px dashed var(--line-300)","borderRadius":"8px","fontSize":"10.5px","outline":"none"}} />
 <button onClick={r.addEv} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"5px 10px","border":"1px dashed var(--line-300)","background":"#fff","color":"var(--orchid-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
 Attach
 </button>
-</div>
 {Boolean(r.evMissing) && (
 <div style={{"fontSize":"10px","fontWeight":"700","color":"var(--danger-600)","marginTop":"3px"}}>Evidence required</div>
 )}

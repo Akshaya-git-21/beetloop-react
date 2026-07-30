@@ -3,9 +3,10 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrEffortOptions, okrNewCode, okrOwnerOptions, okrSteps, okrTaskOptions, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrSaveLabel,
-    okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions, okrParentOptionsList,
-    okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal } = vm;
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrSaveLabel,
+    okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions,
+    okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal,
+    okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions } = vm;
   return (
     <React.Fragment>
 {Boolean(showOkrPanel) && (
@@ -503,10 +504,10 @@ Key result (custom)
 <input value={k.kr} onInput={k.setKr} placeholder="e.g. Increase organic visitors to 100K/month" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
 </div>
 
-                  
+
 <div style={{"display":"grid","gridTemplateColumns":"1.4fr 1fr","gap":"10px"}}>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 KPI (from KPI Master, or custom)
@@ -521,21 +522,80 @@ KPI (from KPI Master, or custom)
 </datalist>
 </div>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Unit
 </label>
-<input value={k.unit} onInput={k.setUnit} placeholder="e.g. sessions" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+<select value={k.unit} onChange={k.setUnit} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select unit…</option>
+{(okrUnitOptions || []).map((u, $index) => (
+<option key={$index} value={u}>{u}</option>
+))}
+</select>
 </div>
 
-                  
+
 </div>
 
-                  
+<div style={{"background":"#fff","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"11px 12px"}}>
+<div style={{"display":"grid","gridTemplateColumns":".9fr 1.6fr","gap":"10px"}}>
+<div>
+<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Target source</label>
+<select value={k.tsrc} onChange={k.setTsrc} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+{(okrTsrcOptions || []).map((s, $i) => (<option key={$i} value={s}>{s}</option>))}
+</select>
+</div>
+{Boolean(k.isEffSrc) && (
+<div>
+<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Effort plan line</label>
+<select value={k.tref} onChange={k.setTref} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select effort line…</option>
+{(k.effOptions || []).map((o, $i) => (<option key={$i} value={o.key}>{o.label}</option>))}
+</select>
+</div>
+)}
+{Boolean(k.isGoldSrc) && (
+<div>
+<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Gold standard</label>
+<select value={k.tref} onChange={k.setTref} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select standard…</option>
+{(k.goldOptions || []).map((o, $i) => (<option key={$i} value={o.id}>{o.label}</option>))}
+</select>
+</div>
+)}
+{Boolean(k.isTplSrc) && (
+<div>
+<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>KPI template</label>
+<select value={k.tref} onChange={k.setTref} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select template…</option>
+{(k.tplOptions || []).map((o, $i) => (<option key={$i} value={o.label}>{o.label}</option>))}
+</select>
+</div>
+)}
+{Boolean(k.isDeptSrc) && (
+<div>
+<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Department target</label>
+<select value={k.tref} onChange={k.setTref} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select department target…</option>
+{(k.deptOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
+</select>
+</div>
+)}
+{Boolean(k.isManualSrc) && (
+<div style={{"display":"flex","alignItems":"flex-end","fontSize":"11px","color":"var(--ink-500)","paddingBottom":"9px"}}>Enter the target by hand below.</div>
+)}
+</div>
+<div style={{"display":"flex","alignItems":"center","gap":"6px","marginTop":"7px","fontSize":"10.5px","color":"var(--ink-400)"}}>
+<Icon name={"info"} style={{"width":"11px","height":"11px","flexShrink":"0"}} />
+{k.targetHint}
+</div>
+</div>
+
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr 1fr 1fr","gap":"10px"}}>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Baseline
@@ -543,15 +603,21 @@ Baseline
 <input value={k.baseline} onInput={k.setBaseline} placeholder="0" style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
 </div>
 
-                    
+
 <div>
-<label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
-Target
-</label>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
+<label style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>Target</label>
+{Boolean(k.targetLocked) && (
+<button onClick={k.unlockTarget} style={{"display":"inline-flex","alignItems":"center","gap":"3px","padding":"0","border":"none","background":"none","fontSize":"10px","fontWeight":"700","color":"var(--orchid-600)","cursor":"pointer"}}>
+<Icon name={"lock"} style={{"width":"9px","height":"9px"}} />
+override
+</button>
+)}
+</div>
 <input value={k.target} onInput={k.setTarget} placeholder="100000" style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
 </div>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Current
@@ -559,7 +625,7 @@ Current
 <input value={k.current} onInput={k.setCurrent} placeholder="68000" style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
 </div>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Weight %
@@ -567,13 +633,13 @@ Weight %
 <input value={k.weight} onInput={k.setWeight} style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none"}} />
 </div>
 
-                  
+
 </div>
 
-                  
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr 1fr","gap":"10px"}}>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 KR owner
@@ -589,12 +655,12 @@ KR owner
 </select>
 </div>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Check-in frequency
 </label>
-<select style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={k.freq} onChange={k.setFreq} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
 <option>
 Daily
 </option>
@@ -610,64 +676,122 @@ Quarterly
 </select>
 </div>
 
-                    
+
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 Due date
 </label>
-<input type="date" style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+<input type="date" value={k.due} onInput={k.setDue} style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
 </div>
 
-                  
+
 </div>
 
-                  
-<div style={{"borderTop":"1px dashed var(--line-300)","paddingTop":"10px","display":"grid","gridTemplateColumns":"1fr 1fr","gap":"10px"}}>
-
-                    
+<div style={{"borderTop":"1px dashed var(--line-300)","paddingTop":"10px"}}>
+<label style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","color":"var(--verify-600)","marginBottom":"6px"}}>
+<Icon name={"ruler"} style={{"width":"12px","height":"12px"}} />
+How is this measured?
+</label>
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"10px"}}>
 <div>
-<label style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","color":"var(--info-600)","marginBottom":"4px"}}>
+<label style={{"display":"block","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Measurement tool</label>
+<select value={k.tool} onChange={k.setTool} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select tool…</option>
+{(okrToolGroups || []).map((g, $i) => (
+<optgroup key={$i} label={g.g}>
+{(g.tools || []).map((t, $i2) => (<option key={$i2} value={t}>{t}</option>))}
+</optgroup>
+))}
+</select>
+</div>
+<div>
+<label style={{"display":"block","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Measurement method</label>
+<select value={k.method} onChange={k.setMethod} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select method…</option>
+{(okrMethodOptions || []).map((m, $i) => (<option key={$i} value={m}>{m}</option>))}
+</select>
+<div style={{"fontSize":"10px","fontWeight":"600","color":"var(--verify-600)","marginTop":"3px"}}>{k.methodAuto}</div>
+</div>
+<div>
+<label style={{"display":"block","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Measurement frequency</label>
+<select value={k.mfreq} onChange={k.setMfreq} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select frequency…</option>
+{(okrMfreqOptions || []).map((m, $i) => (<option key={$i} value={m}>{m}</option>))}
+</select>
+</div>
+<div>
+<label style={{"display":"block","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Evidence required</label>
+<input value={k.evidence} onInput={k.setEvidence} placeholder="e.g. Grammarly report screenshot, GA4 export" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+</div>
+</div>
+<div style={{"display":"flex","alignItems":"center","gap":"6px","marginTop":"7px","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-500)"}}>
+<Icon name={"ruler"} style={{"width":"11px","height":"11px"}} />
+{k.measureSummary}
+</div>
+</div>
+
+<div style={{"borderTop":"1px dashed var(--line-300)","paddingTop":"10px"}}>
+<div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px"}}>
+<div style={{"minWidth":"0"}}>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"5px"}}>
+<label style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","color":"var(--info-600)"}}>
 <Icon name={"list-checks"} style={{"width":"12px","height":"12px"}} />
-Link tasks (contribute to this KPI)
+Linked tasks — many per KR
 </label>
-<select style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
-<option>
-Auto — all tasks tagged with this KPI
-</option>
-{(okrTaskOptions || []).map((o, $index) => (
-<React.Fragment key={$index}>
-<option>
-{o}
-</option>
-</React.Fragment>
-))}
-</select>
+<button onClick={k.addTaskLink} style={{"display":"flex","alignItems":"center","gap":"4px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"plus"} style={{"width":"10px","height":"10px"}} />
+Add task
+</button>
 </div>
-
-                    
-<div>
-<label style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","color":"var(--orchid-600)","marginBottom":"4px"}}>
+<div style={{"display":"flex","flexDirection":"column","gap":"6px"}}>
+{(k.taskLinks || []).map((tl, $ti) => (
+<div key={$ti} style={{"display":"flex","gap":"6px","alignItems":"center","minWidth":"0"}}>
+<select value={tl.key} onChange={tl.set} style={{"flex":"1","minWidth":"0","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12px","background":"#fff"}}>
+{(okrTaskLinkOptions || []).map((o, $i) => (<option key={$i} value={o.key}>{o.label}</option>))}
+</select>
+{Boolean(tl.canRemove) && (
+<button onClick={tl.remove} style={{"width":"26px","height":"26px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={"x"} style={{"width":"11px","height":"11px","color":"var(--ink-500)"}} />
+</button>
+)}
+</div>
+))}
+</div>
+</div>
+<div style={{"minWidth":"0"}}>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"5px"}}>
+<label style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","color":"var(--orchid-600)"}}>
 <Icon name={"gauge"} style={{"width":"12px","height":"12px"}} />
-Link effort plan
+Linked effort — any division
 </label>
-<select style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
-<option>
-None — outcome only
-</option>
-{(okrEffortOptions || []).map((o, $index) => (
-<React.Fragment key={$index}>
-<option>
-{o}
-</option>
-</React.Fragment>
-))}
+<button onClick={k.addEffortLink} style={{"display":"flex","alignItems":"center","gap":"4px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"plus"} style={{"width":"10px","height":"10px"}} />
+Add effort
+</button>
+</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"6px"}}>
+{(k.effortLinks || []).map((el, $ei) => (
+<div key={$ei} style={{"display":"flex","gap":"6px","alignItems":"center","minWidth":"0"}}>
+<select value={el.key} onChange={el.set} style={{"flex":"1","minWidth":"0","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12px","background":"#fff"}}>
+{(okrEffortLinkOptions || []).map((o, $i) => (<option key={$i} value={o.key}>{o.label}</option>))}
 </select>
+{Boolean(el.canRemove) && (
+<button onClick={el.remove} style={{"width":"26px","height":"26px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={"x"} style={{"width":"11px","height":"11px","color":"var(--ink-500)"}} />
+</button>
+)}
+</div>
+))}
+</div>
+</div>
+</div>
+<div style={{"display":"flex","alignItems":"center","gap":"6px","marginTop":"9px","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>
+<Icon name={"git-branch"} style={{"width":"11px","height":"11px"}} />
+{k.linkSummary}
+</div>
 </div>
 
-                  
-</div>
 
-                
 </div>
 
               

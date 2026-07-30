@@ -17,7 +17,7 @@ class AppRoot extends React.Component {
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
-    clFill: {}, clQc: {}, clSubmitted: {}, clEvDraft: {},
+    clFill: {}, clQc: {}, clSubmitted: {},
     showUserModal: false,
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
@@ -30,6 +30,7 @@ class AppRoot extends React.Component {
     cmpFilters: {status:'All',type:'All',dept:'All'}, cmpOpen: null, cmpTab: 'overview',
     cmpNew: false, cmpEditId: null, cmpForm: {}, cmpSection: 'cmpA', cmpEffExpanded: [],
     thOpen: null, thAdded: {}, thNew: [], thForm: null, msgDraft: '', msgFiles: [], msgLink: null,
+    fpTarget: null, fpTitle: '', fpTab: 'browse', fpSel: [], fpQuery: '', fpType: 'All', fpName: '', fpKind: 'PDF',
     tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
     showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
@@ -823,8 +824,8 @@ class AppRoot extends React.Component {
         icon:/\.(png|jpe?g|gif|webp|svg)$/i.test(n)?'image':(/\.(mp4|mov|webm)$/i.test(n)?'video':(/\.pdf$/i.test(n)?'file-text':'file')),
         remove:()=>{ const a=(this.state.msgFiles||[]).slice(); a.splice(i,1); this.setState({ msgFiles:a }); } })),
       msgHasFiles:(this.state.msgFiles||[]).length>0,
-      msgAttach:()=>{ const n='attachment-'+(Date.now()%10000)+'.pdf'; this.setState({ msgFiles:[...(this.state.msgFiles||[]),n] }); },
-      msgAttachImage:()=>{ const n='image-'+(Date.now()%10000)+'.png'; this.setState({ msgFiles:[...(this.state.msgFiles||[]),n] }); },
+      msgAttach:()=>this.openFilePicker('msg','Attach to message'),
+      msgAttachImage:()=>{ this.openFilePicker('msg','Attach image to message'); this.setState({ fpType:'Image', fpKind:'Image' }); },
       msgSend:()=>{ const txt=(this.state.msgDraft||'').trim();
         const files=this.state.msgFiles||[];
         if(!txt&&!files.length){ this.flash('Type a message or attach a file first.'); return; }
@@ -1110,6 +1111,7 @@ class AppRoot extends React.Component {
         const daily=Math.max(0,Math.round((gross-((parseInt(f.breakMin,10)||60)/60))*100)/100);
         const weekly=Math.round(daily*(parseFloat(f.days)||5)*100)/100;
         return daily+' h/day · '+weekly+' h/week capacity'; })(),
+      ...this.filePickerData(),
       showRoleConfirm:this.state.showRoleConfirm,
       roleConfirmLabel:this.state.roleConfirmKey?this.ROLES[this.state.roleConfirmKey].label:'',
       roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
@@ -2487,9 +2489,6 @@ class AppRoot extends React.Component {
         const ext=mk('extRes',{name:'',url:''});
         const intr=mk('intRes',{name:'',itype:'PDF'});
         const atts=f.attachments||[];
-        const addAtt=(kind)=>{ const n=atts.filter(a=>a.kind===kind).length+1;
-          const name=kind==='Image'?('image-'+n+'.jpg'):('document-'+n+'.pdf');
-          this.setState({ ideaForm:{...f, attachments:[...atts,{ name, kind, category:kind==='Image'?'Image':'Reference', desc:'' }]} }); };
         return { idfRefs:refs.rows, idfAddRef:refs.add, idfStats:stats.rows, idfAddStat:stats.add, idfExt:ext.rows, idfAddExt:ext.add, idfInt:intr.rows, idfAddInt:intr.add,
           idfAtts:atts.map((a,i)=>({ i, ...a, isImg:a.kind==='Image', icon:a.kind==='Image'?'image':'file-text',
             setCategory:(e)=>{ const arr=atts.map((x,j)=>j===i?{...x,category:e.target.value}:x); this.setState({ ideaForm:{...f,attachments:arr} }); },
@@ -2497,7 +2496,8 @@ class AppRoot extends React.Component {
             setName:(e)=>{ const arr=atts.map((x,j)=>j===i?{...x,name:e.target.value}:x); this.setState({ ideaForm:{...f,attachments:arr} }); },
             remove:()=>{ const arr=atts.slice(); arr.splice(i,1); this.setState({ ideaForm:{...f,attachments:arr} }); } })),
           idfHasAtts:atts.length>0,
-          idfAddDoc:()=>addAtt('Document'), idfAddImg:()=>addAtt('Image'),
+          idfAddDoc:()=>this.openFilePicker('idea:Document','Attach document to idea'),
+          idfAddImg:()=>{ this.openFilePicker('idea:Image','Attach image to idea'); this.setState({ fpType:'Image', fpKind:'Image' }); },
           idfAttCats:['Brief','Planning','Research','Reference','Image','Media'].concat(co['attCat']||[]),
           idfRefTypes:['Review Paper','Clinical Trial','Research Paper','Meta-analysis','Case Study','Industry Report'].concat(co['refType']||[]),
           idfRefUses:['Key Reference','Supporting Data','Background Info'],
@@ -2594,7 +2594,18 @@ class AppRoot extends React.Component {
       okMeta:[['Scope',o.scope||'Department'],['Brand / Company',o.brand],['Department',o.dept],['Campaign',o.campaign],['Cycle',o.cycle],['Start → Due',o.start+' → '+o.due],['Days left',o.daysLeft<0?('Overdue by '+Math.abs(o.daysLeft)+' days'):(o.daysLeft+' days')],['Owner',o.owner+(o.team?(' '+o.team):'')],['Reviewer',o.reviewer],['Approver',o.approver],['Priority',pri.label],['Health',health.label],['Objective weight',o.weight+'%'],['Version',o.v]].map(m=>({k:m[0],v:m[1]})),
       okKrs:o.krs.map((k,i)=>{ const ks=tone(k.status); const ach=Math.min(999,Math.round((parseFloat(String(k.current).replace(/,/g,''))/parseFloat(String(k.target).replace(/,/g,'')))*100));
         const linked=tasks.filter(t=>t.kpi===k.kpi).map(t=>{ const tt=this.tkTone(t.status); return { id:t.id, name:t.name, assignee:t.assignee, status:t.status, statusBg:tt.bg, statusColor:tt.c, effortPlan:t.effortPlan||'', hasEffort:!!t.effortPlan, contribution:'+'+t.units+' '+t.unit, open:()=>this.setState({ okrOpen:null, route:'tasks', tkOpen:t.id }) }; });
-        return { n:String(i+1), t:k.t, kpi:k.kpi, baseline:k.baseline, target:k.target, current:k.current, unit:k.unit, ach:ach+'%', achColor:pc(ach), achW:Math.min(100,ach)+'%', weight:k.weight+'%', who:k.who, freq:k.freq, due:k.due, status:k.status, statusBg:ks.bg, statusColor:ks.color, linked, hasLinked:linked.length>0, linkedCount:linked.length+' linked task'+(linked.length===1?'':'s') };
+        const sops=this.sopsForKpi(k.kpi);
+        return { n:String(i+1), t:k.t, kpi:k.kpi, baseline:k.baseline, target:k.target, current:k.current, unit:k.unit,
+          measured:(k.tool||k.method)?((k.tool||'No tool')+' · '+(k.method||'method not set')+(k.mfreq?(' · '+k.mfreq):'')):'Measurement not configured',
+          evidenceLabel:k.evidence?('Evidence: '+k.evidence):'No evidence requirement set',
+          hasMeasure:!!(k.tool||k.method),
+          sopList:sops.map(sp=>({ id:sp.id, title:sp.title, version:sp.version, status:sp.status,
+            bg:this.sopTone(sp.status).bg, color:this.sopTone(sp.status).c,
+            steps:(sp.steps||[]).length+' steps · '+sp.frequency,
+            open:()=>this.setState({ okrOpen:null, route:'sop', sopTab:'sops', sopOpen:sp.id, sopTabD:'overview' }) })),
+          hasSops:sops.length>0,
+          sopLabel:sops.length?(sops.length+' SOP'+(sops.length===1?' governs':'s govern')+' how this KPI is delivered'):'',
+          ach:ach+'%', achColor:pc(ach), achW:Math.min(100,ach)+'%', weight:k.weight+'%', who:k.who, freq:k.freq, due:k.due, status:k.status, statusBg:ks.bg, statusColor:ks.color, linked, hasLinked:linked.length>0, linkedCount:linked.length+' linked task'+(linked.length===1?'':'s') };
       }),
       okClose:()=>this.setState({ okrOpen:null }),
       okStop:(e)=>e.stopPropagation(),
@@ -2621,6 +2632,25 @@ class AppRoot extends React.Component {
   ]; }
   allTaskTemplates(){ const upd=this.state.ttUpd||{}; return this.TASK_TEMPLATES().concat(this.state.ttAdded||[]).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   UNIT_MASTER(){ return ['%','Count','Sessions','Users','Visitors','Leads','Keywords','Backlinks','Articles','Pages','Posts','Reels','Impressions','Clicks','CTR %','Ranking position','Score (0–100)','Words','Hours','Days','Seconds','₹ (INR)','$ (USD)','Ratio','Index','Errors','Tickets','Conversions','Conversion rate %','Engagement rate %','Bounce rate %','Domain Authority','Spam score %','Plagiarism %','Readability score','Case studies','Documents','Designs','Infographics','Assets','Fixes']; }
+  normUnit(u){
+    const s=String(u||'').trim(); if(!s) return 'Count';
+    const master=this.UNIT_MASTER();
+    const hit=master.find(m=>m.toLowerCase()===s.toLowerCase()); if(hit) return hit;
+    const map={ 'case studies':'Case studies', documents:'Documents', fixes:'Fixes', designs:'Designs',
+      infographics:'Infographics', assets:'Assets', replies:'Count', contacts:'Count', stories:'Count',
+      videos:'Count', banners:'Assets', mockups:'Designs', 'landing pages':'Pages', audits:'Count' };
+    if(map[s.toLowerCase()]) return map[s.toLowerCase()];
+    const title=s.charAt(0).toUpperCase()+s.slice(1);
+    return master.includes(title)?title:'Count';
+  }
+  effortTargetOptions(){
+    const out=[];
+    this.allEpPlans().forEach(p=>(p.rows||[]).forEach(r=>{
+      out.push({ key:p.id+'|'+r.type, label:r.type+' — '+r.monthly+' '+r.unit+' ('+p.division+' · '+p.period+')',
+        target:String(r.monthly), unit:this.normUnit(r.unit), plan:p.name, division:p.division, kpiId:r.kpiId||'' });
+    }));
+    return out;
+  }
   MEASURE_TOOLS(){ return [
     { g:'Analytics', t:['Google Analytics 4','Google Search Console','Microsoft Clarity','Hotjar','Looker Studio','Matomo'] },
     { g:'SEO', t:['Semrush','Ahrefs','Moz','Screaming Frog','Sitebulb','SE Ranking','PageSpeed Insights','Lighthouse'] },
@@ -2995,7 +3025,6 @@ class AppRoot extends React.Component {
     const V={ Compliant:{bg:'var(--verify-100)',c:'var(--verify-600)'}, 'Accept conditional':{bg:'var(--warn-100)',c:'var(--warn-600)'},
       Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'}, '':{bg:'var(--surface-50)',c:'var(--ink-500)'} };
     let total=0, done=0, pass=0, rework=0;
-    const evDraft=this.state.clEvDraft||{};
     const sections=secsFor.map((s,si)=>({
       h:s.h,
       rows:s.rows.map((r,ri)=>{
@@ -3017,12 +3046,8 @@ class AppRoot extends React.Component {
               cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],files:arr}}; this.setState({ clFill:cur }); } })),
           hasEv:(f.files||[]).length>0,
           evMissing:(f.self!==undefined&&f.self!=='')&&!(f.files||[]).length,
-          evDraftVal:evDraft[id+':'+key]||'',
-          setEvDraft:(e)=>this.setState({ clEvDraft:{...evDraft,[id+':'+key]:e.target.value} }),
-          addEv:()=>{ const name=(evDraft[id+':'+key]||'').trim(); if(!name){ this.flash('Type an evidence file name first.'); return; }
-            const cur={...(this.state.clFill||{})}; const arr=(((cur[id]||{})[key]||{}).files||[]).slice(); arr.push(name);
-            cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],files:arr}};
-            this.setState({ clFill:cur, clEvDraft:{...evDraft,[id+':'+key]:''} }); },
+          addEv:()=>{ this.openFilePicker('compliance:'+id+':'+key,'Evidence for “'+r.kpi+'”');
+            this.setState({ fpName:String(r.kpi).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-report' }); },
           selfBadge:selfPass===null?'—':(selfPass?'Meets standard':'Below standard'),
           selfBadgeBg:selfPass===null?'var(--surface-50)':(selfPass?'var(--verify-100)':'var(--danger-100)'),
           selfBadgeColor:selfPass===null?'var(--ink-400)':(selfPass?'var(--verify-600)':'var(--danger-600)'),
@@ -4788,7 +4813,7 @@ class AppRoot extends React.Component {
       tktFiles:(f.files||[]).map((n,i)=>({ name:n,
         remove:()=>{ const a=(f.files||[]).slice(); a.splice(i,1); this.setState({ tktForm:{...f,files:a} }); } })),
       tktHasFiles:(f.files||[]).length>0,
-      tktAttach:()=>{ const n='attachment-'+(Date.now()%10000)+'.png'; this.setState({ tktForm:{...f, files:[...(f.files||[]),n]} }); },
+      tktAttach:()=>this.openFilePicker('ticket','Attach to ticket'),
       tktSave:()=>{
         if(!(f.subject&&f.subject.trim())){ this.flash('Describe the issue in one line.'); return; }
         if(!(f.desc&&f.desc.trim())){ this.flash('Add details so it can be actioned without a follow-up.'); return; }
@@ -4997,7 +5022,7 @@ class AppRoot extends React.Component {
           tkComments:comments, tkHasComments:comments.length>0, tkCanComment:canComment,
           tkCommentVal:this.state.tkComment||'', tkOnComment:(e)=>this.setState({ tkComment:e.target.value }),
           tkCommentFiles:cfl, tkHasCommentFiles:cfl.length>0,
-          tkAddCommentFile:()=>this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]),'attachment-'+((this.state.tkCommentFiles||[]).length+1)+'.pdf'] }),
+          tkAddCommentFile:()=>this.openFilePicker('comment','Attach to comment'),
           tkPostComment:()=>{ const txt=(this.state.tkComment||'').trim(); const fls=this.state.tkCommentFiles||[];
             if(!txt && !fls.length){ this.flash('Write a comment or attach a document.'); return; }
             const me=this.ROLES[rk];
@@ -5014,14 +5039,14 @@ class AppRoot extends React.Component {
         onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
       }:{k:m[0],v:m[1]}), tkChecklist:checklist, tkEvidence:evidence, tkHasEvidence:evidence.length>0,
       tkActions:actions, tkHasActions:actions.length>0, tkCanAttach:canAttach,
-      tkAttach:()=>{ const ev=(this.tkOv(t).evidence||[]); this.tkPatch(t.id,{evidence:[...ev,'evidence-'+(ev.length+1)+'.png']},'Attached evidence'); },
+      tkAttach:()=>this.openFilePicker('evidence:'+t.id,'Attach task evidence'),
       tkActivity:(this.tkOv(t).activity||[]).slice().reverse().map(a=>({who:a[0],what:a[1],when:a[2]})),
       tkQcPanel:qcPanel,
       tkQcFbVal:(this.state.qcFb||{})[t.id]||'', tkQcOnFb:(e)=>this.setState({ qcFb:{...(this.state.qcFb||{}),[t.id]:e.target.value} }),
       tkQcUrl:ref.url||'', tkQcOnUrl:(e)=>setRef({url:e.target.value}),
       tkQcFiles:(ref.files||[]).map((f,i2)=>({ name:f, remove:()=>{ const a=(ref.files||[]).slice(); a.splice(i2,1); setRef({files:a}); } })),
       tkQcHasFiles:(ref.files||[]).length>0,
-      tkQcAddFile:()=>setRef({ files:[...(ref.files||[]),'reference-'+((ref.files||[]).length+1)+'.png'] }),
+      tkQcAddFile:()=>this.openFilePicker('qcref:'+t.id,'Attach QC reference'),
       tkStages, tkHasChain:tkStages.length>1,
       tkQcApprove:()=>qcFinish('Approved','QC approved — counted toward KPI'),
       tkQcRework:()=>qcFinish('Rework','Rework requested'),
@@ -5133,7 +5158,10 @@ class AppRoot extends React.Component {
         parent:o.parent||'None (top level)', dependsOn:o.dependsOn||'', effortTargets:o.effortTargets||'',
         progressCalc:o.progressCalc||'Automatic (from KPI logs)', dataSource:o.dataSource||'GA4',
         reviewer:this.okrReviewerOpt(o.reviewer), status:o.status==='Archived'?'Draft':o.status, risks:o.risks||'' },
-      okrDraftKRs:(o.krs||[]).map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:k.baseline, target:k.target, current:k.current, weight:String(k.weight), who:k.who })),
+      okrDraftKRs:(o.krs||[]).map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:k.baseline, target:k.target, current:k.current, weight:String(k.weight),
+        who:k.who, freq:k.freq||'Monthly', due:this.isoDate(k.due),
+        tool:k.tool||'', method:k.method||'', mfreq:k.mfreq||'', evidence:k.evidence||'', tsrc:k.tsrc||'Manual', tref:k.tref||'',
+        taskLinks:(k.taskLinks||[{key:''}]), effortLinks:(k.effortLinks||[{key:''}]) })),
       okrKRSeq:(o.krs||[]).length+1,
     });
   }
@@ -5144,7 +5172,9 @@ class AppRoot extends React.Component {
     const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
       t:k.kr&&k.kr.trim()?k.kr.trim():'Key result '+(i+1), kpi:k.kpiSel||'KPI '+(i+1),
       baseline:k.baseline||'0', target:k.target||'100', current:k.current||'0', unit:k.unit||'units',
-      weight:parseInt(k.weight,10)||0, who:k.who||f.owner, freq:'Monthly', due:'Mar 31', status:'Active',
+      weight:parseInt(k.weight,10)||0, who:k.who||f.owner, freq:k.freq||'Monthly', due:this.fmtDate(k.due)||'Mar 31', status:'Active',
+      tool:k.tool||'', method:k.method||'', mfreq:k.mfreq||'', evidence:k.evidence||'', tsrc:k.tsrc||'Manual', tref:k.tref||'',
+      taskLinks:(k.taskLinks||[]).filter(x=>x.key), effortLinks:(k.effortLinks||[]).filter(x=>x.key),
     }));
     const editId=this.state.okrEditId;
     const shared={ title:f.title.trim(), desc:f.desc||'', owner:f.owner, dept:f.dept, brand:f.brand, campaign:f.campaign||'—', category:f.category||f.dept,
@@ -5424,7 +5454,7 @@ class AppRoot extends React.Component {
       ciToggleFlag:()=>this.setState({ ciForm:{...cf, flag:!cf.flag} }),
       ciFiles:(cf.files||[]).map((f,i)=>({ name:f, remove:()=>{ const arr=(cf.files||[]).slice(); arr.splice(i,1); this.setState({ ciForm:{...cf, files:arr} }); } })),
       ciHasFiles:(cf.files||[]).length>0,
-      ciAddFile:()=>{ const arr=(cf.files||[]).slice(); arr.push('evidence-'+(arr.length+1)+'.png'); this.setState({ ciForm:{...cf, files:arr} }); },
+      ciAddFile:()=>this.openFilePicker('checkin','Attach check-in evidence'),
       ciKpis, ciDate: cf.date||this.todayStr(), ciSetDate:this.ciSet('date'), ciSetAct:(key)=>this.ciSet(key),
       ciTitle: titles[t]||'Check-in', ciSubtitle: ctx.title||'',
       ciProgress: ctx.progress? ('OKR progress: '+ctx.progress) : 'Enter actuals below — progress recalculates automatically',
@@ -5932,17 +5962,67 @@ class AppRoot extends React.Component {
       badgeBg: active?'var(--beet-700)':'var(--surface-50)', badgeColor: active?'#fff':'var(--ink-500)' }; });
     const reg = this.MASTERS_REG();
     const kpiOptions = reg.kpi.rows.map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
-    // KR drafts cover the core fields (KPI, baseline/target/current, owner, weight).
-    // Source's richer per-KR tool/target-source picker and multi-task/effort link
-    // arrays are out of scope for this pass — tasks/effort still link to a KR via
-    // its KPI name (see epGenerate/effortView), so linkage isn't lost, just less
-    // granular to configure from this form.
     const drafts = this.state.okrDraftKRs;
     const wTotal = drafts.reduce((s,k)=>s+(parseInt(k.weight,10)||0),0);
     const wOk = wTotal===100;
     const setDraft=(id,field)=>(e)=>{ const v=e.target.value; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===id?{...x,[field]:v}:x) }); };
-    const okrDraftKRs = drafts.map((k,i)=>({ n:i+1, weight:k.weight, kr:k.kr||'', kpiSel:k.kpiSel||'', unit:k.unit||'', baseline:k.baseline||'', target:k.target||'', current:k.current||'', who:k.who||'',
-      setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'), setWho:setDraft(k.id,'who'),
+    const taskOpts=this.allTasks().map(t=>({ key:t.id, label:t.id+' · '+t.name }));
+    const effOpts=this.cmpEffortPool().map(e=>({ key:e.key, label:e.name+' — '+e.division }));
+    const setLinks=(id,field,arr)=>this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===id?{...x,[field]:arr}:x) });
+    const okrDraftKRs = drafts.map((k,i)=>({ n:i+1, weight:k.weight, kr:k.kr||'', kpiSel:k.kpiSel||'', unit:k.unit||'', baseline:k.baseline||'', target:k.target||'', current:k.current||'',
+      taskLinks:(k.taskLinks||[{key:''}]).map((tl,ti)=>({ ti, key:tl.key||'',
+        set:(e)=>{ const a=(k.taskLinks||[{key:''}]).map((x,j)=>j===ti?{key:e.target.value}:x); setLinks(k.id,'taskLinks',a); },
+        remove:()=>{ const a=(k.taskLinks||[{key:''}]).slice(); a.splice(ti,1); setLinks(k.id,'taskLinks',a.length?a:[{key:''}]); },
+        canRemove:(k.taskLinks||[]).length>1 })),
+      addTaskLink:()=>setLinks(k.id,'taskLinks',[...(k.taskLinks||[{key:''}]),{key:''}]),
+      effortLinks:(k.effortLinks||[{key:''}]).map((el,ei)=>({ ei, key:el.key||'',
+        set:(e)=>{ const a=(k.effortLinks||[{key:''}]).map((x,j)=>j===ei?{key:e.target.value}:x); setLinks(k.id,'effortLinks',a); },
+        remove:()=>{ const a=(k.effortLinks||[{key:''}]).slice(); a.splice(ei,1); setLinks(k.id,'effortLinks',a.length?a:[{key:''}]); },
+        canRemove:(k.effortLinks||[]).length>1 })),
+      addEffortLink:()=>setLinks(k.id,'effortLinks',[...(k.effortLinks||[{key:''}]),{key:''}]),
+      linkSummary:(()=>{ const t=(k.taskLinks||[]).filter(x=>x.key).length, e=(k.effortLinks||[]).filter(x=>x.key).length;
+        const divs=[...new Set((k.effortLinks||[]).filter(x=>x.key).map(x=>(effOpts.find(o=>o.key===x.key)||{}).label||'').map(l=>l.split('— ')[1]||'').filter(Boolean))];
+        if(!t&&!e) return 'Auto — every task tagged with this KPI counts toward it';
+        return t+' task'+(t===1?'':'s')+' · '+e+' effort line'+(e===1?'':'s')+(divs.length?(' across '+divs.join(', ')):''); })(),
+      setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'),
+      who:k.who||'', freq:k.freq||'Monthly', due:k.due||'',
+      setWho:setDraft(k.id,'who'), setFreq:setDraft(k.id,'freq'), setDue:setDraft(k.id,'due'),
+      tool:k.tool||'', method:k.method||'', mfreq:k.mfreq||'', evidence:k.evidence||'',
+      setTool:(e)=>{ const v=e.target.value;
+        this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x, tool:v,
+          method:this.methodForTool(v)||x.method, mfreq:this.freqForTool(v)||x.mfreq}:x) });
+        if(this.methodForTool(v)) this.flash('Measurement method & frequency auto-filled for '+v+'.'); },
+      setMethod:setDraft(k.id,'method'), setMfreq:setDraft(k.id,'mfreq'), setEvidence:setDraft(k.id,'evidence'),
+      methodAuto:this.methodForTool(k.tool)?('Auto-set from '+k.tool+' — override if your process differs.'):'',
+      ...(()=>{ const src=k.tsrc||'Manual';
+        const upd=(patch)=>this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x,...patch}:x) });
+        const isEff=src==='Effort plan', isGold=src==='Gold standard', isTpl=src==='KPI template', isManual=src==='Manual', isDept=src==='Department allocation';
+        return {
+          tsrc:src, tref:k.tref||'',
+          targetLocked:!isManual&&!!k.tref,
+          setTsrc:(e)=>{ const v=e.target.value; upd({ tsrc:v, tref:'', ...(v==='Manual'?{}:{ target:'' }) }); },
+          isEffSrc:isEff, isGoldSrc:isGold, isTplSrc:isTpl, isDeptSrc:isDept, isManualSrc:isManual,
+          effOptions:this.effortTargetOptions(),
+          goldOptions:this.GOLD_STANDARDS().map(g=>({ id:g.id, label:g.name+' — '+g.note })),
+          tplOptions:kpiOptions,
+          setTref:(e)=>{ const v=e.target.value;
+            if(isEff){ const o=this.effortTargetOptions().find(x=>x.key===v);
+              upd({ tref:v, target:o?o.target:'', unit:o?o.unit:k.unit, baseline:k.baseline||'0' }); }
+            else if(isGold){ const g=this.GOLD_STANDARDS().find(x=>x.id===v);
+              upd({ tref:v, target:g?(g.op+' '+g.val):'', unit:g?g.unit:k.unit, tool:g?g.tool:k.tool,
+                method:k.method||'Semi-automated — tool + manual check' }); }
+            else if(isTpl){ const t=(kpiOptions||[]).find(x=>x.label===v)||{};
+              upd({ tref:v, kpiSel:v, target:t.target||'', unit:t.unit||k.unit }); }
+            else upd({ tref:v }); },
+          unlockTarget:()=>upd({ tsrc:'Manual', tref:'' }),
+          targetHint:isEff?'Pulled from the effort plan — change the plan to change this target.'
+            :isGold?'Pulled from the Gold Standard master — quality thresholds stay consistent everywhere.'
+            :isTpl?'Pulled from the KPI template default.'
+            :isDept?'Allocated from the department target for this cycle.'
+            :'Manual — use for volatile targets (lead counts, revenue) that change every cycle.',
+          deptOptions:['SEO — Q3 organic sessions','Content — Q3 published assets','SMM — Q3 engagement','Web — Q3 page fixes','Sales — Q3 qualified leads'],
+        }; })(),
+      measureSummary:(k.tool||k.method)?((k.tool||'No tool')+' · '+(k.method||'method not set')+(k.mfreq?(' · '+k.mfreq):'')):'No measurement tool set — progress will be manual.',
       setWeight:(e)=>{ const v=e.target.value; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x,weight:v}:x) }); },
       remove:()=>{ if(this.state.okrDraftKRs.length>1) this.setState({ okrDraftKRs:this.state.okrDraftKRs.filter(x=>x.id!==k.id) }); } }));
     const okrTpls=this.allOkrTemplates().filter(t=>t.status==='Active');
@@ -6016,8 +6096,12 @@ class AppRoot extends React.Component {
       saveOkrDraft:()=>this._saveOkr(false, wOk, wTotal, list.length, rk),
       okrSteps, kpiOptions, okrDraftKRs,
       okrTplOptions, okrTplPick, okrTplVal:this.state.okrTpl||'',
-      okrTaskOptions:this.allTasks().slice(0,10).map(t=>t.id+' — '+t.name),
-      okrEffortOptions:this.allEpPlans().map(p=>p.name+' ('+p.division+')'),
+      okrUnitOptions:this.UNIT_MASTER(),
+      okrTsrcOptions:['Manual','Effort plan','Gold standard','KPI template','Department allocation'],
+      okrToolGroups:this.MEASURE_TOOLS().map(g=>({ g:g.g, tools:g.t })),
+      okrMethodOptions:this.MEASURE_METHODS(), okrMfreqOptions:this.MEASURE_FREQ(),
+      okrTaskLinkOptions:[{key:'',label:'Auto — all tasks tagged with this KPI'}].concat(taskOpts),
+      okrEffortLinkOptions:[{key:'',label:'None — outcome only'}].concat(effOpts),
       okrAddKR:()=>this.setState({ okrDraftKRs:[...this.state.okrDraftKRs,{id:this.state.okrKRSeq,weight:'0'}], okrKRSeq:this.state.okrKRSeq+1 }),
       okrWeightTotal:wTotal, okrWeightBg: wOk?'var(--verify-100)':'var(--warn-100)', okrWeightColor: wOk?'var(--verify-600)':'var(--warn-600)',
       okrNewCode:'OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(list.length+1).padStart(3,'0'),
@@ -6170,7 +6254,86 @@ class AppRoot extends React.Component {
       (ov.comments||t.comments||[]).forEach(c=>(c.files||[]).forEach(n=>{ if(String(n).indexOf('http')===0) return;
         add(n,(c.role||'').indexOf('QC')>=0?'QC reference':'Comment attachment',c.who,t.id); })); });
     this.allTickets().forEach(t=>(t.files||[]).forEach(n=>add(n,'Support ticket',t.by,t.id)));
+    Object.entries(this.state.clFill||{}).forEach(([tid,rows])=>Object.values(rows||{}).forEach(r=>(r.files||[]).forEach(n=>add(n,'Compliance evidence','—',tid))));
     return out;
+  }
+  // One real file picker used by every "Attach" point in the app: Browse lists
+  // files that actually exist in the Document Repository (reuse + traceability
+  // across messages/tasks/tickets/compliance), Upload records a named file with
+  // a type. Replaces the various buttons that previously fabricated a fake name.
+  fileKind(n){ const e=String(n).split('.').pop().toLowerCase();
+    if(['png','jpg','jpeg','gif','webp','svg'].includes(e)) return {t:'Image',icon:'image',color:'var(--orchid-600)',bg:'var(--orchid-100)'};
+    if(['mp4','mov','webm'].includes(e)) return {t:'Video',icon:'video',color:'var(--info-600)',bg:'var(--info-100)'};
+    if(e==='pdf') return {t:'PDF',icon:'file-text',color:'var(--danger-600)',bg:'var(--danger-100)'};
+    if(['xlsx','csv','xls'].includes(e)) return {t:'Spreadsheet',icon:'table',color:'var(--verify-600)',bg:'var(--verify-100)'};
+    if(['docx','doc','txt','md'].includes(e)) return {t:'Document',icon:'file-text',color:'var(--ink-500)',bg:'var(--surface-50)'};
+    return {t:'Document',icon:'file',color:'var(--ink-500)',bg:'var(--surface-50)'}; }
+  fpFinalName(){
+    const ext={PDF:'.pdf',Image:'.png',Spreadsheet:'.xlsx',Document:'.docx',Video:'.mp4'}[this.state.fpKind||'PDF'];
+    const raw=(this.state.fpName||'file').trim();
+    const stem=raw.replace(/\.[a-z0-9]+$/i,'').replace(/\s+/g,'-').replace(/[^A-Za-z0-9._-]/g,'').toLowerCase();
+    return (stem||'file')+ext;
+  }
+  openFilePicker(target, title){ this.setState({ fpTarget:target, fpTitle:title||'Attach files',
+    fpTab:'browse', fpSel:[], fpQuery:'', fpType:'All', fpName:'', fpKind:'PDF' }); }
+  applyPickedFiles(target, names){
+    if(!names.length) return;
+    const t=String(target||'');
+    if(t==='msg') this.setState({ msgFiles:[...(this.state.msgFiles||[]), ...names] });
+    else if(t==='ticket'){ const f=this.state.tktForm||{}; this.setState({ tktForm:{...f, files:[...(f.files||[]), ...names]} }); }
+    else if(t==='comment') this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]), ...names] });
+    else if(t==='checkin'){ const cf=this.state.ciForm||{}; this.setState({ ciForm:{...cf, files:[...(cf.files||[]), ...names]} }); }
+    else if(t.indexOf('qcref:')===0){ const id=t.slice(6); const refs={...(this.state.qcRef||{})};
+      const cur=refs[id]||{files:[],url:''}; refs[id]={...cur, files:[...(cur.files||[]), ...names]}; this.setState({ qcRef:refs }); }
+    else if(t.indexOf('evidence:')===0){ const id=t.slice(9); const task=this.allTasks().find(x=>x.id===id);
+      const base=task?(task.evidence||[]):[]; this.tkPatch(id,{evidence:[...base, ...names]},'Attached evidence'); }
+    else if(t.indexOf('compliance:')===0){ const p=t.split(':'); const id=p[1], key=p[2];
+      const cur={...(this.state.clFill||{})}; const row=((cur[id]||{})[key])||{};
+      cur[id]={...(cur[id]||{}),[key]:{...row, files:[...(row.files||[]), ...names]}};
+      this.setState({ clFill:cur }); }
+    else if(t.indexOf('idea:')===0){ const kind=t.slice(5); const f=this.state.ideaForm||{};
+      const atts=(f.attachments||[]).concat(names.map(n=>({ kind, name:n, category:kind==='Image'?'Image':'Reference', desc:'' })));
+      this.setState({ ideaForm:{...f, attachments:atts} }); }
+    this.flash(names.length+' file'+(names.length===1?'':'s')+' attached.');
+  }
+  filePickerData(){
+    const target=this.state.fpTarget; if(!target) return { fpOpen:false };
+    const q=(this.state.fpQuery||'').toLowerCase();
+    const type=this.state.fpType||'All';
+    const sel=this.state.fpSel||[];
+    const all=this.repoFileList();
+    const list=all.filter(f=>{ const k=this.fileKind(f.name);
+      return (type==='All'||k.t===type) && (!q || (f.name+' '+f.source+' '+f.by+' '+f.where).toLowerCase().indexOf(q)>=0); });
+    const tab=this.state.fpTab||'browse';
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    return {
+      fpOpen:true, fpTitle:this.state.fpTitle||'Attach files',
+      fpIsBrowse:tab==='browse', fpIsUpload:tab==='upload',
+      fpBrowseStyle:seg(tab==='browse'), fpUploadStyle:seg(tab==='upload'),
+      fpGoBrowse:()=>this.setState({ fpTab:'browse' }), fpGoUpload:()=>this.setState({ fpTab:'upload' }),
+      fpClose:()=>this.setState({ fpTarget:null, fpSel:[] }),
+      fpStop:(e)=>e.stopPropagation(),
+      fpQuery:this.state.fpQuery||'', fpSetQuery:(e)=>this.setState({ fpQuery:e.target.value }),
+      fpTypeVal:type, fpSetType:(e)=>this.setState({ fpType:e.target.value }),
+      fpTypeOptions:['All','Image','Video','PDF','Spreadsheet','Document'],
+      fpRows:list.map(f=>{ const k=this.fileKind(f.name); const on=sel.includes(f.name);
+        return { name:f.name, source:f.source, by:f.by, where:f.where, kind:k.t, icon:k.icon, iconBg:k.bg, iconColor:k.color, on,
+          rowStyle:'display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid '+(on?'var(--orchid-400)':'var(--line-200)')+';background:'+(on?'var(--orchid-100)':'#fff')+';border-radius:11px;cursor:pointer;text-align:left;width:100%',
+          toggle:()=>this.setState({ fpSel:on?sel.filter(x=>x!==f.name):[...sel,f.name] }) }; }),
+      fpEmpty:list.length===0,
+      fpEmptyNote:all.length?'No files match this search.':'The repository is empty — upload a new file instead.',
+      fpCount:sel.length?(sel.length+' selected'):'Nothing selected',
+      fpCanAttach:sel.length>0,
+      fpAttach:()=>{ const names=sel.slice(); this.setState({ fpTarget:null, fpSel:[] }); this.applyPickedFiles(target, names); },
+      fpName:this.state.fpName||'', fpSetName:(e)=>this.setState({ fpName:e.target.value }),
+      fpKindVal:this.state.fpKind||'PDF', fpSetKind:(e)=>this.setState({ fpKind:e.target.value }),
+      fpKindOptions:['PDF','Image','Spreadsheet','Document','Video'],
+      fpExtNote:'Saved as '+this.fpFinalName(),
+      fpUpload:()=>{ if(!(this.state.fpName||'').trim()){ this.flash('Name the file you are uploading.'); return; }
+        const name=this.fpFinalName();
+        this.setState({ fpTarget:null, fpSel:[], fpName:'' });
+        this.applyPickedFiles(target, [name]); },
+    };
   }
   REPO_REGISTRY(){
     const count=(n)=>n.toLocaleString('en-IN');

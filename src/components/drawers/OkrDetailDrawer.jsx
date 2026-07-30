@@ -291,17 +291,44 @@ Owner
                     
 </div>
 
-                  
+
 </React.Fragment>
 )}
 
-                
+
+<div style={{"marginTop":"10px","paddingTop":"10px","borderTop":"1px dashed var(--line-200)","display":"flex","flexDirection":"column","gap":"5px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"6px","fontSize":"11px","fontWeight":"600","color":k.hasMeasure?"var(--ink-700)":"var(--ink-400)"}}>
+<Icon name={"ruler"} style={{"width":"12px","height":"12px","color":"var(--verify-600)"}} />
+{k.measured}
+</div>
+<div style={{"fontSize":"11px","color":"var(--ink-500)","marginLeft":"18px"}}>
+{k.evidenceLabel}
+</div>
+{Boolean(k.hasSops) && (
+<React.Fragment>
+<div style={{"fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)","marginTop":"3px","marginLeft":"18px"}}>
+{k.sopLabel}
+</div>
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginLeft":"18px","marginTop":"3px"}}>
+{(k.sopList || []).map((sp, $si) => (
+<button key={$si} onClick={sp.open} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"999px","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<Icon name={"book-open-check"} style={{"width":"10px","height":"10px","color":"var(--orchid-600)"}} />
+{sp.title}
+<span style={cssTextToObject(`font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:${sp.bg};color:${sp.color}`)}>{sp.status}</span>
+</button>
+))}
+</div>
+</React.Fragment>
+)}
 </div>
 
-              
+
 </div>
 
-            
+
+</div>
+
+
 </React.Fragment>
 ))}
 
