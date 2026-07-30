@@ -44,6 +44,8 @@ import CreateCampaignModal from '../components/drawers/CreateCampaignModal.jsx';
 import NewThreadModal from '../components/drawers/NewThreadModal.jsx';
 import SopSection from '../components/sections/SopSection.jsx';
 import SopDetailDrawer from '../components/drawers/SopDetailDrawer.jsx';
+import SupportSection from '../components/sections/SupportSection.jsx';
+import TicketDetailDrawer from '../components/drawers/TicketDetailDrawer.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -119,6 +121,12 @@ export default function AppShell({ vm }) {
 
 
 <SopSection vm={vm} />
+
+
+{/* SUPPORT */}
+
+
+<SupportSection vm={vm} />
 
 
         
@@ -364,6 +372,12 @@ export default function AppShell({ vm }) {
 
 
 <SopDetailDrawer vm={vm} />
+
+
+{/* TICKET DETAIL DRAWER */}
+
+
+<TicketDetailDrawer vm={vm} />
 
 
 

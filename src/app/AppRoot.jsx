@@ -87,6 +87,7 @@ class AppRoot extends React.Component {
     files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full' },
     messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full' },
     sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full' },
+    support:{ ceo:'Full', coo:'View', manager:'Team tickets', team_lead:'Team tickets', senior:'Own tickets', junior:'Own tickets', qc:'Own tickets', admin:'Full' },
     effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
     ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
     qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
@@ -130,6 +131,7 @@ class AppRoot extends React.Component {
     files:{ label:'Document Repository', icon:'folder-open' },
     messages:{ label:'Messages', icon:'message-square' },
     sop:{ label:'SOPs', icon:'book-open-check' },
+    support:{ label:'Help & Support', icon:'life-buoy' },
     qc:{ label:'QC Review', icon:'shield-check' },
     okr:{ label:'OKR & KPI', icon:'target' },
     effort:{ label:'Effort Planner', icon:'gauge' },
@@ -922,7 +924,7 @@ class AppRoot extends React.Component {
                  : 'background:transparent;color:rgba(255,255,255,.72);'),
       };
     });
-    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages','sop']);
+    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages','sop','support']);
     const adminNav = buildNav(['masters','users','config']);
     const hasAdmin = adminNav.length>0;
 
@@ -942,6 +944,7 @@ class AppRoot extends React.Component {
       files:{ eyebrow:'Assets', icon:'folder-open', title:'Document Repository', sub:'Every document, image and video uploaded across tasks — with QC status and deadlines in one view.' },
       messages:{ eyebrow:'Collaboration', icon:'message-square', title:'Messages', sub:'Team conversations — turn any message into a task, or attach it to an existing one.' },
       sop:{ eyebrow:'Governance', icon:'book-open-check', title:'SOPs', sub:'The documented way work is done, tied to gold standards and QC.', actionLabel:'New SOP', actionIcon:'plus' },
+      support:{ eyebrow:'Help', icon:'life-buoy', title:'Help & Support', sub:'Raise and track tickets — software issues, technical questions, training and access requests.', actionLabel:'Raise a ticket', actionIcon:'plus' },
       effort:{ eyebrow:'Planning', icon:'gauge', title:'Create Effort Plan', sub:'Define effort targets, convert them to KPIs and auto-generate tasks for the period.' },
       ideas:{ eyebrow:'Repositories', icon:'lightbulb', title:'Content Repository — Ideas', sub:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks and stay stored for reuse.', actionLabel:'Add Content Idea', actionIcon:'plus' },
       qc:{ eyebrow:'Quality', icon:'shield-check', title:'QC Review', sub:'Independent quality validation and approvals.' },
@@ -969,6 +972,7 @@ class AppRoot extends React.Component {
       else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
       else if(route==='sop') this.flash('SOP creation form is coming in a follow-up phase — browse and manage existing SOPs here for now.');
+      else if(route==='support') this.flash('Ticket creation form is coming in a follow-up phase — browse and manage existing tickets here for now.');
       else this.flash('Draft created — opening editor…');
     };
 
@@ -992,6 +996,7 @@ class AppRoot extends React.Component {
     const showCampaigns = route==='campaigns';
     const showMessages = route==='messages';
     const showSop = route==='sop';
+    const showSupport = route==='support';
     const showTable = ['repositories','users'].includes(route);
     const showPageHead = !showMasterDetail;
 
@@ -1031,7 +1036,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -1088,6 +1093,7 @@ class AppRoot extends React.Component {
     if(showCampaigns) Object.assign(out, this.campaignsView());
     if(showMessages){ Object.assign(out, this.messagesView()); Object.assign(out, this.tkFormData()); }
     if(showSop) Object.assign(out, this.sopView(rk));
+    if(showSupport) Object.assign(out, this.supportView(rk));
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
@@ -3110,7 +3116,7 @@ class AppRoot extends React.Component {
   sopsForKpi(name){ return this.allSops().filter(s=>(s.kpis||[]).some(k=>k.name===name)); }
   sopFormData(){ return { sopFormOpen:false }; }
   sopView(rk){
-    const me=this.ROLES[rk].person;
+    const me=this.currentPerson();
     const canAuthor=['manager','team_lead','admin'].includes(rk);
     const all=this.allSops();
     const F=this.state.sopF||{ division:'All', status:'All', mine:'All', category:'All', priority:'All', frequency:'All', approver:'All', tag:'All' };
@@ -3186,7 +3192,7 @@ class AppRoot extends React.Component {
   sopDetailData(rk){
     const id=this.state.sopOpen; if(!id) return { sopDrawerOpen:false };
     const s=this.allSops().find(x=>x.id===id); if(!s) return { sopDrawerOpen:false };
-    const me=this.ROLES[rk].person;
+    const me=this.currentPerson();
     const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
     const acked=(s.ack||[]).includes(me);
     const canAuthor=['manager','team_lead','admin'].includes(rk)&&(s.owner===me||rk==='admin');
@@ -3316,6 +3322,193 @@ class AppRoot extends React.Component {
       sopRetireLabel:s.status==='Retired'?'Reinstate':'Retire',
       sopDuplicate:()=>this.flash('SOP duplication is coming in a follow-up phase alongside the full create/edit form.'),
       sopSaveAsTemplate:()=>this.flash('“'+s.title+'” saved as a reusable SOP template — available in the New SOP duplicate list.'),
+    };
+  }
+
+  // ---- Help & Support — tickets for software, technical, training and access issues ----
+  TICKET_CATS(){ return [
+    { key:'software', label:'Software / platform issue', icon:'monitor-cog', queue:'Platform Admin', owner:'Karan Shah', sla:8,
+      hint:'Login, permissions, module errors, data not saving.' },
+    { key:'technical', label:'Technical query', icon:'wrench', queue:'Function Lead', owner:'Aditi Rao', sla:24,
+      hint:'How to do the work — SEO, code, design, analytics questions.' },
+    { key:'training', label:'Training request', icon:'graduation-cap', queue:'Manager / L&D', owner:'Priya Nair', sla:72,
+      hint:'Need a walkthrough, upskilling or refresher session.' },
+    { key:'access', label:'Access / tool request', icon:'key-round', queue:'Platform Admin', owner:'Karan Shah', sla:12,
+      hint:'New tool licence, repository access, role change.' },
+    { key:'data', label:'Data correction', icon:'database-backup', queue:'Platform Admin', owner:'Karan Shah', sla:24,
+      hint:'Wrong KPI value, duplicate record, incorrect master entry.' },
+    { key:'process', label:'Process / clarification', icon:'help-circle', queue:'Function Lead', owner:'Aditi Rao', sla:24,
+      hint:'Which workflow applies, who approves, what the standard is.' },
+  ]; }
+  ticketCat(key){ return this.TICKET_CATS().find(c=>c.key===key)||this.TICKET_CATS()[0]; }
+  TICKET_STATES(){ return ['Open','Triaged','Assigned','In Progress','Waiting on requester','Resolved','Closed']; }
+  ticketTone(s){ return { Open:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Triaged:{bg:'var(--info-100)',c:'var(--info-600)'},
+    Assigned:{bg:'var(--info-100)',c:'var(--info-600)'}, 'In Progress':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
+    'Waiting on requester':{bg:'var(--surface-50)',c:'var(--ink-500)'}, Resolved:{bg:'var(--verify-100)',c:'var(--verify-600)'},
+    Closed:{bg:'#EAE4E8',c:'var(--beet-700)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  TICKET_SEED(){ const d=(n)=>this.relDate(-n); return [
+    { id:'TKT-1041', cat:'software', subject:'Cannot upload evidence on TSK-2045', desc:'File picker closes without attaching. Tried PDF and PNG under 2 MB.',
+      by:'Neha Verma', role:'Junior Executive', created:d(1), createdAt:Date.now()-26*3600000, priority:'High', status:'Assigned', assignee:'Karan Shah', task:'TSK-2045',
+      trainingNeeded:false, files:['upload-error.png'],
+      thread:[['Neha Verma','File picker closes without attaching.',d(1)],['Karan Shah','Reproduced on Safari — patch going out today.',d(0)]] },
+    { id:'TKT-1042', cat:'technical', subject:'Which schema for a service page with FAQs?', desc:'Service + FAQPage together, or FAQ only?',
+      by:'Sameer Iyer', role:'Senior Executive', created:d(2), priority:'Medium', status:'Resolved', assignee:'Aditi Rao', task:'TSK-2052',
+      trainingNeeded:false, files:[],
+      thread:[['Sameer Iyer','Service + FAQPage together, or FAQ only?',d(2)],['Aditi Rao','Nest FAQPage inside Service. Gold standard doc updated.',d(1)]] },
+    { id:'TKT-1043', cat:'training', subject:'Refresher on the compliance checklist', desc:'Unsure what evidence QC expects for originality.',
+      by:'Neha Verma', role:'Junior Executive', created:d(3), priority:'Low', status:'Triaged', assignee:'Priya Nair', task:'',
+      trainingNeeded:true, files:[],
+      thread:[['Neha Verma','Unsure what evidence QC expects for originality.',d(3)]] },
+    { id:'TKT-1044', cat:'access', subject:'Semrush seat needed', desc:'Cannot pull competitor gap data without a seat.',
+      by:'Arjun Pillai', role:'Senior Executive', created:d(0), createdAt:Date.now()-3*3600000, priority:'Medium', status:'Open', assignee:'', task:'',
+      trainingNeeded:false, files:[], thread:[['Arjun Pillai','Cannot pull competitor gap data without a seat.',d(0)]] },
+    { id:'TKT-1045', cat:'data', subject:'KPI actual double-counted for June', desc:'Backlinks show 260 against a 200 target — two logs on the same day.',
+      by:'Aditi Rao', role:'Team Lead', created:d(5), priority:'Critical', status:'Closed', assignee:'Karan Shah', task:'',
+      trainingNeeded:false, files:['kpi-log-export.xlsx'], rating:5,
+      thread:[['Aditi Rao','Two logs on the same day.',d(5)],['Karan Shah','Duplicate removed, validation added.',d(4)]] },
+  ]; }
+  allTickets(){ const upd=this.state.tktUpd||{};
+    return (this.state.tktAdded||[]).concat(this.TICKET_SEED()).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+  tktPatch(id,patch,note){
+    const upd={...(this.state.tktUpd||{})};
+    const cur=this.allTickets().find(t=>t.id===id)||{};
+    const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr()]]:(cur.thread||[]);
+    upd[id]={ ...(upd[id]||{}), ...patch, thread };
+    this.setState({ tktUpd:upd });
+  }
+  ticketAge(t){
+    if(t.createdAt) return Math.max(0, Math.round((Date.now()-t.createdAt)/3600000));
+    const iso=this.isoDate(t.created); if(!iso) return 0;
+    // seeded rows carry no timestamp — assume a 10:00 raise time rather than midnight
+    return Math.max(0, Math.round((Date.now()-new Date(iso+'T10:00:00').getTime())/3600000)); }
+  ticketFormData(){ return { tktFormOpen:false }; }
+  supportView(rk){
+    const me=this.currentPerson();
+    const isAdmin=rk==='admin';
+    const isTriage=['admin','manager','team_lead'].includes(rk);
+    let all=this.allTickets();
+    const mine=all.filter(t=>t.by===me||t.assignee===me);
+    const scope=isTriage?(this.state.tktScope||'All tickets'):'My tickets';
+    let list=(scope==='My tickets')?mine:all;
+    let F=this.state.tktF||{ cat:'All', status:'All', priority:'All', assignee:'All' };
+    if(!isTriage && F.assignee!=='All') F={...F, assignee:'All'}; // control is hidden for these roles — never filter silently
+    const setF=(k)=>(e)=>this.setState({ tktF:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),tkt:0} });
+    if(F.cat!=='All') list=list.filter(t=>this.ticketCat(t.cat).label===F.cat);
+    if(F.status!=='All') list=list.filter(t=>t.status===F.status);
+    if(F.priority!=='All') list=list.filter(t=>t.priority===F.priority);
+    if(F.assignee!=='All') list=list.filter(t=>(t.assignee||'Unassigned')===F.assignee);
+    const order={Open:0,Triaged:1,Assigned:2,'In Progress':3,'Waiting on requester':4,Resolved:5,Closed:6};
+    list=list.slice().sort((a,b)=>(order[a.status]-order[b.status])||(this.ticketAge(b)-this.ticketAge(a)));
+    const breached=(t)=>!['Resolved','Closed'].includes(t.status)&&this.ticketAge(t)>this.ticketCat(t.cat).sla;
+    const K=(label,value,sub,color)=>({label,value,sub,color});
+    const open=all.filter(t=>!['Resolved','Closed'].includes(t.status));
+    const pg=this.pgData('tkt',list.map(t=>{ const c=this.ticketCat(t.cat), tn=this.ticketTone(t.status);
+      const age=this.ticketAge(t), bad=breached(t);
+      return { id:t.id, subject:t.subject, cat:c.label, catIcon:c.icon, queue:c.queue,
+        by:t.by, byRole:t.role, created:t.created, priority:t.priority,
+        priColor:{Critical:'var(--danger-600)',High:'var(--warn-600)',Medium:'var(--info-600)',Low:'var(--ink-500)'}[t.priority]||'var(--ink-500)',
+        status:t.status, statusBg:tn.bg, statusColor:tn.c,
+        assignee:t.assignee||'Unassigned', unassigned:!t.assignee,
+        task:t.task||'', hasTask:!!t.task,
+        training:!!t.trainingNeeded,
+        ageLabel:age<24?(age+' h old'):(Math.round(age/24)+' d old'),
+        sla:bad?('SLA breached · target '+c.sla+' h'):('within SLA · '+c.sla+' h'),
+        slaColor:bad?'var(--danger-600)':'var(--verify-600)',
+        replies:String((t.thread||[]).length),
+        open:()=>this.setState({ tktOpen:t.id }) }; }),8);
+    return {
+      supIsList:true,
+      supStats:[K('Open tickets',String(open.length),'awaiting resolution','var(--beet-700)'),
+        K('Unassigned',String(all.filter(t=>!t.assignee&&!['Resolved','Closed'].includes(t.status)).length),'need triage','var(--warn-600)'),
+        K('SLA breached',String(all.filter(t=>breached(t)).length),'past target response','var(--danger-600)'),
+        K('Training requests',String(all.filter(t=>t.trainingNeeded||t.cat==='training').length),'flagged for L&D','var(--orchid-600)'),
+        K('Resolved',String(all.filter(t=>['Resolved','Closed'].includes(t.status)).length),'closed out','var(--verify-600)'),
+        K('My tickets',String(mine.length),'raised by or assigned to me','var(--info-600)')],
+      supRows:pg.rows, supPg:pg, supEmpty:list.length===0,
+      supIsTriage:isTriage, supIsAdmin:isAdmin,
+      supScopeBtns:isTriage?['All tickets','My tickets'].map(s=>({ label:s, active:scope===s,
+        style:'padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(scope===s?'var(--beet-700)':'var(--line-300)')+';background:'+(scope===s?'var(--beet-700)':'#fff')+';color:'+(scope===s?'#fff':'var(--ink-700)'),
+        set:()=>this.setState({ tktScope:s }) })):[],
+      supFilters:[
+        {label:'Category',value:F.cat,onChange:setF('cat'),options:['All'].concat(this.TICKET_CATS().map(c=>c.label))},
+        {label:'Status',value:F.status,onChange:setF('status'),options:['All'].concat(this.TICKET_STATES())},
+        {label:'Priority',value:F.priority,onChange:setF('priority'),options:['All','Critical','High','Medium','Low']},
+        ...(isTriage?[{label:'Assignee',value:F.assignee,onChange:setF('assignee'),options:['All','Unassigned'].concat([...new Set(all.map(t=>t.assignee).filter(Boolean))])}]:[]),
+      ],
+      supReset:()=>this.setState({ tktF:{ cat:'All', status:'All', priority:'All', assignee:'All' } }),
+      supNew:()=>this.flash('Ticket creation form is coming in a follow-up phase — pick a category below to see where it would route.'),
+      supCatCards:this.TICKET_CATS().map(c=>({ label:c.label, icon:c.icon, queue:c.queue, hint:c.hint,
+        sla:'Target response '+c.sla+' h',
+        pick:()=>this.flash('Routes to '+c.queue+' ('+c.owner+') · target response '+c.sla+' h — ticket creation form is coming in a follow-up phase.') })),
+      ...this.ticketFormData(), ...this.ticketDetailData(rk),
+    };
+  }
+  ticketDetailData(rk){
+    const id=this.state.tktOpen; if(!id) return { tktDrawerOpen:false };
+    const t=this.allTickets().find(x=>x.id===id); if(!t) return { tktDrawerOpen:false };
+    const c=this.ticketCat(t.cat), tn=this.ticketTone(t.status);
+    const me=this.currentPerson();
+    const isTriage=['admin','manager','team_lead'].includes(rk);
+    const isOwner=t.assignee===me;
+    const isRequester=t.by===me;
+    const age=this.ticketAge(t);
+    const bad=!['Resolved','Closed'].includes(t.status)&&age>c.sla;
+    const people=['Karan Shah','Aditi Rao','Priya Nair','Rohit Sharma','Arjun Pillai','Farhan Ali','Sameer Iyer'];
+    return { tktDrawerOpen:true,
+      tktD:{ id:t.id, subject:t.subject, desc:t.desc, cat:c.label, catIcon:c.icon, queue:c.queue,
+        status:t.status, statusBg:tn.bg, statusColor:tn.c, priority:t.priority,
+        by:t.by, byRole:t.role, created:t.created, assignee:t.assignee||'Unassigned',
+        ageLabel:age<24?(age+' h old'):(Math.round(age/24)+' d old'),
+        sla:bad?('SLA breached — target '+c.sla+' h'):('Within SLA — target '+c.sla+' h'),
+        slaColor:bad?'var(--danger-600)':'var(--verify-600)',
+        task:t.task||'', hasTask:!!t.task, training:!!t.trainingNeeded },
+      tktDClose:()=>this.setState({ tktOpen:null }),
+      tktDStop:(e)=>e.stopPropagation(),
+      tktThread:(t.thread||[]).map(x=>({ who:x[0], text:x[1], when:x[2],
+        mine:x[0]===me, bg:x[0]===me?'var(--orchid-100)':'var(--surface-50)' })),
+      tktFilesD:(t.files||[]).map(n=>({ name:n })),
+      tktHasFilesD:(t.files||[]).length>0,
+      tktOpenTask:()=>this.setState({ tktOpen:null, route:'tasks', tkTab:'list', tkOpen:t.task }),
+      tktReply:this.state.tktReply||'',
+      tktSetReply:(e)=>this.setState({ tktReply:e.target.value }),
+      tktSend:()=>{ const v=(this.state.tktReply||'').trim(); if(!v){ this.flash('Type a reply first.'); return; }
+        this.tktPatch(t.id,{},v); this.setState({ tktReply:'' }); },
+      tktCanTriage:isTriage,
+      tktCanWork:isTriage||isOwner,
+      tktCanClose:isRequester&&t.status==='Resolved',
+      tktAssignOptions:['Unassigned'].concat(people),
+      tktAssignVal:t.assignee||'Unassigned',
+      tktSetAssign:(e)=>{ const v=e.target.value==='Unassigned'?'':e.target.value;
+        this.tktPatch(t.id,{ assignee:v, status:v?'Assigned':'Open' }, v?('Assigned to '+v):'Unassigned');
+        this.flash(v?(t.id+' assigned to '+v+'.'):(t.id+' returned to the queue.')); },
+      tktStatusOptions:this.TICKET_STATES(),
+      tktSetStatus:(e)=>{ const v=e.target.value; this.tktPatch(t.id,{ status:v },'Status → '+v); this.flash(t.id+' → '+v+'.'); },
+      tktPriorityVal:t.priority,
+      tktSetPriorityD:(e)=>{ const v=e.target.value; this.tktPatch(t.id,{ priority:v },'Priority → '+v); },
+      tktPriorityOptionsD:['Critical','High','Medium','Low'],
+      tktToggleTrainingD:()=>{ this.tktPatch(t.id,{ trainingNeeded:!t.trainingNeeded }, t.trainingNeeded?'Training flag removed':'Flagged as training need');
+        this.flash(t.trainingNeeded?'Training flag removed.':'Flagged for training — visible to Manager / L&D.'); },
+      tktTrainingLabel:t.trainingNeeded?'Remove training flag':'Flag as training need',
+      tktResolve:()=>{ this.tktPatch(t.id,{ status:'Resolved' },'Resolved'); this.flash(t.id+' resolved — requester can confirm or reopen.'); },
+      tktReopen:()=>{ this.tktPatch(t.id,{ status:'Open', assignee:t.assignee },'Reopened by requester'); this.flash(t.id+' reopened.'); },
+      tktConfirm:()=>{ this.tktPatch(t.id,{ status:'Closed' },'Confirmed & closed by requester'); this.flash(t.id+' closed. Thanks for confirming.'); },
+      // convert a ticket into real work
+      tktToTask:()=>{
+        const base=this.allTasks().length;
+        const nid='TSK-'+(3400+base);
+        const div={software:'Web',technical:'SEO',training:'Content',access:'Web',data:'Analytics',process:'Content'}[t.cat]||'Content';
+        const task={ id:nid, name:'['+t.id+'] '+t.subject, desc:t.desc, template:'Custom task', project:'',
+          campaign:'—', start:this.todayStr(), end:this.relDate(2), priority:t.priority,
+          assignee:t.assignee||'Karan Shah', kpiId:'', kpi:'Not linked', units:1, unit:'items',
+          estH:4, actH:0, recurrence:'None', reviewer:'Farhan Ali', effortPlan:'', effortType:'',
+          depMode:'Parallel', dep:'—', division:div, sourceTicket:t.id,
+          checklist:[{t:'Investigate',done:false},{t:'Fix / deliver',done:false},{t:'Confirm with requester',done:false}],
+          evidence:[], status:'Assigned',
+          activity:[[me,'Created from support ticket '+t.id,this.todayStr()]] };
+        this.setState({ tkAdded:[...(this.state.tkAdded||[]),task] });
+        this.tktPatch(t.id,{ status:'In Progress', task:nid },'Converted to task '+nid);
+        this.flash(nid+' created from '+t.id+' — assigned to '+task.assignee+', linked back to this ticket.');
+      },
     };
   }
 
