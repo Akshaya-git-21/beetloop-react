@@ -18,6 +18,9 @@ class AppRoot extends React.Component {
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
     clFill: {}, clQc: {}, clSubmitted: {},
+    okrModTab: 'okrs', leadAdded: [], contactAdded: [], contactUpd: {}, cnOpen: null, cnNew: false, cnForm: {},
+    ldFilters: {service:'All',source:'All',range:'This week'}, ldForm: {}, ldTarget: '10', ldPeriod: 'Weekly',
+    pipeFilters: {stage:'All',service:'All',country:'All',owner:'All'},
     showUserModal: false,
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
@@ -1334,9 +1337,54 @@ class AppRoot extends React.Component {
         X('Rework queue',String(rework),'quality returns',rework?'var(--warn-600)':'var(--verify-600)')],
     };
 
+    // Lead pipeline snapshot on the dashboard, computed from real lead/contact records
+    const leadRoles=['admin','manager','ceo','coo','team_lead','senior','junior'];
+    let leadPanel={ dashHasLeads:false };
+    if(leadRoles.includes(rk)){
+      const contacts=this.allContacts();
+      const leads=this.allLeads();
+      const today=this.todayStr();
+      const cnt=(s)=>contacts.filter(c=>c.stage===s).length;
+      const mqlN=contacts.filter(c=>['MQL','SQL','Opportunity','Won'].includes(c.stage)).length;
+      const sqlN=contacts.filter(c=>['SQL','Opportunity','Won'].includes(c.stage)).length;
+      const wonN=cnt('Won');
+      const totalN=contacts.length;
+      const todayCount=leads.filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0);
+      const leadTarget=parseInt(this.state.ldTarget||'10',10);
+      const pipeValue=contacts.filter(c=>['SQL','Opportunity'].includes(c.stage)).reduce((s,c)=>s+this.cmpNum(c.value),0);
+      const stages=[
+        ['All enquiries',totalN,'var(--ink-400)'],
+        ['MQL',mqlN,'var(--info-500)'],
+        ['SQL',sqlN,'var(--orchid-500)'],
+        ['Opportunity',cnt('Opportunity')+wonN,'var(--warn-500)'],
+        ['Won',wonN,'var(--verify-500)'],
+      ];
+      const svc={}; contacts.forEach(c=>{ svc[c.service]=(svc[c.service]||0)+1; });
+      const topSvc=Object.entries(svc).sort((a,b2)=>b2[1]-a[1]).slice(0,3);
+      leadPanel={
+        dashHasLeads:true,
+        dashLeadToday:String(todayCount),
+        dashLeadTargetNote:todayCount>=leadTarget?('Daily target of '+leadTarget+' met'):(todayCount+' of '+leadTarget+' logged today · '+(leadTarget-todayCount)+' to go'),
+        dashLeadTargetColor:todayCount>=leadTarget?'var(--verify-600)':'var(--warn-600)',
+        dashLeadW:Math.min(100,Math.round(todayCount/(leadTarget||1)*100))+'%',
+        dashLeadBar:todayCount>=leadTarget?'var(--verify-500)':'var(--warn-500)',
+        dashLeadStages:stages.map(s=>({ label:s[0], value:String(s[1]), color:s[2],
+          w:totalN?Math.max(4,Math.round(s[1]/totalN*100))+'%':'0%',
+          rate:s[0]==='MQL'?(totalN?Math.round(mqlN/totalN*100)+'% of all enquiries':'—')
+            :s[0]==='SQL'?(mqlN?Math.round(sqlN/mqlN*100)+'% of MQLs':'—')
+            :s[0]==='Opportunity'?(sqlN?Math.round((cnt('Opportunity')+wonN)/sqlN*100)+'% of SQLs':'—')
+            :s[0]==='Won'?(sqlN?Math.round(wonN/sqlN*100)+'% of SQLs':'—')
+            :(totalN?'captured':'—') })),
+        dashLeadValue:'₹'+Math.round(pipeValue/1000)+'K',
+        dashLeadValueNote:'open pipeline · SQL + Opportunity',
+        dashLeadTopSvc:topSvc.map(x=>({ label:x[0], n:x[1]+' lead'+(x[1]===1?'':'s') })),
+        dashLeadOpen:()=>this.setState({ route:'okr', okrModTab:'pipe' }),
+        dashLeadOpenDaily:()=>this.setState({ route:'okr', okrModTab:'leads' }),
+      };
+    }
     return { kpis:KPI[b]||KPI.manager, dashExtras:EXTRA[b]||EXTRA.manager,
       dashExtrasLabel:'Needs attention · '+role.label+' scope',
-      dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary, dashHasLeads:false };
+      dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary, ...leadPanel };
   }
 
   qcData(rk){
@@ -5763,10 +5811,309 @@ class AppRoot extends React.Component {
     })));
     return map;
   }
-  // Leads/CRM pipeline isn't built in this phase — recorded-performance reconciliation
-  // degrades to source's own "no visitor data recorded" fallback rather than crashing.
-  SERVICE_PAGES(){ return []; }
-  allLeads(){ return []; }
+  // ==== Leads/CRM pipeline — daily lead logging + contact pipeline ====
+  SERVICE_PAGES(){
+    const pages=this.allContentPages().filter(p=>p.repo==='service')
+      .map(p=>({ name:p.name, url:p.url, src:'Website Content Repository' }));
+    const reg=this.MASTERS_REG?this.MASTERS_REG():null;
+    const master=(reg&&reg.service&&reg.service.rows||[]).map(r=>({ name:r.Service_Name, url:r.Primary_URL||'', src:'Service Master' }));
+    const core=[
+      { name:'New Product Development', url:'/services/new-product-development', src:'Website Content Repository' },
+      { name:'Nutraceutical Formulation', url:'/services/nutraceutical-formulation', src:'Website Content Repository' },
+      { name:'Clinical Trial Support', url:'/services/clinical-trial-support', src:'Website Content Repository' },
+      { name:'Regulatory & Compliance', url:'/services/regulatory-compliance', src:'Website Content Repository' },
+      { name:'Food Technology Consulting', url:'/services/food-technology-consulting', src:'Website Content Repository' },
+    ];
+    const seen={}; const out=[];
+    core.concat(pages, master).forEach(s=>{ if(!s.name||seen[s.name]) return; seen[s.name]=1; out.push(s); });
+    return out;
+  }
+  SERVICE_LIST(){ return this.SERVICE_PAGES().map(s=>s.name); }
+  servicePageOf(name){ return this.SERVICE_PAGES().find(s=>s.name===name)||null; }
+  leadSourceList(){ return ['Organic Search','Paid Search','Social Media','Email Campaign','Referral','Direct','Guest Post / External','Webinar','Trade Enquiry']; }
+  LEAD_SEED(){ const d=(n)=>this.relDate(-n); return [
+    { id:'LD-001', date:d(0), service:'New Product Development', source:'Organic Search', visitors:1240, count:4, qualified:3, value:'₹4,20,000', who:'Neha Verma', notes:'2 enquiries from the NPD services page.' },
+    { id:'LD-002', date:d(0), service:'Nutraceutical Formulation', source:'Paid Search', visitors:860, count:2, qualified:1, value:'₹1,10,000', who:'Neha Verma', notes:'' },
+    { id:'LD-003', date:d(1), service:'New Product Development', source:'Referral', visitors:410, count:3, qualified:3, value:'₹3,60,000', who:'Sameer Iyer', notes:'Referred by existing FRL client.' },
+    { id:'LD-004', date:d(1), service:'Regulatory & Compliance', source:'Email Campaign', visitors:520, count:5, qualified:2, value:'₹95,000', who:'Sameer Iyer', notes:'' },
+    { id:'LD-005', date:d(2), service:'New Product Development', source:'Guest Post / External', visitors:290, count:2, qualified:2, value:'₹2,40,000', who:'Neha Verma', notes:'From the Medium guest article.' },
+    { id:'LD-006', date:d(3), service:'Clinical Trial Support', source:'Organic Search', visitors:180, count:1, qualified:1, value:'₹80,000', who:'Aditi Rao', notes:'' },
+  ]; }
+  serviceTargeting(name){
+    const sp=this.servicePageOf(name); const url=sp&&sp.url;
+    const t=url?this.targetedPages()[url]:null;
+    if(t) return { targeted:true, url, kpis:t.kpis, campaigns:t.campaigns, expected:t.expected };
+    const worked=this.allTasks().some(x=>String(x.name||'').toLowerCase().indexOf(String(name).toLowerCase())>=0);
+    return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
+  }
+  allLeads(){ return (this.state.leadAdded||[]).concat(this.LEAD_SEED()); }
+  LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
+  stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
+    MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
+    Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
+    Lost:{bg:'var(--danger-100, #F7E3E6)',c:'var(--danger-600)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  CONTACT_SEED(){ const d=(n)=>this.relDate(-n); return [
+    { id:'CN-001', leadId:'LD-001', name:'Dr. Ananya Krishnan', phone:'+91 98400 22114', email:'ananya.k@vitalfoods.in', country:'India', company:'VitalFoods Pvt Ltd', service:'New Product Development', source:'Organic Search', stage:'SQL', value:'₹4,20,000', date:d(0), owner:'Neha Verma', desc:'Needs a protein bar formulation for the Indian market, FSSAI compliant.', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)],['Moved to SQL — budget confirmed','Neha Verma',d(0)]] },
+    { id:'CN-002', leadId:'LD-001', name:'Rahul Bhatt', phone:'+91 99620 77410', email:'rahul@nutrigen.co', country:'India', company:'NutriGen', service:'New Product Development', source:'Organic Search', stage:'MQL', value:'₹1,80,000', date:d(0), owner:'Neha Verma', desc:'Exploring plant-protein RTD beverage development.', log:[['Enquiry received','Organic Search',d(0)],['Qualified as MQL','Neha Verma',d(0)]] },
+    { id:'CN-003', leadId:'LD-003', name:'Sarah Whitfield', phone:'+44 7700 900321', email:'s.whitfield@purelabs.uk', country:'United Kingdom', company:'PureLabs', service:'New Product Development', source:'Referral', stage:'Won', value:'₹3,60,000', date:d(1), owner:'Sameer Iyer', desc:'Referred by FRL. Signed for a 3-month formulation sprint.', log:[['Enquiry received','Referral',d(1)],['Qualified as SQL','Sameer Iyer',d(1)],['Proposal sent','Sameer Iyer',d(1)],['Won — contract signed','Sameer Iyer',d(0)]] },
+    { id:'CN-004', leadId:'LD-004', name:'Mohammed Al-Rashid', phone:'+971 50 123 4567', email:'m.rashid@gulfnutra.ae', country:'UAE', company:'Gulf Nutra', service:'Regulatory & Compliance', source:'Email Campaign', stage:'UQL', value:'—', date:d(1), owner:'Sameer Iyer', desc:'General query on GCC labelling rules — no budget indicated.', log:[['Enquiry received','Email Campaign',d(1)]] },
+    { id:'CN-005', leadId:'LD-005', name:'Priya Deshmukh', phone:'+91 90040 55231', email:'priya@wellcorenutra.com', country:'India', company:'WellCore', service:'New Product Development', source:'Guest Post / External', stage:'Opportunity', value:'₹2,40,000', date:d(2), owner:'Neha Verma', desc:'Read the Medium article; wants a gummy supplement line.', log:[['Enquiry received','Guest Post',d(2)],['Qualified as SQL','Neha Verma',d(2)],['Proposal in review','Neha Verma',d(1)]] },
+    { id:'CN-006', leadId:'LD-006', name:'Dr. Kenji Tanaka', phone:'+81 90 1234 5678', email:'k.tanaka@bioclin.jp', country:'Japan', company:'BioClin', service:'Clinical Trial Support', source:'Organic Search', stage:'Lost', value:'₹80,000', date:d(3), owner:'Aditi Rao', desc:'Timeline mismatch — needed delivery in 3 weeks.', log:[['Enquiry received','Organic Search',d(3)],['Lost — timeline mismatch','Aditi Rao',d(2)]] },
+  ]; }
+  allContacts(){ const upd=this.state.contactUpd||{}; return (this.state.contactAdded||[]).concat(this.CONTACT_SEED()).map(c=>upd[c.id]?{...c,...upd[c.id]}:c); }
+  pipelineView(canWrite){
+    const me=this.currentPerson();
+    const all=this.allContacts();
+    const F=this.state.pipeFilters||{stage:'All',service:'All',country:'All',owner:'All'};
+    const setF=(k)=>(e)=>this.setState({ pipeFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),pipe:0} });
+    const list=all.filter(c=> (F.stage==='All'||c.stage===F.stage) && (F.service==='All'||c.service===F.service) && (F.country==='All'||c.country===F.country) && (F.owner==='All'||c.owner===F.owner) );
+    const cnt=(s)=>all.filter(c=>c.stage===s).length;
+    const total=all.length, mql=all.filter(c=>['MQL','SQL','Opportunity','Won'].includes(c.stage)).length;
+    const sql=all.filter(c=>['SQL','Opportunity','Won'].includes(c.stage)).length;
+    const won=cnt('Won');
+    const funnel=[
+      { label:'All enquiries', n:total, sub:'captured', color:'var(--ink-400)' },
+      { label:'UQL — unqualified', n:cnt('UQL')+cnt('New'), sub:'no budget / not a fit', color:'var(--ink-500)' },
+      { label:'MQL — marketing qualified', n:mql, sub:total?Math.round(mql/total*100)+'% of enquiries':'—', color:'var(--info-500)' },
+      { label:'SQL — sales qualified', n:sql, sub:mql?Math.round(sql/mql*100)+'% of MQLs':'—', color:'var(--orchid-500)' },
+      { label:'Opportunity', n:cnt('Opportunity')+won, sub:sql?Math.round((cnt('Opportunity')+won)/sql*100)+'% of SQLs':'—', color:'var(--warn-500)' },
+      { label:'Won', n:won, sub:sql?Math.round(won/sql*100)+'% SQL→Won':'—', color:'var(--verify-500)' },
+    ].map(f=>({ ...f, value:String(f.n), w:total?Math.max(4,Math.round(f.n/total*100))+'%':'0%' }));
+    const pipeValue=all.filter(c=>['SQL','Opportunity'].includes(c.stage)).reduce((s,c)=>s+this.cmpNum(c.value),0);
+    const wonValue=all.filter(c=>c.stage==='Won').reduce((s,c)=>s+this.cmpNum(c.value),0);
+    const K=(label,value,sub,color)=>({label,value,sub,color});
+    const pg=this.pgData('pipe',list.map(c=>{ const t=this.stageTone(c.stage);
+      return { ...c, stageBg:t.bg, stageColor:t.c,
+        canWrite:!!canWrite,
+        phoneShown:canWrite?c.phone:'•••• ••••', emailShown:canWrite?c.email:'restricted',
+        setStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin and Manager.'); return; }
+          const v=e.target.value; const u={...(this.state.contactUpd||{})};
+          const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
+          u[c.id]={...(u[c.id]||{}), stage:v, log};
+          this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); },
+        open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin and Manager.'); return; }
+          this.setState({ cnOpen:c.id }); } }; }),8);
+    return {
+      pipeStats:[K('Total leads',String(total),'in pipeline','var(--beet-700)'),
+        K('MQL',String(mql),total?Math.round(mql/total*100)+'% of enquiries':'—','var(--info-600)'),
+        K('SQL',String(sql),mql?Math.round(sql/mql*100)+'% of MQLs':'—','var(--orchid-600)'),
+        K('Won',String(won),sql?Math.round(won/sql*100)+'% SQL conversion':'—','var(--verify-600)'),
+        K('Open pipeline','₹'+Math.round(pipeValue/1000)+'K','SQL + Opportunity','var(--warn-600)'),
+        K('Won value','₹'+Math.round(wonValue/1000)+'K','closed','var(--verify-600)')],
+      pipeFunnel:funnel,
+      pipeRows:pg.rows, pipePg:pg, pipeEmpty:list.length===0,
+      pipeStageOptions:this.LEAD_STAGES(),
+      pipeFilterDefs:[
+        {label:'Stage',value:F.stage,onChange:setF('stage'),options:['All'].concat(this.LEAD_STAGES())},
+        {label:'Service',value:F.service,onChange:setF('service'),options:['All'].concat([...new Set(all.map(c=>c.service))])},
+        {label:'Country',value:F.country,onChange:setF('country'),options:['All'].concat([...new Set(all.map(c=>c.country))])},
+        {label:'Owner',value:F.owner,onChange:setF('owner'),options:['All'].concat([...new Set(all.map(c=>c.owner))])},
+      ],
+      pipeReset:()=>this.setState({ pipeFilters:{stage:'All',service:'All',country:'All',owner:'All'} }),
+      pipeCanWrite:!!canWrite, pipeReadOnly:!canWrite,
+      pipeMaskNote:'Contact details are restricted — visible to Admin and Manager only.',
+      pipeNew:()=>{ if(!canWrite){ this.flash('View only — lead entry is restricted to Admin and Manager.'); return; }
+        this.setState({ cnNew:true, cnForm:{ stage:'New', country:'India', date:'' } }); },
+      ...this.contactFormData(), ...this.contactDetailData(),
+    };
+  }
+  contactFormData(){
+    if(!this.state.cnNew) return { cnFormOpen:false };
+    const f=this.state.cnForm||{};
+    const set=(k)=>(e)=>this.setState({ cnForm:{...f,[k]:e.target.value} });
+    return { cnFormOpen:true, cnf:f,
+      cnFromDaily:!!f.leadId,
+      cnFromDailyNote:f.leadId?('Linked to daily lead entry '+f.leadId+' — '+(f.service||'')+' · '+(f.source||'')):'',
+      cnClose:()=>this.setState({ cnNew:false, cnForm:{} }),
+      cnStop:(e)=>e.stopPropagation(),
+      cnSetName:set('name'), cnSetPhone:set('phone'), cnSetEmail:set('email'), cnSetCountry:set('country'),
+      cnSetCompany:set('company'), cnSetService:set('service'), cnSetSource:set('source'), cnSetStage:set('stage'),
+      cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'),
+      cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
+      cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
+      cnSave:()=>{
+        if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
+        if(!(f.email&&f.email.trim())&&!(f.phone&&f.phone.trim())){ this.flash('Enter a phone number or email.'); return; }
+        const me=this.currentPerson();
+        const id='CN-'+String(this.allContacts().length+1).padStart(3,'0');
+        const rec={ id, leadId:f.leadId||'', name:f.name.trim(), phone:f.phone||'—', email:f.email||'—', country:f.country||'India',
+          company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
+          stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
+          log:[['Lead created',me,this.todayStr()]] };
+        this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
+        this.flash(rec.id+' — '+rec.name+' added to the lead pipeline as '+rec.stage+'.');
+      } };
+  }
+  contactDetailData(){
+    const id=this.state.cnOpen; if(!id) return { cnDrawerOpen:false };
+    const c=this.allContacts().find(x=>x.id===id); if(!c) return { cnDrawerOpen:false };
+    const t=this.stageTone(c.stage); const me=this.currentPerson();
+    return { cnDrawerOpen:true,
+      cnD:{ ...c, stageBg:t.bg, stageColor:t.c },
+      cnDClose:()=>this.setState({ cnOpen:null }),
+      cnDStop:(e)=>e.stopPropagation(),
+      cnMeta:[['Lead ID',c.id],['Company',c.company],['Phone',c.phone],['Email',c.email],['Country',c.country],
+        ['Service requested',c.service],['Source',c.source],['Campaign',c.campaign],['Est. value',c.value],['Captured',c.date],['Owner',c.owner]].map(x=>({k:x[0],v:x[1]||'—'})),
+      cnLog:(c.log||[]).slice().reverse().map(l=>({ what:l[0], who:l[1], when:l[2] })),
+      cnStageOptions2:this.LEAD_STAGES(),
+      cnDSetStage:(e)=>{ const v=e.target.value; const u={...(this.state.contactUpd||{})};
+        u[c.id]={...(u[c.id]||{}), stage:v, log:[...(c.log||[]),['Stage → '+v,me,this.todayStr()]]};
+        this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); } };
+  }
+  leadsView(canWrite){
+    const rk=this.state.roleKey, me=this.currentPerson();
+    const today=this.todayStr();
+    const all=this.allLeads();
+    const F=this.state.ldFilters||{service:'All',source:'All',range:'This week'};
+    const setF=(k)=>(e)=>this.setState({ ldFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),ld:0} });
+    const win=F.range==='Today'?0:(F.range==='This week'?7:(F.range==='This month'?31:9999));
+    const dayAgo=(ds)=>{ const iso=this.isoDate(ds); if(!iso) return 0; return Math.round((Date.now()-new Date(iso+'T00:00:00').getTime())/86400000); };
+    let list=all.filter(l=> (F.service==='All'||l.service===F.service) && (F.source==='All'||l.source===F.source) && dayAgo(l.date)<=win );
+    const sum=(a,k)=>a.reduce((s,x)=>s+(parseInt(x[k],10)||0),0);
+    const todays=all.filter(l=>l.date===today);
+    const mine=todays.filter(l=>l.who===me);
+    const target=parseInt(this.state.ldTarget||'10',10);
+    const todayTotal=sum(todays,'count');
+    const svcMap={}; list.forEach(l=>{ svcMap[l.service]=svcMap[l.service]||{c:0,q:0,n:0,v:0}; svcMap[l.service].c+=parseInt(l.count,10)||0; svcMap[l.service].q+=parseInt(l.qualified,10)||0; svcMap[l.service].v+=parseInt(l.visitors,10)||0; svcMap[l.service].n++; });
+    const maxSvc=Math.max(1,...Object.values(svcMap).map(v=>v.c));
+    const svcRows=Object.entries(svcMap).sort((a,b)=>b[1].c-a[1].c).map(([k,v])=>({
+      label:k, count:String(v.c), qualified:v.q+' qualified', entries:v.n+' entr'+(v.n===1?'y':'ies'),
+      pageUrl:(this.servicePageOf(k)||{}).url||'no page mapped',
+      visitors:v.v.toLocaleString('en-IN')+' visitors', cvr:v.v?((Math.round(v.c/v.v*1000)/10)+'% CVR'):'—',
+      w:Math.round(v.c/maxSvc*100)+'%', rate:v.c?Math.round(v.q/v.c*100)+'% qualified':'—',
+      color:v.q/(v.c||1)>=0.6?'var(--verify-500)':v.q/(v.c||1)>=0.3?'var(--warn-500)':'var(--danger-500)' }));
+    const pg=this.pgData('ld',list.map(l=>({ ...l, countLabel:String(l.count), qualifiedLabel:String(l.qualified),
+      visitorsLabel:(parseInt(l.visitors,10)||0).toLocaleString('en-IN'),
+      ...(()=>{ const kids=this.allContacts().filter(c=>c.leadId===l.id);
+        const n=kids.length, need=parseInt(l.count,10)||0, complete=n>=need;
+        return { detailCount:n+' / '+need+' entered', detailComplete:complete,
+          detailBg:complete?'var(--verify-100)':'var(--warn-100)', detailColor:complete?'var(--verify-600)':'var(--warn-600)',
+          detailLabel:complete?'View details':('Add '+(need-n)+' detail'+((need-n)===1?'':'s')),
+          contactNames:kids.map(c=>({ name:c.name, stage:c.stage,
+            bg:this.stageTone(c.stage).bg, color:this.stageTone(c.stage).c,
+            open:()=>this.setState({ okrModTab:'pipe', cnOpen:c.id }) })),
+          hasContacts:n>0,
+          addDetail:()=>this.setState({ cnNew:true, okrModTab:'pipe',
+            cnForm:{ stage:'New', country:'India', service:l.service, source:l.source, date:this.isoDate(l.date), leadId:l.id } }) }; })(),
+      pageUrl:(this.servicePageOf(l.service)||{}).url||'', hasPage:!!(this.servicePageOf(l.service)||{}).url,
+      openPage:()=>{ const s=this.servicePageOf(l.service); const p=s&&this.allContentPages().find(x=>x.url===s.url);
+        if(p) this.setState({ route:'content', cOpen:p.id, cTab:0 }); else this.flash('No repository page mapped to "'+l.service+'" yet.'); },
+      isToday:l.date===today, dateBg:l.date===today?'var(--verify-100)':'var(--surface-50)', dateColor:l.date===today?'var(--verify-600)':'var(--ink-500)' })),10);
+    const f=this.state.ldForm||{};
+    const set=(k)=>(e)=>this.setState({ ldForm:{...f,[k]:e.target.value} });
+    const K=(label,value,sub,color)=>({label,value,sub,color});
+    const pct=Math.min(100,Math.round(todayTotal/(target||1)*100));
+    return {
+      ldStats:[K('Leads today',String(todayTotal),'target '+target+' / day',todayTotal>=target?'var(--verify-600)':'var(--warn-600)'),
+        K('Qualified today',String(sum(todays,'qualified')),'from '+todays.length+' entries','var(--orchid-600)'),
+        K('In range',String(sum(list,'count')),F.range.toLowerCase(),'var(--info-600)'),
+        K('Services active',String(Object.keys(svcMap).length),'generating leads','var(--beet-700)'),
+        K('My entries today',String(mine.length),mine.length?'logged':'not logged yet',mine.length?'var(--verify-600)':'var(--danger-600)')],
+      ldTodayPct:pct+'%', ldTodayW:pct+'%',
+      ldTodayColor:pct>=100?'var(--verify-500)':pct>=60?'var(--warn-500)':'var(--danger-500)',
+      ldTodayNote:todayTotal>=target?('Daily target met — '+todayTotal+' of '+target+' leads.'):(todayTotal+' of '+target+' leads today · '+(target-todayTotal)+' to go'),
+      ldPendingToday:mine.length===0,
+      ldSvcRows:svcRows, ldRows:pg.rows, ldPg:pg, ldEmpty:list.length===0, ldCanEnter:!!canWrite, ldReadOnly:!canWrite,
+      ...(()=>{
+        const grp={ targeted:{v:0,c:0,q:0,svc:[]}, untargeted:{v:0,c:0,q:0,svc:[]} };
+        Object.entries(svcMap).forEach(([name,val])=>{ const t=this.serviceTargeting(name);
+          const g=t.targeted?grp.targeted:grp.untargeted;
+          g.v+=val.v; g.c+=val.c; g.q+=val.q;
+          g.svc.push({ name, visitors:val.v.toLocaleString('en-IN'), leads:val.c, leadsLabel:val.c+' lead'+(val.c===1?'':'s'), qualified:val.q,
+            url:t.url||'no page mapped',
+            cvr:val.v?((Math.round(val.c/val.v*1000)/10)+'%'):'—',
+            why:t.targeted?(t.kpis.length?('KPI: '+t.kpis.join(', ')+(t.campaigns.length?(' · '+t.campaigns[0]):'')):'Effort/tasks working on it'):'No KPI or effort assigned',
+            expected:t.expected?('expected '+t.expected):'' }); });
+        const mk=(key,label,tone)=>{ const g=grp[key]; const tot=grp.targeted.c+grp.untargeted.c;
+          return { label, visitors:g.v.toLocaleString('en-IN'), leads:String(g.c), qualified:String(g.q),
+            cvr:g.v?((Math.round(g.c/g.v*1000)/10)+'%'):'—',
+            share:tot?Math.round(g.c/tot*100)+'% of leads':'—',
+            w:tot?Math.round(g.c/tot*100)+'%':'0%',
+            color:tone, pages:g.svc.sort((a,b)=>b.leads-a.leads),
+            hasPages:g.svc.length>0, noPages:g.svc.length===0,
+            empty:key==='targeted'?'No targeted pages produced leads in this range.':'Every lead came from a targeted page — good attribution.' }; };
+        return { ldSplit:[ mk('targeted','Targeted pages — planned, with KPI & effort behind them','var(--verify-500)'),
+                           mk('untargeted','Untargeted pages — leads arriving without a plan','var(--warn-500)') ],
+          ldSplitNote:'Targeted = the page is linked to a campaign KPI or has effort/tasks working on it. Untargeted leads are unplanned wins — consider bringing those pages into a campaign.' }; })(),
+      ldFilterDefs:[
+        {label:'Service',value:F.service,onChange:setF('service'),options:['All'].concat(this.SERVICE_LIST())},
+        {label:'Source',value:F.source,onChange:setF('source'),options:['All'].concat(this.leadSourceList())},
+        {label:'Range',value:F.range,onChange:setF('range'),options:['Today','This week','This month','All time']},
+      ],
+      ldReset:()=>this.setState({ ldFilters:{service:'All',source:'All',range:'This week'} }),
+      ...(()=>{
+        const per=this.state.ldPeriod||'Weekly';
+        const N={Weekly:7,Monthly:30,Quarterly:91}[per];
+        const buckets=(per==='Weekly'?6:(per==='Monthly'?6:4));
+        const label=(i)=>{ const end=new Date(Date.now()-i*N*86400000);
+          const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          if(per==='Monthly') return M[end.getMonth()]+' '+end.getFullYear();
+          if(per==='Quarterly') return 'Q'+(Math.floor(end.getMonth()/3)+1)+' '+end.getFullYear();
+          return i===0?'This week':(i===1?'Last week':(i+' weeks ago')); };
+        const rows=[];
+        for(let i=0;i<buckets;i++){
+          const inBucket=all.filter(l=>{ const d=dayAgo(l.date); return d>=i*N && d<(i+1)*N; });
+          const c=sum(inBucket,'count'), q=sum(inBucket,'qualified');
+          const svc={}; inBucket.forEach(l=>{ svc[l.service]=(svc[l.service]||0)+(parseInt(l.count,10)||0); });
+          const top=Object.entries(svc).sort((a,b)=>b[1]-a[1])[0];
+          const src={}; inBucket.forEach(l=>{ src[l.source]=(src[l.source]||0)+(parseInt(l.count,10)||0); });
+          const topSrc=Object.entries(src).sort((a,b)=>b[1]-a[1])[0];
+          rows.push({ i, label:label(i), count:c, qualified:q, entries:inBucket.length,
+            top:top?(top[0]+' ('+top[1]+')'):'—', topSrc:topSrc?(topSrc[0]+' ('+topSrc[1]+')'):'—',
+            rate:c?Math.round(q/c*100)+'%':'—',
+            target:target*N, hit:c>=target*N });
+        }
+        const max=Math.max(1,...rows.map(r=>r.count));
+        const cur=rows[0]||{count:0,qualified:0}, prev=rows[1]||{count:0};
+        const delta=cur.count-prev.count;
+        const pctD=prev.count?Math.round(delta/prev.count*100):(cur.count?100:0);
+        return {
+          ldPeriod:per,
+          ldPeriodBtns:['Weekly','Monthly','Quarterly'].map(p=>({ label:p, active:per===p,
+            style:'padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(per===p?'var(--beet-700)':'var(--line-300)')+';background:'+(per===p?'var(--beet-700)':'#fff')+';color:'+(per===p?'#fff':'var(--ink-700)'),
+            set:()=>this.setState({ ldPeriod:p }) })),
+          ldReportTitle:per+' lead report',
+          ldReportRows:rows.map(r=>({ ...r, countLabel:String(r.count), qualifiedLabel:String(r.qualified),
+            entriesLabel:r.entries+' entr'+(r.entries===1?'y':'ies'),
+            targetLabel:'target '+r.target,
+            w:Math.round(r.count/max*100)+'%',
+            color:r.hit?'var(--verify-500)':(r.count?'var(--warn-500)':'var(--line-300)'),
+            badge:r.hit?'Target met':'Below target',
+            badgeBg:r.hit?'var(--verify-100)':'var(--warn-100)', badgeColor:r.hit?'var(--verify-600)':'var(--warn-600)' })),
+          ldTrendLabel:(delta>=0?'▲ +':'▼ ')+delta+' leads vs previous period ('+(pctD>=0?'+':'')+pctD+'%)',
+          ldTrendColor:delta>=0?'var(--verify-600)':'var(--danger-600)',
+          ldReportSummary:cur.count+' leads · '+cur.qualified+' qualified · '+(cur.count?Math.round(cur.qualified/cur.count*100):0)+'% qualification rate',
+        }; })(),
+      ldf:f, ldSourceOptions:this.leadSourceList(),
+      ldServiceOptions:this.SERVICE_PAGES().map(s=>({ v:s.name, label:s.name+(s.url?(' — '+s.url):'')+' · '+s.src })),
+      ldServicePageNote:(()=>{ const s=f.service&&this.servicePageOf(f.service);
+        return s?('Linked page: '+(s.url||'no URL on record')+' · '+s.src):'Pick a service — its repository page is linked automatically.'; })(),
+      ldSetService:(e)=>{ const v=e.target.value;
+        const sp=this.servicePageOf(v);
+        const tp=sp&&this.targetedPages()[sp.url];
+        const camp=(tp&&tp.campaigns&&tp.campaigns[0])||'';
+        this.setState({ ldForm:{...f, service:v, campaign:camp||f.campaign||'— None —'} });
+        if(camp) this.flash('Campaign auto-filled from "'+v+'" — '+camp+'.'); },
+      ldCampaignNote:(()=>{ const sp=f.service&&this.servicePageOf(f.service);
+        const tp=sp&&this.targetedPages()[sp.url];
+        return (tp&&tp.campaigns&&tp.campaigns.length)
+          ? ('Auto-filled from the campaign targeting '+sp.url)
+          : (f.service?'No campaign targets this service page yet — pick one manually.':'Select a service to auto-fill the campaign.'); })(),
+      ldSetDate:set('date'), ldSetSource:set('source'), ldSetCount:set('count'), ldSetQualified:set('qualified'), ldSetValue:set('value'), ldSetNotes:set('notes'), ldSetVisitors:set('visitors'),
+      ldSetCampaign:set('campaign'), ldCampaignOptions:['— None —'].concat(this.campaignNames(false)),
+      ldSave:()=>{
+        const n=parseInt(f.count,10)||0;
+        if(!f.service){ this.flash('Select the service these leads came in for.'); return; }
+        if(!n){ this.flash('Enter how many leads came in.'); return; }
+        const id='LD-'+String(all.length+1).padStart(3,'0');
+        const sp=this.servicePageOf(f.service);
+        const rec={ id, date:this.fmtDate(f.date)||today, service:f.service, servicePage:(sp&&sp.url)||'', source:f.source||'Organic Search',
+          visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'' };
+        this.setState({ leadAdded:[rec,...(this.state.leadAdded||[])], ldForm:{} });
+        this.flash(n+' lead'+(n===1?'':'s')+' logged for '+f.service+' — counted toward today’s KPI.');
+      },
+    };
+  }
   PAGE_STAGES(mode){
     const all=[
       { stage:'Content draft', division:'Content', tpl:'Write Article', who:'Sameer Iyer', hrs:12, kpi:'Content Published', effort:'Service pages' },

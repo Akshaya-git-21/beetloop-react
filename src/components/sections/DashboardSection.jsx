@@ -3,7 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function DashboardSection({ vm }) {
-  const { accessSummary, dashExtras, dashExtrasLabel, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash } = vm;
+  const { accessSummary, dashExtras, dashExtrasLabel, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash,
+    dashHasLeads, dashLeadOpen, dashLeadStages, dashLeadToday, dashLeadW, dashLeadBar, dashLeadTargetNote,
+    dashLeadOpenDaily, dashLeadTopSvc } = vm;
   return (
     <React.Fragment>
 {Boolean(showDash) && (
@@ -68,6 +70,61 @@ export default function DashboardSection({ vm }) {
 </div>
 </div>
 
+{Boolean(dashHasLeads) && (
+<div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(420px,1fr))","gap":"16px","marginBottom":"16px"}}>
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"16px","gap":"12px","flexWrap":"wrap"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--beet-700)","margin":"0"}}>Lead pipeline</h3>
+<button onClick={dashLeadOpen} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"filter"} style={{"width":"12px","height":"12px"}} />
+Open pipeline
+</button>
+</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"11px"}}>
+{(dashLeadStages || []).map((s, $index) => (
+<div key={$index} style={{"display":"flex","alignItems":"center","gap":"12px","flexWrap":"wrap"}}>
+<span style={{"minWidth":"88px","flexShrink":"0"}}>
+<span style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{s.label}</span>
+<span style={{"display":"block","fontSize":"10.5px","color":"var(--ink-500)"}}>{s.rate}</span>
+</span>
+<div style={{"flex":"1","minWidth":"120px","height":"20px","borderRadius":"7px","background":"var(--line-200)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:7px;width:${s.w};background:${s.color}`)} />
+</div>
+<span style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"16px","color":"var(--ink-900)","minWidth":"36px","textAlign":"right","flexShrink":"0"}}>{s.value}</span>
+</div>
+))}
+</div>
+</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"16px"}}>
+<div style={{"background":"var(--beet-700)","borderRadius":"20px","padding":"20px 22px","color":"#fff"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"9px"}}>
+<Icon name={"user-plus"} style={{"width":"15px","height":"15px","color":"var(--orchid-300)"}} />
+<span style={{"fontSize":"12px","fontWeight":"700","flex":"1"}}>Leads today</span>
+<span style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"22px"}}>{dashLeadToday}</span>
+</div>
+<div style={{"height":"7px","borderRadius":"99px","background":"rgba(255,255,255,.14)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${dashLeadW};background:${dashLeadBar}`)} />
+</div>
+<div style={{"fontSize":"11px","color":"rgba(255,255,255,.75)","marginTop":"7px"}}>{dashLeadTargetNote}</div>
+<button onClick={dashLeadOpenDaily} style={{"display":"inline-flex","alignItems":"center","gap":"5px","marginTop":"12px","padding":"6px 12px","border":"1px solid rgba(255,255,255,.28)","background":"transparent","color":"#fff","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"arrow-right"} style={{"width":"12px","height":"12px"}} />
+Daily leads
+</button>
+</div>
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"11px"}}>Leads by service</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"7px"}}>
+{(dashLeadTopSvc || []).map((t, $index) => (
+<div key={$index} style={{"display":"flex","alignItems":"center","gap":"9px"}}>
+<span style={{"fontSize":"12px","fontWeight":"600","color":"var(--ink-900)","flex":"1","minWidth":"0"}}>{t.label}</span>
+<span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>{t.n}</span>
+</div>
+))}
+</div>
+</div>
+</div>
+</div>
+)}
 
 <div style={{"display":"grid","gridTemplateColumns":"1.6fr 1fr","gap":"16px"}}>
 
