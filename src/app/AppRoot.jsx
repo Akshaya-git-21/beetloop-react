@@ -971,7 +971,7 @@ class AppRoot extends React.Component {
       else if(route==='okr') this.setState({ showOkrPanel:true });
       else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
-      else if(route==='sop') this.flash('SOP creation form is coming in a follow-up phase — browse and manage existing SOPs here for now.');
+      else if(route==='sop') this.setState({ sopNew:true, sopForm:{ division:'Content', status:'Draft', priority:'Medium', frequency:'Per project', category:'Content production' } });
       else if(route==='support') this.flash('Ticket creation form is coming in a follow-up phase — browse and manage existing tickets here for now.');
       else this.flash('Draft created — opening editor…');
     };
@@ -3443,6 +3443,19 @@ class AppRoot extends React.Component {
   SOP_PRIORITIES(){ return ['Critical','High','Medium','Low']; }
   SOP_EVIDENCE(){ return ['File upload','URL','Screenshot','PDF','Document']; }
   SOP_REL(){ return ['Requires completion of','Related SOP','Parent SOP','Child SOP']; }
+  GOLD_STANDARDS(){ return [
+    { id:'gs1', name:'Plagiarism / similarity', op:'≤', val:'5', unit:'Plagiarism %', tool:'Turnitin', note:'≤ 5% similarity (≥ 95% originality)' },
+    { id:'gs2', name:'AI-content originality', op:'≥', val:'95', unit:'%', tool:'Originality.ai', note:'≥ 95% human-written score' },
+    { id:'gs3', name:'Grammar & clarity score', op:'≥', val:'90', unit:'Score (0–100)', tool:'Grammarly', note:'≥ 90 Grammarly score' },
+    { id:'gs4', name:'Readability', op:'≥', val:'60', unit:'Readability score', tool:'Hemingway Editor', note:'≥ 60 Flesch reading ease' },
+    { id:'gs5', name:'On-page SEO score', op:'≥', val:'85', unit:'Score (0–100)', tool:'Yoast SEO', note:'≥ 85 on-page score' },
+    { id:'gs6', name:'Core Web Vitals — LCP', op:'≤', val:'2.5', unit:'Seconds', tool:'PageSpeed Insights', note:'≤ 2.5s LCP' },
+    { id:'gs7', name:'Lighthouse performance', op:'≥', val:'90', unit:'Score (0–100)', tool:'Lighthouse', note:'≥ 90 performance score' },
+    { id:'gs8', name:'Backlink spam score', op:'≤', val:'3', unit:'Spam score %', tool:'Moz', note:'≤ 3% spam score' },
+    { id:'gs9', name:'Referring domain authority', op:'≥', val:'40', unit:'Domain Authority', tool:'Ahrefs', note:'DA ≥ 40' },
+    { id:'gs10', name:'QC first-pass approval', op:'≥', val:'90', unit:'%', tool:'Beetloop QC checklist', note:'≥ 90% approved without rework' },
+    { id:'gs11', name:'Broken links on site', op:'≤', val:'0', unit:'Errors', tool:'Screaming Frog', note:'Zero broken links' },
+  ]; }
   sopPriTone(p){ return { Critical:{bg:'var(--danger-100)',c:'var(--danger-600)'}, High:{bg:'var(--warn-100)',c:'var(--warn-600)'},
     Medium:{bg:'var(--info-100)',c:'var(--info-600)'}, Low:{bg:'var(--surface-50)',c:'var(--ink-500)'} }[p]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   SOP_SEED(){ const d=(n)=>this.relDate(-n); const f=(n)=>this.relDate(n);
@@ -3689,7 +3702,127 @@ class AppRoot extends React.Component {
   }
   // bi-directional: which SOPs contribute to a given KPI name
   sopsForKpi(name){ return this.allSops().filter(s=>(s.kpis||[]).some(k=>k.name===name)); }
-  sopFormData(){ return { sopFormOpen:false }; }
+  sopFormData(rk){
+    if(!this.state.sopNew) return { sopFormOpen:false };
+    const f=this.state.sopForm||{};
+    const set=(k)=>(e)=>this.setState({ sopForm:{...f,[k]:e.target.value} });
+    const steps=f.steps||[{t:'',d:'',outcome:'',dur:'',ev:[],subs:[]}];
+    const all=this.allSops();
+    const nextId='SOP-'+String(all.length+1).padStart(3,'0');
+    const kpiPool=[...new Set(all.reduce((a,s)=>a.concat((s.kpis||[]).map(k=>k.name)),[]))]
+      .concat(['Organic Sessions','Qualified Leads','Keywords in Top 10','Referring Domains','Engagement Rate','QC First-Pass Rate']);
+    const kpiOpts=[...new Set(kpiPool)];
+    const sec=(f.section||'basics');
+    const secs=[['basics','Identification','file-text'],['classify','Classification','tag'],['context','Execution context','workflow'],['steps','Steps','list-checks'],['links','Relationships','git-branch'],['gov','Governance','shield-check']];
+    return { sopFormOpen:true, sf:f, sopNextId:nextId,
+      sopClose:()=>this.setState({ sopNew:false, sopForm:{} }),
+      sopStop:(e)=>e.stopPropagation(),
+      sopSecs:secs.map(x=>({ key:x[0], label:x[1], icon:x[2], active:sec===x[0],
+        style:'display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;'+(sec===x[0]?'background:var(--beet-700);color:#fff':'background:var(--surface-50);color:var(--ink-500)'),
+        go:()=>this.setState({ sopForm:{...f, section:x[0]} }) })),
+      sopSecBasics:sec==='basics', sopSecClassify:sec==='classify', sopSecContext:sec==='context',
+      sopSecSteps:sec==='steps', sopSecLinks:sec==='links', sopSecGov:sec==='gov',
+      sopSetTitle:set('title'), sopSetPurpose:set('purpose'), sopSetScope:set('scope'),
+      sopSetDivision:set('division'), sopSetStatus:set('status'), sopSetApprover:set('approver'),
+      sopSetReview:set('review'), sopSetCategory:set('category'), sopSetPriority:set('priority'),
+      sopSetFrequency:set('frequency'), sopSetEstTime:set('estTime'), sopSetTrigger:set('trigger'),
+      sopSetApplicability:set('applicability'), sopSetInputs:set('inputs'), sopSetOutputs:set('outputs'),
+      sopSetResources:set('resources'), sopSetDocs:set('docs'), sopSetSuccess:set('successCriteria'),
+      sopSetRisks:set('risks'), sopSetEscalation:set('escalation'), sopSetTags:set('tags'),
+      sopSetChange:set('changeSummary'), sopSetReason:set('reason'),
+      sopDivisionOptions:['Content','SEO','SMM','Web Development','Design','Quality','Marketing','Analytics','Operations'],
+      sopStatusOptions:['Draft','In review','Published'],
+      sopCategoryOptions:this.SOP_CATS(),
+      sopPriorityOptions:this.SOP_PRIORITIES(),
+      sopFrequencyOptions:this.SOP_FREQ(),
+      sopApproverOptions:(this.state.users||[]).map(u=>u.name),
+      sopStdRows:this.GOLD_STANDARDS().map(g=>{ const on=(f.standards||[]).includes(g.id);
+        return { id:g.id, label:g.name, note:g.note, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const cur=f.standards||[];
+            this.setState({ sopForm:{...f, standards:on?cur.filter(x=>x!==g.id):[...cur,g.id]} }); } }; }),
+      sopKpiRows:kpiOpts.map(n=>{ const on=(f.kpis||[]).includes(n);
+        return { name:n, on,
+          style:'display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--orchid-400)':'var(--line-300)')+';background:'+(on?'var(--orchid-100)':'#fff')+';color:'+(on?'var(--orchid-700)':'var(--ink-700)'),
+          toggle:()=>{ const cur=f.kpis||[];
+            this.setState({ sopForm:{...f, kpis:on?cur.filter(x=>x!==n):[...cur,n]} }); } }; }),
+      sopRelRows:(f.rels||[{rel:'Related SOP',id:''}]).map((r,i)=>({
+        rel:r.rel, id:r.id, n:String(i+1),
+        relOptions:this.SOP_REL(),
+        sopOptions:[''].concat(all.map(s=>s.id+' — '+s.title)),
+        setRel:(e)=>{ const a=(f.rels||[{rel:'Related SOP',id:''}]).slice(); a[i]={...a[i],rel:e.target.value}; this.setState({ sopForm:{...f,rels:a} }); },
+        setId:(e)=>{ const a=(f.rels||[{rel:'Related SOP',id:''}]).slice(); a[i]={...a[i],id:String(e.target.value).split(' — ')[0]}; this.setState({ sopForm:{...f,rels:a} }); },
+        remove:()=>{ const a=(f.rels||[]).slice(); a.splice(i,1); this.setState({ sopForm:{...f,rels:a.length?a:[{rel:'Related SOP',id:''}]} }); },
+        canRemove:(f.rels||[]).length>1 })),
+      sopAddRel:()=>this.setState({ sopForm:{...f, rels:[...(f.rels||[{rel:'Related SOP',id:''}]),{rel:'Related SOP',id:''}]} }),
+      sopSteps:steps.map((st,i)=>({ n:String(i+1), t:st.t, d:st.d, outcome:st.outcome||'', dur:st.dur||'', notes:st.notes||'',
+        setT:(e)=>{ const a=steps.slice(); a[i]={...a[i],t:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
+        setD:(e)=>{ const a=steps.slice(); a[i]={...a[i],d:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
+        setOutcome:(e)=>{ const a=steps.slice(); a[i]={...a[i],outcome:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
+        setDur:(e)=>{ const a=steps.slice(); a[i]={...a[i],dur:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
+        setNotes:(e)=>{ const a=steps.slice(); a[i]={...a[i],notes:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
+        evRows:this.SOP_EVIDENCE().map(ev=>{ const on=(st.ev||[]).includes(ev);
+          return { label:ev, on,
+            style:'padding:4px 9px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--info-500)':'var(--line-300)')+';background:'+(on?'var(--info-100)':'#fff')+';color:'+(on?'var(--info-600)':'var(--ink-500)'),
+            toggle:()=>{ const a=steps.slice(); const cur=a[i].ev||[];
+              a[i]={...a[i], ev:on?cur.filter(x=>x!==ev):[...cur,ev]};
+              this.setState({ sopForm:{...f,steps:a} }); } }; }),
+        subRows:(st.subs||[]).map((sb,j)=>({ t:sb[0]||sb.t||'', d:sb[1]||sb.d||'',
+          setT:(e)=>{ const a=steps.slice(); const sa=(a[i].subs||[]).slice(); sa[j]=[e.target.value,(sa[j]&&(sa[j][1]||sa[j].d))||'']; a[i]={...a[i],subs:sa}; this.setState({ sopForm:{...f,steps:a} }); },
+          setD:(e)=>{ const a=steps.slice(); const sa=(a[i].subs||[]).slice(); sa[j]=[(sa[j]&&(sa[j][0]||sa[j].t))||'',e.target.value]; a[i]={...a[i],subs:sa}; this.setState({ sopForm:{...f,steps:a} }); },
+          remove:()=>{ const a=steps.slice(); const sa=(a[i].subs||[]).slice(); sa.splice(j,1); a[i]={...a[i],subs:sa}; this.setState({ sopForm:{...f,steps:a} }); } })),
+        hasSubs:(st.subs||[]).length>0,
+        addSub:()=>{ const a=steps.slice(); a[i]={...a[i], subs:[...(a[i].subs||[]),['','']]}; this.setState({ sopForm:{...f,steps:a} }); },
+        remove:()=>{ const a=steps.slice(); a.splice(i,1); this.setState({ sopForm:{...f,steps:a.length?a:[{t:'',d:'',ev:[],subs:[]}]} }); },
+        moveUp:()=>{ if(i===0) return; const a=steps.slice(); const t=a[i-1]; a[i-1]=a[i]; a[i]=t; this.setState({ sopForm:{...f,steps:a} }); },
+        moveDown:()=>{ if(i===steps.length-1) return; const a=steps.slice(); const t=a[i+1]; a[i+1]=a[i]; a[i]=t; this.setState({ sopForm:{...f,steps:a} }); },
+        canRemove:steps.length>1 })),
+      sopAddStep:()=>this.setState({ sopForm:{...f, steps:[...steps,{t:'',d:'',outcome:'',dur:'',ev:[],subs:[]}]} }),
+      sopStepCount:steps.filter(s=>(s.t||'').trim()).length+' step'+(steps.filter(s=>(s.t||'').trim()).length===1?'':'s')+' defined',
+      sopDupOptions:[''].concat(all.map(s=>s.id+' — '+s.title)),
+      sopDupFrom:(e)=>{ const id=String(e.target.value).split(' — ')[0]; const src=all.find(x=>x.id===id); if(!src) return;
+        this.setState({ sopForm:{ ...f, title:src.title+' (copy)', purpose:src.purpose, scope:src.scope,
+          division:src.division, category:src.category, priority:src.priority, frequency:src.frequency,
+          estTime:src.estTime, trigger:src.trigger, applicability:src.applicability,
+          inputs:(src.inputs||[]).join(', '), outputs:(src.outputs||[]).join(', '),
+          resources:(src.resources||[]).join(', '), tags:(src.tags||[]).join(', '),
+          successCriteria:src.successCriteria, risks:src.risks, escalation:src.escalation,
+          approver:src.approver, status:'Draft', section:sec,
+          kpis:(src.kpis||[]).map(k=>k.name), rels:(src.sops||[]).length?src.sops.slice():[{rel:'Related SOP',id:''}],
+          steps:(src.steps||[]).map(st=>({ t:st.t, d:st.d, outcome:st.outcome, dur:st.dur, ev:(st.ev||[]).slice(), subs:(st.subs||[]).slice(), notes:st.notes })) } });
+        this.flash('Duplicated '+src.id+' — edit and save as a new SOP.'); },
+      sopSave:()=>{
+        if(!(f.title&&f.title.trim())){ this.flash('Give the SOP a title.'); return; }
+        if(!(f.purpose&&f.purpose.trim())){ this.flash('State the purpose — what outcome this procedure guarantees.'); return; }
+        const real=steps.filter(s=>(s.t||'').trim());
+        if(!real.length){ this.flash('Add at least one step — an SOP without steps is not a procedure.'); return; }
+        const csv=(v)=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+        const rec={ id:nextId, title:f.title.trim(), division:f.division||'Content', category:f.category||'Content production',
+          version:'v1.0', status:f.status||'Draft', priority:f.priority||'Medium', estTime:f.estTime||'—',
+          frequency:f.frequency||'Per project', owner:this.currentPerson(), approver:f.approver||'Priya Nair',
+          updated:this.todayStr(), updatedBy:this.currentPerson(), review:this.fmtDate(f.review)||this.relDate(90), lastReviewed:'',
+          lastExecuted:'', execCount:0, avgTime:'—', trend:'no data yet',
+          tags:csv(f.tags), trigger:f.trigger||'', applicability:f.applicability||'',
+          purpose:f.purpose.trim(), scope:f.scope||'',
+          inputs:csv(f.inputs), outputs:csv(f.outputs), resources:csv(f.resources),
+          docs:csv(f.docs).map(n=>({ name:n, kind:'Document' })),
+          successCriteria:f.successCriteria||'', risks:f.risks||'', escalation:f.escalation||'',
+          standards:(f.standards||[]).map(id=>{ const g=this.GOLD_STANDARDS().find(x=>x.id===id); return g?(g.name+' — '+g.note):id; }),
+          templates:[], roles:[],
+          kpis:(f.kpis||[]).map(n=>({ name:n, owner:'Priya Nair', status:'No data' })),
+          sops:(f.rels||[]).filter(r=>r.id),
+          steps:real.map(s=>({ t:s.t.trim(), d:s.d||'', outcome:s.outcome||'', dur:s.dur||'',
+            ev:s.ev||[], subs:s.subs||[], links:[], files:[], notes:s.notes||'' })),
+          versions:[{ v:'v1.0', by:this.currentPerson(), date:this.todayStr(),
+            summary:f.changeSummary||'Initial version.', reason:f.reason||'New procedure.',
+            published:(f.status==='Published')?this.todayStr():'', review:this.fmtDate(f.review)||this.relDate(90) }],
+          audit:[['Created',this.currentPerson(),this.todayStr()]],
+          comments:[], ack:[] };
+        if(f.status==='Published') rec.audit.push(['Published',this.currentPerson(),this.todayStr()]);
+        this.setState({ sopAdded:[rec,...(this.state.sopAdded||[])], sopNew:false, sopForm:{}, sopOpen:rec.id, sopTabD:'overview' });
+        this.flash(rec.id+' created as '+rec.status+' — '+rec.steps.length+' step'+(rec.steps.length===1?'':'s')+', approver '+rec.approver+'.');
+      } };
+  }
   sopView(rk){
     const me=this.currentPerson();
     const canAuthor=['manager','team_lead','admin'].includes(rk);
@@ -3760,8 +3893,8 @@ class AppRoot extends React.Component {
         {label:'Show',value:F.mine,onChange:setF('mine'),options:['All','Needs my acknowledgement','Owned by me','Review due or overdue']},
       ],
       sopReset:()=>this.setState({ sopF:{ division:'All', status:'All', mine:'All', category:'All', priority:'All', frequency:'All', approver:'All', tag:'All' }, sopQuery:'' }),
-      sopNewBtn:()=>this.flash('SOP creation form is coming in a follow-up phase — browse and manage existing SOPs here for now.'),
-      ...this.sopFormData(), ...this.sopDetailData(rk),
+      sopNewBtn:()=>this.setState({ sopNew:true, sopForm:{ division:'Content', status:'Draft', priority:'Medium', frequency:'Per project', category:'Content production' } }),
+      ...this.sopFormData(rk), ...this.sopDetailData(rk),
     };
   }
   sopDetailData(rk){
@@ -3895,7 +4028,15 @@ class AppRoot extends React.Component {
         s.status==='Retired'?(s.id+' reinstated.'):(s.id+' retired — kept for audit, no longer in force.'),
         [s.status==='Retired'?'Published':'Retired',me,this.todayStr()]),
       sopRetireLabel:s.status==='Retired'?'Reinstate':'Retire',
-      sopDuplicate:()=>this.flash('SOP duplication is coming in a follow-up phase alongside the full create/edit form.'),
+      sopDuplicate:()=>{ this.setState({ sopOpen:null, sopNew:true,
+        sopForm:{ title:s.title+' (copy)', purpose:s.purpose, scope:s.scope, division:s.division, category:s.category,
+          priority:s.priority, frequency:s.frequency, estTime:s.estTime, trigger:s.trigger, applicability:s.applicability,
+          inputs:(s.inputs||[]).join(', '), outputs:(s.outputs||[]).join(', '), resources:(s.resources||[]).join(', '),
+          tags:(s.tags||[]).join(', '), successCriteria:s.successCriteria, risks:s.risks, escalation:s.escalation,
+          approver:s.approver, status:'Draft', section:'basics',
+          kpis:(s.kpis||[]).map(k=>k.name), rels:(s.sops||[]).length?s.sops.slice():[{rel:'Related SOP',id:''}],
+          steps:(s.steps||[]).map(st=>({ t:st.t, d:st.d, outcome:st.outcome, dur:st.dur, ev:(st.ev||[]).slice(), subs:(st.subs||[]).slice(), notes:st.notes })) } });
+        this.flash('Duplicated '+s.id+' — saved as a new draft when you submit.'); },
       sopSaveAsTemplate:()=>this.flash('“'+s.title+'” saved as a reusable SOP template — available in the New SOP duplicate list.'),
     };
   }
