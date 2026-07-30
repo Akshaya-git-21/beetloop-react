@@ -15,6 +15,7 @@ class AppRoot extends React.Component {
     email: '', password: '', loginError: '',
     newPass: '', confirmPass: '', mfa: true,
     toast: '',
+    dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     showUserModal: false,
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
@@ -1150,7 +1151,7 @@ class AppRoot extends React.Component {
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
-    if(showAnalytics) out.analyticsCards = this.analyticsData(role.bucket);
+    if(showAnalytics){ out.analyticsCards = this.analyticsData(role.bucket); Object.assign(out, this.dashboardsView(rk, role)); }
     if(showMastersHub) out.masterGroups = this.mastersData();
     if(showMasterDetail) Object.assign(out, this.masterDetailData());
     if(showOKR) Object.assign(out, this.okrView());
@@ -1437,22 +1438,173 @@ class AppRoot extends React.Component {
     this.flash(msg);
   }
 
+  // Simplified from source: no live start/stop stopwatch feature is ported,
+  // so "hours logged" reads the task's recorded actual hours directly rather
+  // than a running timer session on top of a base value.
+  hrsOf(t){ return parseFloat(t.actH)||0; }
+  dashboardsView(rk, role){
+    const b=role.bucket;
+    const may={ exec:['exec','capacity','dept','team'], ops:['exec','capacity','dept','team'], admin:['exec','capacity','dept','team'],
+      manager:['dept','team','capacity'], lead:['team'], senior:[], junior:[], qc:[] }[b]||[];
+    if(!may.length) return { dbHasBoards:false };
+    const cur=may.includes(this.state.dbTab)?this.state.dbTab:may[0];
+    const META={ exec:{label:'Executive',icon:'crown'}, capacity:{label:'Resource & Capacity',icon:'users'}, dept:{label:'Department',icon:'building-2'}, team:{label:'Team',icon:'user-check'} };
+    const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const tasks=this.allTasks(), okrs=this.allOkrs(), camps=this.allCampaigns(), plans2=this.allEpPlans();
+    const hrsOf=(t)=>this.hrsOf(t);
+    const KP=(label,value,sub,color)=>({label,value,sub,color});
+    const done=tasks.filter(t=>['Approved','Closed'].includes(t.status)).length;
+    const open=tasks.filter(t=>['Assigned','In Progress','Submitted'].includes(t.status)).length;
+    const rework=tasks.filter(t=>t.status==='Rework').length;
+    const avgOkr=okrs.length?Math.round(okrs.reduce((s,o)=>s+o.progress,0)/okrs.length):0;
+    const atRisk=okrs.filter(o=>this.okrHealth(o).label!=='On Track'&&o.status!=='Completed').length;
+    const totBudget=camps.reduce((s,c)=>s+this.cmpNum(c.budget),0), totSpend=camps.reduce((s,c)=>s+this.cmpNum(c.spend),0);
+    const people=[...new Set(tasks.map(t=>t.assignee))];
+    const capRows=people.map(p=>{ const mine=tasks.filter(t=>t.assignee===p);
+      const CAP=this.weeklyCapacity(p)||40;
+      const open=mine.filter(t=>!['Approved','Closed'].includes(t.status));
+      const act=mine.reduce((s,t)=>s+hrsOf(t),0), est=open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0);
+      const util=Math.round(est/CAP*100);
+      const free=Math.round((CAP-est)*10)/10;
+      return { label:p, tasks:open.length+' open task'+(open.length===1?'':'s'),
+        shift:this.shiftLabel(p),
+        est:est.toFixed(1)+' h assigned', act:Math.round(act*10)/10+' h logged',
+        capLabel:CAP+' h/week capacity',
+        freeLabel:free>=0?(free.toFixed(1)+' h free'):(Math.abs(free).toFixed(1)+' h over'),
+        freeColor:free>=0?'var(--verify-600)':'var(--danger-600)',
+        util:util+'%', w:Math.min(100,util)+'%',
+        color:util>100?'var(--danger-500)':util>=85?'var(--warn-500)':util>=40?'var(--verify-500)':'var(--info-500)',
+        state:util>100?'Overloaded':util>=85?'Fully booked':util>=40?'Balanced':'Underloaded',
+        stateBg:util>100?'var(--danger-100)':util>=85?'var(--warn-100)':util>=40?'var(--verify-100)':'var(--info-100)',
+        stateColor:util>100?'var(--danger-600)':util>=85?'var(--warn-600)':util>=40?'var(--verify-600)':'var(--info-600)' }; })
+      .sort((a,b2)=>parseInt(b2.util)-parseInt(a.util));
+    const divs=[...new Set(tasks.map(t=>this.tkDivision(t)))];
+    const deptRows=divs.map(d=>{ const mine=tasks.filter(t=>this.tkDivision(t)===d);
+      const ok=mine.filter(t=>['Approved','Closed'].includes(t.status)).length;
+      const dOkrs=okrs.filter(o=>this.deptKey(o.dept)===this.deptKey(d));
+      const prog=dOkrs.length?Math.round(dOkrs.reduce((s,o)=>s+o.progress,0)/dOkrs.length):0;
+      return { label:this.deptLabel(d), tasks:mine.length+' tasks', done:ok+' approved', okrs:dOkrs.length+' OKRs',
+        pct:prog+'%', w:prog+'%', color:prog>=70?'var(--verify-500)':prog>=40?'var(--warn-500)':'var(--danger-500)',
+        completion:mine.length?Math.round(ok/mine.length*100)+'% task completion':'no tasks' }; });
+    const TF=this.state.dbTeamF||{ period:'This month', from:'', to:'', division:'All' };
+    const setTF=(k)=>(e)=>this.setState({ dbTeamF:{...TF,[k]:e.target.value} });
+    const winOf={ 'This week':7, 'Bi-monthly':14, 'This month':31, 'This quarter':92, 'This year':366, 'All time':99999 }[TF.period]||31;
+    const inRange=(t)=>{
+      if(TF.from||TF.to){ const iso=this.isoDate(t.end)||this.isoDate(t.start); if(!iso) return true;
+        if(TF.from&&iso<TF.from) return false; if(TF.to&&iso>TF.to) return false; return true; }
+      const df=this.dayDiff(t); return df===null?true:Math.abs(df)<=winOf;
+    };
+    const teamTasks=tasks.filter(t=>inRange(t)&&(TF.division==='All'||this.tkDivision(t)===TF.division));
+    const teamPeople=[...new Set(teamTasks.map(t=>t.assignee))];
+    const teamRows=teamPeople.map(p=>{ const mine=teamTasks.filter(t=>t.assignee===p);
+      const ok=mine.filter(t=>['Approved','Closed'].includes(t.status)).length, rw=mine.filter(t=>t.status==='Rework').length;
+      const late=mine.filter(t=>{ const df=this.dayDiff(t); return df!==null&&df<0&&!['Approved','Closed'].includes(t.status); }).length;
+      const q=mine.length?Math.round((ok/(mine.length))*100):0;
+      const effRows=[]; plans2.forEach(pl=>(pl.rows||[]).forEach(r=>{ if(String(r.assignee||'')===p) effRows.push({pl,r}); }));
+      const effAssigned=effRows.reduce((s,x)=>s+(parseInt(x.r.monthly,10)||0),0);
+      const effCreated=mine.filter(t=>t.effortPlan).length;
+      const kpiMap={};
+      mine.forEach(t=>{ if(!t.kpi) return; kpiMap[t.kpi]=kpiMap[t.kpi]||{target:0,ach:0,n:0,unit:t.unit||''};
+        kpiMap[t.kpi].target+=parseInt(t.units,10)||0; kpiMap[t.kpi].n++;
+        if(['Approved','Closed'].includes(t.status)) kpiMap[t.kpi].ach+=parseInt(t.units,10)||0; });
+      const kpiRows=Object.entries(kpiMap).map(([k,v])=>({ kpi:k,
+        target:v.target+' '+v.unit, ach:v.ach+' '+v.unit,
+        pct:(v.target?Math.round(v.ach/v.target*100):0)+'%', w:Math.min(100,v.target?Math.round(v.ach/v.target*100):0)+'%',
+        color:(v.target&&v.ach/v.target>=0.7)?'var(--verify-500)':(v.target&&v.ach/v.target>=0.4)?'var(--warn-500)':'var(--danger-500)' }));
+      const typeMap={}; mine.forEach(t=>{ const d=this.tkDivision(t); typeMap[d]=(typeMap[d]||0)+1; });
+      const expanded=(this.state.dbTeamOpen||[]).includes(p);
+      return { label:p, initials:p.split(' ').map(x=>x[0]).join('').slice(0,2), tasks:String(mine.length), done:String(ok), rework:String(rw), late:String(late),
+        pct:q+'%', w:q+'%', color:q>=70?'var(--verify-500)':q>=40?'var(--warn-500)':'var(--danger-500)',
+        flagBg:late>0?'var(--danger-100)':'var(--verify-100)', flagColor:late>0?'var(--danger-600)':'var(--verify-600)',
+        flag:late>0?(late+' overdue'):'On schedule',
+        hours:Math.round(mine.reduce((s,t)=>s+hrsOf(t),0)*10)/10+' h logged',
+        effAssignedLabel:effAssigned?(effAssigned.toLocaleString('en-IN')+' units planned'):'No effort assigned',
+        effCreatedLabel:effCreated+' task'+(effCreated===1?'':'s')+' generated from effort',
+        effPlans:effRows.slice(0,6).map(x=>({ name:x.r.type, plan:x.pl.name, qty:(x.r.monthly||0)+' '+x.r.unit,
+          open:()=>this.setState({ route:'effort', epView:'detail', epPlanId:x.pl.id }) })),
+        hasEffPlans:effRows.length>0,
+        kpiRows, hasKpis:kpiRows.length>0,
+        typeRows:Object.entries(typeMap).map(([d,n])=>({ label:d, n:String(n),
+          bg:this.tkDivTone(d).bg, color:this.tkDivTone(d).c })),
+        taskRows:mine.slice(0,8).map(t=>{ const tt=this.tkTone(t.status);
+          return { id:t.id, name:t.name, type:this.tkDivision(t), dates:t.start+' → '+t.end,
+            status:t.status, bg:tt.bg, color:tt.c, open:()=>this.setState({ route:'tasks', tkOpen:t.id }) }; }),
+        taskMore:mine.length>8?('+'+(mine.length-8)+' more tasks'):'',
+        expanded, toggleLabel:expanded?'Hide detail':'Effort · KPI · tasks',
+        toggle:()=>{ const cur=this.state.dbTeamOpen||[];
+          this.setState({ dbTeamOpen:cur.includes(p)?cur.filter(x=>x!==p):[...cur,p] }); } }; })
+      .sort((a,b2)=>parseInt(b2.pct)-parseInt(a.pct));
+    return {
+      dbHasBoards:true,
+      dbTabs:may.map(k=>({ label:META[k].label, icon:META[k].icon, style:seg(cur===k), go:()=>this.setState({ dbTab:k }) })),
+      dbIsExec:cur==='exec', dbIsCapacity:cur==='capacity', dbIsDept:cur==='dept', dbIsTeam:cur==='team',
+      dbTitle:META[cur].label+' dashboard',
+      dbSub:{ exec:'Company-wide performance — OKRs, campaigns, delivery and spend.',
+        capacity:'Workload and utilisation across the team — who is over or under capacity.',
+        dept:'Department-level delivery and objective progress.',
+        team:'Individual scorecards — throughput, quality and schedule adherence.' }[cur],
+      dbExecKpis:[KP('Avg OKR progress',avgOkr+'%','across '+okrs.length+' objectives','var(--beet-700)'),
+        KP('OKRs at risk',String(atRisk),'need leadership attention',atRisk?'var(--danger-600)':'var(--verify-600)'),
+        KP('Live campaigns',String(camps.filter(c=>c.status==='Live').length),'of '+camps.length+' total','var(--orchid-600)'),
+        KP('Task completion',(tasks.length?Math.round(done/tasks.length*100):0)+'%',done+' of '+tasks.length+' approved','var(--verify-600)'),
+        KP('Budget committed','₹'+(Math.round(totSpend/1000))+'K','of ₹'+(Math.round(totBudget/1000))+'K planned','var(--info-600)')],
+      dbExecOkrs:okrs.map(o=>({ label:o.title, sub:o.dept+' · '+o.cycle+' · '+o.owner, pct:o.progress+'%', w:o.progress+'%',
+        color:o.progress>=70?'var(--verify-500)':o.progress>=40?'var(--warn-500)':'var(--danger-500)',
+        health:this.okrHealth(o).label, healthBg:this.okrHealth(o).bg, healthColor:this.okrHealth(o).color,
+        open:()=>this.setState({ route:'okr', okrOpen:o.id }) })),
+      dbExecCampaigns:camps.map(c=>{ const p=this.cmpProgress(c); const sp=this.cmpNum(c.spend), bd=this.cmpNum(c.budget);
+        return { label:c.name, sub:c.brand+' · '+c.dept+' · '+c.status, pct:p+'%', w:p+'%',
+          color:p>=70?'var(--verify-500)':p>=40?'var(--warn-500)':'var(--danger-500)',
+          spend:'₹'+Math.round(sp/1000)+'K / ₹'+Math.round(bd/1000)+'K', spendW:Math.min(100,Math.round(sp/(bd||1)*100))+'%',
+          open:()=>this.setState({ route:'campaigns', cmpOpen:c.id, cmpTab:'model' }) }; }),
+      dbCapKpis:[KP('People tracked',String(people.length),'with assigned work','var(--beet-700)'),
+        KP('Overloaded',String(capRows.filter(r=>parseInt(r.util)>100).length),'assigned beyond shift capacity','var(--danger-600)'),
+        KP('Underloaded',String(capRows.filter(r=>parseInt(r.util)<40).length),'below 40% of capacity','var(--info-600)'),
+        KP('Open workload',String(open),'tasks in flight','var(--info-600)'),
+        KP('Rework load',String(rework),'tasks sent back','var(--orchid-600)')],
+      dbCapRows:capRows,
+      dbDeptRows:deptRows,
+      dbDeptKpis:[KP('Departments',String(divs.length),'delivering work','var(--beet-700)'),
+        KP('Tasks in flight',String(open),'open across departments','var(--info-600)'),
+        KP('Approved',String(done),'QC-passed','var(--verify-600)'),
+        KP('Rework',String(rework),'awaiting correction','var(--danger-600)')],
+      dbTeamRows:teamRows,
+      dbTeamFilters:[
+        { label:'Period', value:TF.period, onChange:setTF('period'), options:['This week','Bi-monthly','This month','This quarter','This year','All time'] },
+        { label:'Division', value:TF.division, onChange:setTF('division'), options:['All'].concat([...new Set(tasks.map(t=>this.tkDivision(t)))]) },
+      ],
+      dbTeamFrom:TF.from, dbTeamTo:TF.to, dbTeamSetFrom:setTF('from'), dbTeamSetTo:setTF('to'),
+      dbTeamReset:()=>this.setState({ dbTeamF:{ period:'This month', from:'', to:'', division:'All' }, dbTeamOpen:[] }),
+      dbTeamRangeNote:(TF.from||TF.to)
+        ? ('Custom range '+(this.fmtDate(TF.from)||'start')+' → '+(this.fmtDate(TF.to)||'today')+' · '+teamTasks.length+' tasks')
+        : (TF.period+' · '+teamTasks.length+' tasks'+(TF.division!=='All'?(' · '+TF.division):'')),
+      dbTeamEmpty:teamRows.length===0,
+      dbTeamKpis:[KP('Team members',String(teamPeople.length),'with tasks in range','var(--beet-700)'),
+        KP('Avg completion',(teamRows.length?Math.round(teamRows.reduce((s,r)=>s+parseInt(r.pct),0)/teamRows.length):0)+'%','approved vs assigned','var(--verify-600)'),
+        KP('Overdue tasks',String(teamRows.reduce((s,r)=>s+parseInt(r.late),0)),'past due date','var(--danger-600)'),
+        KP('Rework items',String(teamTasks.filter(t=>t.status==='Rework').length),'quality returns','var(--warn-600)')],
+    };
+  }
   analyticsData(b){
     const rank = {exec:5,ops:5,manager:3,lead:2,senior:1,junior:0,admin:5,qc:1}[b];
     const defs = [
-      { title:'Executive Dashboard', desc:'Company revenue, growth and strategic KPIs.', icon:'building-2', min:5 },
-      { title:'Resource & Capacity', desc:'Utilization, allocation and capacity planning.', icon:'gauge', min:4 },
-      { title:'Department Dashboard', desc:'Projects, campaigns and KPI attainment.', icon:'bar-chart-3', min:3 },
-      { title:'Team Dashboard', desc:'Team workload, throughput and quality.', icon:'users', min:2 },
-      { title:'Competitor Dashboard', desc:'Benchmarks vs. tracked competitors.', icon:'swords', min:3 },
-      { title:'My Scorecard', desc:'Your personal KPIs and deliverables.', icon:'user-round', min:0 },
+      { title:'Executive Dashboard', desc:'Company revenue, growth and strategic KPIs.', icon:'building-2', min:5, tab:'exec' },
+      { title:'Resource & Capacity', desc:'Utilization, allocation and capacity planning.', icon:'gauge', min:4, tab:'capacity' },
+      { title:'Department Dashboard', desc:'Projects, campaigns and KPI attainment.', icon:'bar-chart-3', min:3, tab:'dept' },
+      { title:'Team Dashboard', desc:'Team workload, throughput and quality.', icon:'users', min:2, tab:'team' },
+      { title:'Competitor Dashboard', desc:'Benchmarks vs. tracked competitors.', icon:'swords', min:3, soon:true },
+      { title:'My Scorecard', desc:'Your personal KPIs and deliverables.', icon:'user-round', min:0, soon:true },
     ];
     return defs.map(d=>{
       const locked = rank < d.min;
+      const live = !locked && !!d.tab;
       return { title:d.title, desc:d.desc, icon:d.icon, locked,
         opacity: locked?'.55':'1',
+        cursor: live?'pointer':'auto',
+        open: live?(()=>this.setState({ dbTab:d.tab })):(()=>{ if(d.soon) this.flash(d.title+' is planned for a later release.'); }),
         iconBg: locked?'var(--surface-50)':'var(--orchid-100)', iconColor: locked?'var(--ink-400)':'var(--orchid-600)',
-        tag: locked?'Restricted for your role':'Available', tagColor: locked?'var(--ink-400)':'var(--verify-600)' };
+        tag: locked?'Restricted for your role':(live?'Open dashboard →':'Planned'),
+        tagColor: locked?'var(--ink-400)':(live?'var(--orchid-600)':'var(--ink-400)') };
     });
   }
 
@@ -2832,8 +2984,37 @@ class AppRoot extends React.Component {
     if(isNaN(d)) return null;
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  dailyCapacity(){ return 8; } // flat placeholder — no per-person capacity model yet
-  weeklyCapacity(){ return 40; } // flat placeholder — no per-person capacity model yet
+  DEPT_MASTER(){ return [
+    { key:'seo',     label:'SEO',             aliases:['seo','search'] },
+    { key:'content', label:'Content',         aliases:['content','content writing','editorial','copy'] },
+    { key:'smm',     label:'SMM',             aliases:['smm','social','social media'] },
+    { key:'web',     label:'Web Development', aliases:['web','web development','web dev','development','engineering'] },
+    { key:'design',  label:'Design',          aliases:['design','graphics','graphic design','creative'] },
+    { key:'quality', label:'Quality',         aliases:['quality','qc','qa'] },
+    { key:'analytics',label:'Analytics',      aliases:['analytics','data','bi'] },
+    { key:'marketing',label:'Marketing',      aliases:['marketing','growth','demand gen'] },
+    { key:'leadership',label:'Leadership',    aliases:['leadership','exec','management'] },
+    { key:'ops',     label:'Operations',      aliases:['operations','ops','delivery'] },
+  ]; }
+  deptKey(v){
+    const s=String(v==null?'':v).trim().toLowerCase();
+    if(!s||s==='—') return '';
+    const hit=this.DEPT_MASTER().find(d=>d.key===s||d.label.toLowerCase()===s||d.aliases.indexOf(s)>=0);
+    if(hit) return hit.key;
+    const partial=this.DEPT_MASTER().find(d=>d.aliases.some(a=>s.indexOf(a)>=0||a.indexOf(s)>=0));
+    return partial?partial.key:s;
+  }
+  deptLabel(v){ const k=this.deptKey(v); const hit=this.DEPT_MASTER().find(d=>d.key===k); return hit?hit.label:(v||'—'); }
+  userOf(name){ return (this.state.users||[]).find(u=>u.name===name)||null; }
+  dailyCapacity(name){
+    const u=this.userOf(name); if(!u) return 8;
+    const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
+    const gross=hm(u.shiftEnd||'18:00')-hm(u.shiftStart||'09:00');
+    return Math.max(0, Math.round((gross-((u.breakMin||60)/60))*100)/100);
+  }
+  weeklyCapacity(name){ const u=this.userOf(name); return Math.round(this.dailyCapacity(name)*((u&&u.days)||5)*100)/100; }
+  shiftLabel(name){ const u=this.userOf(name); if(!u) return 'No shift set';
+    return (u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00')+' · '+(u.breakMin||60)+'m break · '+this.dailyCapacity(name)+' h/day'; }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
   campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
   campaignOptionsFor(stored,withNone){ const base=this.campaignNames(withNone);
