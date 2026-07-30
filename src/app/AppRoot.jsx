@@ -972,7 +972,7 @@ class AppRoot extends React.Component {
       else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
       else if(route==='sop') this.setState({ sopNew:true, sopForm:{ division:'Content', status:'Draft', priority:'Medium', frequency:'Per project', category:'Content production' } });
-      else if(route==='support') this.flash('Ticket creation form is coming in a follow-up phase — browse and manage existing tickets here for now.');
+      else if(route==='support') this.setState({ tktNew:true, tktForm:{ cat:'software', priority:'Medium' } });
       else this.flash('Draft created — opening editor…');
     };
 
@@ -4097,7 +4097,41 @@ class AppRoot extends React.Component {
     const iso=this.isoDate(t.created); if(!iso) return 0;
     // seeded rows carry no timestamp — assume a 10:00 raise time rather than midnight
     return Math.max(0, Math.round((Date.now()-new Date(iso+'T10:00:00').getTime())/3600000)); }
-  ticketFormData(){ return { tktFormOpen:false }; }
+  ticketFormData(){
+    if(!this.state.tktNew) return { tktFormOpen:false };
+    const f=this.state.tktForm||{};
+    const set=(k)=>(e)=>this.setState({ tktForm:{...f,[k]:e.target.value} });
+    const c=this.ticketCat(f.cat);
+    const me=this.currentPerson();
+    return { tktFormOpen:true, tf:f,
+      tktClose:()=>this.setState({ tktNew:false, tktForm:{} }),
+      tktStop:(e)=>e.stopPropagation(),
+      tktCatOptions:this.TICKET_CATS().map(x=>({ v:x.key, label:x.label })),
+      tktSetCat:set('cat'), tktSetSubject:set('subject'), tktSetDesc:set('desc'),
+      tktSetPriority:set('priority'), tktSetTask:set('task'),
+      tktPriorityOptions:['Critical','High','Medium','Low'],
+      tktTaskOptions:['— None —'].concat(this.allTasks().filter(t=>t.assignee===me).map(t=>t.id+' — '+t.name)),
+      tktRouteNote:'Routes to '+c.queue+' ('+c.owner+') · target response '+c.sla+' h',
+      tktCatHint:c.hint,
+      tktTraining:f.training?'Yes':'No',
+      tktToggleTraining:()=>this.setState({ tktForm:{...f, training:!f.training} }),
+      tktFiles:(f.files||[]).map((n,i)=>({ name:n,
+        remove:()=>{ const a=(f.files||[]).slice(); a.splice(i,1); this.setState({ tktForm:{...f,files:a} }); } })),
+      tktHasFiles:(f.files||[]).length>0,
+      tktAttach:()=>{ const n='attachment-'+(Date.now()%10000)+'.png'; this.setState({ tktForm:{...f, files:[...(f.files||[]),n]} }); },
+      tktSave:()=>{
+        if(!(f.subject&&f.subject.trim())){ this.flash('Describe the issue in one line.'); return; }
+        if(!(f.desc&&f.desc.trim())){ this.flash('Add details so it can be actioned without a follow-up.'); return; }
+        const n=this.allTickets().length+1;
+        const rec={ id:'TKT-'+String(1040+n), cat:f.cat||'software', subject:f.subject.trim(), desc:f.desc.trim(),
+          by:me, role:this.ROLES[this.state.roleKey].label, created:this.todayStr(), createdAt:Date.now(),
+          priority:f.priority||'Medium', status:'Open', assignee:'', task:(f.task&&f.task!=='— None —')?String(f.task).split(' — ')[0]:'',
+          trainingNeeded:!!f.training, files:f.files||[],
+          thread:[[me,f.desc.trim(),this.todayStr()]] };
+        this.setState({ tktAdded:[rec,...(this.state.tktAdded||[])], tktNew:false, tktForm:{}, tktOpen:rec.id });
+        this.flash(rec.id+' raised — routed to '+c.queue+' ('+c.owner+'), target response '+c.sla+' h.');
+      } };
+  }
   supportView(rk){
     const me=this.currentPerson();
     const isAdmin=rk==='admin';
@@ -4152,10 +4186,10 @@ class AppRoot extends React.Component {
         ...(isTriage?[{label:'Assignee',value:F.assignee,onChange:setF('assignee'),options:['All','Unassigned'].concat([...new Set(all.map(t=>t.assignee).filter(Boolean))])}]:[]),
       ],
       supReset:()=>this.setState({ tktF:{ cat:'All', status:'All', priority:'All', assignee:'All' } }),
-      supNew:()=>this.flash('Ticket creation form is coming in a follow-up phase — pick a category below to see where it would route.'),
+      supNew:()=>this.setState({ tktNew:true, tktForm:{ cat:'software', priority:'Medium' } }),
       supCatCards:this.TICKET_CATS().map(c=>({ label:c.label, icon:c.icon, queue:c.queue, hint:c.hint,
         sla:'Target response '+c.sla+' h',
-        pick:()=>this.flash('Routes to '+c.queue+' ('+c.owner+') · target response '+c.sla+' h — ticket creation form is coming in a follow-up phase.') })),
+        pick:()=>this.setState({ tktNew:true, tktForm:{ cat:c.key, priority:'Medium' } }) })),
       ...this.ticketFormData(), ...this.ticketDetailData(rk),
     };
   }
