@@ -19,6 +19,9 @@ import MyProfileSection from '../components/sections/MyProfileSection.jsx';
 import CampaignsSection from '../components/sections/CampaignsSection.jsx';
 import MessagesSection from '../components/sections/MessagesSection.jsx';
 import OkrSection from '../components/sections/OkrSection.jsx';
+import LeadPipelineSection from '../components/sections/LeadPipelineSection.jsx';
+import ContactFormModal from '../components/drawers/ContactFormModal.jsx';
+import ContactDetailDrawer from '../components/drawers/ContactDetailDrawer.jsx';
 import ContentIdeaQcDrawer from '../components/drawers/ContentIdeaQcDrawer.jsx';
 import TaskTemplateFormDrawer from '../components/drawers/TaskTemplateFormDrawer.jsx';
 import OkrTemplateFormDrawer from '../components/drawers/OkrTemplateFormDrawer.jsx';
@@ -224,7 +227,8 @@ export default function AppShell({ vm }) {
         
 {/* OKR & KPI */}
 
-        
+
+<LeadPipelineSection vm={vm} />
 <OkrSection vm={vm} />
 
 
@@ -390,6 +394,8 @@ export default function AppShell({ vm }) {
 <RaiseTicketModal vm={vm} />
 <CreateRepositoryModal vm={vm} />
 <FilePickerModal vm={vm} />
+<ContactFormModal vm={vm} />
+<ContactDetailDrawer vm={vm} />
 
 
 

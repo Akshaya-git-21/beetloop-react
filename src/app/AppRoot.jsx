@@ -949,7 +949,13 @@ class AppRoot extends React.Component {
       : this.ROLES[rk];
     const route = this.state.route;
     const acc = this.ACCESS;
-    const showMyKpi = route==='okr' && ['team_lead','senior','junior'].includes(rk);
+    const leadFull = ['admin','manager'].includes(rk);
+    const leadView = ['ceo','coo','team_lead','senior','junior'].includes(rk);
+    const leadAccess = leadFull || leadView;
+    const otabRaw = this.state.okrModTab||'okrs';
+    const otab2 = (leadAccess && route==='okr')?otabRaw:'okrs';
+    const onLeadTab = route==='okr' && leadAccess && otab2!=='okrs';
+    const showMyKpi = route==='okr' && !onLeadTab && ['team_lead','senior','junior'].includes(rk);
 
     // nav
     const buildNav = (mods) => mods.filter(m=>acc[m] && acc[m][rk]).map(m=>{
@@ -1028,7 +1034,7 @@ class AppRoot extends React.Component {
     const showAnalytics = route==='analytics';
     const showMastersHub = route==='masters' && !this.state.masterKey;
     const showMasterDetail = route==='masters' && !!this.state.masterKey;
-    const showOKR = route==='okr' && !showMyKpi;
+    const showOKR = route==='okr' && !showMyKpi && !onLeadTab;
     const showContent = route==='content';
     const showTasks2 = route==='tasks';
     const showTemplates = route==='templates';
@@ -1163,6 +1169,15 @@ class AppRoot extends React.Component {
     if(showMastersHub) out.masterGroups = this.mastersData();
     if(showMasterDetail) Object.assign(out, this.masterDetailData());
     if(showOKR) Object.assign(out, this.okrView());
+    if(route==='okr' && leadAccess){
+      const seg2=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      Object.assign(out, { okrLeadAccess:true, okrModOkrs:otab2==='okrs', okrModLeads:otab2==='leads', okrModPipe:otab2==='pipe',
+        okrSegOkrsStyle:seg2(otab2==='okrs'), okrSegLeadsStyle:seg2(otab2==='leads'), okrSegPipeStyle:seg2(otab2==='pipe'),
+        okrGoOkrs:()=>this.setState({ okrModTab:'okrs' }), okrGoLeads:()=>this.setState({ okrModTab:'leads' }), okrGoPipe:()=>this.setState({ okrModTab:'pipe' }),
+        leadFull, leadViewOnly:leadView, okrTabsVisible:true });
+      if(otab2==='leads') Object.assign(out, this.leadsView(leadFull));
+      if(otab2==='pipe') Object.assign(out, this.pipelineView(leadFull));
+    }
     if(route==='okr') Object.assign(out, this.okrDetailData());
     if(showMyKpi) Object.assign(out, this.checkinView());
     if(route==='okr') Object.assign(out, this.ciData());
