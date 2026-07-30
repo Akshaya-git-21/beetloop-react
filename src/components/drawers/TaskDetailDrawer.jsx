@@ -3,7 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function TaskDetailDrawer({ vm }) {
-  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages } = vm;
+  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
+    clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
+    clCanSubmit, clSubmit, clCanReopen, clReopen, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll } = vm;
   return (
     <React.Fragment>
 {Boolean(tkDrawerOpen) && (
@@ -287,11 +289,168 @@ Workflow pipeline — stages unlock on QC approval
           
 </div>
 
-        
+
 </React.Fragment>
 )}
 
-        
+{Boolean(clHas) && (
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"padding":"15px 18px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
+<Icon name={"clipboard-check"} style={{"width":"16px","height":"16px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<div style={{"flex":"1","minWidth":"180px"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--beet-700)"}}>Compliance checklist — {clKind}</div>
+<div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"1px"}}>{clStatusNote}</div>
+</div>
+<span style={{"fontSize":"11px","fontWeight":"700","padding":"3px 10px","borderRadius":"999px","background":"var(--surface-50)","color":"var(--ink-500)"}}>{clProgress}</span>
+{Boolean(clSubmitted) && (
+<span style={{"fontSize":"11px","fontWeight":"700","padding":"3px 10px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>{clQcSummary}</span>
+)}
+</div>
+{(clSections || []).map((s, $si) => (
+<div key={$si}>
+<div style={{"padding":"9px 18px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--beet-700)"}}>{s.h}</div>
+<div style={{"overflowX":"auto"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1180px"}}>
+<thead><tr>
+<th style={{"textAlign":"left","padding":"9px 18px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>KPI</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Method / tool</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Unit</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Gold standard</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--info-600)"}}>Self score</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--info-600)"}}>Evidence</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--orchid-600)"}}>QC verified</th>
+<th style={{"textAlign":"left","padding":"9px 18px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--orchid-600)"}}>QC verdict</th>
+</tr></thead>
+<tbody>
+{(s.rows || []).map((r, $ri) => (
+<tr key={$ri}>
+<td style={{"padding":"11px 18px","borderTop":"1px solid var(--line-200)","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","verticalAlign":"top"}}>{r.kpi}</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","verticalAlign":"top"}}>
+<div style={{"fontSize":"11.5px","color":"var(--ink-700)"}}>{r.method}</div>
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>{r.tool}</div>
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","fontSize":"11.5px","color":"var(--ink-500)","verticalAlign":"top"}}>{r.unit}</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","verticalAlign":"top"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11.5px","fontWeight":"700","color":"var(--verify-600)"}}>{r.gold}</span>
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","verticalAlign":"top","minWidth":"150px"}}>
+{Boolean(r.writerEditable) && (
+<React.Fragment>
+<input value={r.self} onInput={r.setSelf} placeholder="value" style={{"width":"100%","minWidth":"0","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"12px","outline":"none"}} />
+<input value={r.selfNote} onInput={r.setSelfNote} placeholder="note (optional)" style={{"width":"100%","minWidth":"0","marginTop":"4px","padding":"6px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"11px","outline":"none"}} />
+</React.Fragment>
+)}
+{Boolean(r.selfLocked) && (
+<React.Fragment>
+<div style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{r.self}</div>
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>{r.selfNote}</div>
+</React.Fragment>
+)}
+<span style={cssTextToObject(`display:inline-block;margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${r.selfBadgeBg};color:${r.selfBadgeColor}`)}>{r.selfBadge}</span>
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","verticalAlign":"top","minWidth":"150px"}}>
+{Boolean(r.hasEv) && (
+<div style={{"display":"flex","flexDirection":"column","gap":"4px","marginBottom":"5px"}}>
+{(r.evFiles || []).map((ev, $ei) => (
+<span key={$ei} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 8px","border":"1px solid var(--line-300)","borderRadius":"8px","fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--ink-700)","background":"#fff"}}>
+<Icon name={ev.icon} style={{"width":"10px","height":"10px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<span style={{"flex":"1","minWidth":"0"}}>{ev.name}</span>
+{Boolean(r.writerEditable) && (
+<button onClick={ev.remove} style={{"border":"none","background":"none","padding":"0","cursor":"pointer","display":"flex","color":"var(--ink-400)"}}>
+<Icon name={"x"} style={{"width":"10px","height":"10px"}} />
+</button>
+)}
+</span>
+))}
+</div>
+)}
+{Boolean(r.writerEditable) && (
+<React.Fragment>
+<div style={{"display":"flex","gap":"5px"}}>
+<input value={r.evDraftVal} onInput={r.setEvDraft} placeholder="file name" style={{"flex":"1","minWidth":"0","padding":"6px 8px","border":"1px dashed var(--line-300)","borderRadius":"8px","fontSize":"10.5px","outline":"none"}} />
+<button onClick={r.addEv} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"5px 10px","border":"1px dashed var(--line-300)","background":"#fff","color":"var(--orchid-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
+Attach
+</button>
+</div>
+{Boolean(r.evMissing) && (
+<div style={{"fontSize":"10px","fontWeight":"700","color":"var(--danger-600)","marginTop":"3px"}}>Evidence required</div>
+)}
+</React.Fragment>
+)}
+{Boolean(r.selfLocked) && Boolean(r.evMissing) && (
+<span style={{"fontSize":"10.5px","fontWeight":"700","color":"var(--warn-600)"}}>No evidence attached</span>
+)}
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","verticalAlign":"top","minWidth":"120px"}}>
+{Boolean(r.qcEditable) && (
+<input value={r.qcVal} onInput={r.setQcVal} placeholder="verified" style={{"width":"100%","minWidth":"0","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"12px","outline":"none"}} />
+)}
+{Boolean(r.writerEditable) && (
+<span style={{"fontSize":"11px","color":"var(--ink-400)"}}>—</span>
+)}
+</td>
+<td style={{"padding":"11px 18px","borderTop":"1px solid var(--line-200)","verticalAlign":"top","minWidth":"190px"}}>
+{Boolean(r.qcEditable) && (
+<React.Fragment>
+<select value={r.verdict} onChange={r.setVerdict} style={cssTextToObject(`width:100%;min-width:0;padding:6px 9px;border:none;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;background:${r.verdictBg};color:${r.verdictColor}`)}>
+{(clVerdictOptions || []).map((v, $vi) => (
+<option key={$vi} value={v}>{v}</option>
+))}
+</select>
+{Boolean(r.needsComment) && (
+<textarea value={r.comment} onInput={r.setComment} rows="2" placeholder="Comment — what must change…" style={{"width":"100%","marginTop":"5px","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"11.5px","outline":"none","resize":"vertical"}} />
+)}
+</React.Fragment>
+)}
+{Boolean(r.writerEditable) && (
+<span style={{"fontSize":"11px","color":"var(--ink-400)"}}>Pending QC</span>
+)}
+</td>
+</tr>
+))}
+</tbody>
+</table>
+</div>
+</div>
+))}
+<div style={{"padding":"13px 18px","borderTop":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
+<div style={{"flex":"1","minWidth":"140px","height":"7px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${clProgressW};background:var(--orchid-500)`)} />
+</div>
+{Boolean(clCanSubmit) && (
+<button onClick={clSubmit} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 16px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"send"} style={{"width":"13px","height":"13px"}} />
+Submit for QC
+</button>
+)}
+{Boolean(clCanReopen) && (
+<button onClick={clReopen} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"rotate-ccw"} style={{"width":"13px","height":"13px"}} />
+Return to assignee
+</button>
+)}
+</div>
+{Boolean(clQcShowBulk) && (
+<div style={{"padding":"12px 18px","borderTop":"1px solid var(--line-200)","background":"var(--orchid-100)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
+<Icon name={"shield-check"} style={{"width":"15px","height":"15px","color":"var(--orchid-700)","flexShrink":"0"}} />
+<div style={{"flex":"1","minWidth":"170px"}}>
+<div style={{"fontSize":"12px","fontWeight":"800","color":"var(--beet-700)"}}>Report your compliance verdict against the submitted evidence</div>
+<div style={{"fontSize":"10.5px","color":"var(--orchid-700)","marginTop":"1px"}}>{clQcCoverage}</div>
+</div>
+<div style={{"flex":"1","minWidth":"90px","height":"6px","borderRadius":"99px","background":"rgba(255,255,255,.6)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${clQcCoverageW};background:var(--orchid-600)`)} />
+</div>
+<button onClick={clAcceptAll} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"check-check"} style={{"width":"13px","height":"13px"}} />
+Verify vs gold standard
+</button>
+</div>
+)}
+</div>
+)}
+
+
 <div>
 <div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"8px"}}>
 Description

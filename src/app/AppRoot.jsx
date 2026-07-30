@@ -17,6 +17,7 @@ class AppRoot extends React.Component {
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
+    clFill: {}, clQc: {}, clSubmitted: {}, clEvDraft: {},
     showUserModal: false,
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
@@ -2976,6 +2977,95 @@ class AppRoot extends React.Component {
         reworkPct:v.reviewed?Math.round(v.rework/v.reviewed*100):0,
         scored:v.scored, reviewed:v.reviewed })) };
   }
+  // Interactive checklist for one task: writer fills self-scores + evidence,
+  // QC records a verified value + verdict per line once submitted. Evidence
+  // here is a simple filename entry rather than the shared document-picker
+  // modal (that subsystem isn't ported), so "attach" just records a name.
+  complianceData(t, rk){
+    const id=t.id;
+    const kind=this.clKind(t);
+    const secsFor=this.complianceSections(kind);
+    const fill=this.complianceFill(t);
+    const qc=((this.state.clQc||{})[id])||{};
+    const submitted=this.complianceSubmitted(t);
+    const isAssignee=t.assignee===this.currentPerson();
+    const isQC=rk==='qc'||['manager','team_lead','admin'].includes(rk);
+    const writerEditable=isAssignee&&!submitted;
+    const qcEditable=isQC&&submitted;
+    const V={ Compliant:{bg:'var(--verify-100)',c:'var(--verify-600)'}, 'Accept conditional':{bg:'var(--warn-100)',c:'var(--warn-600)'},
+      Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'}, '':{bg:'var(--surface-50)',c:'var(--ink-500)'} };
+    let total=0, done=0, pass=0, rework=0;
+    const evDraft=this.state.clEvDraft||{};
+    const sections=secsFor.map((s,si)=>({
+      h:s.h,
+      rows:s.rows.map((r,ri)=>{
+        const key=si+'-'+ri;
+        const f=fill[key]||{}, q=qc[key]||{};
+        total++; if(f.self!==undefined&&f.self!=='') done++;
+        const selfPass=this.clPass(f.self,r.gold);
+        if(q.verdict==='Compliant') pass++; if(q.verdict==='Rework') rework++;
+        const vt=V[q.verdict||''];
+        return { kpi:r.kpi, method:r.method, tool:r.tool, unit:r.unit, gold:r.gold,
+          self:f.self||'', selfNote:f.note||'',
+          setSelf:(e)=>{ const cur={...(this.state.clFill||{})}; cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],self:e.target.value}}; this.setState({ clFill:cur }); },
+          setSelfNote:(e)=>{ const cur={...(this.state.clFill||{})}; cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],note:e.target.value}}; this.setState({ clFill:cur }); },
+          writerEditable, qcEditable,
+          selfLocked:!writerEditable,
+          evFiles:(f.files||[]).map((n,fi)=>({ name:n,
+            icon:/\.(png|jpe?g|gif|webp)$/i.test(n)?'image':(/\.pdf$/i.test(n)?'file-text':'file'),
+            remove:()=>{ const cur={...(this.state.clFill||{})}; const arr=(((cur[id]||{})[key]||{}).files||[]).slice(); arr.splice(fi,1);
+              cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],files:arr}}; this.setState({ clFill:cur }); } })),
+          hasEv:(f.files||[]).length>0,
+          evMissing:(f.self!==undefined&&f.self!=='')&&!(f.files||[]).length,
+          evDraftVal:evDraft[id+':'+key]||'',
+          setEvDraft:(e)=>this.setState({ clEvDraft:{...evDraft,[id+':'+key]:e.target.value} }),
+          addEv:()=>{ const name=(evDraft[id+':'+key]||'').trim(); if(!name){ this.flash('Type an evidence file name first.'); return; }
+            const cur={...(this.state.clFill||{})}; const arr=(((cur[id]||{})[key]||{}).files||[]).slice(); arr.push(name);
+            cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],files:arr}};
+            this.setState({ clFill:cur, clEvDraft:{...evDraft,[id+':'+key]:''} }); },
+          selfBadge:selfPass===null?'—':(selfPass?'Meets standard':'Below standard'),
+          selfBadgeBg:selfPass===null?'var(--surface-50)':(selfPass?'var(--verify-100)':'var(--danger-100)'),
+          selfBadgeColor:selfPass===null?'var(--ink-400)':(selfPass?'var(--verify-600)':'var(--danger-600)'),
+          qcVal:q.val||'', setQcVal:(e)=>{ const cur={...(this.state.clQc||{})}; cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],val:e.target.value}}; this.setState({ clQc:cur }); },
+          verdict:q.verdict||'', verdictBg:vt.bg, verdictColor:vt.c,
+          setVerdict:(e)=>{ const cur={...(this.state.clQc||{})}; cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],verdict:e.target.value}}; this.setState({ clQc:cur }); },
+          comment:q.comment||'', setComment:(e)=>{ const cur={...(this.state.clQc||{})}; cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],comment:e.target.value}}; this.setState({ clQc:cur }); },
+          needsComment:q.verdict==='Rework'||q.verdict==='Accept conditional' };
+      }) }));
+    return { clHas:true, clKind:kind, clSections:sections,
+      clVerdictOptions:['','Compliant','Accept conditional','Rework'],
+      clSubmitted:submitted, clWriterEditable:writerEditable, clQcEditable:qcEditable,
+      clProgress:done+' of '+total+' filled', clProgressW:total?Math.round(done/total*100)+'%':'0%',
+      clStatusNote:submitted
+        ? (qcEditable?'Writer entries are locked. Record your verified value and verdict per line.':'Submitted for QC — awaiting review.')
+        : (writerEditable?'Fill your self-assessment against each gold standard, then submit for QC.':'Awaiting the assignee’s self-assessment.'),
+      clQcSummary:submitted?(pass+' compliant · '+rework+' rework of '+total+' checks'):'',
+      clCanSubmit:writerEditable&&done>0,
+      clSubmit:()=>{ if(done<total){ this.flash('Fill every line before submitting ('+done+'/'+total+').'); return; }
+        const noEv=[]; secsFor.forEach((s,si)=>s.rows.forEach((r,ri)=>{
+          const ff=fill[si+'-'+ri]||{}; if(!(ff.files||[]).length) noEv.push(r.kpi); }));
+        if(noEv.length){ this.flash('Attach evidence for: '+noEv.slice(0,3).join(', ')+(noEv.length>3?(' +'+(noEv.length-3)+' more'):'')+'.'); return; }
+        this.setState({ clSubmitted:{...(this.state.clSubmitted||{}),[id]:true} });
+        this.tkPatch(id,{},'Compliance checklist submitted for QC');
+        this.flash('Compliance checklist submitted — locked for QC review.'); },
+      clReopen:()=>{ this.setState({ clSubmitted:{...(this.state.clSubmitted||{}),[id]:false} });
+        this.flash('Checklist returned to the assignee for correction.'); },
+      clCanReopen:qcEditable,
+      clQcShowBulk:qcEditable,
+      clQcCoverage:(()=>{ let v=0,n=0; secsFor.forEach((s,si)=>s.rows.forEach((r,ri)=>{ n++; if((qc[si+'-'+ri]||{}).verdict) v++; }));
+        return v+' of '+n+' lines reviewed'; })(),
+      clQcCoverageW:(()=>{ let v=0,n=0; secsFor.forEach((s,si)=>s.rows.forEach((r,ri)=>{ n++; if((qc[si+'-'+ri]||{}).verdict) v++; }));
+        return n?Math.round(v/n*100)+'%':'0%'; })(),
+      clAcceptAll:()=>{ const cur={...(this.state.clQc||{})}; const o={...(cur[id]||{})};
+        secsFor.forEach((s,si)=>s.rows.forEach((r,ri)=>{ const key=si+'-'+ri; const f2=fill[key]||{};
+          if((o[key]||{}).verdict) return;
+          const pass=this.clPass(f2.self,r.gold);
+          o[key]={ ...(o[key]||{}), val:f2.self||'', verdict:pass?'Compliant':'Rework',
+            comment:pass?'':'Self-reported '+(f2.self||'—')+' does not meet '+r.gold+' — rework required.' }; }));
+        cur[id]=o; this.setState({ clQc:cur });
+        this.flash('Verified against submitted evidence — lines meeting the gold standard marked Compliant, misses marked Rework.'); },
+    };
+  }
   tkDivision(t){
     if(t.division) return t.division;
     const map={'Update Meta Descriptions':'SEO','Fix Broken Links':'SEO','Add Alt Text':'SEO','Keyword Research':'SEO','Write Article':'Content'};
@@ -4937,6 +5027,7 @@ class AppRoot extends React.Component {
       tkQcRework:()=>qcFinish('Rework','Rework requested'),
       tkClose:()=>this.setState({ tkOpen:null }),
       tkKpiNote: t.status==='Approved' ? 'Counted toward KPI on approval.' : 'Counts toward the KPI once QC approves.',
+      ...this.complianceData(t, rk),
     };
   }
 
