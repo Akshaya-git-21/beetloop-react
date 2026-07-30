@@ -916,7 +916,7 @@ class AppRoot extends React.Component {
             openRepo:()=>this.setState({ route:'files' }) })),
           openTask:()=>this.setState({ route:'tasks', tkOpen:m.taskId }),
           convert:()=>{
-            this.setState({ tkNew:true,
+            this.setState({ tkNew:true, msgConvert:m.id,
               tkForm:{ template:'Custom task', name:String(m.text).slice(0,60), desc:'From '+cur.name+' — '+m.who+': "'+m.text+'"',
                 priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
             this.flash('Creating a task from this message — link its effort plan and KPI to complete the chain.'); },
@@ -5389,7 +5389,7 @@ class AppRoot extends React.Component {
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'));
     return {
       tkNew:this.state.tkNew, tkf:f, tkCode:nextCode,
-      tkCloseNew:()=>this.setState({ tkNew:false }),
+      tkCloseNew:()=>this.setState({ tkNew:false, msgConvert:null }),
       tkTplOptions:this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name})),
       tkKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
       tkProjectOptions:['—'].concat(this.recordsFor('projects').map(r=>r.name)),
@@ -5422,14 +5422,17 @@ class AppRoot extends React.Component {
   tkSubmitNew(){
     const f=this.state.tkForm||{};
     if(!f.name||!f.name.trim()){ this.flash('Enter a task name.'); return; }
+    if(!(parseFloat(f.estH)>0)){ this.flash('Enter estimated hours — capacity planning and utilisation depend on it.'); return; }
     const kpiPool=this.epKpiPool();
     const k=kpiPool.find(x=>x.id===f.kpiId);
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
     const who=this.currentPerson();
     const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
-    this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:id });
-    this.flash('Task '+id+' created and assigned to '+task.assignee+'.');
+    const fromMsg=this.state.msgConvert;
+    this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
+    if(fromMsg) this._linkMessageToTask(fromMsg, id);
+    this.flash('Task '+id+' created and assigned to '+task.assignee+(fromMsg?' — linked back to the message.':'.'));
     supabase.from('tasks').insert({
       code:id, name:task.name, description:task.desc, priority:task.priority, status:task.status,
       division:task.division, project:task.project, campaign:task.campaign,
@@ -5443,6 +5446,16 @@ class AppRoot extends React.Component {
     }).then(({error})=>{
       if(error) console.warn('[supabase] task insert failed:', error.message);
     });
+  }
+  _linkMessageToTask(msgId, taskId){
+    const th=this.allThreads().find(t=>t.msgs.some(x=>x.id===msgId));
+    if(!th) return;
+    const seedThread=this.THREADS_SEED().find(x=>x.id===th.id) || (this.state.thNew||[]).find(x=>x.id===th.id);
+    const seedMsg=seedThread && seedThread.msgs.find(x=>x.id===msgId);
+    if(seedMsg){ seedMsg.taskId=taskId; return; }
+    const add={...(this.state.thAdded||{})};
+    add[th.id]=(add[th.id]||[]).map(x=>x.id===msgId?{...x,taskId}:x);
+    this.setState({ thAdded:add });
   }
 
   // Loads every Supabase-backed task and replaces tkAdded with the persisted
