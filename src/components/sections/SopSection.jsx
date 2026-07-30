@@ -4,11 +4,18 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function SopSection({ vm }) {
   const {
+    showSop, sopGoPb, sopSegPb, sopGoSop, sopSegSop,
     sopIsList, sopStats, sopQuery, sopSetQuery, sopReset, sopCanAuthor, sopNewBtn,
     sopSearchHint, sopFilters, sopRows, sopEmpty, sopPg,
   } = vm;
   return (
     <React.Fragment>
+      {Boolean(showSop) && (
+        <div style={{ display: 'inline-flex', background: 'var(--surface-50)', border: '1px solid var(--line-300)', borderRadius: 12, padding: 3, marginBottom: 16, flexWrap: 'wrap' }}>
+          <button onClick={sopGoPb} style={cssTextToObject(sopSegPb)}><Icon name="book-open-check" style={{ width: 15, height: 15 }} />Brand Playbooks</button>
+          <button onClick={sopGoSop} style={cssTextToObject(sopSegSop)}><Icon name="list-checks" style={{ width: 15, height: 15 }} />SOPs</button>
+        </div>
+      )}
       {Boolean(sopIsList) && (
         <React.Fragment>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 12, marginBottom: 16 }}>
