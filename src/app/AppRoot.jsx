@@ -960,6 +960,7 @@ class AppRoot extends React.Component {
     const page = Object.assign({ canEdit:this.EDIT_LEVELS.includes(lvl) }, PAGES[route]||PAGES.dashboard);
     // masters/users always show action for admin
     if(route==='users') page.canEdit = ['admin','coo','ceo'].includes(rk);
+    if(route==='repositories') page.canEdit = rk==='admin';
     if(['dashboard','analytics','masters','config','qc','content','effort','profile'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
 
@@ -973,6 +974,7 @@ class AppRoot extends React.Component {
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
       else if(route==='sop') this.setState({ sopNew:true, sopForm:{ division:'Content', status:'Draft', priority:'Medium', frequency:'Per project', category:'Content production' } });
       else if(route==='support') this.setState({ tktNew:true, tktForm:{ cat:'software', priority:'Medium' } });
+      else if(route==='repositories') this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:'Priya Nair' } });
       else this.flash('Draft created — opening editor…');
     };
 
@@ -1022,6 +1024,16 @@ class AppRoot extends React.Component {
       ...this.pwStrength(),
       // shell
       role, roleKey:rk, nav, adminNav, hasAdmin,
+      campaignOptions:this.campaignOptionsFor((this.state.tkForm||{}).campaign,true),
+      campaignOptionsNone:this.campaignOptionsFor((this.state.okrForm||{}).campaign,true),
+      epCampaignOptions:this.campaignOptionsFor((this.state.epForm||{}).campaign,true),
+      okrTitleOptions:this.okrTitleOptionsFor((this.state.epForm||{}).okr),
+      okrParentOptions:this.okrTitleOptionsFor((this.state.okrForm||{}).parent),
+      tkCampaignVal:this.campaignOpt((this.state.tkForm||{}).campaign),
+      okrCampaignVal:this.campaignOpt((this.state.okrForm||{}).campaign),
+      epCampaignVal:this.campaignOpt((this.state.epForm||{}).campaign),
+      epOkrVal:this.okrTitleOpt((this.state.epForm||{}).okr),
+      okrParentVal:(this.state.okrForm||{}).parent||'None (top level)',
       roleOptions:['admin','ceo','coo'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
       onRoleChange:e=>{ const k=e.target.value; const allowed = this.ACCESS[route]&&this.ACCESS[route][k]; this.setState({ roleKey:k, route: allowed?route:'dashboard' }); },
       notifications:this.state.notifications, unreadCount:(this.state.notifications||[]).filter(n=>!n.read).length,
@@ -1899,6 +1911,12 @@ class AppRoot extends React.Component {
       if(['xlsx','csv','xls'].includes(e)) return {t:'Spreadsheet',icon:'table',color:'var(--verify-600)',bg:'var(--verify-100)'};
       return {t:'Document',icon:'file',color:'var(--ink-500)',bg:'var(--surface-50)'}; };
     let files=[];
+    // message attachments — collected from every thread
+    this.allThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>{
+      if(own && m.who!==me) return;
+      files.push({ name:n, source:'Message attachment', by:m.who,
+        task:{ id:th.name, name:'“'+String(m.text).slice(0,48)+'”', status:'Shared', start:String(m.when).split(' · ')[0], end:'—', assignee:m.who } });
+    })));
     this.allTasks().forEach(t=>{
       if(own && t.assignee!==me) return;
       const ov=this.tkOv?this.tkOv(t):t;
@@ -1912,7 +1930,8 @@ class AppRoot extends React.Component {
       return { ...f, type:ft.t, ftIcon:ft.icon, ftColor:ft.color, ftBg:ft.bg,
         taskId:f.task.id, taskName:f.task.name, status:f.task.status, statusBg:tn.bg, statusColor:tn.c,
         dates:f.task.start+' → '+f.task.end, dueLabel:due&&due.label?due.label:'', dueColor:due&&due.color?due.color:'var(--ink-400)',
-        open:()=>this.setState({ route:'tasks', tkOpen:f.task.id }) }; });
+        open:()=>{ if(f.source==='Message attachment') this.setState({ route:'messages' });
+          else this.setState({ route:'tasks', tkOpen:f.task.id, tkFilter:'All' }); } }; });
     const filtered=enriched.filter(f=> (F.type==='All'||f.type===F.type) && (F.status==='All'||f.status===F.status) && (F.source==='All'||f.source===F.source) && (!q || (f.name+' '+f.taskName+' '+f.by).toLowerCase().includes(q)) );
     const pg=this.pgData('fl',filtered,10);
     const K=(label,value,color)=>({label,value,color});
@@ -1922,8 +1941,8 @@ class AppRoot extends React.Component {
       flOwnNote:own,
       flFilterDefs:[
         {label:'Type',value:F.type,onChange:setF('type'),options:['All','Image','Video','PDF','Spreadsheet','Document']},
-        {label:'Source',value:F.source,onChange:setF('source'),options:['All','Task evidence','QC reference','Comment attachment']},
-        {label:'Task status',value:F.status,onChange:setF('status'),options:['All','Assigned','In Progress','Submitted','Rework','Approved']},
+        {label:'Source',value:F.source,onChange:setF('source'),options:['All','Task evidence','QC reference','Comment attachment','Message attachment']},
+        {label:'Task status',value:F.status,onChange:setF('status'),options:['All','Assigned','In Progress','Submitted','Rework','Approved','Closed']},
       ],
       flQuery:this.state.flQuery||'',
       flOnQuery:(e)=>this.setState({ flQuery:e.target.value, pg:{...(this.state.pg||{}),fl:0} }),
@@ -1952,6 +1971,11 @@ class AppRoot extends React.Component {
         statusBg:p.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:p.status==='Active'?'var(--verify-600)':'var(--ink-500)',
         efforts:p.rows.length+' efforts', total:total.toLocaleString('en-US')+' units / month', linked:linked+' KPI-linked',
         divIcon:{'Content Writer':'file-text','Graphics':'image','Web Developers':'code','SMM':'share-2','SEO':'search'}[p.division]||'gauge',
+        campaignName:p.campaign||'—', okrName:p.okr||'—',
+        openCampaign:(e)=>{ if(e)e.stopPropagation(); const resolved=this.campaignOpt(p.campaign); const c=this.allCampaigns().find(x=>x.name===resolved);
+          if(c) this.setState({ route:'campaigns', cmpOpen:c.id, cmpTab:'chain' }); else this.flash('No campaign matches "'+p.campaign+'" yet.'); },
+        openOkr:(e)=>{ if(e)e.stopPropagation(); const o=this.allOkrs().find(x=>x.title===p.okr);
+          if(o) this.setState({ route:'okr', okrOpen:o.id }); else this.flash('No OKR matches "'+p.okr+'" yet.'); },
         edit:()=>this.setState({ epView:'create', epPlanId:p.id, epDivision:p.division, epForm:{ name:p.name, quarter:p.period, campaign:p.campaign, dept:p.dept, owner:p.owner, okr:p.okr, start:p.start, end:p.end, type:p.type }, epRows:p.rows.map(r=>({...r})) }),
       };
     });
@@ -1960,8 +1984,28 @@ class AppRoot extends React.Component {
     const epRows=rows.map((r,i)=>{
       const weekly=Math.ceil((r.monthly||0)/4), daily=Math.ceil((r.monthly||0)/(r.days||25));
       const k=this.epKpiPool().find(x=>x.id===r.kpiId);
+      const kids=(r.kpiIds&&r.kpiIds.length)?r.kpiIds:(r.kpiId?[r.kpiId]:[]);
+      const kobjs=kids.map(id=>this.epKpiPool().find(x=>x.id===id)).filter(Boolean);
+      const ts=this.allTasks().filter(t=>t.effortType===r.type||t.template===r.type||t.name===r.type||(t.kpiId&&kids.includes(t.kpiId)));
+      const expTasks=(this.state.epRowExpanded||[]).includes(r.type);
       return { ...r, i, monthly:String(r.monthly||0), weekly:weekly.toLocaleString('en-US'), daily:daily.toLocaleString('en-US'), weightStr:String(r.weight||0),
         kpiLabel:k?k.kpi:'—', hasKpi:!!k,
+        kpiChips:kobjs.map(o=>({ label:o.kpi, sub:o.baseline+' → '+o.target+' '+o.unit,
+          remove:()=>{ const nk=kids.filter(x=>x!==o.id); this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]||''}:x) }); } })),
+        kpiCountLabel:kobjs.length?(kobjs.length+' KPI'+(kobjs.length===1?'':'s')+' linked'):'Effort only — no KPI linked',
+        addKpiVal:'',
+        addKpi:(e)=>{ const v=e.target.value; if(!v||kids.includes(v)) return; const nk=[...kids,v];
+          this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]}:x) });
+          const kk=this.epKpiPool().find(x=>x.id===v); this.flash((kk?kk.kpi:'KPI')+' linked to “'+r.type+'” — one effort can drive several KPIs.'); },
+        kpiAddOptions:[{id:'',label:'+ Link another KPI…'}].concat(this.epKpiPool().filter(x=>!kids.includes(x.id)).map(x=>({id:x.id,label:x.kpi+' — '+x.who}))),
+        kpiChain:kobjs.length?kobjs.map(o=>o.kpi+' · '+o.baseline+' → '+o.target+' '+o.unit).join('   |   '):'Effort only — no KPI linked',
+        taskCount:String(ts.length), taskDone:String(ts.filter(t=>['Approved','Closed'].includes(t.status)).length),
+        taskToggle:(expTasks?'Hide':'Show')+' '+ts.length+' task'+(ts.length===1?'':'s'),
+        tasksExpanded:expTasks, tasksEmpty:ts.length===0,
+        toggleTasks:()=>{ const cur=this.state.epRowExpanded||[]; this.setState({ epRowExpanded: cur.includes(r.type)?cur.filter(x=>x!==r.type):[...cur,r.type] }); },
+        taskRows:ts.slice(0,10).map(t=>{ const tn=this.tkTone(t.status);
+          return { id:t.id, name:t.name, dates:t.start+' → '+t.end, who:t.assignee, status:t.status, statusBg:tn.bg, statusColor:tn.c,
+            open:()=>this.setState({ route:'tasks', tkOpen:t.id, tkFilter:'All' }) }; }),
         priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[r.priority]||'var(--ink-400)',
         setMonthly:setRow(i,'monthly'), setWeight:setRow(i,'weight'), setPriority:setRow(i,'priority'), setKpi:setRow(i,'kpiId'), kpiOpts,
         setType:setRow(i,'type'), setUnit:setRow(i,'unit'),
@@ -2046,12 +2090,27 @@ class AppRoot extends React.Component {
         this.setState({ epAdded:added, epView:'list', epPlanId:plan.id });
         this.flash('Effort plan “'+f.name+'” saved for '+division+(totalW===100?'.':' — weightages incomplete, saved as Draft.')); },
       epForm:f, epRows2:epRows, epAlloc:alloc, epCanEdit:canEdit,
+      epIsEdit:!!this.state.epPlanId,
+      epEditTitle:this.state.epPlanId?('Edit effort plan · '+this.state.epPlanId):'Create effort plan',
+      epEditSub:this.state.epPlanId?'Saved plan — every effort shows its linked KPI and the tasks generated from it.':'Define effort targets, convert them to KPIs and auto-generate tasks for the period.',
+      epSaveLabel:this.state.epPlanId?'Save changes':'Save plan',
       epSetName:setF('name'), epSetQuarter:setF('quarter'), epSetCampaign:setF('campaign'), epSetDept:setF('dept'), epSetOwner:setF('owner'), epSetOkr:setF('okr'), epSetStart:setF('start'), epSetEnd:setF('end'), epSetType:setF('type'),
       epTotalW:totalW+'%', epTotalWColor: totalW===100?'var(--verify-600)':'var(--danger-600)',
       epBalanced: totalW===100,
       epBalanceMsg: totalW===100?'All targets balanced — ready for task generation.':'Weightages must total 100% (currently '+totalW+'%).',
       epGenerated:this.state.epGenerated,
       epGenerate:()=>this.epGenerate(),
+      ...(()=>{ const mode=this.state.epGenMode||'One task per effort line';
+        const live=rows.filter(r=>r.monthly);
+        const count=mode==='Weekly batches'?live.length*4
+          :mode==='One task per deliverable'?live.reduce((s,r)=>s+Math.min(r.monthly,31),0)
+          :live.length;
+        return {
+          epGenModes:['One task per effort line','Weekly batches','One task per deliverable'].map(m=>({ label:m, active:mode===m,
+            style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'#fff':'rgba(255,255,255,.35)')+';background:'+(mode===m?'#fff':'transparent')+';color:'+(mode===m?'var(--beet-700)':'rgba(255,255,255,.9)'),
+            set:()=>this.setState({ epGenMode:m }) })),
+          epGenPreview:'Will create '+count+' task'+(count===1?'':'s')+' from '+live.length+' effort line'+(live.length===1?'':'s'),
+          epGenWarn:count>20?('That is a lot of tasks — consider “One task per effort line”.'):'' }; })(),
       epOwnerOptions:['Neha Verma','Sameer Iyer'],
     };
   }
@@ -2070,30 +2129,47 @@ class AppRoot extends React.Component {
       const id='TSK-'+(2060+added.length+1);
       added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, priority:r.priority, assignee:f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
     };
-    let n=0, batched=0;
+    // generation mode is explicit — default is ONE task per effort line, so a
+    // 60-unit target no longer explodes into 60 tasks unless deliberately chosen.
+    const mode=this.state.epGenMode||'One task per effort line';
+    const already=(this.state.tkAdded||[]).filter(t=>t.effortPlan===f.name);
+    if(already.length){ this.flash(already.length+' tasks already exist for “'+f.name+'”. Delete them first to regenerate.'); return; }
+    let n=0;
     rows.forEach(r=>{
       if(!r.monthly) return;
       const k=this.epKpiPool().find(x=>x.id===r.kpiId);
       const days=r.days||25;
-      if(r.monthly<=31){
-        // discrete deliverables → one task per unit (12 blogs = 12 tasks)
-        for(let i=1;i<=r.monthly;i++){
-          const day=Math.min(28, Math.max(1, Math.ceil(i*days/r.monthly)));
-          mk(r.type+' — '+i+' of '+r.monthly, 'Deliverable '+i+' of '+r.monthly+' from the '+f.name+'. Each approved task adds +1 '+r.unit.replace(/s$/,'')+' to the linked KPI.', 1, monthWord+' '+day+', '+year, [{t:'Produce 1 '+r.unit.replace(/s$/,''),done:false},{t:'Attach deliverable as evidence',done:false},{t:'Submit for QC',done:false}], r, k);
+      const unitOne=r.unit.replace(/s$/,'');
+      if(mode==='Weekly batches'){
+        const perWeek=Math.ceil(r.monthly/4);
+        for(let w=1;w<=4;w++){
+          mk(r.type+' — week '+w+' of 4 ('+perWeek.toLocaleString('en-US')+' '+r.unit+')',
+            'Weekly batch '+w+' of 4 · period target '+r.monthly.toLocaleString('en-US')+' '+r.unit+'.',
+            perWeek, monthWord+' '+Math.min(28,w*7)+', '+year,
+            [{t:'Hit weekly batch of '+perWeek.toLocaleString('en-US')+' '+r.unit,done:false},{t:'Attach work log as evidence',done:false},{t:'Submit for QC',done:false}], r, k);
+          n++;
+        }
+      } else if(mode==='One task per deliverable'){
+        const cap=Math.min(r.monthly, 31); // hard ceiling — protects against runaway generation
+        for(let i=1;i<=cap;i++){
+          const day=Math.min(28, Math.max(1, Math.ceil(i*days/cap)));
+          mk(r.type+' — '+i+' of '+cap, 'Deliverable '+i+' of '+cap+' from '+f.name+'.', 1,
+            monthWord+' '+day+', '+year,
+            [{t:'Produce 1 '+unitOne,done:false},{t:'Attach deliverable as evidence',done:false},{t:'Submit for QC',done:false}], r, k);
           n++;
         }
       } else {
-        // high-volume effort → weekly batch tasks
-        const perWeek=Math.ceil(r.monthly/4);
-        for(let w=1;w<=4;w++){
-          mk(r.type+' — week '+w+' batch ('+perWeek.toLocaleString('en-US')+' '+r.unit+')', 'Weekly batch '+w+' of 4 · monthly target '+r.monthly.toLocaleString('en-US')+' '+r.unit+' ('+Math.ceil(r.monthly/days).toLocaleString('en-US')+'/day). Approved batches roll into the linked KPI.', perWeek, monthWord+' '+Math.min(28,w*7)+', '+year, [{t:'Hit weekly batch of '+perWeek.toLocaleString('en-US')+' '+r.unit,done:false},{t:'Attach work log as evidence',done:false},{t:'Submit for QC',done:false}], r, k);
-          n++; 
-        }
-        batched++;
+        // default — a single task carrying the whole target for that effort line
+        mk(r.type+' — '+r.monthly.toLocaleString('en-US')+' '+r.unit,
+          'Effort line from '+f.name+' · target '+r.monthly.toLocaleString('en-US')+' '+r.unit+
+          ' over '+days+' working days ('+Math.ceil(r.monthly/days).toLocaleString('en-US')+'/day).',
+          r.monthly, monthWord+' 28, '+year,
+          [{t:'Deliver '+r.monthly.toLocaleString('en-US')+' '+r.unit,done:false},{t:'Attach work log as evidence',done:false},{t:'Submit for QC',done:false}], r, k);
+        n++;
       }
     });
     this.setState({ tkAdded:added, epGenerated:true, route:'tasks', tkFilter:f.name });
-    this.flash(n+' tasks generated — one per deliverable (batched weekly for high-volume efforts), all linked to the plan & KPIs, assigned to '+f.owner+'.');
+    this.flash(n+' task'+(n===1?'':'s')+' generated from '+rows.filter(r=>r.monthly).length+' effort line'+(rows.filter(r=>r.monthly).length===1?'':'s')+' · mode “'+mode+'” · assigned to '+f.owner+'.');
   }
 
   IDEAS(){ return [
@@ -2514,6 +2590,14 @@ class AppRoot extends React.Component {
   allOkrs(){ return this.OKR_DATA().concat(this.state.okrAdded||[]); }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
   campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
+  campaignOptionsFor(stored,withNone){ const base=this.campaignNames(withNone);
+    const v=this.campaignOpt(stored);
+    return base.includes(v)?base:base.concat([v]); }
+  okrTitleOpt(stored){ if(!stored||stored==='—') return '— None —';
+    const t=this.allOkrs().map(o=>o.title);
+    return t.find(x=>x===stored)||stored; }
+  okrTitleOptionsFor(stored){ const base=['— None —'].concat(this.allOkrs().map(o=>o.title));
+    const v=this.okrTitleOpt(stored); return base.includes(v)?base:base.concat([v]); }
   tkOv(t){ const o=((this.state.tkUpd||{})[t.id])||{}; return {...t, ...o}; }
   allTasks(){ return this.WTASKS().concat(this.state.tkAdded||[]).map(t=>this.tkOv(t)); }
   tkPatch(id, patch, act){
@@ -4948,7 +5032,7 @@ class AppRoot extends React.Component {
       contentQuery:this.state.cQuery||'', contentOnQuery:e=>this.setState({cQuery:e.target.value}),
       contentRepoLabel:repoName(cRepo), ...(()=>{ const pg=this.pgData('content',rows,8); return { contentRows:pg.rows, cPg:pg }; })(), contentEmpty:rows.length===0,
       contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npForm:{ repo: cRepo==='all'?'service':cRepo } }):this.flash('View only for your role.'),
-      contentAI:()=>this.flash('AI Content Assistant — coming soon.'),
+      contentAI:()=>this.setState({ route:'ideas' }),
       ...this.contentDetail(),
       ...this.newPageData(),
     };
@@ -5060,6 +5144,87 @@ class AppRoot extends React.Component {
     this.flash('Page “'+name+'” created as '+code+' — added to '+repoName+' (top of list).');
   }
 
+  // a service page is "targeted" when a campaign KPI links it
+  targetedPages(){
+    const map={};
+    this.allCampaigns().forEach(c=>(c.kpis||[]).forEach(k=>(k.pages||[]).forEach(p=>{
+      if(!p.url) return; map[p.url]=map[p.url]||{url:p.url,title:p.title||p.url,kpis:[],campaigns:[],expected:0};
+      if(k.kpi&&map[p.url].kpis.indexOf(k.kpi)<0) map[p.url].kpis.push(k.kpi);
+      if(map[p.url].campaigns.indexOf(c.name)<0) map[p.url].campaigns.push(c.name);
+      map[p.url].expected+=this.cmpNum(p.contrib);
+    })));
+    return map;
+  }
+  // Leads/CRM pipeline isn't built in this phase — recorded-performance reconciliation
+  // degrades to source's own "no visitor data recorded" fallback rather than crashing.
+  SERVICE_PAGES(){ return []; }
+  allLeads(){ return []; }
+  PAGE_STAGES(mode){
+    const all=[
+      { stage:'Content draft', division:'Content', tpl:'Write Article', who:'Sameer Iyer', hrs:12, kpi:'Content Published', effort:'Service pages' },
+      { stage:'Graphics & assets', division:'Graphics', tpl:'Create Reel', who:'Arjun Pillai', hrs:6, kpi:'Assets delivered', effort:'Banners / creatives' },
+      { stage:'Web build', division:'Web', tpl:'Build Landing Page', who:'Rohit Sharma', hrs:8, kpi:'Pages shipped', effort:'Landing pages' },
+      { stage:'SEO on-page', division:'SEO', tpl:'Update Meta Descriptions', who:'Aditi Rao', hrs:4, kpi:'On-page SEO score', effort:'On-page optimisation' },
+      { stage:'Publish & QA', division:'Web', tpl:'Publish Page', who:'Rohit Sharma', hrs:2, kpi:'Pages shipped', effort:'Landing pages' },
+    ];
+    if(mode==='Revamp') return all.filter(s=>['Content draft','SEO on-page','Publish & QA'].includes(s.stage));
+    return all;
+  }
+  pageWorkView(p){
+    const rk=this.state.roleKey, who=this.currentPerson();
+    const canRun=['manager','team_lead','admin'].includes(rk);
+    const mode=(this.state.cwMode||{})[p.id]||'New page';
+    const linked=this.allTasks().filter(t=>t.sourcePage===p.id);
+    const approved=['QC Approved','Scheduled','Published'].includes(p.workflow)||!!(this.state.cwApproved||{})[p.id];
+    const stages=this.PAGE_STAGES(mode);
+    const kpiTargets=this.targetedPages()[p.url]||null;
+    const done=linked.filter(t=>['Approved','Closed'].includes(t.status)).length;
+    return {
+      cwMode:mode, cwCanRun:canRun,
+      cwModeBtns:['New page','Revamp'].map(m=>({ label:m==='New page'?'New page build':'Revamp existing content', active:mode===m,
+        style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'var(--beet-700)':'var(--line-300)')+';background:'+(mode===m?'var(--beet-700)':'#fff')+';color:'+(mode===m?'#fff':'var(--ink-700)'),
+        set:()=>this.setState({ cwMode:{...(this.state.cwMode||{}),[p.id]:m} }) })),
+      cwApproved:approved,
+      cwApproveLabel:approved?'Brief approved':'Approve brief for production',
+      cwApprove:()=>{ this.setState({ cwApproved:{...(this.state.cwApproved||{}),[p.id]:true} });
+        this.flash('Brief approved for '+p.id+' — production tasks can now be generated.'); },
+      cwStages:stages.map((s,i)=>{
+        const t=linked.find(x=>x.stage===s.stage);
+        const tn=t?this.tkTone(t.status):{bg:'var(--surface-50)',c:'var(--ink-500)'};
+        return { n:String(i+1), stage:s.stage, division:s.division, who:s.who, hrs:s.hrs+' h', kpi:s.kpi, effort:s.effort,
+          has:!!t, id:t?t.id:'—', status:t?t.status:'Not generated', bg:tn.bg, color:tn.c,
+          dep:i===0?'Starts the chain':('After '+stages[i-1].stage),
+          open:t?(()=>this.setState({ cOpen:null, route:'tasks', tkOpen:t.id })):(()=>this.flash('Generate production tasks first.')) };
+      }),
+      cwLinkedCount:linked.length?(done+' of '+linked.length+' stages complete'):'No tasks generated yet',
+      cwProgressW:linked.length?Math.round(done/linked.length*100)+'%':'0%',
+      cwHasTasks:linked.length>0,
+      cwKpiNote:kpiTargets
+        ? ('Targeted by KPI: '+(kpiTargets.kpis.join(', ')||'—')+(kpiTargets.campaigns.length?(' · '+kpiTargets.campaigns[0]):'')+(kpiTargets.expected?(' · expected '+kpiTargets.expected):''))
+        : 'This page is not linked to a campaign KPI yet — add it as a targeted page so traffic and leads roll up.',
+      cwKpiLinked:!!kpiTargets,
+      cwOpenKpi:()=>this.setState({ cOpen:null, route:'campaigns' }),
+      cwGenerate:()=>{
+        if(!approved){ this.flash('Approve the brief before generating production tasks.'); return; }
+        if(linked.length){ this.flash('Tasks already generated for '+p.id+' — open them in Tasks.'); return; }
+        const base=this.allTasks().length;
+        const added=stages.map((s,i)=>({
+          id:'TSK-'+(3200+base+i), name:s.stage+' — '+p.name, desc:mode+' production for '+p.url+'.',
+          template:s.tpl, project:'—', campaign:(kpiTargets&&kpiTargets.campaigns[0])||'—',
+          start:this.relDate(i*2), end:this.relDate(i*2+2), priority:'High', assignee:s.who,
+          kpiId:'', kpi:s.kpi, units:1, unit:'pages', estH:s.hrs, actH:0, recurrence:'None',
+          reviewer:'Farhan Ali', effortPlan:'Auto — from '+p.id, effortType:s.effort,
+          depMode:'Sequential', dep:i===0?'—':(s.stage?('TSK-'+(3200+base+i-1)):'—'),
+          division:s.division, stage:s.stage, sourcePage:p.id, sourcePageUrl:p.url,
+          checklist:[{t:'Work complete',done:false},{t:'Evidence attached',done:false},{t:'Compliance checklist filled',done:false}],
+          evidence:[], status:i===0?'Assigned':'Assigned',
+          activity:[[who,'Generated from '+p.id+' ('+mode+' chain, stage '+(i+1)+' of '+stages.length+')',this.todayStr()]] }));
+        this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added] });
+        this.flash(added.length+' sequential tasks generated for '+p.id+' — Content → '+(mode==='Revamp'?'SEO → Publish':'Graphics → Web → SEO → Publish')+', each with QC and effort linkage.');
+      },
+      cwOpenTasks:()=>this.setState({ cOpen:null, route:'tasks', tkQuery:p.id }),
+    };
+  }
   contentDetail(){
     const id=this.state.cOpen; if(!id) return { contentOpen:false };
     const p=this.allContentPages().find(x=>x.id===id); if(!p) return { contentOpen:false };
@@ -5093,9 +5258,26 @@ class AppRoot extends React.Component {
       cd_wf:wf.map((w,i)=>({ label:w, done:i<activeWf, active:i===activeWf,
         dotBg: i<activeWf?'var(--verify-500)':(i===activeWf?'var(--orchid-500)':'var(--line-300)'),
         color: i<=activeWf?'var(--ink-900)':'var(--ink-400)' })),
-      cd_pub:[['Owner',p.owner],['Reviewer',p.reviewer],['Approver',p.reviewer],['Publish Date',p.publishDate],['Expiry Date',p.expiry],['Version',p.version]].map(x=>({k:x[0],v:x[1]})),
+      cd_pub:[['Owner',p.owner],['Reviewer',p.reviewer],['Approver',p.reviewer],['Publish Date',p.publishDate],['Expiry / review due',p.expiry],['Version',p.version],['Menu order',String(p.menuOrder)],['Breadcrumb',p.breadcrumb]].map(x=>({k:x[0],v:x[1]})),
       cd_analytics:[['Organic Traffic',p.analytics.traffic],['CTR',p.analytics.ctr],['Avg Position',p.analytics.pos],['Bounce Rate',p.analytics.bounce],['Time on Page',p.analytics.time],['Conversions',p.analytics.conv],['Backlinks',p.analytics.backlinks],['Page Speed',p.analytics.speed]].map(x=>({k:x[0],v:x[1]})),
       cd_activity:(p.activity||[]).map(a=>({ who:a[0], action:a[1], date:a[2] })),
+      // page analytics reconciled with recorded lead/visitor data for the same URL
+      ...(()=>{
+        const svc=this.SERVICE_PAGES().find(s=>s.url===p.url);
+        const leads=svc?this.allLeads().filter(l=>l.service===svc.name):[];
+        if(!leads.length) return { cd_liveHas:false, cd_liveNote:'No visitor or lead entries recorded against this URL yet — figures below are the last imported analytics snapshot.' };
+        const vis=leads.reduce((s,l)=>s+(parseInt(l.visitors,10)||0),0);
+        const ld=leads.reduce((s,l)=>s+(parseInt(l.count,10)||0),0);
+        const q=leads.reduce((s,l)=>s+(parseInt(l.qualified,10)||0),0);
+        const snap=parseInt(String(p.analytics.traffic).replace(/[^0-9]/g,''),10)||0;
+        return { cd_liveHas:true,
+          cd_live:[['Visitors (recorded)',vis.toLocaleString('en-IN')],['Leads',String(ld)],['Qualified',String(q)],
+            ['Conversion rate',vis?((Math.round(ld/vis*1000)/10)+'%'):'—'],['Entries',String(leads.length)],
+            ['Snapshot traffic',p.analytics.traffic]].map(x=>({k:x[0],v:x[1]})),
+          cd_liveNote:'Recorded from daily lead entries against this service page.',
+          cd_liveWarn:snap>0&&vis>0&&Math.abs(snap-vis)/Math.max(snap,vis)>0.25,
+          cd_liveWarnMsg:'Snapshot traffic ('+p.analytics.traffic+') differs from recorded visitors ('+vis.toLocaleString('en-IN')+') by more than 25% — reconcile the analytics import.' }; })(),
+      ...this.pageWorkView(p),
       closeContent:()=>this.setState({cOpen:null}),
       contentAINote:()=>this.flash('AI suggestion accepted (demo).'),
     };
@@ -5331,19 +5513,76 @@ class AppRoot extends React.Component {
       ];
       return { tableCols:['Objective / KR','Type','Cycle','Progress','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[1],...r[3],c3:r[2],...act(canEdit?'Edit':'View',canEdit?editor('Editing OKR…'):viewer,canEdit)})) };
     }
-    // repositories
-    const rows=[
-      ['Content repository','Blogs, whitepapers, case studies','842 items',tag('Content','info')],
-      ['SEO repository','Audits, keyword sets, reports','516 items',tag('SEO','info')],
-      ['Asset library','Banners, reels, thumbnails','1,204 items',tag('Assets','info')],
-      ['Promotions repository','Offers & creative','98 items',tag('Promotions','info')],
+    // repositories are real records with live counts, and Admin can create new ones
+    return this.repositoriesView(rk, canEdit);
+  }
+  repoFileList(){
+    const out=[]; const seen={};
+    const add=(name,source,by,where)=>{ const k=name+'|'+source+'|'+where; if(seen[k]) return; seen[k]=1;
+      out.push({ name, source, by, where }); };
+    this.allThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>add(n,'Message attachment',m.who,th.name))));
+    this.allTasks().forEach(t=>{ const ov=this.tkOv?this.tkOv(t):t;
+      (ov.evidence||t.evidence||[]).forEach(n=>add(n,'Task evidence',t.assignee,t.id));
+      (ov.comments||t.comments||[]).forEach(c=>(c.files||[]).forEach(n=>{ if(String(n).indexOf('http')===0) return;
+        add(n,(c.role||'').indexOf('QC')>=0?'QC reference':'Comment attachment',c.who,t.id); })); });
+    this.allTickets().forEach(t=>(t.files||[]).forEach(n=>add(n,'Support ticket',t.by,t.id)));
+    return out;
+  }
+  REPO_REGISTRY(){
+    const count=(n)=>n.toLocaleString('en-IN');
+    const built=[
+      { key:'ideas', name:'Content Ideas', desc:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks.',
+        cat:'Content', icon:'lightbulb', owner:'Priya Nair',
+        n:this.allIdeas().length, unit:'ideas', go:()=>this.setState({ route:'ideas' }) },
+      { key:'content', name:'Website Content', desc:'Every service page, insight and article with its SEO, links and media.',
+        cat:'Content', icon:'folder-tree', owner:'Priya Nair',
+        n:this.allContentPages().length, unit:'pages', go:()=>this.setState({ route:'content' }) },
+      { key:'backlink', name:'Backlink Domains', desc:'Approved backlink sources with authority, spam score and platform rules.',
+        cat:'SEO', icon:'link', owner:'Aditi Rao',
+        n:this.BACKLINK_DOMAINS().length, unit:'domains', go:()=>this.setState({ route:'masters', masterKey:'backlink' }) },
+      { key:'files', name:'Documents & Assets', desc:'Every file uploaded across tasks, QC, messages and compliance evidence.',
+        cat:'Assets', icon:'folder-open', owner:'Karan Shah',
+        n:this.repoFileList().length, unit:'files', go:()=>this.setState({ route:'files' }) },
+      { key:'templates', name:'Templates', desc:'Reusable task, KPI and OKR templates that seed new work.',
+        cat:'Performance', icon:'layout-template', owner:'Priya Nair',
+        n:(this.TASK_TEMPLATES?this.TASK_TEMPLATES().length:0)+(this.KPI_TEMPLATES?this.KPI_TEMPLATES().length:0),
+        unit:'templates', go:()=>this.setState({ route:'templates' }) },
     ];
-    const useLabel = ['junior','senior'].includes(rk)?'Open':(canEdit?'Manage':'View');
-    return { tableCols:['Repository','Contents','Items','Category','Actions'], tableRows:rows.map(r=>{
-      const base={c0:r[0],c0sub:r[1],c1:'',...r[3],c3:r[2]};
-      if(r[0]==='Content repository') return {...base, ...act('Open ideas', ()=>this.setState({ route:'ideas' }), true)};
-      return {...base, ...act(useLabel, canEdit?editor('Opening repository…'):editor('Opening (read-only)…'), canEdit)};
-    }) };
+    const custom=(this.state.repoAdded||[]).map(r=>({ ...r, n:0, unit:'items', custom:true,
+      go:()=>this.flash('“'+r.name+'” is empty — add the first record from its source module.') }));
+    return custom.concat(built).map(r=>({ ...r, items:count(r.n)+' '+r.unit }));
+  }
+  repositoriesView(rk, canEdit){
+    const isAdmin=rk==='admin';
+    const list=this.REPO_REGISTRY();
+    const tag=(t)=>({tag:t,tagBg:'var(--info-100)',tagColor:'var(--info-600)'});
+    const f=this.state.repoForm||{};
+    const setR=(k)=>(e)=>this.setState({ repoForm:{...f,[k]:e.target.value} });
+    return {
+      tableCols:['Repository','Owner','Category','Items','Actions'],
+      tableRows:list.map(r=>({
+        c0:r.name, c0sub:r.desc, c1:r.owner, ...tag(r.cat), c3:r.items,
+        actionLabel:r.custom?'Empty':(['junior','senior'].includes(rk)?'Open':(canEdit?'Manage':'View')),
+        action:r.go,
+        actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit&&!r.custom
+          ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
+      })),
+      repoCanCreate:isAdmin,
+      repoFormOpen:!!this.state.repoNew,
+      repoNew:()=>this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:'Priya Nair' } }),
+      repoClose:()=>this.setState({ repoNew:false, repoForm:{} }),
+      repoStop:(e)=>e.stopPropagation(),
+      rf:f, repoSetName:setR('name'), repoSetDesc:setR('desc'), repoSetCat:setR('cat'), repoSetOwner:setR('owner'),
+      repoCatOptions:['Content','SEO','Assets','Promotions','Performance','Quality','Research'],
+      repoOwnerOptions:(this.state.users||[]).map(u=>u.name),
+      repoSave:()=>{
+        if(!(f.name&&f.name.trim())){ this.flash('Name the repository.'); return; }
+        const rec={ key:'r'+Date.now(), name:f.name.trim(), desc:f.desc||'Custom repository.',
+          cat:f.cat||'Content', icon:'database', owner:f.owner||'Karan Shah' };
+        this.setState({ repoAdded:[rec,...(this.state.repoAdded||[])], repoNew:false, repoForm:{} });
+        this.flash('“'+rec.name+'” created under '+rec.cat+' — owned by '+rec.owner+'.');
+      },
+    };
   }
 
   uf(k,e){ this.setState({ uf:{...this.state.uf,[k]:e.target.value} }); }

@@ -3,7 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentPageDetailDrawer({ vm }) {
-  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop } = vm;
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop,
+    cwLinkedCount, cwModeBtns, cwCanRun, cwApprove, cwApproveLabel, cwGenerate, cwHasTasks, cwOpenTasks, cwProgressW, cwStages, cwOpenKpi, cwKpiNote,
+    cd_liveHas, cd_liveNote, cd_live, cd_liveWarn, cd_liveWarnMsg } = vm;
   return (
     <React.Fragment>
 {Boolean(contentOpen) && (
@@ -612,7 +614,79 @@ alt: {m.alt}
 {Boolean(cd_tab7) && (
 <React.Fragment>
 
-          
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden","marginBottom":"20px"}}>
+<div style={{"padding":"14px 17px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
+<Icon name={"workflow"} style={{"width":"16px","height":"16px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<div style={{"flex":"1","minWidth":"170px"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--beet-700)"}}>Production chain — page → tasks → QC → KPI</div>
+<div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"1px"}}>{cwLinkedCount}</div>
+</div>
+{(cwModeBtns || []).map((m, $index) => (
+<React.Fragment key={$index}>
+<button onClick={m.set} style={cssTextToObject(m.style)}>{m.label}</button>
+</React.Fragment>
+))}
+</div>
+<div style={{"padding":"12px 17px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"9px","flexWrap":"wrap"}}>
+{Boolean(cwCanRun) && (
+<React.Fragment>
+<button onClick={cwApprove} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"shield-check"} style={{"width":"13px","height":"13px"}} />{cwApproveLabel}
+</button>
+<button onClick={cwGenerate} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 15px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"list-plus"} style={{"width":"13px","height":"13px"}} />Generate production tasks
+</button>
+</React.Fragment>
+)}
+{Boolean(cwHasTasks) && (
+<button onClick={cwOpenTasks} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"external-link"} style={{"width":"13px","height":"13px"}} />Open in Tasks
+</button>
+)}
+<div style={{"flex":"1","minWidth":"110px","height":"7px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${cwProgressW};background:var(--verify-500)`)} />
+</div>
+</div>
+<div className="blscroll" style={{"overflowX":"auto"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"900px"}}>
+<thead><tr>
+<th style={{"textAlign":"left","padding":"9px 17px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>#</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Stage</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Owner</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--info-600)"}}>Effort line</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--orchid-600)"}}>KPI</th>
+<th style={{"textAlign":"left","padding":"9px 12px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Task</th>
+<th style={{"textAlign":"left","padding":"9px 17px","fontSize":"10px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>Status</th>
+</tr></thead>
+<tbody>
+{(cwStages || []).map((s, $index) => (
+<tr key={$index} onClick={s.open} style={{"cursor":"pointer"}}>
+<td style={{"padding":"11px 17px","borderTop":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>{s.n}</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)"}}>
+<div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{s.stage}</div>
+<div style={{"fontSize":"10px","color":"var(--ink-400)"}}>{s.division} · {s.dep}</div>
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)"}}>
+<div style={{"fontSize":"12px","color":"var(--ink-700)"}}>{s.who}</div>
+<div style={{"fontSize":"10px","color":"var(--ink-400)"}}>{s.hrs}</div>
+</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","fontSize":"11.5px","color":"var(--info-600)","fontWeight":"700"}}>{s.effort}</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","fontSize":"11.5px","color":"var(--orchid-700)","fontWeight":"700"}}>{s.kpi}</td>
+<td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-700)"}}>{s.id}</td>
+<td style={{"padding":"11px 17px","borderTop":"1px solid var(--line-200)"}}>
+<span style={cssTextToObject(`font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;background:${s.bg};color:${s.color}`)}>{s.status}</span>
+</td>
+</tr>
+))}
+</tbody>
+</table>
+</div>
+<div onClick={cwOpenKpi} style={{"padding":"11px 17px","borderTop":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"8px","fontSize":"11.5px","fontWeight":"700","color":"var(--orchid-700)","cursor":"pointer"}}>
+<Icon name={"target"} style={{"width":"13px","height":"13px","flexShrink":"0"}} />{cwKpiNote}
+</div>
+</div>
+
+
 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":"20px"}}>
 
             
@@ -659,7 +733,38 @@ alt: {m.alt}
 {Boolean(cd_tab8) && (
 <React.Fragment>
 
-          
+{Boolean(cd_liveHas) && (
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
+<Icon name={"activity"} style={{"width":"15px","height":"15px","color":"var(--verify-600)","flexShrink":"0"}} />
+<div>
+<div style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)"}}>Recorded performance — from platform data</div>
+<div style={{"fontSize":"11px","color":"var(--ink-500)","marginTop":"1px"}}>{cd_liveNote}</div>
+</div>
+</div>
+<div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(140px,1fr))","gap":"10px"}}>
+{(cd_live || []).map((f, $index) => (
+<React.Fragment key={$index}>
+<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"11px 13px"}}>
+<div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>{f.k}</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"17px","color":"var(--ink-900)","marginTop":"3px"}}>{f.v}</div>
+</div>
+</React.Fragment>
+))}
+</div>
+{Boolean(cd_liveWarn) && (
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"11px","background":"var(--warn-100)","border":"1px solid #EFD9B4","color":"var(--warn-600)","padding":"9px 12px","borderRadius":"11px","fontSize":"11.5px","fontWeight":"700"}}>
+<Icon name={"alert-triangle"} style={{"width":"13px","height":"13px","flexShrink":"0"}} />{cd_liveWarnMsg}
+</div>
+)}
+</div>
+)}
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"9px"}}>
+<Icon name={"database"} style={{"width":"13px","height":"13px","color":"var(--ink-400)"}} />
+<span style={{"fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Last imported analytics snapshot</span>
+</div>
+
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
 
             

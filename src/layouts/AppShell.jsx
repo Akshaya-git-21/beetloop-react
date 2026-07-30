@@ -49,6 +49,7 @@ import BrandPlaybookSection from '../components/sections/BrandPlaybookSection.js
 import SupportSection from '../components/sections/SupportSection.jsx';
 import TicketDetailDrawer from '../components/drawers/TicketDetailDrawer.jsx';
 import RaiseTicketModal from '../components/drawers/RaiseTicketModal.jsx';
+import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -384,6 +385,7 @@ export default function AppShell({ vm }) {
 
 <TicketDetailDrawer vm={vm} />
 <RaiseTicketModal vm={vm} />
+<CreateRepositoryModal vm={vm} />
 
 
 

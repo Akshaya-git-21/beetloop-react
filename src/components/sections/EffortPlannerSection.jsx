@@ -3,7 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function EffortPlannerSection({ vm }) {
-  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort } = vm;
+  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
+    epIsEdit, epEditTitle, epEditSub, epSaveLabel, epCampaignOptions, epCampaignVal, okrTitleOptions, epOkrVal,
+    epGenModes, epGenPreview, epGenWarn } = vm;
   return (
     <React.Fragment>
 {Boolean(showEffort) && (
@@ -506,18 +508,29 @@ Reset
 {p.linked}
 </span>
 
-                  
+
 </div>
 
-                  
+<div style={{"display":"flex","flexDirection":"column","gap":"5px","borderTop":"1px solid var(--line-200)","paddingTop":"9px"}}>
+<button onClick={p.openCampaign} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"0","border":"none","background":"none","fontSize":"11.5px","fontWeight":"700","color":"var(--orchid-600)","cursor":"pointer","textAlign":"left"}}>
+<Icon name={"megaphone"} style={{"width":"12px","height":"12px","flexShrink":"0"}} />
+{p.campaignName}
+</button>
+<button onClick={p.openOkr} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"0","border":"none","background":"none","fontSize":"11.5px","fontWeight":"700","color":"var(--info-600)","cursor":"pointer","textAlign":"left"}}>
+<Icon name={"target"} style={{"width":"12px","height":"12px","flexShrink":"0"}} />
+{p.okrName}
+</button>
+</div>
+
+
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"auto"}}>
 
-                    
+
 <span style={{"flex":"1","fontSize":"12px","color":"var(--ink-500)"}}>
 Owner · {p.owner}
 </span>
 
-                    
+
 <button onClick={p.edit} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"7px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"pencil"} style={{"width":"13px","height":"13px"}} />
 Open
@@ -569,13 +582,23 @@ All effort plans
             
 <button onClick={epSave} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 16px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"save"} style={{"width":"15px","height":"15px"}} />
-Save plan
+{epSaveLabel}
 </button>
 
-          
+
 </div>
 
-          
+<div style={{"display":"flex","alignItems":"center","gap":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","padding":"14px 18px","marginBottom":"16px","boxShadow":"var(--shadow-sm)"}}>
+<span style={{"width":"36px","height":"36px","borderRadius":"11px","background":"var(--orchid-100)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={"gauge"} style={{"width":"17px","height":"17px","color":"var(--orchid-600)"}} />
+</span>
+<div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"16px","color":"var(--beet-700)"}}>{epEditTitle}</div>
+<div style={{"fontSize":"12.5px","color":"var(--ink-500)","marginTop":"2px"}}>{epEditSub}</div>
+</div>
+</div>
+
+
 <div style={{"display":"flex","alignItems":"center","gap":"0","marginBottom":"18px"}}>
 
             
@@ -665,7 +688,15 @@ Period (month)
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Campaign
 </label>
-<input value={epForm.campaign} onInput={epSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={epCampaignVal} onChange={epSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+{(epCampaignOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
               
@@ -697,7 +728,15 @@ Employee / owner
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Linked OKR
 </label>
-<input value={epForm.okr} onInput={epSetOkr} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={epOkrVal} onChange={epSetOkr} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+{(okrTitleOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
               
@@ -871,10 +910,22 @@ Low
 </span>
 </td>
 
-                      
+
 <td style={{"padding":"11px 14px","borderBottom":"1px solid var(--line-200)"}}>
-<select value={r.kpiId} onChange={r.setKpi} style={{"maxWidth":"220px","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
-{(r.kpiOpts || []).map((o, $index) => (
+<div style={{"display":"flex","flexDirection":"column","gap":"5px","maxWidth":"240px"}}>
+{(r.kpiChips || []).map((c, $index) => (
+<React.Fragment key={$index}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"4px 8px","borderRadius":"8px","background":"var(--orchid-100)","color":"var(--orchid-700)","fontSize":"11px","fontWeight":"700"}}>
+<Icon name={"target"} style={{"width":"11px","height":"11px","flexShrink":"0"}} />
+<span style={{"flex":"1","minWidth":"0"}}>{c.label}</span>
+<button onClick={c.remove} style={{"border":"none","background":"none","cursor":"pointer","display":"flex","padding":"0","color":"var(--orchid-700)"}}>
+<Icon name={"x"} style={{"width":"11px","height":"11px"}} />
+</button>
+</span>
+</React.Fragment>
+))}
+<select value={r.addKpiVal} onChange={r.addKpi} style={{"maxWidth":"240px","padding":"6px 9px","border":"1px dashed var(--line-300)","borderRadius":"9px","fontSize":"11.5px","background":"#fff","color":"var(--ink-500)"}}>
+{(r.kpiAddOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.id}>
 {o.label}
@@ -882,9 +933,10 @@ Low
 </React.Fragment>
 ))}
 </select>
+</div>
 </td>
 
-                      
+
 <td style={{"padding":"11px 24px 11px 14px","borderBottom":"1px solid var(--line-200)"}}>
 <span style={{"display":"inline-flex","alignItems":"center","gap":"7px"}}>
 <input value={r.weightStr} onInput={r.setWeight} style={{"width":"56px","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"13px","outline":"none"}} />
@@ -896,6 +948,35 @@ Low
 </React.Fragment>
 )}
 </span>
+</td>
+</tr>
+<tr>
+<td colSpan={8} style={{"padding":"0 24px 12px","borderBottom":"1px solid var(--line-200)"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"5px","fontSize":"11px","fontWeight":"700","padding":"3px 9px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
+<Icon name={"target"} style={{"width":"11px","height":"11px"}} />{r.kpiChain}
+</span>
+<button onClick={r.toggleTasks} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 10px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"11px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"list-checks"} style={{"width":"11px","height":"11px"}} />{r.taskToggle}
+</button>
+<span style={{"fontSize":"11px","color":"var(--ink-500)"}}>{r.taskDone} of {r.taskCount} approved</span>
+</div>
+{Boolean(r.tasksExpanded) && (
+<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"11px","overflow":"hidden","marginTop":"9px"}}>
+{(r.taskRows || []).map((t, $index) => (
+<div key={$index} onClick={t.open} style={{"padding":"8px 12px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"9px","cursor":"pointer"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--beet-700)","flexShrink":"0"}}>{t.id}</span>
+<span style={{"fontSize":"12px","fontWeight":"600","color":"var(--ink-900)","flex":"1","minWidth":"0"}}>{t.name}</span>
+<span style={{"fontSize":"10.5px","color":"var(--ink-500)","flexShrink":"0"}}>{t.dates}</span>
+<span style={{"fontSize":"10.5px","color":"var(--ink-500)","flexShrink":"0"}}>{t.who}</span>
+<span style={cssTextToObject(`font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${t.statusBg};color:${t.statusColor};flex-shrink:0`)}>{t.status}</span>
+</div>
+))}
+{Boolean(r.tasksEmpty) && (
+<div style={{"padding":"12px","textAlign":"center","fontSize":"11.5px","color":"var(--ink-500)"}}>No tasks generated from this effort yet — use Generate tasks below.</div>
+)}
+</div>
+)}
 </td>
 
                     
@@ -1015,6 +1096,17 @@ Total weightage: {epTotalW}
 <div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"16px"}}>
 Generate tasks from this plan
 </div>
+<div style={{"display":"flex","flexWrap":"wrap","gap":"7px","margin":"9px 0 7px"}}>
+{(epGenModes || []).map((m, $index) => (
+<React.Fragment key={$index}>
+<button onClick={m.set} style={cssTextToObject(m.style)}>{m.label}</button>
+</React.Fragment>
+))}
+</div>
+<div style={{"fontSize":"12px","fontWeight":"700","color":"#fff"}}>{epGenPreview}</div>
+{Boolean(epGenWarn) && (
+<div style={{"fontSize":"11.5px","color":"#F3D9A6"}}>{epGenWarn}</div>
+)}
 <div style={{"fontSize":"13px","color":"rgba(255,255,255,.78)","marginTop":"3px"}}>
 One task per deliverable — 12 blog posts become 12 tasks (+1 each to the KPI); high-volume efforts like 25,000 words split into 4 weekly batch tasks. Dates spread across the month, assignee & KPI carried along.
 </div>
