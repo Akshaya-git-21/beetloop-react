@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function FilePickerModal({ vm }) {
   const { fpOpen, fpTitle, fpClose, fpStop, fpGoBrowse, fpGoUpload, fpBrowseStyle, fpUploadStyle,
     fpIsBrowse, fpIsUpload, fpQuery, fpSetQuery, fpTypeVal, fpSetType, fpTypeOptions, fpRows, fpEmpty, fpEmptyNote,
-    fpCount, fpAttach, fpName, fpSetName, fpKindVal, fpSetKind, fpKindOptions, fpExtNote, fpUpload } = vm;
+    fpCount, fpAttach, fpName, fpSetName, fpKindVal, fpSetKind, fpKindOptions, fpExtNote, fpUpload, fpFilesPicked } = vm;
+  const fileInputRef = useRef(null);
   return (
     <React.Fragment>
 {Boolean(fpOpen) && (
@@ -80,11 +81,13 @@ Attach selected
 {Boolean(fpIsUpload) && (
 <React.Fragment>
 <div style={{"padding":"16px 22px"}}>
-<div style={{"border":"1.5px dashed var(--line-300)","borderRadius":"14px","background":"var(--surface-50)","padding":"24px","textAlign":"center","marginBottom":"14px"}}>
+<input ref={fileInputRef} type="file" multiple onChange={fpFilesPicked} style={{"display":"none"}} />
+<button onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{"width":"100%","border":"1.5px dashed var(--line-300)","borderRadius":"14px","background":"var(--surface-50)","padding":"24px","textAlign":"center","marginBottom":"14px","cursor":"pointer"}}>
 <Icon name={"upload-cloud"} style={{"width":"22px","height":"22px","color":"var(--orchid-600)"}} />
-<div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginTop":"7px"}}>Name the file you are uploading</div>
-<div style={{"fontSize":"11px","color":"var(--ink-500)","marginTop":"2px"}}>It joins the Document Repository and stays linked to this record.</div>
-</div>
+<div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginTop":"7px"}}>Choose files from your device</div>
+<div style={{"fontSize":"11px","color":"var(--ink-500)","marginTop":"2px"}}>Opens your file explorer — the file attaches immediately once selected.</div>
+</button>
+<div style={{"fontSize":"11px","color":"var(--ink-500)","marginBottom":"11px"}}>Or name a placeholder file instead:</div>
 <div style={{"display":"grid","gridTemplateColumns":"1.6fr 1fr","gap":"11px"}}>
 <div>
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>File name</label>

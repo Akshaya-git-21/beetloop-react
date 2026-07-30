@@ -7015,6 +7015,16 @@ class AppRoot extends React.Component {
         const name=this.fpFinalName();
         this.setState({ fpTarget:null, fpSel:[], fpName:'' });
         this.applyPickedFiles(target, [name]); },
+      // Opens the device's native file explorer (real <input type=file>); the
+      // chosen file(s) are attached immediately using their real filenames.
+      fpFilesPicked:(e)=>{
+        const files=Array.from(e.target.files||[]);
+        e.target.value='';
+        if(!files.length) return;
+        const names=files.map(f=>f.name);
+        this.setState({ fpTarget:null, fpSel:[], fpName:'' });
+        this.applyPickedFiles(target, names);
+      },
     };
   }
   REPO_REGISTRY(){
