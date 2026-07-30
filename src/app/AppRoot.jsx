@@ -5391,7 +5391,26 @@ class AppRoot extends React.Component {
       tkNew:this.state.tkNew, tkf:f, tkCode:nextCode,
       tkCloseNew:()=>this.setState({ tkNew:false, msgConvert:null }),
       tkTplOptions:this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name})),
-      tkKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
+      ...(()=>{
+        const plan0=this.allEpPlans().find(p=>p.name===f.effortPlan);
+        const row0=plan0&&plan0.rows.find(r=>r.type===f.effortRow);
+        let pool=kpiPool, scoped=false, note='All KPIs — link an effort to narrow this list.';
+        if(row0){
+          const ids=[row0.kpiId].concat(row0.kpiIds||[]).filter(Boolean);
+          const sub=kpiPool.filter(k=>ids.includes(k.id));
+          if(sub.length){ pool=sub; scoped=true;
+            note='Showing only the '+sub.length+' KPI'+(sub.length===1?'':'s')+' linked to “'+row0.type+'”.'; }
+          else { pool=[]; scoped=true; note='“'+row0.type+'” is effort-only — no KPI linked to it.'; }
+        } else if(plan0){
+          const ids=plan0.rows.map(r=>r.kpiId).filter(Boolean);
+          const sub=kpiPool.filter(k=>ids.includes(k.id));
+          if(sub.length){ pool=sub; scoped=true;
+            note='Showing the '+sub.length+' KPI'+(sub.length===1?'':'s')+' used by “'+plan0.name+'” — pick an effort to narrow further.'; }
+        }
+        return {
+          tkKpiOptions:[{id:'',label:pool.length?'None — not KPI-linked':'None — effort only'}]
+            .concat(pool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
+          tkKpiScoped:scoped, tkKpiNote:note }; })(),
       tkProjectOptions:['—'].concat(this.recordsFor('projects').map(r=>r.name)),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),

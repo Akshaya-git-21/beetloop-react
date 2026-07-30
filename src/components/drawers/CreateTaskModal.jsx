@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkNew, tkPlanInfo, tkProjectOptions, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetProject, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkProjectOptions, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetProject, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -324,9 +324,13 @@ Linked KPI
 </React.Fragment>
 ))}
 </select>
+<div style={{"display":"flex","alignItems":"center","gap":"5px","marginTop":"4px","fontSize":"10.5px","fontWeight":"600","color":"var(--orchid-700)"}}>
+<Icon name={"filter"} style={{"width":"10px","height":"10px","flexShrink":"0"}} />
+{tkKpiNote}
+</div>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Contribution units
