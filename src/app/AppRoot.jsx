@@ -1272,28 +1272,31 @@ class AppRoot extends React.Component {
       admin:{eyebrow:'Platform scope',big:'Full',sub:'Configuration & security',note:'You manage users, masters, roles and integrations — but business decisions like OKRs and campaign approvals belong to leadership.'},
     };
     const scopeBox = scopeMap[b];
-    const modsFor = ['dashboard','campaigns','tasks','qc','analytics','masters'];
+    const modsFor = ['dashboard','campaigns','tasks','qc','analytics','support','masters'];
     const accessSummary = modsFor.map(m=>{
       const l = (this.ACCESS[m]&&this.ACCESS[m][rk]) || 'No access';
       const t = l==='No access' ? {bg:'var(--danger-100)',color:'var(--danger-600)'} : this.levelTone(l);
       return { mod:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:l, bg:t.bg, color:t.color };
     });
 
-    // "Needs attention" tiles — computed live from Tasks/OKRs, which already
-    // exist. SOPs/Support/Leads-dependent stats show 0 until those modules
-    // are built (SOPs and Support aren't implemented yet; the Leads/CRM
-    // pipeline panel below is hidden entirely rather than shown empty).
+    // "Needs attention" tiles — computed live from Tasks/OKRs/SOPs/Support,
+    // which all already exist. The Leads/CRM pipeline panel below is hidden
+    // entirely rather than shown empty, since that subsystem isn't built.
     const X=(label,value,sub,color)=>({label,value,sub,color});
     const tasks=this.allTasks(), me=this.currentPerson();
     const mineT=tasks.filter(t=>t.assignee===me);
     const overdue=(list)=>list.filter(t=>{ const d=this.dayDiff(t); return d!==null&&d<0&&!['Approved','Closed'].includes(t.status); }).length;
     const okrs=this.allOkrs();
     const atRisk=okrs.filter(o=>this.okrHealth(o).label!=='On Track'&&o.status!=='Completed').length;
-    const sopOverdue=0, sopUnack=0; // SOPs module not built yet
-    const tOpen=0, tUnassigned=0; // Support module not built yet
+    const sops=this.allSops();
+    const sopOverdue=sops.filter(s=>this.sopReviewState(s).overdue).length;
+    const sopUnack=sops.filter(s=>s.status==='Published'&&!(s.ack||[]).includes(me)).length;
+    const tickets=this.allTickets();
+    const tOpen=tickets.filter(t=>!['Resolved','Closed'].includes(t.status)).length;
+    const tUnassigned=tickets.filter(t=>!t.assignee&&!['Resolved','Closed'].includes(t.status)).length;
     const inQC=tasks.filter(t=>t.status==='Submitted').length;
     const rework=tasks.filter(t=>t.status==='Rework').length;
-    const overCap=(this.state.users||[]).filter(u=>{ const wk=this.weeklyCapacity(u.name);
+    const overCap=(this.state.users||[]).filter(u=>{ const wk=this.weeklyCapacity(u.name)||40;
       const open=tasks.filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
       return open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)>wk; }).length;
     const EXTRA={
