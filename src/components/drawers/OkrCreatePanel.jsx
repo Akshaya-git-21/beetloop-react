@@ -3,7 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrEffortOptions, okrNewCode, okrOwnerOptions, okrSteps, okrTaskOptions, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand } = vm;
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrEffortOptions, okrNewCode, okrOwnerOptions, okrSteps, okrTaskOptions, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrSaveLabel,
+    okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions, okrParentOptionsList,
+    okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal } = vm;
   return (
     <React.Fragment>
 {Boolean(showOkrPanel) && (
@@ -29,13 +31,13 @@ OKR Configuration
         
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginTop":"3px"}}>
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"22px","color":"var(--beet-700)","margin":"0"}}>
-Create new OKR
+{okrPanelTitle || 'Create new OKR'}
 </h3>
 <span style={{"fontFamily":"'Space Mono'","fontSize":"12px","color":"var(--ink-400)"}}>
-{okrNewCode}
+{okrPanelCode || okrNewCode}
 </span>
 <span style={{"fontSize":"10.5px","fontWeight":"700","padding":"2px 9px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-500)"}}>
-Draft · v1.0
+{okrPanelVerBadge || 'Draft · v1.0'}
 </span>
 </div>
 
@@ -238,7 +240,7 @@ foodresearchlab.com
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Department *
@@ -262,54 +264,28 @@ Design
 </select>
 </div>
 
-            
-<div>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Project (optional)
-</label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-—
-</option>
-<option>
-Pubrica SEO program
-</option>
-<option>
-Statswork website rebuild
-</option>
-</select>
-</div>
-
-            
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Campaign (optional)
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-—
-</option>
-<option>
-Q3 SEO push — Pubrica
-</option>
-<option>
-Whitepaper funnel — FRL
-</option>
+<select value={okrCampaignVal} onChange={okrSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(campaignOptionsNone || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
-          
 </div>
 
-          
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Objective category
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.category} onChange={okrSetCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 Traffic
 </option>
@@ -337,12 +313,12 @@ Revenue
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Strategic priority
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.priority} onChange={okrSetPriority} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 Critical
 </option>
@@ -358,20 +334,20 @@ Low
 </select>
 </div>
 
-          
-</div>
 
-        
 </div>
 
 
-        
+</div>
+
+
+
 {/* C · Timeline */}
 
-        
+
 <div id="okrC" style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"22px 24px"}}>
 
-          
+
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"14px"}}>
 <span style={{"width":"22px","height":"22px","borderRadius":"7px","background":"var(--beet-700)","color":"#fff","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"11px","fontWeight":"800"}}>
 C
@@ -381,39 +357,39 @@ Timeline
 </span>
 </div>
 
-          
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Cycle *
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.cycle} onChange={okrSetCycle} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
-Q1 2025
+Q1 2026
 </option>
 <option>
-Q2 2025
+Q2 2026
 </option>
 <option>
-Q3 2025
+Q3 2026
 </option>
 <option>
-Q4 2025
+Q4 2026
 </option>
 <option>
-Annual 2025
+Annual 2026
 </option>
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Review frequency
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.reviewFreq} onChange={okrSetReviewFreq} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 Weekly
 </option>
@@ -426,26 +402,26 @@ Quarterly
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Start date
 </label>
-<input type="date" style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
+<input type="date" value={okrForm.start||''} onChange={okrSetStart} style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 End date
 </label>
-<input type="date" style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
+<input type="date" value={okrForm.end||''} onChange={okrSetEnd} style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
 </div>
 
-          
+
 </div>
 
-        
+
 </div>
 
 
@@ -746,36 +722,34 @@ Alignment & dependencies
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Parent objective
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrParentVal} onChange={okrSetParent} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 None (top level)
 </option>
-<option>
-Increase Organic Traffic by 50%
-</option>
-<option>
-Launch 30 High-Quality Content Pieces
-</option>
+{(okrParentOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
-            
+
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"12px"}}>
 
-              
-<div>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Linked projects
-</label>
-<input placeholder="Pubrica SEO program…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+
+<div style={{"display":"none"}}>
+<input placeholder="" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
 </div>
 
-              
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Linked campaigns
 </label>
-<input placeholder="Q3 SEO push…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={okrCampaignVal} onChange={okrSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(campaignOptionsNone || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
+</select>
 </div>
 
             
@@ -786,15 +760,15 @@ Linked campaigns
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Depends on
 </label>
-<input placeholder="e.g., Website Migration, Technical SEO Audit" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<input value={okrForm.dependsOn||''} onInput={okrSetDependsOn} placeholder="e.g., Website Migration, Technical SEO Audit" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Linked effort targets
 </label>
-<input placeholder="e.g., 12 blogs/month, 200 backlinks/month" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<input value={okrForm.effortTargets||''} onInput={okrSetEffortTargets} placeholder="e.g., 12 blogs/month, 200 backlinks/month" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
 </div>
 
           
@@ -828,7 +802,7 @@ Progress & data source
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Progress calculation
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.progressCalc} onChange={okrSetProgressCalc} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 Automatic (from KPI logs)
 </option>
@@ -838,12 +812,12 @@ Manual
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Data source
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.dataSource} onChange={okrSetDataSource} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 GA4
 </option>
@@ -896,25 +870,19 @@ Review & governance
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Reviewer / approver
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-John Smith (Admin)
-</option>
-<option>
-Priya Nair (Manager)
-</option>
-<option>
-Rahul Menon (COO)
-</option>
+<select value={okrForm.reviewer} onChange={okrSetReviewer} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(okrReviewerOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Initial status
+Status
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={okrForm.status} onChange={okrSetStatus} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
 <option>
 Draft
 </option>
@@ -923,6 +891,15 @@ Active
 </option>
 <option>
 On Hold
+</option>
+<option>
+At Risk
+</option>
+<option>
+Completed
+</option>
+<option>
+Archived
 </option>
 </select>
 </div>
@@ -957,7 +934,7 @@ Risk & assumptions
 </div>
 
           
-<textarea rows="2" placeholder="Key risks, assumptions or blockers that could affect this objective…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical"}} />
+<textarea rows="2" value={okrForm.risks||''} onInput={okrSetRisks} placeholder="Key risks, assumptions or blockers that could affect this objective…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical"}} />
 
         
 </div>
@@ -1065,7 +1042,7 @@ Save draft
 
       
 <button onClick={saveOkr} style={{"padding":"11px 28px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 18px -8px rgba(122,28,70,.55)"}}>
-Save & activate
+{okrSaveLabel || 'Save & activate'}
 </button>
 
     

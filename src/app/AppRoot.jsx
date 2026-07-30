@@ -19,7 +19,7 @@ class AppRoot extends React.Component {
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
     okrExpanded: [], showOkrPanel: false, okrRecord: null, okrSection: 'okrA', okrOpen: null,
-    okrAdded: [],
+    okrAdded: [], okrUpd: {}, okrEditId: null,
     okrForm: { title:'', desc:'', owner:'Sarah Johnson', dept:'SEO', brand:'Beetloop', category:'SEO' },
     recordsAdded: [], showRecordModal: false, recordKind: 'projects',
     recordForm: { name:'', type:'', owner:'', status:'On track' },
@@ -520,7 +520,7 @@ class AppRoot extends React.Component {
     return rows.length?Math.round(rows.reduce((s,x)=>s+x,0)/rows.length):0;
   }
   cmpKpiPool(){
-    const okrs = this.OKR_DATA().concat(this.state.okrAdded||[]);
+    const okrs = this.OKR_DATA();
     const out=[];
     okrs.forEach(o=>(o.krs||[]).forEach(k=>{
       out.push({ key:o.code+'::'+k.kpi, kpi:k.kpi, unit:k.unit, target:k.target, current:k.current, okrId:o.id, okrCode:o.code, okrTitle:o.title, freq:k.freq });
@@ -651,7 +651,7 @@ class AppRoot extends React.Component {
             icon:p.kind==='External'?'external-link':'file-text',
             bg:p.kind==='External'?'var(--info-100)':'var(--orchid-100)', color:p.kind==='External'?'var(--info-600)':'var(--orchid-600)' })),
           hasPages:(k.pages||[]).filter(p=>p.url).length>0,
-          openOkr:()=>{ const o=this.OKR_DATA().concat(this.state.okrAdded||[]).find(x=>x.code===okrCode); if(o) this.setState({ cmpOpen:null, route:'okr', okrOpen:o.id }); else this.flash('This KPI is not linked to an OKR yet.'); } }; }),
+          openOkr:()=>{ const o=this.OKR_DATA().find(x=>x.code===okrCode); if(o) this.setState({ cmpOpen:null, route:'okr', okrOpen:o.id }); else this.flash('This KPI is not linked to an OKR yet.'); } }; }),
       cmpEffortRows:c.efforts||[],
       cmpTeamRows:(c.team||[]).map(x=>({ ...x, initials:x.who.split(' ').map(s=>s[0]).join('').slice(0,2) })),
       cmpTaskLabel:c.taskDone+' of '+c.taskCount+' tasks completed',
@@ -868,7 +868,7 @@ class AppRoot extends React.Component {
     };
   }
 
-  OKR_DATA(){
+  OKR_SEED(){
     return [
       { id:'1', code:'OKR-SEO-Q1-001', v:'v1.2', scope:'Organization', title:'Increase Organic Traffic by 50%', desc:'Drive significant growth in organic search visitors through SEO optimization.', owner:'Sarah Johnson', team:'+1', cycle:'Q1 2025', brand:'Food Research Lab', dept:'SEO', campaign:'Organic Growth Q1', category:'SEO', progress:68, due:'Mar 31, 2025', start:'Jan 1, 2025', daysLeft:15, cycleElapsed:75, status:'Active', weight:30, reviewer:'John Smith', approver:'Rahul Menon',
         krs:[
@@ -898,6 +898,37 @@ class AppRoot extends React.Component {
         ] },
     ];
   }
+  krAchievement(k){
+    const cur=this.cmpNum(k.current), base=this.cmpNum(k.baseline), tgt=this.cmpNum(k.target);
+    if(tgt===base) return cur>=tgt?100:0;
+    const lowerIsBetter = base>tgt;
+    const pct = lowerIsBetter ? (base-cur)/(base-tgt)*100 : (cur-base)/(tgt-base)*100;
+    return Math.max(0, Math.min(100, Math.round(pct)));
+  }
+  okrProgress(o){
+    const krs=o.krs||[];
+    if(!krs.length) return o.progress||0;
+    const totalWeight = krs.reduce((s,k)=>s+(k.weight||0),0) || krs.length;
+    const weighted = krs.reduce((s,k)=>s+this.krAchievement(k)*(k.weight||(100/krs.length)),0);
+    return Math.round(weighted/totalWeight);
+  }
+  cycleElapsedOf(o){
+    const start=new Date(o.start), due=new Date(o.due);
+    if(isNaN(start)||isNaN(due)||due<=start) return o.cycleElapsed||0;
+    const now=new Date();
+    const pct=(now-start)/(due-start)*100;
+    return Math.round(Math.max(0, pct));
+  }
+  allOkrs(){
+    const upd=this.state.okrUpd||{};
+    return this.OKR_SEED().concat(this.state.okrAdded||[])
+      .map(o=>upd[o.id]?{...o,...upd[o.id]}:o)
+      .map(o=>{
+        const p=Math.min(100,this.okrProgress(o));
+        return { ...o, progress:p, progressRaw:this.okrProgress(o), cycleElapsed:this.cycleElapsedOf(o) };
+      });
+  }
+  OKR_DATA(){ return this.allOkrs(); }
 
   renderVals(){
     const rk = this.state.roleKey;
@@ -1766,7 +1797,7 @@ class AppRoot extends React.Component {
   }
   okrHealth(o){
     if(o.status==='Completed') return { label:'Complete', color:'var(--verify-600)', bg:'var(--verify-100)', dot:'var(--verify-500)' };
-    const expected = o.cycleElapsed; // % of cycle elapsed
+    const expected = this.cycleElapsedOf(o); // % of cycle elapsed
     if(o.progress >= expected - 5) return { label:'Healthy', color:'var(--verify-600)', bg:'var(--verify-100)', dot:'var(--verify-500)' };
     if(o.progress >= expected - 25) return { label:'At Risk', color:'var(--warn-600)', bg:'var(--warn-100)', dot:'var(--warn-500)' };
     return { label:'Off Track', color:'var(--danger-600)', bg:'var(--danger-100)', dot:'var(--danger-500)' };
@@ -2803,7 +2834,6 @@ class AppRoot extends React.Component {
   }
   dailyCapacity(){ return 8; } // flat placeholder — no per-person capacity model yet
   weeklyCapacity(){ return 40; } // flat placeholder — no per-person capacity model yet
-  allOkrs(){ return this.OKR_DATA().concat(this.state.okrAdded||[]); }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
   campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
   campaignOptionsFor(stored,withNone){ const base=this.campaignNames(withNone);
@@ -4749,22 +4779,51 @@ class AppRoot extends React.Component {
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
 
+  OKR_REVIEWERS(){ return ['John Smith (Admin)','Priya Nair (Manager)','Rahul Menon (COO)','Aditi Rao (Team Lead)','Farhan Ali (QC)']; }
+  okrReviewerOpt(name){ if(!name) return this.OKR_REVIEWERS()[0];
+    const hit=this.OKR_REVIEWERS().find(o=>o===name||o.split(' (')[0]===String(name).split(' (')[0]);
+    return hit||name; }
+  openOkrEdit(id){
+    const o=this.OKR_DATA().find(x=>x.id===id);
+    if(!o) return;
+    this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:id,
+      okrForm:{ title:o.title, desc:o.desc||'', owner:o.owner, dept:o.dept, brand:o.brand, campaign:o.campaign&&o.campaign!=='—'?o.campaign:'', category:o.category, scope:o.scope, priority:o.priority||this.okrPriority(o).label,
+        cycle:o.cycle, reviewFreq:o.reviewFreq||'Weekly', start:this.isoDate(o.start), end:this.isoDate(o.due),
+        parent:o.parent||'None (top level)', dependsOn:o.dependsOn||'', effortTargets:o.effortTargets||'',
+        progressCalc:o.progressCalc||'Automatic (from KPI logs)', dataSource:o.dataSource||'GA4',
+        reviewer:this.okrReviewerOpt(o.reviewer), status:o.status==='Archived'?'Draft':o.status, risks:o.risks||'' },
+      okrDraftKRs:(o.krs||[]).map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:k.baseline, target:k.target, current:k.current, weight:String(k.weight), who:k.who })),
+      okrKRSeq:(o.krs||[]).length+1,
+    });
+  }
   _saveOkr(activate, wOk, wTotal, existingCount, rk){
     const f=this.state.okrForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter an objective title.'); return; }
     if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
-    const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
     const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
       t:k.kr&&k.kr.trim()?k.kr.trim():'Key result '+(i+1), kpi:k.kpiSel||'KPI '+(i+1),
       baseline:k.baseline||'0', target:k.target||'100', current:k.current||'0', unit:k.unit||'units',
       weight:parseInt(k.weight,10)||0, who:k.who||f.owner, freq:'Monthly', due:'Mar 31', status:'Active',
     }));
+    const editId=this.state.okrEditId;
+    const shared={ title:f.title.trim(), desc:f.desc||'', owner:f.owner, dept:f.dept, brand:f.brand, campaign:f.campaign||'—', category:f.category||f.dept,
+      scope:f.scope||'Department', priority:f.priority||'Medium', cycle:f.cycle||'Q1 2026', reviewFreq:f.reviewFreq||'Weekly',
+      start:this.fmtDate(f.start)||this.todayStr(), due:this.fmtDate(f.end)||'Mar 31, 2026',
+      parent:f.parent||'None (top level)', dependsOn:f.dependsOn||'', effortTargets:f.effortTargets||'',
+      progressCalc:f.progressCalc||'Automatic (from KPI logs)', dataSource:f.dataSource||'GA4',
+      reviewer:f.reviewer||this.currentPerson(), risks:f.risks||'', krs, status: activate?(f.status&&f.status!=='Draft'?f.status:'Active'):'Draft' };
+    if(editId){
+      const prev=this.OKR_DATA().find(x=>x.id===editId)||{};
+      const ver='v'+(parseFloat(String(prev.v||'v1.0').replace('v',''))+0.1).toFixed(1);
+      this.setState({ okrUpd:{...(this.state.okrUpd||{}), [editId]:{...shared, v:ver}},
+        showOkrPanel:false, okrEditId:null, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
+      this.flash('Changes saved to '+(prev.code||editId)+' ('+ver+').');
+      return;
+    }
+    const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
     const okr={
-      id:'okr-local-'+Date.now(), code, v:'v1.0', scope:'Department', title:f.title.trim(), desc:f.desc||'',
-      owner:f.owner, team:'', cycle:'Q1 2026', brand:f.brand, dept:f.dept, campaign:'', category:f.category||f.dept,
-      progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
-      status: activate?'Active':'Draft', weight:100, reviewer:this.currentPerson(), approver:this.currentPerson(),
-      krs,
+      id:'okr-local-'+Date.now(), code, v:'v1.0', team:'', campaign:'', daysLeft:90, cycleElapsed:0,
+      weight:100, approver:this.currentPerson(), ...shared,
     };
     this.setState({ okrAdded:[...(this.state.okrAdded||[]), okr], showOkrPanel:false,
       okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
@@ -5499,13 +5558,12 @@ class AppRoot extends React.Component {
     };
   }
 
-  okrRowAct(o,name){ return (e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null }); this.flash(name+' “'+o.title+'”'); }; }
   okrBulkAct(name){ return ()=>{ const n=this.state.okrSelected.length; this.setState({ okrSelected:[] }); this.flash(name+' '+n+' OKR'+(n===1?'':'s')); }; }
 
   okrView(){
     const rk = this.state.roleKey;
     const canEdit = ['manager','admin'].includes(rk);
-    const all = this.OKR_DATA().concat(this.state.okrAdded||[]);
+    const all = this.OKR_DATA();
     const F = this.state.okrFilters;
     const fq=F.kpiFreq||'All', dueF=F.due||'All';
     const dueMatch=(o)=>{ if(dueF==='All') return true; if(dueF==='Overdue') return o.daysLeft<0&&o.status!=='Completed'; if(dueF==='Due this week') return o.daysLeft>=0&&o.daysLeft<=7; if(dueF==='Due this month') return o.daysLeft>=0&&o.daysLeft<=31; if(dueF==='Due this quarter') return o.daysLeft>=0&&o.daysLeft<=92; return true; };
@@ -5547,7 +5605,14 @@ class AppRoot extends React.Component {
         toggle:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrExpanded: expanded?this.state.okrExpanded.filter(x=>x!==o.id):[...this.state.okrExpanded,o.id] }); },
         menuOpen: this.state.okrMenu===o.id,
         toggleMenu:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu: this.state.okrMenu===o.id?null:o.id }); },
-        viewAct: this.okrRowAct(o,'Viewing'), editAct: this.okrRowAct(o,'Editing'), cloneAct: this.okrRowAct(o,'Cloned'), archiveAct: this.okrRowAct(o,'Archived'),
+        viewAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null, okrOpen:o.id }); },
+        editAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null }); this.openOkrEdit(o.id); },
+        cloneAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null,
+            okrAdded:[...(this.state.okrAdded||[]), { ...o, id:'okr-local-'+Date.now(), code:o.code+'-COPY', v:'v1.0', title:o.title+' (Copy)', status:'Draft', progress:0 }] });
+          this.flash('Cloned "'+o.title+'" as a new draft.'); },
+        archiveAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null,
+            okrUpd:{...(this.state.okrUpd||{}), [o.id]:{...(this.state.okrUpd||{})[o.id], status:'Archived'}} });
+          this.flash('Archived "'+o.title+'".'); },
         histAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null, historyOkr:o.id }); },
         isManagerReviewer: rk==='manager'||rk==='admin', isExecReviewer: rk==='ceo'||rk==='coo',
         reviewAct:(e)=>{ if(e)e.stopPropagation(); this.openCi('manager',{id:o.id,title:o.title,progress:o.progress+'%'}); },
@@ -5567,6 +5632,11 @@ class AppRoot extends React.Component {
       badgeBg: active?'var(--beet-700)':'var(--surface-50)', badgeColor: active?'#fff':'var(--ink-500)' }; });
     const reg = this.MASTERS_REG();
     const kpiOptions = reg.kpi.rows.map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
+    // KR drafts cover the core fields (KPI, baseline/target/current, owner, weight).
+    // Source's richer per-KR tool/target-source picker and multi-task/effort link
+    // arrays are out of scope for this pass — tasks/effort still link to a KR via
+    // its KPI name (see epGenerate/effortView), so linkage isn't lost, just less
+    // granular to configure from this form.
     const drafts = this.state.okrDraftKRs;
     const wTotal = drafts.reduce((s,k)=>s+(parseInt(k.weight,10)||0),0);
     const wOk = wTotal===100;
@@ -5613,8 +5683,11 @@ class AppRoot extends React.Component {
       okrClearSel:()=>this.setState({ okrSelected:[] }),
       okrBulkReviewer:this.okrBulkAct('Assigned reviewer to'), okrBulkOwner:this.okrBulkAct('Changed owner for'), okrBulkArchive:this.okrBulkAct('Archived'), okrBulkExport:this.okrBulkAct('Exported'),
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
-      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO' } }); else this.flash('Only Managers and Admin can create OKRs.'); },
-      showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false }),
+      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' } }); else this.flash('Only Managers and Admin can create OKRs.'); },
+      showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false, okrEditId:null }),
+      okrIsEdit:!!this.state.okrEditId, okrPanelTitle:this.state.okrEditId?'Edit OKR':'Create new OKR', okrSaveLabel:this.state.okrEditId?'Save changes':'Save & activate',
+      ...(()=>{ const er=this.state.okrEditId?all.find(x=>x.id===this.state.okrEditId):null;
+        return { okrPanelCode:er?er.code:('OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(list.length+1).padStart(3,'0')), okrPanelVerBadge:er?(er.status+' · '+(er.v||'v1.0')):'Draft · v1.0' }; })(),
       okrForm:this.state.okrForm,
       okrSetTitle:e=>this.setState({ okrForm:{...this.state.okrForm, title:e.target.value} }),
       okrSetDesc:e=>this.setState({ okrForm:{...this.state.okrForm, desc:e.target.value} }),
@@ -5622,6 +5695,23 @@ class AppRoot extends React.Component {
       okrOwnerOptions:(this.state.users||[]).map(u=>u.name),
       okrSetDept:e=>this.setState({ okrForm:{...this.state.okrForm, dept:e.target.value} }),
       okrSetBrand:e=>this.setState({ okrForm:{...this.state.okrForm, brand:e.target.value} }),
+      okrSetCampaign:e=>{ const v=e.target.value; this.setState({ okrForm:{...this.state.okrForm, campaign: v==='— None —'?'':v} }); },
+      okrSetCategory:e=>this.setState({ okrForm:{...this.state.okrForm, category:e.target.value} }),
+      okrSetScope:e=>this.setState({ okrForm:{...this.state.okrForm, scope:e.target.value} }),
+      okrSetPriority:e=>this.setState({ okrForm:{...this.state.okrForm, priority:e.target.value} }),
+      okrSetCycle:e=>this.setState({ okrForm:{...this.state.okrForm, cycle:e.target.value} }),
+      okrSetReviewFreq:e=>this.setState({ okrForm:{...this.state.okrForm, reviewFreq:e.target.value} }),
+      okrSetStart:e=>this.setState({ okrForm:{...this.state.okrForm, start:e.target.value} }),
+      okrSetEnd:e=>this.setState({ okrForm:{...this.state.okrForm, end:e.target.value} }),
+      okrSetParent:e=>this.setState({ okrForm:{...this.state.okrForm, parent:e.target.value} }),
+      okrSetDependsOn:e=>this.setState({ okrForm:{...this.state.okrForm, dependsOn:e.target.value} }),
+      okrSetEffortTargets:e=>this.setState({ okrForm:{...this.state.okrForm, effortTargets:e.target.value} }),
+      okrSetProgressCalc:e=>this.setState({ okrForm:{...this.state.okrForm, progressCalc:e.target.value} }),
+      okrSetDataSource:e=>this.setState({ okrForm:{...this.state.okrForm, dataSource:e.target.value} }),
+      okrSetReviewer:e=>this.setState({ okrForm:{...this.state.okrForm, reviewer:e.target.value} }),
+      okrSetStatus:e=>this.setState({ okrForm:{...this.state.okrForm, status:e.target.value} }),
+      okrSetRisks:e=>this.setState({ okrForm:{...this.state.okrForm, risks:e.target.value} }),
+      okrReviewerOptions:this.OKR_REVIEWERS(),
       saveOkr:()=>this._saveOkr(true, wOk, wTotal, list.length, rk),
       saveOkrDraft:()=>this._saveOkr(false, wOk, wTotal, list.length, rk),
       okrSteps, kpiOptions, okrDraftKRs,
