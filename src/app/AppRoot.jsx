@@ -5261,7 +5261,7 @@ class AppRoot extends React.Component {
     const checklist=(t.checklist||[]).map((c,i)=>({ t:c.t, done:c.done,
       boxBg:c.done?'var(--verify-500)':'#fff', boxBorder:c.done?'var(--verify-500)':'var(--line-300)', op:c.done?'1':'0',
       toggle:()=>{ if(!isAssignee){ this.flash('Only the assignee updates the checklist.'); return; } const arr=(t.checklist||[]).map((x,j)=>j===i?{...x,done:!x.done}:x); this.tkPatch(t.id,{checklist:arr},(c.done?'Unchecked':'Completed')+' checklist item — '+c.t); } }));
-    const evidence=(t.evidence||[]).map(f=>({name:f}));
+    const evidence=(t.evidence||[]).map(f=>({name:f, open:()=>this.setState({ route:'files', flQuery:f })}));
     const actions=[];
     const btn=(label,icon,bg,fg,go,border)=>actions.push({label,icon,go,style:'display:flex;align-items:center;gap:7px;border-radius:11px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;background:'+bg+';color:'+fg+';border:'+(border||'none')});
     if(isAssignee){
@@ -5358,7 +5358,7 @@ class AppRoot extends React.Component {
           isQC:/QC|Manager|Lead|Admin/i.test(c.role),
           bubbleBg:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-100)':'var(--surface-50)',
           bubbleBorder:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-200)':'var(--line-200)',
-          files:(c.files||[]).map(f=>({name:f})), hasFiles:(c.files||[]).length>0 }));
+          files:(c.files||[]).map(f=>({name:f, open:()=>this.setState({ route:'files', flQuery:f })})), hasFiles:(c.files||[]).length>0 }));
         const cfl=(this.state.tkCommentFiles||[]).map((f,i)=>({ name:f, remove:()=>{ const a=(this.state.tkCommentFiles||[]).slice(); a.splice(i,1); this.setState({tkCommentFiles:a}); } }));
         return {
           tkComments:comments, tkHasComments:comments.length>0, tkCanComment:canComment,
@@ -5386,7 +5386,7 @@ class AppRoot extends React.Component {
       tkQcPanel:qcPanel,
       tkQcFbVal:(this.state.qcFb||{})[t.id]||'', tkQcOnFb:(e)=>this.setState({ qcFb:{...(this.state.qcFb||{}),[t.id]:e.target.value} }),
       tkQcUrl:ref.url||'', tkQcOnUrl:(e)=>setRef({url:e.target.value}),
-      tkQcFiles:(ref.files||[]).map((f,i2)=>({ name:f, remove:()=>{ const a=(ref.files||[]).slice(); a.splice(i2,1); setRef({files:a}); } })),
+      tkQcFiles:(ref.files||[]).map((f,i2)=>({ name:f, open:()=>this.setState({ route:'files', flQuery:f }), remove:()=>{ const a=(ref.files||[]).slice(); a.splice(i2,1); setRef({files:a}); } })),
       tkQcHasFiles:(ref.files||[]).length>0,
       tkQcAddFile:()=>this.openFilePicker('qcref:'+t.id,'Attach QC reference'),
       tkStages, tkHasChain:tkStages.length>1,

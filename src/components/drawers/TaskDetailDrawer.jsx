@@ -202,7 +202,7 @@ Attach reference image
 <React.Fragment key={$index}>
 <span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 8px 5px 10px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)"}}>
 <Icon name={"image"} style={{"width":"11px","height":"11px"}} />
-{f.name}
+<button onClick={f.open} style={{"background":"none","border":"none","padding":"0","cursor":"pointer","color":"var(--ink-700)","font":"inherit"}}>{f.name}</button>
 <button onClick={f.remove} style={{"background":"none","border":"none","cursor":"pointer","color":"var(--ink-500)","display":"flex","padding":"0"}}>
 <Icon name={"x"} style={{"width":"12px","height":"12px"}} />
 </button>
@@ -698,10 +698,10 @@ Attach
               
 {(tkEvidence || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"12px","fontWeight":"600","padding":"6px 11px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-700)"}}>
+<button onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"12px","fontWeight":"600","padding":"6px 11px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"file"} style={{"width":"12px","height":"12px"}} />
 {f.name}
-</span>
+</button>
 </React.Fragment>
 ))}
 
@@ -774,10 +774,10 @@ Comments & feedback — assignee ↔ QC
 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
 {(c.files || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 10px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)"}}>
+<button onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 10px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
 {f.name}
-</span>
+</button>
 </React.Fragment>
 ))}
 </div>
