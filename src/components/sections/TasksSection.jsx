@@ -267,13 +267,15 @@ Today
 </React.Fragment>
 )}
 
-          
+
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
-            
-<div style={{"display":"grid","gridTemplateColumns":".62fr 1.7fr .58fr .78fr .78fr .9fr .7fr 1fr .5fr","gap":"10px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
 
-              
+<div className="blscroll" style={{"overflowX":"auto"}}>
+<div style={{"minWidth":"1290px"}}>
+<div style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 172px","gap":"10px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
+
+
 <span>
 Task ID
 </span>
@@ -302,25 +304,25 @@ QC feedback
 Action
 </span>
 
-            
+
 </div>
 
-            
+
 {(tkRows || []).map((t, $index) => (
 <React.Fragment key={$index}>
 
-              
-<div onClick={t.open} style={{"display":"grid","gridTemplateColumns":".62fr 1.7fr .58fr .78fr .78fr .9fr .7fr 1fr .5fr","gap":"10px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
 
-                
+<div onClick={t.open} style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 172px","gap":"10px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
+
+
 <span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>
 {t.id}
 </span>
 
-                
+
 <div style={{"minWidth":"0"}}>
 
-                  
+
 <div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
 <span style={cssTextToObject(`width:7px;height:7px;border-radius:99px;background:${t.priDot};flex-shrink:0`)} />
 <span style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
@@ -344,7 +346,7 @@ LOCKED
 )}
 </div>
 
-                  
+
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginTop":"4px","flexWrap":"wrap"}}>
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:${t.divBg};color:${t.divColor}`)}>
 {t.division}
@@ -364,27 +366,35 @@ LOCKED
 </span>
 </React.Fragment>
 )}
+{Boolean(t.tmShow) && (
+<React.Fragment>
+<button onClick={t.tmToggle} style={cssTextToObject(t.tmBtnStyle)}>
+<Icon name={t.tmIcon} style={{"width":"11px","height":"11px"}} />
+{t.tmText}
+</button>
+</React.Fragment>
+)}
 </div>
 
-                
+
 </div>
 
-                
+
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:${t.day.bg};color:${t.day.color};justify-self:start`)}>
 {t.day.label}
 </span>
 
-                
+
 <span style={{"fontSize":"12px","fontWeight":"600","color":"var(--ink-900)"}}>
 {t.assignee}
 </span>
 
-                
+
 <span style={{"fontSize":"12px","color":"var(--ink-700)"}}>
 {t.reviewer}
 </span>
 
-                
+
 <span style={{"minWidth":"0"}}>
 <span style={{"display":"block","fontSize":"11.5px","color":"var(--ink-500)"}}>
 {t.dates}
@@ -399,49 +409,65 @@ LOCKED
 )}
 </span>
 
-                
+
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:${t.statusBg};color:${t.statusColor};justify-self:start`)}>
 {t.status}
 </span>
 
-                
+
 <span style={{"minWidth":"0","fontSize":"11.5px","fontWeight":"600","color":"var(--ink-600)","display":"-webkit-box","WebkitLineClamp":"2","WebkitBoxOrient":"vertical","overflow":"hidden"}}>
 {t.qcFb}
 </span>
 
-                
-<button onClick={t.open} style={{"justifySelf":"end","display":"flex","alignItems":"center","gap":"5px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"9px","padding":"7px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-View
-</button>
 
-              
+<span style={{"minWidth":"0"}}>
+{Boolean(t.hasRework) && (
+<React.Fragment>
+<span style={cssTextToObject(`display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:${t.reworkBg};color:${t.reworkColor};margin-bottom:4px`)}>
+<Icon name={"rotate-ccw"} style={{"width":"10px","height":"10px"}} />
+{t.reworkLabel}
+</span>
+</React.Fragment>
+)}
+<button onClick={t.naGo} style={cssTextToObject(t.naStyle)}>
+<Icon name={t.naIcon} style={{"width":"12px","height":"12px"}} />
+{t.naLabel}
+</button>
+<span style={{"display":"block","fontSize":"10px","color":"var(--ink-400)","marginTop":"3px","textWrap":"pretty"}}>
+{t.naHint}
+</span>
+</span>
+
+
 </div>
 
-            
+
 </React.Fragment>
 ))}
+</div>
+</div>
 
-            
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"12px 20px","background":"var(--surface-50)"}}>
 
-              
+
 <span style={{"flex":"1","fontSize":"12px","fontWeight":"600","color":"var(--ink-500)"}}>
 {tkPageLabel}
 </span>
 
-              
+
 <button onClick={tkPrev} style={cssTextToObject(tkPrevStyle)}>
 <Icon name={"chevron-left"} style={{"width":"14px","height":"14px"}} />
 Prev
 </button>
 
-              
+
 <button onClick={tkNext} style={cssTextToObject(tkNextStyle)}>
 Next
 <Icon name={"chevron-right"} style={{"width":"14px","height":"14px"}} />
 </button>
 
-            
+
 </div>
 
 

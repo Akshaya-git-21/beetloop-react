@@ -5,7 +5,10 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function TaskDetailDrawer({ vm }) {
   const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
     clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
-    clCanSubmit, clSubmit, clCanReopen, clReopen, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll } = vm;
+    clCanSubmit, clSubmit, clCanReopen, clReopen, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
+    tkStatusCanSet, tkStatusOptions, tkStatusVal, tkSetStatusSel, tkStatusHint,
+    tkQcDigestHas, tkQcVerdictLine, tkQcOverall, tkQcLines, tkQcHasLines, tkQcCoverage, tkQcW,
+    tmCanTrack, tmElapsed, tmDotStyle, tmStatus, tmToggle, tmBtnStyle, tmIcon, tmLabel, tmProgressW, tmTotalLabel, tmHasSessions, tmSessions } = vm;
   return (
     <React.Fragment>
 {Boolean(tkDrawerOpen) && (
@@ -49,10 +52,33 @@ export default function TaskDetailDrawer({ vm }) {
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
-        
+
 </div>
 
-        
+
+{Boolean(tkStatusCanSet) && (
+<React.Fragment>
+
+
+<div style={{"display":"flex","alignItems":"center","gap":"9px","marginTop":"12px","flexWrap":"wrap"}}>
+<span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
+Status
+</span>
+<select value={tkStatusVal} onChange={tkSetStatusSel} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)","background":"#fff","cursor":"pointer"}}>
+{(tkStatusOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
+</select>
+<span style={{"fontSize":"10.5px","color":"var(--ink-400)","flex":"1","minWidth":"140px"}}>
+{tkStatusHint}
+</span>
+</div>
+
+
+</React.Fragment>
+)}
+
+
 {Boolean(tkHasActions) && (
 <React.Fragment>
 
@@ -82,7 +108,53 @@ export default function TaskDetailDrawer({ vm }) {
       
 <div style={{"padding":"20px max(24px,calc((100% - 1040px)/2)) 40px","display":"flex","flexDirection":"column","gap":"20px"}}>
 
-        
+
+{Boolean(tkQcDigestHas) && (
+<React.Fragment>
+
+
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 18px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"9px","marginBottom":"10px","flexWrap":"wrap"}}>
+<Icon name={"message-square-quote"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)","flex":"1","minWidth":"140px"}}>
+QC review outcome
+</span>
+<span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-700)"}}>
+{tkQcVerdictLine}
+</span>
+</div>
+<div style={{"height":"6px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden","marginBottom":"9px"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${tkQcW};background:var(--orchid-500)`)} />
+</div>
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginBottom":"10px"}}>
+{tkQcCoverage}
+</div>
+<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"11px 13px","fontSize":"12.5px","color":"var(--ink-700)","lineHeight":"1.5"}}>
+{tkQcOverall}
+</div>
+{Boolean(tkQcHasLines) && (
+<React.Fragment>
+<div style={{"display":"flex","flexDirection":"column","gap":"7px","marginTop":"10px"}}>
+{(tkQcLines || []).map((c, $index) => (
+<div key={$index} style={{"display":"flex","alignItems":"flex-start","gap":"8px"}}>
+<span style={cssTextToObject(`font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:${c.bg};color:${c.color};flex-shrink:0`)}>
+{c.verdict}
+</span>
+<span style={{"fontSize":"12px","color":"var(--ink-700)","lineHeight":"1.45"}}>
+<span style={{"fontWeight":"700","color":"var(--ink-900)"}}>{c.kpi}</span> — {c.text}
+</span>
+</div>
+))}
+</div>
+</React.Fragment>
+)}
+</div>
+
+
+</React.Fragment>
+)}
+
+
 {Boolean(tkQcPanel) && (
 <React.Fragment>
 
@@ -191,15 +263,70 @@ Linked KPI · {tkD.kpi}
 </div>
 </div>
 
-          
+
 <span style={{"fontSize":"13px","fontWeight":"800","color":"var(--verify-600)"}}>
 {tkD.contribution}
 </span>
 
-        
+
 </div>
 
-        
+
+{Boolean(tmCanTrack) && (
+<React.Fragment>
+
+
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"12px"}}>
+<span style={{"width":"38px","height":"38px","borderRadius":"11px","background":"var(--surface-50)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={"timer"} style={{"width":"18px","height":"18px","color":"var(--beet-700)"}} />
+</span>
+<div style={{"flex":"1","minWidth":"0"}}>
+<div style={{"fontFamily":"'Space Mono'","fontWeight":"700","fontSize":"22px","color":"var(--ink-900)","letterSpacing":".02em"}}>
+{tmElapsed}
+</div>
+<div style={{"display":"flex","alignItems":"center","gap":"6px","marginTop":"2px"}}>
+<span style={cssTextToObject(tmDotStyle)} />
+<span style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>{tmStatus}</span>
+</div>
+</div>
+<button onClick={tmToggle} style={cssTextToObject(tmBtnStyle)}>
+<Icon name={tmIcon} style={{"width":"15px","height":"15px"}} />
+{tmLabel}
+</button>
+</div>
+<div style={{"height":"5px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden","marginTop":"11px"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${tmProgressW};background:var(--verify-500)`)} />
+</div>
+<div style={{"fontSize":"11px","color":"var(--ink-500)","marginTop":"5px"}}>
+{tmTotalLabel}
+</div>
+{Boolean(tmHasSessions) && (
+<React.Fragment>
+<div style={{"borderTop":"1px solid var(--line-200)","marginTop":"11px","paddingTop":"9px"}}>
+<div style={{"fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"7px"}}>
+Time log
+</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"5px"}}>
+{(tmSessions || []).map((s, $index) => (
+<div key={$index} style={{"display":"flex","alignItems":"center","gap":"9px","fontSize":"11.5px"}}>
+<Icon name={"clock"} style={{"width":"11px","height":"11px","color":"var(--ink-400)","flexShrink":"0"}} />
+<span style={{"fontFamily":"'Space Mono'","fontWeight":"700","color":"var(--ink-900)"}}>{s.dur}</span>
+<span style={{"color":"var(--ink-500)"}}>{s.who}</span>
+<span style={{"marginLeft":"auto","color":"var(--ink-400)"}}>{s.date} · {s.time}</span>
+</div>
+))}
+</div>
+</div>
+</React.Fragment>
+)}
+</div>
+
+
+</React.Fragment>
+)}
+
+
 {Boolean(tkHasFb) && (
 <React.Fragment>
 

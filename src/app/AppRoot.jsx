@@ -3397,10 +3397,47 @@ class AppRoot extends React.Component {
   allTasks(){ return this.WTASKS().concat(this.state.tkAdded||[]).map(t=>this.tkOv(t)); }
   tkPatch(id, patch, act){
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
+    if(patch && patch.status==='Rework') patch={...patch, reworkCount:this.reworkCycles(t)+1};
     const upd={...(this.state.tkUpd||{})};
     upd[id]={ ...(upd[id]||{}), ...patch, activity:[...(t.activity||[]), [this.currentPerson(), act, this.todayStr()]] };
     this.setState({ tkUpd:upd });
     this._persistTaskPatch(id, patch);
+  }
+  reworkCycles(t){
+    const fromActivity=(t.activity||[]).filter(a=>/rework/i.test(String(a[1]))).length;
+    const fromState=((this.state.tkUpd||{})[t.id]||{}).reworkCount||0;
+    return Math.max(fromActivity, fromState);
+  }
+  timers(){ return this.state.tkTimers||{}; }
+  timerOf(id){ return this.timers()[id]||{ running:false, elapsed:0, sessions:[] }; }
+  timerElapsed(id){ const t=this.timerOf(id); return t.elapsed + (t.running&&t.startedAt?Math.floor((Date.now()-t.startedAt)/1000):0); }
+  hms(sec){ const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
+  ensureTick(){ if(this._tick) return; this._tick=setInterval(()=>{ const any=Object.values(this.timers()).some(t=>t.running);
+    if(any) this.forceUpdate(); else { clearInterval(this._tick); this._tick=null; } },1000); }
+  startTimer(id){
+    const t=this.allTasks().find(x=>x.id===id); if(!t) return;
+    const running=Object.keys(this.timers()).find(k=>k!==id&&this.timers()[k].running);
+    if(running){ this.flash('Stop the timer on '+running+' first — only one task can run at a time.'); return; }
+    const cur=this.timerOf(id);
+    const baseH=(cur.baseH!==undefined)?cur.baseH:(parseFloat(t.actH)||0);
+    const upd={...this.timers(), [id]:{...cur, baseH, running:true, startedAt:Date.now()}};
+    const patch={...(this.state.tkUpd||{})};
+    patch[id]={...(patch[id]||{}), status: t.status==='Assigned'?'In Progress':t.status};
+    this.setState({ tkTimers:upd, tkUpd:patch });
+    this.ensureTick();
+    this.flash('Timer started on '+id+(t.status==='Assigned'?' — task moved to In Progress.':'.'));
+  }
+  stopTimer(id){
+    const cur=this.timerOf(id); if(!cur.running) return;
+    const secs=Math.floor((Date.now()-cur.startedAt)/1000);
+    const sessions=[...(cur.sessions||[]), { start:cur.startedAt, secs, who:this.currentPerson(), date:this.todayStr() }];
+    const total=cur.elapsed+secs;
+    const baseH=cur.baseH||0;
+    const patch={...(this.state.tkUpd||{})};
+    patch[id]={...(patch[id]||{}), actH:Math.round((baseH+total/3600)*100)/100 };
+    this.setState({ tkTimers:{...this.timers(), [id]:{ running:false, startedAt:null, elapsed:total, sessions, baseH }}, tkUpd:patch });
+    this.flash('Timer stopped — '+this.hms(secs)+' logged on '+id+'.');
   }
   // Fire-and-forget: syncs to Supabase when this task exists there (created
   // via tkSubmitNew). No-ops harmlessly for the built-in demo-only tasks.
@@ -3414,7 +3451,7 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] task update failed:', error.message);
     });
   }
-  tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'},Closed:{bg:'#EAE4E8',c:'var(--beet-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   relDate(n){ const d=new Date(Date.now()+n*86400000); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; return m+' '+d.getDate()+', '+d.getFullYear(); }
   dayDiff(t){ const s=String(t.end||''); if(!s||s==='—') return null; const d=Date.parse(/\d{4}/.test(s)?s:(s+', 2026')); if(isNaN(d)) return null; const a=new Date(); a.setHours(0,0,0,0); const b=new Date(d); b.setHours(0,0,0,0); return Math.round((b-a)/86400000); }
   dayTag(t){ const df=this.dayDiff(t); if(df===null) return {label:'—',bg:'var(--surface-50)',color:'var(--ink-400)'};
@@ -3469,9 +3506,16 @@ class AppRoot extends React.Component {
     const hasPending=pendingOpen.length>0;
     const pri=(p)=>({Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[p]||'var(--ink-400)');
     const tkRows=list.map(t=>{ const tn=this.tkTone(t.status); const df=this.dayDiff(t);
+      const tmr=this.timerOf(t.id), tmSec=this.timerElapsed(t.id);
       const blockedBy=this.tkBlockedBy(t);
       const locked = isOwn && hasPending && df!==null && df>=0 && ['Assigned','In Progress'].includes(t.status) && !pendingOpen.some(p=>p.id===t.id);
       return {
+      tmRunning:tmr.running, tmElapsed:this.hms(tmSec), tmHasTime:tmSec>0,
+      tmShow:(t.assignee===person||['manager','team_lead','admin'].includes(rk)) && t.status!=='Approved' && t.status!=='Closed',
+      tmBtnStyle:'display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid '+(tmr.running?'var(--danger-600)':'var(--line-300)')+';background:'+(tmr.running?'var(--danger-600)':'#fff')+';color:'+(tmr.running?'#fff':'var(--ink-700)'),
+      tmIcon:tmr.running?'square':'play',
+      tmText:tmr.running?this.hms(tmSec):(tmSec>0?this.hms(tmSec):'Start'),
+      tmToggle:(e)=>{ if(e)e.stopPropagation(); tmr.running?this.stopTimer(t.id):this.startTimer(t.id); },
       waiting: blockedBy && ['Assigned','In Progress'].includes(t.status) ? ('Waiting on '+blockedBy.id) : '',
       division:this.tkDivision(t), divBg:this.tkDivTone(this.tkDivision(t)).bg, divColor:this.tkDivTone(this.tkDivision(t)).c,
       id:t.id, name:t.name, kpi:t.kpi, kpiId:t.kpiId, contribution:'+'+t.units+' '+t.unit, project:t.project,
@@ -3480,7 +3524,47 @@ class AppRoot extends React.Component {
       reviewer:t.reviewer||'—', qcFb:t.qcFeedback||'—', hasQcFb:!!t.qcFeedback,
       priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end,
       status:t.status, statusBg:tn.bg, statusColor:tn.c,
+      ...(()=>{ const rc=this.reworkCycles(t);
+        return { hasRework:rc>0, reworkLabel:rc===1?'1 QC rework':(rc+' QC reworks'),
+          reworkBg:rc>=3?'var(--danger-100)':rc===2?'var(--warn-100)':'var(--surface-50)',
+          reworkColor:rc>=3?'var(--danger-600)':rc===2?'var(--warn-600)':'var(--ink-500)' }; })(),
       open:()=>this.setState({ tkOpen:t.id }),
+      ...(()=>{
+        const mine=t.assignee===person, isQC=rk==='qc', isLead=['manager','team_lead','admin'].includes(rk);
+        const set=(st,note,msg)=>(e)=>{ if(e)e.stopPropagation(); this.tkPatch(t.id,{status:st},note); this.flash(msg); };
+        const openIt=(e)=>{ if(e)e.stopPropagation(); this.setState({ tkOpen:t.id }); };
+        const A=(label,icon,go,primary,hint)=>({ naLabel:label, naIcon:icon, naGo:go, naHint:hint||'',
+          naStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;'+(primary
+            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)') });
+        if(blockedBy && ['Assigned','In Progress'].includes(t.status))
+          return A('Blocked — open '+blockedBy.id,'lock',openIt,false,'Predecessor must finish first');
+        if(locked) return A('Clear pending first','lock',openIt,false,'Finish overdue work before today’s');
+        switch(t.status){
+          case 'Assigned':
+            return mine?A('Start task','play',set('In Progress','Started work','Task started — timer and checklist are now active.'),true,'Move to In Progress')
+              : isLead?A('Reassign','user-round-cog',openIt,false,'Not started yet')
+              : A('View','eye',openIt,false,'');
+          case 'In Progress':
+            return mine?A('Submit for QC','send',set('Submitted','Submitted for QC review','Submitted — now in the QC reviewer’s queue.'),true,'Attach evidence first')
+              : isLead?A('Follow up','message-square',openIt,false,'In progress')
+              : A('View','eye',openIt,false,'');
+          case 'Submitted':
+            return (isQC||isLead)?A('Review now','shield-check',openIt,true,'Approve or request rework')
+              : A('Awaiting QC','clock',openIt,false,'No action needed from you');
+          case 'Rework':
+            return mine?A('Fix & resubmit','rotate-ccw',set('In Progress','Rework started','Reopened — address the QC comments and resubmit.'),true,'QC comments attached')
+              : (isQC||isLead)?A('View feedback','message-square',openIt,false,'Waiting on the assignee')
+              : A('View','eye',openIt,false,'');
+          case 'Approved':
+            return isLead?A('Close & log KPI','check-circle-2',set('Closed','Closed — KPI logged','Task closed. The KPI contribution is locked in.'),true,'QC passed — final closure')
+              : mine?A('Log KPI actual','target',(e)=>{ if(e)e.stopPropagation(); this.setState({ route:'okr', okrModTab:'okrs' }); },true,'Record the outcome against your KPI')
+              : A('View','eye',openIt,false,'QC approved');
+          case 'Closed':
+            return A('View record','archive',openIt,false,'Complete — no action');
+          default:
+            return A('Open','eye',openIt,false,'');
+        }
+      })(),
     };});
     const queuePending=pendingOpen.map(t=>({ name:t.name, id:t.id, open:()=>this.setState({ tkOpen:t.id }) }));
     const queueToday=isOwn?this.allTasks().filter(t=>t.assignee===person && this.dayDiff(t)===0 && ['Assigned','In Progress','Rework'].includes(t.status)).map(t=>({ name:t.name, id:t.id, locked:hasPending, open:()=>this.setState({ tkOpen:t.id }) })):[];
@@ -3499,7 +3583,7 @@ class AppRoot extends React.Component {
     const period=this.state.tkPeriod||'Weekly';
     const win=period==='Weekly'?7:31;
     const aList=list.filter(t=>{ const df=this.dayDiff(t); return df===null?true:Math.abs(df)<=win; });
-    const aAssigned=aList.length, aDone=aList.filter(t=>t.status==='Approved').length, aPending=aList.filter(t=>['Assigned','In Progress','Submitted'].includes(t.status)).length, aRework=aList.filter(t=>t.status==='Rework').length;
+    const aAssigned=aList.length, aDone=aList.filter(t=>['Approved','Closed'].includes(t.status)).length, aPending=aList.filter(t=>['Assigned','In Progress','Submitted'].includes(t.status)).length, aRework=aList.filter(t=>t.status==='Rework').length;
     const apct=(n)=>aAssigned?Math.round(n/aAssigned*100):0;
     const pLbl=period==='Weekly'?'this week':'this month';
     const tkWeek=[
@@ -3524,7 +3608,7 @@ class AppRoot extends React.Component {
       tkSubFilters:[
         {label:'Type', value:F.division||'All', onChange:setF2('division'), options:['All','Content','Graphics','Web Developers','SMM','SEO']},
         {label:'Day', value:dayF, onChange:setF2('day'), options:['All','Overdue','Day before','Yesterday','Today','Tomorrow']},
-        {label:'Status', value:F.status, onChange:setF2('status'), options:['All','Assigned','In Progress','Submitted','Rework','Approved']},
+        {label:'Status', value:F.status, onChange:setF2('status'), options:['All','Assigned','In Progress','Submitted','Rework','Approved','Closed']},
         {label:'Priority', value:F.priority, onChange:setF2('priority'), options:['All','Critical','High','Medium','Low']},
         {label:'Assignee', value:F.assignee, onChange:setF2('assignee'), options:['All'].concat(Array.from(new Set(this.allTasks().map(t=>t.assignee))))},
       ],
@@ -5190,8 +5274,61 @@ class AppRoot extends React.Component {
       this.flash(status==='Approved'?('Approved · +'+t.units+' '+t.unit+' → '+t.kpi+'.'+(unlocked.length?(' Next stage unlocked: '+unlocked.map(n=>n.id).join(', ')+'.'):'')):'Rework requested — feedback & references sent to '+t.assignee+'.');
     };
     const canAttach=isAssignee && t.status!=='Approved';
+    const tm=this.timerOf(id), elapsed=this.timerElapsed(id);
+    const timerData={
+      tmRunning:tm.running, tmElapsed:this.hms(elapsed),
+      tmCanTrack:isAssignee||['manager','team_lead','admin'].includes(rk),
+      tmLabel:tm.running?'Stop timer':'Start timer',
+      tmIcon:tm.running?'square':'play',
+      tmBtnStyle:'display:flex;align-items:center;gap:7px;padding:9px 16px;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;background:'+(tm.running?'var(--danger-600)':'#7A1C46'),
+      tmToggle:()=>tm.running?this.stopTimer(id):this.startTimer(id),
+      tmDotStyle:'width:8px;height:8px;border-radius:99px;background:'+(tm.running?'var(--danger-500)':'var(--ink-400)'),
+      tmStatus:tm.running?'Running — time is being logged':'Not running',
+      tmSessions:(tm.sessions||[]).slice().reverse().map(s=>({ dur:this.hms(s.secs), who:s.who, date:s.date,
+        time:new Date(s.start).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) })),
+      tmHasSessions:(tm.sessions||[]).length>0,
+      ...(()=>{ const baseH=(tm.baseH!==undefined)?tm.baseH:(parseFloat(t.actH)||0);
+        const totalH=Math.round((baseH+elapsed/3600)*100)/100;
+        return {
+          tmTotalLabel:(tm.sessions||[]).length+' session'+((tm.sessions||[]).length===1?'':'s')+' this cycle · '+totalH+' h actual'+(baseH?(' (incl. '+baseH+' h previously logged)'):'')+(t.estH?(' of '+t.estH+' h estimated'):''),
+          tmProgressW:t.estH?Math.min(100,Math.round(totalH/t.estH*100))+'%':'0%',
+          tmOver:t.estH&&totalH>t.estH }; })(),
+    };
     return {
+      ...(()=>{ const d=this.qcCommentDigest(t);
+        return { tkQcDigestHas:d.hasAny,
+          tkQcVerdictLine:d.verdictLabel||'Not reviewed yet',
+          tkQcOverall:d.overall||'No overall QC note recorded.',
+          tkQcLines:d.lines.map(l=>({ kpi:l.kpi, text:l.text, verdict:l.verdict,
+            bg:l.verdict==='Compliant'?'var(--verify-100)':l.verdict==='Rework'?'var(--danger-100)':'var(--warn-100)',
+            color:l.verdict==='Compliant'?'var(--verify-600)':l.verdict==='Rework'?'var(--danger-600)':'var(--warn-600)' })),
+          tkQcHasLines:d.lines.length>0,
+          tkQcCoverage:d.reviewed+' of '+d.total+' checks reviewed',
+          tkQcW:d.total?Math.round(d.reviewed/d.total*100)+'%':'0%' }; })(),
       tkDrawerOpen:true, tkD:{ id:t.id, name:t.name, desc:t.desc, status:t.status, statusBg:tn.bg, statusColor:tn.c, kpi:t.kpi, kpiId:t.kpiId, contribution:'+'+t.units+' '+t.unit },
+      ...(()=>{
+        const mine=t.assignee===person;
+        const canSet=mine||['manager','team_lead','admin'].includes(rk);
+        const base=['Assigned','In Progress','Completed — send to QC'];
+        const cur=t.status==='Submitted'?'Completed — send to QC':t.status;
+        const opts=base.includes(cur)?base:[cur].concat(base);
+        return {
+          tkStatusCanSet:canSet && !['Approved','Closed'].includes(t.status),
+          tkStatusOptions:opts, tkStatusVal:cur,
+          tkSetStatusSel:(e)=>{ const v=e.target.value;
+            if(v==='Completed — send to QC'){
+              this.tkPatch(t.id,{ status:'Submitted' },'Marked complete — routed to QC ('+(t.reviewer||'QC team')+')');
+              this.flash(t.id+' marked complete and sent to '+(t.reviewer||'the QC team')+' for review.');
+            } else {
+              this.tkPatch(t.id,{ status:v },'Status → '+v);
+              this.flash(t.id+' → '+v+'.');
+            } },
+          tkStatusHint:t.status==='Submitted'
+            ? ('Awaiting QC review by '+(t.reviewer||'the QC team')+'.')
+            : (t.status==='Rework'
+              ? 'QC sent this back — address the comments, then choose “Completed — send to QC”.'
+              : 'Choosing “Completed — send to QC” routes this task to the QC queue automatically.') }; })(),
+      ...timerData,
       tkHasFb:!!t.qcFeedback, tkFb:t.qcFeedback||'',
       ...(()=>{
         const canComment = isAssignee || ['manager','team_lead','admin','qc'].includes(rk);
