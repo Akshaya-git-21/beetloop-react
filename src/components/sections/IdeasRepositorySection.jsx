@@ -16,7 +16,7 @@ All repositories
 </button>
 
           
-<div style={{"display":"grid","gridTemplateColumns":"repeat(5,1fr)","gap":"12px","marginBottom":"18px"}}>
+<div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(160px,1fr))","gap":"12px","marginBottom":"18px"}}>
 
             
 {(ideaStats || []).map((s, $index) => (

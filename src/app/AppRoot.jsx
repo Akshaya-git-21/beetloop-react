@@ -16,6 +16,7 @@ class AppRoot extends React.Component {
     newPass: '', confirmPass: '', mfa: true,
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
+    umOpen: null, umEdit: false, umDraft: {},
     showUserModal: false,
     showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
@@ -29,7 +30,6 @@ class AppRoot extends React.Component {
     cmpNew: false, cmpEditId: null, cmpForm: {}, cmpSection: 'cmpA', cmpEffExpanded: [],
     thOpen: null, thAdded: {}, thNew: [], thForm: null, msgDraft: '', msgFiles: [], msgLink: null,
     tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
-    showManageUserModal: false, manageUserIndex: null, manageUserForm: null,
     showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
@@ -43,7 +43,7 @@ class AppRoot extends React.Component {
     epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '',
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [],
-    uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive' },
+    uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' },
     users: [
       { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
       { name:'Rahul Menon', sub:'COO · Operations', role:'COO', dept:'Operations', status:'Active', statusTone:'ok' },
@@ -219,6 +219,10 @@ class AppRoot extends React.Component {
       Department:u.dept||'—', Designation:u.designation||'—', Team:u.team||'—',
       Reporting_Manager:u.reportingManager||'—', Team_Lead:u.teamLead||'—',
       Office_Location:u.officeLocation||'—', Role:u.role,
+      Shift_Start:u.shiftStart||'09:00', Shift_End:u.shiftEnd||'18:00',
+      Break_Minutes:String(u.breakMin||60), Working_Days:String(u.days||5),
+      Daily_Capacity_Hours:String(this.dailyCapacity(u.name)),
+      Weekly_Capacity_Hours:String(this.weeklyCapacity(u.name)),
       Employment_Type:u.employmentType||'Full-time', Joining_Date:u.joiningDate||'—',
       Status:u.status,
     }));
@@ -277,9 +281,9 @@ class AppRoot extends React.Component {
       },
       user: {
         label:'User Master', icon:'users', group:'Organization & Security',
-        desc:'Platform users with department, designation, reporting hierarchy and role.',
-        cols:[ {k:'Employee_ID',l:'Emp ID',mono:1}, {k:'Full_Name',l:'Name'}, {k:'Department',l:'Dept'}, {k:'Designation',l:'Designation'}, {k:'Role',l:'Role'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['Employee_ID','Full_Name','Official_Email','Mobile','Department','Designation','Team','Reporting_Manager','Team_Lead','Office_Location','Role','Employment_Type','Joining_Date','Status'],
+        desc:'Platform users with department, designation, reporting hierarchy, role and shift capacity — the same records shown in User Management.',
+        cols:[ {k:'Employee_ID',l:'Emp ID',mono:1}, {k:'Full_Name',l:'Name'}, {k:'Department',l:'Dept'}, {k:'Role',l:'Role'}, {k:'Shift_Start',l:'Shift'}, {k:'Weekly_Capacity_Hours',l:'Cap h/wk',mono:1}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Employee_ID','Full_Name','Official_Email','Mobile','Department','Designation','Team','Reporting_Manager','Team_Lead','Office_Location','Role','Shift_Start','Shift_End','Break_Minutes','Working_Days','Daily_Capacity_Hours','Weekly_Capacity_Hours','Employment_Type','Joining_Date','Status'],
         rows:[], // populated live from this.state.users on every MASTERS_REG() call — see below
       },
       department: {
@@ -1031,7 +1035,8 @@ class AppRoot extends React.Component {
     const showMessages = route==='messages';
     const showSop = route==='sop';
     const showSupport = route==='support';
-    const showTable = ['repositories','users'].includes(route);
+    const showTable = route==='repositories';
+    const showUsersTable = route==='users';
     const showPageHead = !showMasterDetail;
 
     const out = {
@@ -1080,7 +1085,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -1095,18 +1100,15 @@ class AppRoot extends React.Component {
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
       saveRecord:()=>this._saveRecord(),
       recordEditKey:this.state.recordEditKey, deleteRecord:()=>this._deleteRecord(),
-      showManageUserModal:this.state.showManageUserModal, manageUserForm:this.state.manageUserForm,
-      closeManageUserModal:()=>this.setState({ showManageUserModal:false }),
-      manageUserSetName:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, name:e.target.value} }),
-      manageUserSetDept:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, dept:e.target.value} }),
-      manageUserSetDesignation:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, designation:e.target.value} }),
-      manageUserSetRole:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, roleKey:e.target.value} }),
-      manageUserSetStatus:e=>this.setState({ manageUserForm:{...this.state.manageUserForm, status:e.target.value} }),
-      saveManageUser:()=>this._saveManageUser(),
-      deleteManageUser:()=>this._deleteManageUser(),
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
+      ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
+      ufCapNote:(()=>{ const f=this.state.uf||{}; const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
+        const gross=hm(f.shiftEnd||'18:00')-hm(f.shiftStart||'09:00');
+        const daily=Math.max(0,Math.round((gross-((parseInt(f.breakMin,10)||60)/60))*100)/100);
+        const weekly=Math.round(daily*(parseFloat(f.days)||5)*100)/100;
+        return daily+' h/day · '+weekly+' h/week capacity'; })(),
       showRoleConfirm:this.state.showRoleConfirm,
       roleConfirmLabel:this.state.roleConfirmKey?this.ROLES[this.state.roleConfirmKey].label:'',
       roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
@@ -1168,6 +1170,7 @@ class AppRoot extends React.Component {
       out.tblQuery=this.state.tblQuery||'';
       out.tblOnQuery=(e)=>this.setState({ tblQuery:e.target.value, pg:{...(this.state.pg||{}),['tbl-'+route]:0} });
     }
+    if(showUsersTable) Object.assign(out, this.tableData(route, rk, lvl, readOnly));
     if(showTasks2){ Object.assign(out, this.tasksView());
       const tkTab=this.state.tkTab||'list';
       const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
@@ -1720,11 +1723,14 @@ class AppRoot extends React.Component {
     const q = (this.state.masterQuery||'').toLowerCase();
     const tagTone = (v)=>{ const t=this.levelTone; const tone=st(v); return { ok:{bg:'var(--verify-100)',color:'var(--verify-600)'}, warn:{bg:'var(--warn-100)',color:'var(--warn-600)'}, danger:{bg:'var(--danger-100)',color:'var(--danger-600)'}, draft:{bg:'var(--surface-50)',color:'var(--ink-500)'}, info:{bg:'var(--info-100)',color:'var(--info-600)'} }[tone]; };
     const rows = m.rows.map((r,idx)=>{
-      const cells = m.cols.map(c=>{ const v=r[c.k]; const tt = c.tag?tagTone(v):null; return { val: v===undefined||v===''?'—':String(v), plain:!c.tag, tag:!!c.tag, font: c.mono?"'Space Mono', monospace":"inherit", tagBg: tt?tt.bg:'', tagColor: tt?tt.color:'' }; });
-      return { cells, open:()=>this.setState({ masterRecord:idx, masterTab:0 }) };
+      const cells = m.cols.map(c=>{ let v=r[c.k];
+        if(key==='user'&&c.k==='Shift_Start') v=(r.Shift_Start||'')+'–'+(r.Shift_End||'');
+        const tt = c.tag?tagTone(v):null; return { val: v===undefined||v===''?'—':String(v), plain:!c.tag, tag:!!c.tag, font: c.mono?"'Space Mono', monospace":"inherit", tagBg: tt?tt.bg:'', tagColor: tt?tt.color:'' }; });
+      return { cells, open:()=>{ if(key==='user'){ this.setState({ route:'users', umOpen:r.Full_Name, umEdit:false }); return; }
+        this.setState({ masterRecord:idx, masterTab:0 }); } };
     }).filter((_,idx)=>{ if(!q) return true; return JSON.stringify(m.rows[idx]).toLowerCase().includes(q); });
     const out = {
-      mdLabel:m.label, mdIcon:m.icon, mdDesc:m.desc, mdCount:m.rows.length+' records',
+      mdLabel:m.label, mdIcon:m.icon, mdDesc:m.desc, mdCount:m.rows.length+' records'+(key==='user'?' · synced with User Management':''),
       mdCols:m.cols.map(c=>c.l), ...(()=>{ const pg=this.pgData('md-'+key,rows,8); return { mdRows:pg.rows, mdPg:pg }; })(),
       mdBack:()=>this.setState({ masterKey:null, masterRecord:null }),
       mdAdd:()=>this.openMasterRecordEdit(key, null),
@@ -2524,9 +2530,9 @@ class AppRoot extends React.Component {
       idfCatOptions:opts('category',['Nutrition','Science','Compliance','Marketing','Health','Food Technology']),
       idfSubCatOptions:opts('subCategory',['— Optional —','Plant Proteins','Formulation','Regulatory','SEO','Branding','Clinical']),
       idfServiceOptions:opts('service',['— Optional —','Content Writing','SEO','Technical SEO','Web Development','Digital Marketing','Social Media','CRO']),
-      idfCampaignOptions:opts('campaign',['— Optional —','Content Engine Q1','Q3 SEO push','Organic Growth Q1','Social Push Q1','CRO Sprint']),
+      idfCampaignOptions:opts('campaign',['— Optional —'].concat(this.campaignNames(false))),
       idfOwnerOptions:['Sameer Iyer','Neha Verma'],
-      idfEffortOptions:this.allEpPlans().map(p=>p.name),
+      idfEffortOptions:['— Optional —'].concat(this.allEpPlans().map(p=>p.name)),
       idfClusterOptions:opts('cluster',['Plant Based Nutrition','Protein Types & Benefits','Nutraceutical Compliance','Food Innovation']),
       idfPillarOptions:opts('pillar',['Plant Based Protein Hub','Compliance Hub','Formulation Hub']),
       idfAudienceOptions:opts('audience',['Health Conscious Adults','Formulators','Manufacturers','Researchers','Students']),
@@ -3015,6 +3021,69 @@ class AppRoot extends React.Component {
   weeklyCapacity(name){ const u=this.userOf(name); return Math.round(this.dailyCapacity(name)*((u&&u.days)||5)*100)/100; }
   shiftLabel(name){ const u=this.userOf(name); if(!u) return 'No shift set';
     return (u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00')+' · '+(u.breakMin||60)+'m break · '+this.dailyCapacity(name)+' h/day'; }
+  userDetailData(rk){
+    const name=this.state.umOpen; if(!name) return { umDrawerOpen:false };
+    const u=this.userOf(name); if(!u) return { umDrawerOpen:false };
+    const isAdmin=rk==='admin';
+    const editing=isAdmin&&!!this.state.umEdit;
+    const d=this.state.umDraft||{};
+    const setD=(k)=>(e)=>this.setState({ umDraft:{...d,[k]:e.target.value} });
+    const tasks=this.allTasks().filter(t=>t.assignee===name);
+    const open=tasks.filter(t=>!['Approved','Closed'].includes(t.status));
+    const assigned=open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0);
+    const wk=this.weeklyCapacity(name)||40;
+    const util=wk?Math.round(assigned/wk*100):0;
+    return {
+      umDrawerOpen:true, umEditing:editing, umCanEdit:isAdmin,
+      umU:{ name:u.name, sub:u.sub, role:u.role, dept:u.dept, status:u.status,
+        initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
+        statusBg:u.statusTone==='ok'?'var(--verify-100)':'var(--warn-100)',
+        statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)' },
+      umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{} }),
+      umStop:(e)=>e.stopPropagation(),
+      umMeta:[['Role',u.role],['Department',u.dept],['Designation',u.sub],['Account status',u.status],
+        ['Shift',(u.shiftStart||'09:00')+' – '+(u.shiftEnd||'18:00')],['Break',(u.breakMin||60)+' minutes'],
+        ['Working days',(u.days||5)+' / week'],['Daily capacity',this.dailyCapacity(name)+' h'],
+        ['Weekly capacity',wk+' h']].map(x=>({k:x[0],v:x[1]})),
+      umLoad:{ assigned:assigned.toFixed(1)+' h assigned', cap:wk+' h capacity',
+        free:(wk-assigned>=0?((wk-assigned).toFixed(1)+' h free'):(Math.abs(wk-assigned).toFixed(1)+' h over')),
+        freeColor:(wk-assigned)>=0?'var(--verify-600)':'var(--danger-600)',
+        pct:util+'%', w:Math.min(100,util)+'%',
+        color:util>100?'var(--danger-500)':util>=85?'var(--warn-500)':util>=40?'var(--verify-500)':'var(--info-500)',
+        state:util>100?'Overloaded':util>=85?'Fully booked':util>=40?'Balanced':'Underloaded',
+        stateBg:util>100?'var(--danger-100)':util>=85?'var(--warn-100)':util>=40?'var(--verify-100)':'var(--info-100)',
+        stateColor:util>100?'var(--danger-600)':util>=85?'var(--warn-600)':util>=40?'var(--verify-600)':'var(--info-600)',
+        openTasks:open.length+' open of '+tasks.length+' total' },
+      umTasks:tasks.slice(0,8).map(t=>{ const tt=this.tkTone(t.status);
+        return { id:t.id, name:t.name, hours:(t.estH||0)+' h', dates:t.start+' → '+t.end,
+          status:t.status, bg:tt.bg, color:tt.c, open:()=>this.setState({ umOpen:null, route:'tasks', tkOpen:t.id }) }; }),
+      umHasTasks:tasks.length>0,
+      umTaskMore:tasks.length>8?('+'+(tasks.length-8)+' more'):'',
+      umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
+        breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status } }),
+      umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
+      umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
+      umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
+      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin'],
+      umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
+      umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
+      umDayOptions:['4','5','5.5','6'],
+      umSave:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,
+          shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
+          breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
+          role:d.role||x.role, dept:d.dept||x.dept, status:d.status||x.status,
+          statusTone:(d.status||x.status)==='Active'?'ok':'warn' }:x);
+        this.setState({ users, umEdit:false, umDraft:{} });
+        const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
+        const newCap=Math.round((hm(d.shiftEnd||u.shiftEnd||'18:00')-hm(d.shiftStart||u.shiftStart||'09:00')-((parseInt(d.breakMin,10)||u.breakMin||60)/60))*(parseFloat(d.days)||u.days||5)*10)/10;
+        this.flash(name+' updated — capacity now '+newCap+' h/week.'); },
+      umSuspend:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,status:x.status==='Suspended'?'Active':'Suspended',statusTone:x.status==='Suspended'?'ok':'warn'}:x);
+        this.setState({ users }); this.flash(name+(u.status==='Suspended'?' reactivated.':' suspended — login blocked, records retained.')); },
+      umSuspendLabel:u.status==='Suspended'?'Reactivate account':'Suspend account',
+      umResend:()=>this.flash('Activation link re-sent to '+String(u.name).toLowerCase().replace(/\s+/g,'.')+'@beetloop.com.'),
+      umShowResend:u.status==='Pending Invitation',
+    };
+  }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
   campaignNames(withNone){ const names=this.allCampaigns().map(c=>c.name); return withNone?['— None —'].concat(names):names; }
   campaignOptionsFor(stored,withNone){ const base=this.campaignNames(withNone);
@@ -5101,47 +5170,6 @@ class AppRoot extends React.Component {
     this.flash((kind==='campaigns'?'Campaign':'Project')+' deleted.');
   }
 
-  _saveManageUser(){
-    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
-    if(!f || i==null) return;
-    if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
-    if(this.HIGH_PRIVILEGE_ROLES.includes(f.roleKey)){
-      this.setState({ showRoleConfirm:true, roleConfirmKey:f.roleKey, roleConfirmAction:'manage' });
-      return;
-    }
-    this._applyManageUser(f.roleKey);
-  }
-  _applyManageUser(roleKey){
-    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
-    if(!f || i==null) return;
-    const roleLabel=(this.ROLES[roleKey]&&this.ROLES[roleKey].label)||roleKey;
-    const updated={ ...f, roleKey, name:f.name.trim(), role:roleLabel, sub:(f.designation||roleLabel)+' · '+f.dept,
-      statusTone: f.status==='Active'?'ok':'warn' };
-    const users=[...this.state.users]; users[i]=updated;
-    this.setState({ users, showManageUserModal:false });
-    this.flash('Updated '+updated.name+'.');
-    if(f.id){
-      supabase.from('profiles').update({
-        full_name:updated.name, department:updated.dept, designation:updated.designation||null,
-        role_key:updated.roleKey, status:updated.status,
-      }).eq('id', f.id).then(({error})=>{
-        if(error) console.warn('[supabase] profile update failed:', error.message);
-      });
-    }
-  }
-  _deleteManageUser(){
-    const f=this.state.manageUserForm; const i=this.state.manageUserIndex;
-    if(!f || i==null) return;
-    const users=this.state.users.filter((_,x)=>x!==i);
-    this.setState({ users, showManageUserModal:false, manageUserIndex:null, manageUserForm:null });
-    this.flash('Removed '+f.name+' from the team.');
-    if(f.id){
-      supabase.from('profiles').delete().eq('id', f.id).then(({error})=>{
-        if(error) console.warn('[supabase] profile delete failed:', error.message);
-      });
-    }
-  }
-
   async _loadRecords(){
     const { data, error } = await supabase.from('records').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] records load failed:', error.message); return; }
@@ -5948,16 +5976,54 @@ class AppRoot extends React.Component {
       : 'padding:6px 13px;border:1px solid var(--line-300);background:#fff;color:var(--ink-700);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer'});
 
     if(route==='users'){
+      const empOf=(name)=>{ const idx=this.state.users.findIndex(u=>u.name===name); return 'EMP-'+String(100+idx+1).slice(-3); };
       return {
-        tableCols:['User','Department','Status','Role','Actions'],
-        tableRows:this.state.users.map((u,i)=>({
-          c0:u.name, c0sub:u.sub, c1:u.dept, c3:u.role,
-          ...tag(u.status, u.statusTone==='ok'?'ok':'warn'),
-          ...act(canEdit?'Manage':'View', canEdit
-            ? ()=>{ const rkFound=u.roleKey||Object.keys(this.ROLES).find(k=>this.ROLES[k].label===u.role)||'junior';
-                this.setState({ showManageUserModal:true, manageUserIndex:i, manageUserForm:{...u, roleKey:rkFound} }); }
-            : ()=>this.flash('View only.'), false),
-        })),
+        umIsList:true,
+        umRows:this.state.users.map(u=>{
+          const open=this.allTasks().filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
+          const assigned=open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0);
+          const wk=this.weeklyCapacity(u.name)||40;
+          const util=wk?Math.round(assigned/wk*100):0;
+          const free=Math.round((wk-assigned)*10)/10;
+          return {
+            emp:empOf(u.name), name:u.name, sub:u.sub, dept:u.dept, role:u.role,
+            initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
+            shift:(u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00'),
+            shiftSub:(u.breakMin||60)+'m break · '+(u.days||5)+' days',
+            daily:this.dailyCapacity(u.name)+' h/day',
+            weekly:wk+' h',
+            loadLabel:assigned.toFixed(1)+' h assigned',
+            freeLabel:free>=0?(free.toFixed(1)+' h free'):(Math.abs(free).toFixed(1)+' h over'),
+            freeColor:free>=0?'var(--verify-600)':'var(--danger-600)',
+            util:util+'%', w:Math.min(100,util)+'%',
+            barColor:util>100?'var(--danger-500)':util>=85?'var(--warn-500)':util>=40?'var(--verify-500)':'var(--info-500)',
+            load:util>100?'Overloaded':util>=85?'Fully booked':util>=40?'Balanced':'Underloaded',
+            loadBg:util>100?'var(--danger-100)':util>=85?'var(--warn-100)':util>=40?'var(--verify-100)':'var(--info-100)',
+            loadColor:util>100?'var(--danger-600)':util>=85?'var(--warn-600)':util>=40?'var(--verify-600)':'var(--info-600)',
+            status:u.status,
+            statusBg:u.statusTone==='ok'?'var(--verify-100)':'var(--warn-100)',
+            statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)',
+            actionLabel:rk==='admin'?'Manage':'View',
+            actionStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(rk==='admin'
+              ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
+            open:()=>this.setState({ umOpen:u.name, umEdit:false }),
+            suspendLabel:u.status==='Suspended'?'Reactivate':'Suspend',
+            suspend:(e)=>{ if(e)e.stopPropagation();
+              const users=(this.state.users||[]).map(x=>x.name===u.name?{...x,status:x.status==='Suspended'?'Active':'Suspended',statusTone:x.status==='Suspended'?'ok':'warn'}:x);
+              this.setState({ users }); this.flash(u.name+(u.status==='Suspended'?' reactivated.':' suspended — login blocked, records retained.')); },
+            canSuspend:rk==='admin' };
+        }),
+        umStats:(()=>{ const rows=this.state.users.map(u=>{
+            const open=this.allTasks().filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
+            const wk=this.weeklyCapacity(u.name)||40;
+            return wk?Math.round(open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)/wk*100):0; });
+          const K=(label,value,sub,color)=>({label,value,sub,color});
+          return [K('Users',String(this.state.users.length),'on the platform','var(--beet-700)'),
+            K('Active',String(this.state.users.filter(u=>u.status==='Active').length),'can sign in','var(--verify-600)'),
+            K('Overloaded',String(rows.filter(x=>x>100).length),'beyond shift capacity','var(--danger-600)'),
+            K('Underloaded',String(rows.filter(x=>x<40).length),'below 40% of capacity','var(--info-600)'),
+            K('Total capacity',this.state.users.reduce((s,u)=>s+(this.weeklyCapacity(u.name)||0),0)+' h','per week','var(--orchid-600)')]; })(),
+        ...this.userDetailData(rk),
       };
     }
     const scoped = (rows)=> (rk==='junior') ? rows.slice(0,2) : (rk==='senior'? rows.slice(0,3) : rows);
@@ -6087,8 +6153,9 @@ class AppRoot extends React.Component {
   async _createUser(roleKey){
     const f=this.state.uf;
     const name=(f.first+' '+f.last).trim();
-    const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn' };
-    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive' } });
+    const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn',
+      shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5 };
+    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' } });
     try{
       const resp=await fetch('/api/invite-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -6106,7 +6173,6 @@ class AppRoot extends React.Component {
     const { roleConfirmKey, roleConfirmAction } = this.state;
     this.setState({ showRoleConfirm:false, roleConfirmKey:null, roleConfirmAction:null });
     if(roleConfirmAction==='add') this._createUser(roleConfirmKey);
-    else if(roleConfirmAction==='manage') this._applyManageUser(roleConfirmKey);
   }
   cancelRoleAssignment(){ this.setState({ showRoleConfirm:false, roleConfirmKey:null, roleConfirmAction:null }); }
 

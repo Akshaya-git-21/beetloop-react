@@ -116,7 +116,7 @@ Move to Tasks
 <div style={cssTextToObject(`font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${idFbColor};margin-bottom:3px`)}>
 QC feedback
 </div>
-<div style={{"fontSize":"13px","fontWeight":"600","color":"var(--ink-800)","lineHeight":"1.5"}}>
+<div style={{"fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","lineHeight":"1.5"}}>
 {idFb}
 </div>
 </div>

@@ -31,8 +31,9 @@ import CheckInModal from '../components/drawers/CheckInModal.jsx';
 import CheckInHistoryDrawer from '../components/drawers/CheckInHistoryDrawer.jsx';
 import Toast from '../components/drawers/Toast.jsx';
 import CreateRecordModal from '../components/drawers/CreateRecordModal.jsx';
-import ManageUserModal from '../components/drawers/ManageUserModal.jsx';
 import AddUserModal from '../components/drawers/AddUserModal.jsx';
+import UsersSection from '../components/sections/UsersSection.jsx';
+import UserDetailDrawer from '../components/drawers/UserDetailDrawer.jsx';
 import EditMasterRecordModal from '../components/drawers/EditMasterRecordModal.jsx';
 import ConfirmRoleModal from '../components/drawers/ConfirmRoleModal.jsx';
 import MasterRecordSlideOver from '../components/drawers/MasterRecordSlideOver.jsx';
@@ -176,11 +177,12 @@ export default function AppShell({ vm }) {
 <TasksSection vm={vm} />
 
 
-        
-{/* TABLE SCREENS (projects / campaigns / tasks / okr / repositories / users / masters detail) */}
 
-        
+{/* TABLE SCREENS (projects / campaigns / tasks / okr / repositories / masters detail) */}
+
+
 <TableSection vm={vm} />
+<UsersSection vm={vm} />
 
 
         
@@ -314,7 +316,7 @@ export default function AppShell({ vm }) {
 
 <Toast vm={vm} />
 <CreateRecordModal vm={vm} />
-<ManageUserModal vm={vm} />
+<UserDetailDrawer vm={vm} />
 
 
 

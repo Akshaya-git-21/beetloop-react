@@ -2,7 +2,8 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function AddUserModal({ vm }) {
-  const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole } = vm;
+  const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -116,7 +117,50 @@ Analytics
 </select>
 </div>
 
-          
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Shift start
+</label>
+<input type="time" value={uf.shiftStart} onInput={ufShiftStart} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Shift end
+</label>
+<input type="time" value={uf.shiftEnd} onInput={ufShiftEnd} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Break (minutes)
+</label>
+<input value={uf.breakMin} onInput={ufBreak} placeholder="60" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Working days / week
+</label>
+<select value={uf.days} onChange={ufDays} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="5.5">5.5</option>
+<option value="6">6</option>
+</select>
+</div>
+
+
+<div style={{"gridColumn":"1 / -1","display":"flex","alignItems":"center","gap":"8px","background":"var(--verify-100)","border":"1px solid #BFE3D0","color":"var(--verify-600)","padding":"9px 13px","borderRadius":"11px","fontSize":"11.5px","fontWeight":"700"}}>
+<Icon name={"gauge"} style={{"width":"13px","height":"13px","flexShrink":"0"}} />
+{ufCapNote}
+</div>
+
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Designation
