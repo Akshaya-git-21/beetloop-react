@@ -32,6 +32,7 @@ class AppRoot extends React.Component {
     recordOverrides: {}, recordEditKey: null, recordIsReal: false,
     cmpFilters: {status:'All',type:'All',dept:'All'}, cmpOpen: null, cmpTab: 'overview',
     cmpNew: false, cmpEditId: null, cmpForm: {}, cmpSection: 'cmpA', cmpEffExpanded: [],
+    cmpAdded: [], cmpUpd: {}, cmpDeleted: [], cmpNewEffort: null,
     thOpen: null, thAdded: {}, thNew: [], thForm: null, msgDraft: '', msgFiles: [], msgLink: null,
     fpTarget: null, fpTitle: '', fpTab: 'browse', fpSel: [], fpQuery: '', fpType: 'All', fpName: '', fpKind: 'PDF',
     tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
@@ -45,7 +46,7 @@ class AppRoot extends React.Component {
     otAdded: [], otUpd: {}, otNew: false, otEditId: null, otForm: {}, okrTpl: '',
     ideaAdded: [], ideaUpd: {}, ideaForm: {}, showIdeaForm: false, ideaFilters: {status:'All', quarter:'All'}, ideaOpen: null, qcRef: {}, ideaStep: 1, ideaCmt: {},
     epForm: null, epRows: null, epGenerated: false, epView: 'list', epDivision: 'Content Writer', epPlanId: null, epAdded: [],
-    epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '',
+    epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '', epRowAdds: {},
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [],
     uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' },
@@ -511,7 +512,7 @@ class AppRoot extends React.Component {
         team:[{who:'Karan Shah',role:'Campaign Owner'}],
         taskCount:6, taskDone:2, outcomeKpi:'Content Published', outcomeUnit:'articles', outcomeTarget:30, outcomeCurrent:13,
       },
-      { id:'CMP-104', name:'Backlink outreach — Tutors', type:'SEO Campaign', status:'Scheduled', brand:'Tutors India', dept:'SEO', objective:'Domain Authority', cycle:'Q4 2026',
+      { id:'CMP-104', name:'Backlink outreach — Tutors', type:'SEO Campaign', status:'Planning', brand:'Tutors India', dept:'SEO', objective:'Domain Authority', cycle:'Q4 2026',
         start:'Oct 15, 2026', end:'Nov 30, 2026', owner:'Sameer Iyer', budget:'₹1,80,000', spend:'₹0',
         goal:'Secure high-authority editorial backlinks to lift domain rating ahead of the Q1 local-SEO push.',
         countries:'India', industries:'Education', audience:'Local students, parents', persona:'Parent researching tutoring services', companySize:'N/A',
@@ -523,11 +524,17 @@ class AppRoot extends React.Component {
     ];
     return this._campaigns;
   }
-  allCampaigns(){ return this.CAMPAIGNS_SEED(); }
+  allCampaigns(){
+    const upd=this.state.cmpUpd||{};
+    const del=this.state.cmpDeleted||[];
+    return this.CAMPAIGNS_SEED().concat(this.state.cmpAdded||[])
+      .filter(c=>!del.includes(c.id))
+      .map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
+  }
   cmpNum(v){ if(v==null||v==='') return 0; const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
   cmpProgress(c){
-    const rows=(c.kpis||[]).map(k=>{ const t=this.cmpNum(k.target); return t?Math.min(100,Math.round(this.cmpNum(k.current)/t*100)):0; });
-    return rows.length?Math.round(rows.reduce((s,x)=>s+x,0)/rows.length):0;
+    const ks=c.kpis||[]; if(!ks.length) return 0;
+    return Math.round(ks.reduce((s,k)=>s+Math.max(0,Math.min(100,this.cmpNum(k.current)/(this.cmpNum(k.target)||1)*100)),0)/ks.length);
   }
   cmpKpiPool(){
     const okrs = this.OKR_DATA();
@@ -598,11 +605,10 @@ class AppRoot extends React.Component {
       blockerBg:blockers.length?'var(--warn-100)':'var(--verify-100)', blockerColor:blockers.length?'var(--warn-600)':'var(--verify-600)',
       hasBlockers:blockers.length>0 };
   }
-  cmpStatusTone(s){ return {Live:{bg:'var(--verify-100)',c:'var(--verify-600)'},Planning:{bg:'var(--info-100)',c:'var(--info-600)'},Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},Paused:{bg:'var(--warn-100)',c:'var(--warn-600)'},Scheduled:{bg:'var(--info-100)',c:'var(--info-600)'},Completed:{bg:'var(--orchid-100)',c:'var(--orchid-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  cmpStatusTone(s){ return {Live:{bg:'var(--verify-100)',c:'var(--verify-600)'},Planning:{bg:'var(--info-100)',c:'var(--info-600)'},Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},Paused:{bg:'var(--warn-100)',c:'var(--warn-600)'},Completed:{bg:'var(--orchid-100)',c:'var(--orchid-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   campaignsView(){
     const rk=this.state.roleKey;
-    const lvl=(this.ACCESS.campaigns&&this.ACCESS.campaigns[rk])||'No access';
-    const canEdit=this.EDIT_LEVELS.includes(lvl);
+    const canEdit=['manager','admin'].includes(rk);
     const me=this.currentPerson();
     const own=['senior','junior'].includes(rk);
     const F=this.state.cmpFilters||{status:'All',type:'All',dept:'All'};
@@ -621,10 +627,10 @@ class AppRoot extends React.Component {
         edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('Only Managers and Admin can edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
       }; }),6);
     const K=(label,value,color)=>({label,value,color});
-    const stats=[K('Campaigns',String(all.length),'var(--beet-700)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>['Planning','Draft','Scheduled'].includes(c.status)).length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
+    const stats=[K('Campaigns',String(all.length),'var(--beet-700)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>c.status==='Planning').length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
     const out={ cmpStats:stats, cmpRows:pg.rows, cmpPg:pg, cmpCanEdit:canEdit, cmpEmpty:list.length===0, cmpOwnNote:own,
       cmpFilterDefs:[
-        {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Scheduled','Completed']},
+        {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Completed']},
         {label:'Type',value:F.type,onChange:setF('type'),options:['All','SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']},
         {label:'Department',value:F.dept,onChange:setF('dept'),options:['All','SEO','Content','SMM','Web Development','Design']},
       ],
@@ -681,16 +687,96 @@ class AppRoot extends React.Component {
     const set=(k)=>(e)=>this.setState({ cmpForm:{...f,[k]:e.target.value} });
     const sec=this.state.cmpSection||'cmpA';
     const sections=[['cmpA','A','Campaign basics'],['cmpB','B','Goal & scope'],['cmpC','C','Target audience'],['cmpD','D','Linked KPIs'],['cmpE','E','Effort lines'],['cmpF','F','Campaign team']];
-    const rowset=(key,blank,fields)=>{ const arr=f[key]||[blank];
+    const kpiPool=this.cmpKpiPool();
+    const rowset=(key,blank)=>{ const arr=f[key]||[blank];
       return { rows:arr.map((r,i)=>({ i, ...r,
-          ...Object.fromEntries(fields.map(field=>[ 'set'+field.charAt(0).toUpperCase()+field.slice(1),
-            (e)=>{ const a=arr.map((x,j)=>j===i?{...x,[field]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); } ])),
+          set:(field)=>(e)=>{ const a=arr.map((x,j)=>j===i?{...x,[field]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); },
+          setA:(e)=>{ const a=arr.map((x,j)=>j===i?{...x,[Object.keys(blank)[0]]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); },
+          setB:(e)=>{ const a=arr.map((x,j)=>j===i?{...x,[Object.keys(blank)[1]]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); },
+          setC:(e)=>{ const a=arr.map((x,j)=>j===i?{...x,[Object.keys(blank)[2]]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); },
+          setD:(e)=>{ const a=arr.map((x,j)=>j===i?{...x,[Object.keys(blank)[3]]:e.target.value}:x); this.setState({ cmpForm:{...f,[key]:a} }); },
           remove:()=>{ const a=arr.slice(); a.splice(i,1); this.setState({ cmpForm:{...f,[key]:a.length?a:[blank]} }); },
           canRemove:arr.length>1 })),
         add:()=>this.setState({ cmpForm:{...f,[key]:[...arr,blank]} }) }; };
-    const kpis=rowset('kpis',{kpi:'',target:'',current:'0',unit:''},['kpi','target','current','unit']);
-    const efforts=rowset('efforts',{name:'',qty:'',unit:'',cadence:'',mode:'direct'},['name','qty','unit','cadence','mode']);
-    const team=rowset('team',{who:'',role:''},['who','role']);
+    const kpiArr=f.kpis||[{kpi:'',target:'',current:'0',unit:''}];
+    const kpis={ rows:kpiArr.map((r,i)=>({ i, ...r,
+        srcKey:r.srcKey||'',
+        okrLabel:r.okrCode?(r.okrCode+' · '+(r.okrTitle||'')):'Not linked to an OKR',
+        okrLinked:!!r.okrCode,
+        autoLabel:(()=>{ const m=this.cmpEffortPool().filter(p=>p.kpi===r.kpi); if(!m.length) return r.kpi?'No effort line drives this KPI yet':'';
+          return m.length+' effort line'+(m.length===1?'':'s')+' · '+m.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0)+' tasks auto-linked — '+m.map(x=>x.name).join(', '); })(),
+        ...(()=>{ const pages=r.pages||[];
+          const upd=(a)=>{ const arr=kpiArr.map((x,j)=>j===i?{...x,pages:a}:x); this.setState({ cmpForm:{...f,kpis:arr}}); };
+          return {
+            pageRows:pages.map((p,pi)=>({ pi, ...p, isInternal:(p.kind||'Internal')==='Internal', isExternal:p.kind==='External',
+              setKind:(e)=>upd(pages.map((x,j)=>j===pi?{...x,kind:e.target.value,url:''}:x)),
+              setUrl:(e)=>{ const v=e.target.value; const pg=this.allContentPages().find(z=>z.url===v);
+                upd(pages.map((x,j)=>j===pi?{...x,url:v,title:pg?pg.name:x.title}:x)); },
+              setTitle:(e)=>upd(pages.map((x,j)=>j===pi?{...x,title:e.target.value}:x)),
+              setContrib:(e)=>upd(pages.map((x,j)=>j===pi?{...x,contrib:e.target.value}:x)),
+              remove:()=>upd(pages.filter((x,j)=>j!==pi)) })),
+            hasPages:pages.length>0,
+            addInternalPage:()=>upd([...pages,{kind:'Internal',url:'',title:'',contrib:''}]),
+            addExternalPage:()=>upd([...pages,{kind:'External',url:'',title:'',contrib:''}]),
+            pageSummary:(()=>{ const int=pages.filter(p=>(p.kind||'Internal')==='Internal'&&p.url).length, ext=pages.filter(p=>p.kind==='External'&&p.url).length;
+              if(!int&&!ext) return 'No landing pages linked — add the pages this KPI drives traffic to';
+              return int+' internal page'+(int===1?'':'s')+' · '+ext+' external URL'+(ext===1?'':'s'); })(),
+            repoPageOptions:[{v:'',label:'— Select a page from Website Content Repository —'}].concat(this.allContentPages().map(p=>({ v:p.url, label:(p.repo==='service'?'Service':p.repo==='insight'?'Insight':'Page')+' · '+p.name+' — '+p.url }))) }; })(),
+        pick:(e)=>{ const v=e.target.value; const src=kpiPool.find(x=>x.key===v);
+          const a=kpiArr.map((x,j)=>j===i?(src?{...x, srcKey:v, kpi:src.kpi, unit:src.unit, target:src.target, current:src.current, okrId:src.okrId, okrCode:src.okrCode, okrTitle:src.okrTitle, freq:src.freq}:{...x,srcKey:'',okrId:'',okrCode:'',okrTitle:''}):x);
+          if(!src){ this.setState({ cmpForm:{...f,kpis:a} }); return; }
+          const pool=this.cmpEffortPool();
+          const existing=(f.efforts||[]).filter(x=>x.name&&x.name.trim());
+          const matches=pool.filter(p=>p.kpi===src.kpi && !existing.some(x=>x.srcKey===p.key));
+          const added=matches.map(p=>({ srcKey:p.key, name:p.name, qty:p.qty, unit:p.unit, cadence:p.cadence, division:p.division, owner:p.owner, kpi:p.kpi, planId:p.planId, tasks:p.tasks, tasksDone:p.tasksDone, mode:'direct', driverKpi:'', perUnit:'', conv:'' }));
+          const efforts=added.length?existing.concat(added):(f.efforts||[]);
+          this.setState({ cmpForm:{...f, kpis:a, efforts:efforts.length?efforts:[{name:'',qty:'',unit:'',cadence:'',mode:'direct'}]} });
+          if(added.length){ const t=added.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0);
+            this.flash(src.kpi+' linked — '+added.length+' effort line'+(added.length===1?'':'s')+' and '+t+' tasks auto-attached from Effort Planner.'); }
+          else this.flash(src.kpi+' linked — no Effort Planner line drives this KPI yet; add one in section E.'); },
+        setB:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,target:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
+        setC:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,current:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
+        setD:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,unit:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
+        remove:()=>{ const a=kpiArr.slice(); a.splice(i,1); this.setState({ cmpForm:{...f,kpis:a.length?a:[{kpi:'',target:'',current:'0',unit:''}]} }); },
+        canRemove:kpiArr.length>1 })),
+      add:()=>this.setState({ cmpForm:{...f,kpis:[...kpiArr,{kpi:'',target:'',current:'0',unit:''}]} }) };
+    const effPool=this.cmpEffortPool();
+    const linkedKpis=(f.kpis||[]).map(k=>k.kpi).filter(Boolean);
+    const effOptions=[{key:'',label:'— Select an effort line from Effort Planner —'}]
+      .concat(effPool.filter(e=>!linkedKpis.length||!e.kpi||linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:e.label})))
+      .concat(effPool.filter(e=>linkedKpis.length&&e.kpi&&!linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:'(other KPI) '+e.label})));
+    const effArr=f.efforts||[];
+    const efforts={ rows:effArr.map((r,i)=>({ i, ...r,
+        srcKey:r.srcKey||'',
+        locked:!!r.srcKey,
+        summary:(r.qty||'—')+' '+(r.unit||'')+' · '+(r.cadence||'—'),
+        metaLabel:r.name?((r.division||'—')+' · '+(r.owner||'—')+' · '+(r.tasks||'0')+' tasks'+(r.kpi?(' → '+r.kpi):' · effort only')):'Nothing selected',
+        planLabel:r.planId?('Locked — owned by '+r.planId+' in Effort Planner'):'Custom line — will be written back to Effort Planner',
+        isEnabler:r.mode==='enabler', modeVal:r.mode||'direct',
+        openPlan:()=>this.setState({ cmpNew:false, route:'effort', epView:'list' }),
+        ...(()=>{ const ts=this.allTasks().filter(t=>t.template===r.name||t.name===r.name||(r.kpi&&t.kpi===r.kpi));
+          const exp=(this.state.cmpEffExpanded||[]).includes(r.srcKey||r.name);
+          return { taskList:ts.slice(0,8).map(t=>{ const tn=this.tkTone(t.status);
+              return { id:t.id, name:t.name, dates:t.start+' → '+t.end, who:t.assignee, status:t.status, statusBg:tn.bg, statusColor:tn.c }; }),
+            taskListEmpty:ts.length===0,
+            taskMore:ts.length>8?('+ '+(ts.length-8)+' more tasks'):'',
+            taskToggleLabel:(exp?'Hide':'Show')+' '+ts.length+' linked task'+(ts.length===1?'':'s'),
+            expanded:exp,
+            toggleTasks:()=>{ const key=r.srcKey||r.name; const cur=this.state.cmpEffExpanded||[];
+              this.setState({ cmpEffExpanded: cur.includes(key)?cur.filter(x=>x!==key):[...cur,key] }); },
+            openTasks:()=>this.setState({ cmpNew:false, route:'tasks', tkQuery:r.name }) }; })(),
+        pick:(e)=>{ const v=e.target.value; const s=effPool.find(x=>x.key===v);
+          const a=effArr.map((x,j)=>j===i?(s?{...x, srcKey:v, name:s.name, qty:s.qty, unit:s.unit, cadence:s.cadence, division:s.division, owner:s.owner, kpi:s.kpi, planId:s.planId, tasks:s.tasks, tasksDone:s.tasksDone, mode:x.mode||'direct'}:{...x,srcKey:'',name:'',qty:'',unit:'',cadence:'',division:'',owner:'',kpi:'',tasks:'',tasksDone:''}):x);
+          this.setState({ cmpForm:{...f,efforts:a} }); },
+        setMode:(e)=>{ const a=effArr.map((x,j)=>j===i?{...x,mode:e.target.value}:x); this.setState({ cmpForm:{...f,efforts:a} }); },
+        setPerUnit:(e)=>{ const a=effArr.map((x,j)=>j===i?{...x,perUnit:e.target.value}:x); this.setState({ cmpForm:{...f,efforts:a} }); },
+        setConv:(e)=>{ const a=effArr.map((x,j)=>j===i?{...x,conv:e.target.value}:x); this.setState({ cmpForm:{...f,efforts:a} }); },
+        setDriver:(e)=>{ const a=effArr.map((x,j)=>j===i?{...x,driverKpi:e.target.value}:x); this.setState({ cmpForm:{...f,efforts:a} }); },
+        setGate:(e)=>{ const a=effArr.map((x,j)=>j===i?{...x,gate:e.target.value}:x); this.setState({ cmpForm:{...f,efforts:a} }); },
+        remove:()=>{ const a=effArr.slice(); a.splice(i,1); this.setState({ cmpForm:{...f,efforts:a} }); },
+        canRemove:true })),
+      add:()=>this.setState({ cmpNewEffort:{ name:'', qty:'', unit:'', cadence:'', division:(f.dept==='Content'?'Content Writer':(f.dept||'SEO')), kpi:(f.kpis&&f.kpis[0]&&f.kpis[0].kpi)||'' } }) };
+    const team=rowset('team',{who:'',role:''});
     return {
       cmpFormOpen:this.state.cmpNew,
       cmpf:f,
@@ -702,40 +788,71 @@ class AppRoot extends React.Component {
       cmpFormDelete:()=>this._deleteCampaign(),
       cmpFormSave:()=>this._saveCampaign(),
       cmpSections:sections.map(([id,letter,name])=>({ letter, name, active:sec===id,
-        go:(e)=>{ if(e)e.preventDefault(); this.setState({ cmpSection:id }); },
+        go:(e)=>{ if(e)e.preventDefault(); this.setState({ cmpSection:id });
+          setTimeout(()=>{ const el=document.getElementById(id); if(!el) return;
+            let sc=el.parentElement; while(sc && !(sc.scrollHeight>sc.clientHeight+4 && /auto|scroll/.test(getComputedStyle(sc).overflowY))) sc=sc.parentElement;
+            if(sc) sc.scrollTo({ top:Math.max(0, el.offsetTop-20), behavior:'smooth' }); },0); },
         badgeBg:sec===id?'var(--beet-700)':'var(--surface-50)', badgeColor:sec===id?'#fff':'var(--ink-500)' })),
       cmpSetName:set('name'), cmpSetType:set('type'), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
       cmpSetCountries:set('countries'), cmpSetIndustries:set('industries'), cmpSetAudience:set('audience'), cmpSetPersona:set('persona'), cmpSetCompanySize:set('companySize'),
-      cmpPeopleNames:(this.state.users||[]).map(u=>u.name),
       cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
-      cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortEmpty:(f.efforts||[]).length===0,
+      cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortOptions:effOptions,
+      cmpEffortEmpty:effArr.length===0,
+      ...(()=>{ const ne=this.state.cmpNewEffort; if(!ne) return { cmpNewEffortOpen:false };
+        const setNe=(k)=>(e)=>this.setState({ cmpNewEffort:{...ne,[k]:e.target.value} });
+        return { cmpNewEffortOpen:true, cmpNe:ne,
+          cmpNeSetName:setNe('name'), cmpNeSetQty:setNe('qty'), cmpNeSetUnit:setNe('unit'), cmpNeSetCadence:setNe('cadence'), cmpNeSetDivision:setNe('division'), cmpNeSetKpi:setNe('kpi'),
+          cmpNeKpiOptions:['— No KPI —'].concat((f.kpis||[]).map(k=>k.kpi).filter(Boolean)),
+          cmpNeDivisions:this.EP_DIVISIONS?this.EP_DIVISIONS():['SEO','Content Writer','Graphics','Web Developers','SMM'],
+          cmpNeCancel:()=>this.setState({ cmpNewEffort:null }),
+          cmpNeSave:()=>{
+            if(!(ne.name&&ne.name.trim())){ this.flash('Name the effort line.'); return; }
+            const qty=parseInt(ne.qty,10)||0;
+            if(!qty){ this.flash('Enter the monthly quantity.'); return; }
+            const plans=this.allEpPlans();
+            let plan=plans.find(p=>p.division===ne.division);
+            const row={ type:ne.name.trim(), icon:'gauge', monthly:qty, days:25, unit:ne.unit||'units', priority:'High', weight:0, kpiId:'', kpiName:ne.kpi&&ne.kpi.indexOf('—')!==0?ne.kpi:'' };
+            let planId;
+            if(plan){ planId=plan.id;
+              this.setState({ epRowAdds:{...(this.state.epRowAdds||{}), [plan.id]:[...((this.state.epRowAdds||{})[plan.id]||[]), row]} });
+            } else {
+              planId='EP-'+String(100+plans.length+1).slice(-3);
+              this.setState({ epAdded:[...(this.state.epAdded||[]),{ id:planId, name:(f.name||'Campaign')+' — '+ne.division+' effort', division:ne.division, period:f.cycle||'Q3 2026', owner:f.owner||this.currentPerson(), dept:f.dept||'SEO', campaign:f.name||'—', okr:(f.kpis&&f.kpis[0]&&f.kpis[0].okrTitle)||'—', start:f.start||this.todayStr(), end:f.end||'—', type:'Monthly', status:'Draft', rows:[row] }] });
+            }
+            const line={ srcKey:planId+' :: '+row.type, name:row.type, qty:String(qty), unit:row.unit, cadence:Math.round(qty/25)+' /day · '+qty+' /month', division:ne.division, owner:f.owner||this.currentPerson(), kpi:row.kpiName, planId, tasks:String(qty), tasksDone:'0', mode:'direct', driverKpi:'', perUnit:'', conv:'' };
+            this.setState({ cmpForm:{...f, efforts:[...(f.efforts||[]), line]}, cmpNewEffort:null });
+            this.flash('Effort line added and written back to '+planId+' in Effort Planner — '+qty+' tasks will be generated.');
+          } }; })(),
       cmpTeamForm:team.rows, cmpAddTeam:team.add,
+      cmpPeopleNames:(this.state.users||[]).map(u=>u.name),
+      cmpRoleNames:['Campaign owner','Content lead','SEO lead','Graphics lead','Web developer','Social media exec','QC reviewer','Analyst'],
+      cmpKpiPoolOptions:[{key:'',label:'— Select a KPI from an existing OKR —'}].concat(kpiPool.map(k=>({key:k.key,label:(k.label)||(k.kpi+' — '+k.okrCode)}))),
     };
   }
   _saveCampaign(){
     const f=this.state.cmpForm||{};
-    if(!f.name||!f.name.trim()){ this.flash('Enter a campaign name.'); return; }
-    const all=this.allCampaigns();
+    if(!(f.name&&f.name.trim())){ this.flash('Enter a campaign name.'); return; }
+    const kp=(f.kpis||[]).filter(k=>k.kpi&&k.kpi.trim());
+    if(!kp.length){ this.flash('Link at least one KPI — the campaign drives KPIs, which drive effort and tasks.'); return; }
+    const ef=(f.efforts||[]).filter(e=>e.name&&e.name.trim()).map(e=>({...e, mode:e.mode||'direct', tasks:e.tasks||e.qty, tasksDone:e.tasksDone||'0'}));
+    const tm=(f.team||[]).filter(t=>t.who&&t.who.trim());
+    const base={ name:f.name.trim(), type:f.type||'SEO Campaign', objective:f.objective||'Lead Generation', status:f.status||'Draft', brand:f.brand||'Beetloop', dept:f.dept||'SEO', cycle:f.cycle||'Q3 2026', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', owner:f.owner||this.currentPerson(), budget:f.budget||'—', spend:f.spend||'₹0', goal:f.goal||'', countries:f.countries||'—', industries:f.industries||'—', audience:f.audience||'—', persona:f.persona||'—', companySize:f.companySize||'—', kpis:kp, efforts:ef, team:tm.length?tm:[{who:f.owner||this.currentPerson(),role:'Campaign owner'}],
+      outcomeKpi:f.outcomeKpi||(kp[0]&&kp[0].kpi)||'Outcome', outcomeTarget:f.outcomeTarget||(kp[0]&&kp[0].target)||'0', outcomeCurrent:f.outcomeCurrent||(kp[0]&&kp[0].current)||'0', outcomeUnit:f.outcomeUnit||(kp[0]&&kp[0].unit)||'',
+      taskCount:ef.reduce((s,e)=>s+(parseInt(e.tasks,10)||0),0), taskDone:ef.reduce((s,e)=>s+(parseInt(e.tasksDone,10)||0),0) };
     if(this.state.cmpEditId){
-      const idx=all.findIndex(c=>c.id===this.state.cmpEditId);
-      if(idx>-1) all[idx] = {...all[idx], ...f, id:this.state.cmpEditId};
-      this.flash('Campaign "'+f.name+'" updated.');
+      this.setState({ cmpUpd:{...(this.state.cmpUpd||{}),[this.state.cmpEditId]:base}, cmpNew:false, cmpEditId:null, cmpForm:{} });
+      this.flash('Campaign updated.');
     } else {
-      const id='CMP-'+String(100+all.length+1).slice(-3);
-      const firstKpi=(f.kpis||[])[0];
-      all.unshift({ id, taskCount:0, taskDone:0, spend:'₹0',
-        outcomeKpi:firstKpi?firstKpi.kpi:'Outcome', outcomeUnit:firstKpi?firstKpi.unit:'',
-        outcomeTarget:firstKpi?this.cmpNum(firstKpi.target):0, outcomeCurrent:firstKpi?this.cmpNum(firstKpi.current):0,
-        ...f, kpis:f.kpis||[], efforts:f.efforts||[], team:f.team||[] });
-      this.flash('Campaign "'+f.name+'" created.');
+      const nid='CMP-'+String(100+this.allCampaigns().length+1).slice(-3);
+      this.setState({ cmpAdded:[...(this.state.cmpAdded||[]),{id:nid,...base}], cmpNew:false, cmpForm:{} });
+      this.flash(nid+' created — '+kp.length+' KPI'+(kp.length===1?'':'s')+' and '+ef.length+' effort line'+(ef.length===1?'':'s')+' linked. Generate tasks from Effort Planner.');
     }
-    this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} });
   }
   _deleteCampaign(){
-    const all=this.allCampaigns();
-    const idx=all.findIndex(c=>c.id===this.state.cmpEditId);
-    if(idx>-1){ const name=all[idx].name; all.splice(idx,1); this.flash('Deleted campaign: '+name+'.'); }
-    this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} });
+    const id=this.state.cmpEditId; if(!id) return;
+    const c=this.allCampaigns().find(x=>x.id===id);
+    this.setState({ cmpDeleted:[...(this.state.cmpDeleted||[]), id], cmpNew:false, cmpEditId:null, cmpForm:{} });
+    this.flash('Deleted campaign: '+(c?c.name:id)+'.');
   }
 
   // ============ Messages (new module) ============
@@ -2166,7 +2283,8 @@ class AppRoot extends React.Component {
     { id:'EP-002', name:'Jul SEO Effort Plan', division:'SEO', period:'Jul 2026', owner:'Neha Verma', dept:'SEO', campaign:'Q3 SEO push', okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly', status:'Active', rows:this.EP_DIV_ROWS('SEO') },
     { id:'EP-003', name:'Jul Graphics Effort Plan', division:'Graphics', period:'Jul 2026', owner:'Neha Verma', dept:'Design', campaign:'Social Push Q1', okr:'Grow Social Engagement 3×', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly', status:'Draft', rows:this.EP_DIV_ROWS('Graphics') },
   ]; }
-  allEpPlans(){ return this.EP_PLANS().concat(this.state.epAdded||[]); }
+  allEpPlans(){ const adds=this.state.epRowAdds||{};
+    return this.EP_PLANS().concat(this.state.epAdded||[]).map(p=>adds[p.id]?{...p, rows:(p.rows||[]).concat(adds[p.id])}:p); }
   epKpiPool(){ return [].concat((this.MY_KPIS().junior||[]).map(k=>({...k,who:'Junior'})),(this.MY_KPIS().senior||[]).map(k=>({...k,who:'Senior'})),(this.MY_KPIS().team_lead||[]).map(k=>({...k,who:'Team Lead'})),this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ id:t.id, kpi:t.name, unit:t.unit, baseline:'0', target:t.defTarget, current:'0', freq:t.freq, who:'Template' }))); }
   KPI_TEMPLATES(){ return [
     { id:'kt1', name:'Organic Sessions', category:'Traffic', division:'SEO', unit:'sessions', direction:'Increase', defTarget:'100,000', freq:'Monthly', source:'GA4', desc:'Total organic search sessions on tracked domains.', status:'Active', owner:'Priya Nair', updated:'Jun 10, 2026' },
