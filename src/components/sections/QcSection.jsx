@@ -3,7 +3,8 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function QcSection({ vm }) {
-  const { kpis, qcDayChips, qcOnStatusF, qcPeriodBtns, qcPeriodLabel, qcPg, qcRows, qcStatusF, qcStatusOptions, qcWeek, showQC } = vm;
+  const { kpis, qcDayChips, qcOnStatusF, qcPeriodBtns, qcPeriodLabel, qcPg, qcRows, qcStatusF, qcStatusOptions, qcWeek, showQC,
+    qcCompliance, qcComplianceDiv, qcComplianceHas, qcComplianceEmpty } = vm;
   return (
     <React.Fragment>
 {Boolean(showQC) && (
@@ -98,13 +99,51 @@ Mirror of the Tasks screen — submitted tasks land here for review. Approve to 
 </React.Fragment>
 ))}
 
-          
+
 </div>
 
-          
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
+<Icon name={"clipboard-check"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<span style={{"fontSize":"11.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Compliance quality — from checklist data</span>
+</div>
+{Boolean(qcComplianceHas) && (
+<React.Fragment>
+<div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(150px,1fr))","gap":"10px"}}>
+{(qcCompliance || []).map((c, $index) => (
+<React.Fragment key={$index}>
+<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"12px 14px"}}>
+<div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>{c.label}</div>
+<div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:20px;color:${c.color};margin-top:3px`)}>{c.value}</div>
+<div style={{"fontSize":"10px","color":"var(--ink-400)","marginTop":"2px"}}>{c.sub}</div>
+</div>
+</React.Fragment>
+))}
+</div>
+<div style={{"display":"flex","flexDirection":"column","gap":"10px","marginTop":"14px"}}>
+{(qcComplianceDiv || []).map((d, $index) => (
+<div key={$index}>
+<div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"4px"}}>
+<span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","flex":"1","minWidth":"0"}}>{d.label}</span>
+<span style={{"fontSize":"11px","color":"var(--ink-500)"}}>{d.sub}</span>
+<span style={{"fontSize":"12px","fontWeight":"800","color":"var(--ink-900)","width":"44px","textAlign":"right"}}>{d.selfPct}</span>
+</div>
+<div style={{"height":"7px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden"}}>
+<div style={cssTextToObject(`height:100%;border-radius:99px;width:${d.w};background:${d.color}`)} />
+</div>
+</div>
+))}
+</div>
+</React.Fragment>
+)}
+{Boolean(qcComplianceEmpty) && (
+<div style={{"fontSize":"12px","color":"var(--ink-500)"}}>No checklist entries yet — open a task, fill the compliance checklist and submit it to populate these metrics.</div>
+)}
+</div>
+
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"14px","flexWrap":"wrap"}}>
 
-            
+
 {(qcDayChips || []).map((c, $index) => (
 <React.Fragment key={$index}>
 
@@ -252,53 +291,37 @@ QC action & feedback
 {q.status}
 </span>
 
-                
+
 <div onClick={q.stopClick} style={{"minWidth":"0"}}>
-
-                  
-{Boolean(q.actionable) && (
-<React.Fragment>
-
-                    
-<div style={{"display":"flex","alignItems":"center","gap":"7px","flexWrap":"wrap"}}>
-
-                      
-<input value={q.fbVal} onInput={q.onFb} placeholder="QC comment / feedback…" style={{"flex":"1","minWidth":"130px","padding":"8px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12px","outline":"none"}} />
-
-                      
-<button onClick={q.rework} style={{"padding":"8px 11px","border":"1px solid #F0DDBB","background":"#fff","color":"var(--warn-600)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-Rework
-</button>
-
-                      
-<button onClick={q.approve} style={{"padding":"8px 12px","border":"none","background":"var(--verify-500)","color":"#fff","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-Approve
-</button>
-
-                    
+{Boolean(q.qcHasVerdicts) && (
+<div style={{"display":"flex","alignItems":"center","gap":"6px","marginBottom":"5px"}}>
+<Icon name={"clipboard-check"} style={{"width":"12px","height":"12px","color":"var(--orchid-600)","flexShrink":"0"}} />
+<span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-700)"}}>{q.qcVerdictLine}</span>
 </div>
-
-                  
-</React.Fragment>
 )}
-
-                  
-{Boolean(q.reviewed) && (
-<React.Fragment>
-
-                    
-<div style={{"display":"flex","alignItems":"flex-start","gap":"6px"}}>
-<Icon name={"message-square-quote"} style={cssTextToObject(`width:13px;height:13px;color:${q.feedbackColor};flex-shrink:0;margin-top:2px`)} />
-<span style={{"fontSize":"12px","fontWeight":"600","color":"var(--ink-600)","lineHeight":"1.45"}}>
-{q.feedback}
-</span>
+{Boolean(q.qcHasOverall) && (
+<div style={{"display":"flex","alignItems":"flex-start","gap":"6px","marginBottom":"5px"}}>
+<Icon name={"message-square-quote"} style={cssTextToObject(`width:12px;height:12px;color:${q.feedbackColor};flex-shrink:0;margin-top:2px`)} />
+<span style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-700)","lineHeight":"1.45"}}>{q.qcOverall}</span>
 </div>
-
-                  
-</React.Fragment>
 )}
-
-                
+{Boolean(q.qcHasComments) && (
+<div style={{"display":"flex","flexDirection":"column","gap":"3px","marginBottom":"6px"}}>
+{(q.qcLineComments || []).map((c, $i2) => (
+<div key={$i2} style={{"display":"flex","alignItems":"flex-start","gap":"6px"}}>
+<span style={cssTextToObject(`font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:5px;background:${c.bg};color:${c.color};flex-shrink:0`)}>{c.verdict}</span>
+<span style={{"fontSize":"11px","color":"var(--ink-500)","lineHeight":"1.4"}}><span style={{"fontWeight":"700","color":"var(--ink-700)"}}>{c.kpi}</span> — {c.text}</span>
+</div>
+))}
+<span style={{"fontSize":"10px","color":"var(--ink-400)"}}>{q.qcMoreComments}</span>
+</div>
+)}
+{Boolean(q.qcNoComments) && (
+<div style={{"fontSize":"11px","color":"var(--ink-400)","marginBottom":"6px"}}>No comments yet — review inside to record them.</div>
+)}
+<button onClick={q.open} style={cssTextToObject(q.qcReviewStyle)}>
+<Icon name={"shield-check"} style={{"width":"12px","height":"12px"}} />{q.qcReviewLabel}
+</button>
 </div>
 
               

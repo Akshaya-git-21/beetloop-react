@@ -2,7 +2,8 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function KpiTemplateFormDrawer({ vm }) {
-  const { ktClose, ktFormTitle, ktNew, ktSave, ktSetCategory, ktSetDefTarget, ktSetDesc, ktSetDirection, ktSetDivision, ktSetFreq, ktSetName, ktSetSource, ktSetStatus, ktSetUnit, ktf, ttStop } = vm;
+  const { ktClose, ktFormTitle, ktNew, ktSave, ktSetCategory, ktSetDefTarget, ktSetDesc, ktSetDirection, ktSetDivision, ktSetName, ktSetStatus, ktSetUnit, ktf, ttStop,
+    ktUnitOptions, ktToolGroups, ktMethodOptions, ktMfreqOptions, ktSetTool, ktSetMethod, ktSetMfreq, ktSetEvidence } = vm;
   return (
     <React.Fragment>
 {Boolean(ktNew) && (
@@ -125,10 +126,72 @@ All
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Unit
 </label>
-<input value={ktf.unit} onInput={ktSetUnit} placeholder="e.g. sessions, %, keywords" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={ktf.unit} onChange={ktSetUnit} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<option value="">Select unit…</option>
+{(ktUnitOptions || []).map((u, $index) => (
+<React.Fragment key={$index}>
+<option value={u}>{u}</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
-          
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Measurement tool
+</label>
+<select value={ktf.tool} onChange={ktSetTool} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<option value="">Select tool…</option>
+{(ktToolGroups || []).map((g, $index) => (
+<optgroup key={$index} label={g.g}>
+{(g.tools || []).map((t, $i2) => (
+<option key={$i2} value={t}>{t}</option>
+))}
+</optgroup>
+))}
+</select>
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Measurement method
+</label>
+<select value={ktf.method} onChange={ktSetMethod} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<option value="">Select method…</option>
+{(ktMethodOptions || []).map((m, $index) => (
+<React.Fragment key={$index}>
+<option value={m}>{m}</option>
+</React.Fragment>
+))}
+</select>
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Measurement frequency
+</label>
+<select value={ktf.mfreq} onChange={ktSetMfreq} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<option value="">Select frequency…</option>
+{(ktMfreqOptions || []).map((m, $index) => (
+<React.Fragment key={$index}>
+<option value={m}>{m}</option>
+</React.Fragment>
+))}
+</select>
+</div>
+
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Evidence required
+</label>
+<input value={ktf.evidence} onInput={ktSetEvidence} placeholder="e.g. Turnitin similarity report" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} />
+</div>
+
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Direction
@@ -151,64 +214,6 @@ Default target
 <input value={ktf.defTarget} onInput={ktSetDefTarget} placeholder="e.g. 100,000" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
 </div>
 
-          
-<div>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Measurement cadence
-</label>
-<select value={ktf.freq} onChange={ktSetFreq} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-Daily
-</option>
-<option>
-Weekly
-</option>
-<option>
-Monthly
-</option>
-<option>
-Quarterly
-</option>
-<option>
-Yearly
-</option>
-</select>
-</div>
-
-          
-<div>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Data source
-</label>
-<select value={ktf.source} onChange={ktSetSource} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-GA4
-</option>
-<option>
-Google Search Console
-</option>
-<option>
-Semrush
-</option>
-<option>
-Ahrefs
-</option>
-<option>
-Lighthouse
-</option>
-<option>
-Platform APIs
-</option>
-<option>
-KPI Log
-</option>
-<option>
-Manual
-</option>
-</select>
-</div>
-
-          
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Status

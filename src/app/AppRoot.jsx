@@ -1311,6 +1311,21 @@ class AppRoot extends React.Component {
       project:t.project, priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end, dueAlert:this.tkDueAlert(t),
       status:t.status==='Submitted'?'Awaiting QC':t.status, statusBg:tn.bg, statusColor:tn.c,
       open:()=>this.setState({ tkOpen:t.id }),
+      // comments are captured inside the review drawer — the list only reflects them
+      ...(()=>{ const d=this.qcCommentDigest(t);
+        return { qcHasComments:d.lines.length>0||!!d.overall,
+          qcVerdictLine:d.verdictLabel,
+          qcHasVerdicts:d.reviewed>0,
+          qcOverall:d.overall,
+          qcHasOverall:!!d.overall,
+          qcLineComments:d.lines.slice(0,3).map(l=>({ kpi:l.kpi, text:l.text, verdict:l.verdict,
+            bg:l.verdict==='Compliant'?'var(--verify-100)':l.verdict==='Rework'?'var(--danger-100)':'var(--warn-100)',
+            color:l.verdict==='Compliant'?'var(--verify-600)':l.verdict==='Rework'?'var(--danger-600)':'var(--warn-600)' })),
+          qcMoreComments:d.lines.length>3?('+'+(d.lines.length-3)+' more line comments'):'',
+          qcNoComments:!d.hasAny,
+          qcReviewLabel:t.status==='Submitted'?'Review & comment':'Open review',
+          qcReviewStyle:'display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(t.status==='Submitted'
+            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)') }; })(),
       actionable: canAct && t.status==='Submitted',
       reviewed: t.status!=='Submitted',
       feedback: t.qcFeedback||'No QC comment recorded.',
@@ -1334,7 +1349,7 @@ class AppRoot extends React.Component {
       approve:(e)=>{ if(e)e.stopPropagation(); const note=(this.state.qcFb||{})[i.id]||''; this.ideaPatch(i.id,{status:'Approved', qcFeedback:note?('QC approved — '+note):'QC approved'}); this.flash(i.id+' approved — it can now be moved to Tasks from the Content repository.'); },
       rework:(e)=>{ if(e)e.stopPropagation(); const note=(this.state.qcFb||{})[i.id]||''; if(!note.trim()){ this.flash('Enter QC feedback before requesting rework.'); return; } this.ideaPatch(i.id,{status:'Rework', qcFeedback:'Rework — '+note}); this.flash('Rework requested — feedback sent to '+i.owner+'.'); },
     };});
-    const kpis=[K('Awaiting review',String(list.filter(t=>t.status==='Submitted').length+ideaRows.length),'var(--warn-600)'),K('Tasks approved',String(list.filter(t=>t.status==='Approved').length),'var(--verify-600)'),K('Rework open',String(list.filter(t=>t.status==='Rework').length),'var(--warn-600)'),K('Content ideas in queue',String(ideaRows.length),'var(--orchid-600)')];
+    const kpis=[K('Awaiting review',String(list.filter(t=>t.status==='Submitted').length+ideaRows.length),'var(--warn-600)'),K('Tasks approved',String(list.filter(t=>['Approved','Closed'].includes(t.status)).length),'var(--verify-600)'),K('Rework open',String(list.filter(t=>t.status==='Rework').length),'var(--warn-600)'),K('Content ideas in queue',String(ideaRows.length),'var(--orchid-600)')];
     const sf=this.state.qcStatusF||'All';
     // day classification for tasks in queue (by due date)
     const dayKey=(t)=>{ const df=this.dayDiff(t); if(df===null) return '—'; if(df<0) return 'Overdue'; if(df===0) return 'Today'; if(df===1) return 'Tomorrow'; if(df===2) return 'Day after'; return 'Later'; };
@@ -1355,7 +1370,7 @@ class AppRoot extends React.Component {
     const period=this.state.qcPeriod||'Weekly';
     const win=period==='Weekly'?7:31;
     const allT=this.allTasks().filter(t=>{ const df=this.dayDiff(t); return df===null?true:Math.abs(df)<=win; });
-    const wkAssigned=allT.length, wkDone=allT.filter(t=>t.status==='Approved').length, wkPending=allT.filter(t=>['Assigned','In Progress','Submitted'].includes(t.status)).length, wkRework=allT.filter(t=>t.status==='Rework').length;
+    const wkAssigned=allT.length, wkDone=allT.filter(t=>['Approved','Closed'].includes(t.status)).length, wkPending=allT.filter(t=>['Assigned','In Progress','Submitted'].includes(t.status)).length, wkRework=allT.filter(t=>t.status==='Rework').length;
     const pct=(n)=>wkAssigned?Math.round(n/wkAssigned*100):0;
     const pLbl=period==='Weekly'?'this week':'this month';
     const qcWeek=[
@@ -1367,7 +1382,22 @@ class AppRoot extends React.Component {
     const qcPeriodBtns=['Weekly','Monthly'].map(p=>{ const active=period===p; return { label:p+' report', active,
       style:'padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':'var(--ink-700)'),
       set:()=>this.setState({ qcPeriod:p }) }; });
+    const cs=this.complianceStats(list);
     return { kpis, qcRows:pg.rows, qcPg:pg, qcCanAct:canAct, qcDayChips, qcWeek, qcPeriodBtns, qcPeriodLabel:'Task analytics — all users · '+period.toLowerCase()+' report',
+      qcCompliance:[
+        { label:'Self-assessment pass', value:cs.selfPct+'%', sub:cs.meets+' of '+cs.scored+' checks meet gold standard', color:cs.selfPct>=80?'var(--verify-600)':cs.selfPct>=50?'var(--warn-600)':'var(--danger-600)' },
+        { label:'QC first-pass', value:cs.firstPassPct+'%', sub:cs.compliant+' compliant of '+cs.reviewed+' reviewed', color:cs.firstPassPct>=80?'var(--verify-600)':'var(--warn-600)' },
+        { label:'Rework rate', value:cs.reworkPct+'%', sub:cs.rework+' lines sent back', color:cs.reworkPct<=10?'var(--verify-600)':'var(--danger-600)' },
+        { label:'Conditional accepts', value:String(cs.conditional), sub:'passed with caveats', color:'var(--warn-600)' },
+        { label:'Evidence attached', value:cs.evidencePct+'%', sub:cs.evidence+' of '+cs.scored+' scored checks', color:cs.evidencePct>=90?'var(--verify-600)':'var(--warn-600)' },
+        { label:'Checklists submitted', value:String(cs.submitted), sub:'of '+list.length+' tasks in queue', color:'var(--beet-700)' },
+      ],
+      qcComplianceDiv:cs.byDiv.map(d=>({ label:d.label,
+        selfPct:d.selfPct+'%', w:d.selfPct+'%',
+        color:d.selfPct>=80?'var(--verify-500)':d.selfPct>=50?'var(--warn-500)':'var(--danger-500)',
+        sub:d.scored+' checks scored · '+d.reviewed+' reviewed · '+d.reworkPct+'% rework' })),
+      qcComplianceHas:cs.scored>0||cs.reviewed>0,
+      qcComplianceEmpty:cs.scored===0&&cs.reviewed===0,
       qcStatusF:sf, qcOnStatusF:(e)=>this.setState({ qcStatusF:e.target.value, pg:{...(this.state.pg||{}),qc:0} }),
       qcStatusOptions:['All','Awaiting QC','Approved','Rework'] };
   }
@@ -2400,6 +2430,43 @@ class AppRoot extends React.Component {
     { id:'TPL-006', name:'Custom task', division:'All', desc:'Blank template — define scope and acceptance criteria per task.', kpiId:'', unit:'', estH:0, priority:'Medium', recurrence:'None', status:'Active', owner:'Admin', updated:'Jan 5, 2026', checklist:['Define acceptance criteria'] },
   ]; }
   allTaskTemplates(){ const upd=this.state.ttUpd||{}; return this.TASK_TEMPLATES().concat(this.state.ttAdded||[]).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+  UNIT_MASTER(){ return ['%','Count','Sessions','Users','Visitors','Leads','Keywords','Backlinks','Articles','Pages','Posts','Reels','Impressions','Clicks','CTR %','Ranking position','Score (0–100)','Words','Hours','Days','Seconds','₹ (INR)','$ (USD)','Ratio','Index','Errors','Tickets','Conversions','Conversion rate %','Engagement rate %','Bounce rate %','Domain Authority','Spam score %','Plagiarism %','Readability score','Case studies','Documents','Designs','Infographics','Assets','Fixes']; }
+  MEASURE_TOOLS(){ return [
+    { g:'Analytics', t:['Google Analytics 4','Google Search Console','Microsoft Clarity','Hotjar','Looker Studio','Matomo'] },
+    { g:'SEO', t:['Semrush','Ahrefs','Moz','Screaming Frog','Sitebulb','SE Ranking','PageSpeed Insights','Lighthouse'] },
+    { g:'Content quality', t:['Grammarly','Turnitin','Copyscape','Originality.ai','Hemingway Editor','Yoast SEO','SurferSEO','Manual editorial review'] },
+    { g:'Social & ads', t:['Meta Business Suite','LinkedIn Analytics','YouTube Studio','Google Ads','Buffer','Hootsuite'] },
+    { g:'Delivery & CRM', t:['Jira','Asana','ClickUp','HubSpot','Zoho CRM','Salesforce'] },
+    { g:'Internal', t:['Beetloop KPI Log','Beetloop QC checklist','Manual entry','Spreadsheet tracker','Client report'] },
+  ]; }
+  MEASURE_TOOL_LIST(){ return this.MEASURE_TOOLS().reduce((a,g)=>a.concat(g.t),[]); }
+  MEASURE_METHODS(){ return ['Automated — tool API sync','Automated — scheduled export','Semi-automated — tool + manual check','Manual — tool report entered by owner','Manual — sampled audit','Manual — full review','Third-party / client-reported']; }
+  // each tool implies how it is read, so the method (and cadence) auto-populate
+  TOOL_METHOD(){ return {
+    'Google Analytics 4':['Automated — tool API sync','Daily'], 'Google Search Console':['Automated — tool API sync','Daily'],
+    'Microsoft Clarity':['Automated — scheduled export','Weekly'], 'Hotjar':['Automated — scheduled export','Weekly'],
+    'Looker Studio':['Automated — tool API sync','Real-time'], 'Matomo':['Automated — tool API sync','Daily'],
+    'Semrush':['Automated — scheduled export','Weekly'], 'Ahrefs':['Automated — scheduled export','Weekly'],
+    'Moz':['Automated — scheduled export','Monthly'], 'Screaming Frog':['Semi-automated — tool + manual check','Monthly'],
+    'Sitebulb':['Semi-automated — tool + manual check','Monthly'], 'SE Ranking':['Automated — scheduled export','Weekly'],
+    'PageSpeed Insights':['Automated — tool API sync','Weekly'], 'Lighthouse':['Automated — tool API sync','Weekly'],
+    'Grammarly':['Manual — tool report entered by owner','On completion'], 'Turnitin':['Manual — tool report entered by owner','On completion'],
+    'Copyscape':['Manual — tool report entered by owner','On completion'], 'Originality.ai':['Manual — tool report entered by owner','On completion'],
+    'Hemingway Editor':['Manual — tool report entered by owner','On completion'], 'Yoast SEO':['Semi-automated — tool + manual check','On completion'],
+    'SurferSEO':['Semi-automated — tool + manual check','On completion'], 'Manual editorial review':['Manual — full review','On completion'],
+    'Meta Business Suite':['Automated — scheduled export','Weekly'], 'LinkedIn Analytics':['Automated — scheduled export','Weekly'],
+    'YouTube Studio':['Automated — scheduled export','Weekly'], 'Google Ads':['Automated — tool API sync','Daily'],
+    'Buffer':['Automated — scheduled export','Weekly'], 'Hootsuite':['Automated — scheduled export','Weekly'],
+    'Jira':['Automated — tool API sync','Real-time'], 'Asana':['Automated — tool API sync','Real-time'],
+    'ClickUp':['Automated — tool API sync','Real-time'], 'HubSpot':['Automated — tool API sync','Daily'],
+    'Zoho CRM':['Automated — tool API sync','Daily'], 'Salesforce':['Automated — tool API sync','Daily'],
+    'Beetloop KPI Log':['Manual — tool report entered by owner','Weekly'], 'Beetloop QC checklist':['Manual — full review','On completion'],
+    'Manual entry':['Manual — tool report entered by owner','Weekly'], 'Spreadsheet tracker':['Manual — tool report entered by owner','Weekly'],
+    'Client report':['Third-party / client-reported','Monthly'],
+  }; }
+  methodForTool(tool){ return (this.TOOL_METHOD()[tool]||[])[0]||''; }
+  freqForTool(tool){ return (this.TOOL_METHOD()[tool]||[])[1]||''; }
+  MEASURE_FREQ(){ return ['Real-time','Daily','Weekly','Fortnightly','Monthly','Quarterly','On completion']; }
   templatesView(){
     const rk=this.state.roleKey;
     const canEdit=['manager','team_lead','admin'].includes(rk);
@@ -2491,10 +2558,17 @@ class AppRoot extends React.Component {
       ktNew:this.state.ktNew, ktf:kf,
       ktFormTitle:this.state.ktEditId?'Edit KPI template':'New KPI template',
       ktClose:()=>this.setState({ ktNew:false, ktEditId:null, ktForm:{} }),
+      ktUnitOptions:this.UNIT_MASTER(), ktToolGroups:this.MEASURE_TOOLS().map(g=>({ g:g.g, tools:g.t })),
+      ktMethodOptions:this.MEASURE_METHODS(), ktMfreqOptions:this.MEASURE_FREQ(),
+      ktSetTool:(e)=>{ const v=e.target.value; const cur=this.state.ktForm||{};
+        this.setState({ ktForm:{...cur, tool:v, method:this.methodForTool(v)||cur.method, mfreq:this.freqForTool(v)||cur.mfreq} });
+        if(this.methodForTool(v)) this.flash('Measurement method & frequency auto-filled for '+v+'.'); },
+      ktMethodAuto:this.methodForTool((this.state.ktForm||{}).tool)?('Auto-set from '+(this.state.ktForm||{}).tool):'',
+      ktSetMethod:setKf('method'), ktSetMfreq:setKf('mfreq'), ktSetEvidence:setKf('evidence'),
       ktSetName:setKf('name'), ktSetCategory:setKf('category'), ktSetDivision:setKf('division'), ktSetUnit:setKf('unit'), ktSetDirection:setKf('direction'), ktSetDefTarget:setKf('defTarget'), ktSetFreq:setKf('freq'), ktSetSource:setKf('source'), ktSetDesc:setKf('desc'), ktSetStatus:setKf('status'),
       ktSave:()=>{
         if(!(kf.name&&kf.name.trim())){ this.flash('Enter a KPI name.'); return; }
-        const rec={ name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
+        const rec={ tool:kf.tool||'', method:kf.method||'', mfreq:kf.mfreq||'', evidence:kf.evidence||'', name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.ktEditId){ this.setState({ ktUpd:{...(this.state.ktUpd||{}),[this.state.ktEditId]:rec}, ktNew:false, ktEditId:null, ktForm:{} }); this.flash('KPI template updated.'); }
         else { const nid='kt'+(this.allKpiTemplates().length+1); this.setState({ ktAdded:[...(this.state.ktAdded||[]),{id:nid,...rec}], ktNew:false, ktForm:{} }); this.flash('KPI template created — now available in Create Task, OKR key results and Effort plans.'); }
       },
@@ -2570,6 +2644,148 @@ class AppRoot extends React.Component {
     const prev=depId?all.find(x=>x.id===depId):null;
     const next=all.filter(x=>x.dep && String(x.dep).split(' ')[0]===t.id);
     return { prev, next };
+  }
+  // ---- Compliance checklists — self-assessment against gold standards, reconciled at QC ----
+  // Data layer only in this phase: the interactive per-task self-assessment/QC-verdict
+  // UI (a "Compliance" tab in Task Detail) is deferred; complianceFill() auto-synthesizes
+  // plausible self-scores for any task that has reached QC so the stats below are real.
+  COMPLIANCE_SEED(){ return {
+    Content:[
+      { h:'Content excellence', rows:[
+        { kpi:'Content originality', method:'Plagiarism scan', tool:'Turnitin', unit:'%', gold:'≥ 95' },
+        { kpi:'AI-content originality', method:'AI detection', tool:'Originality.ai', unit:'%', gold:'≥ 95' },
+        { kpi:'Grammar & clarity', method:'Automated grammar check', tool:'Grammarly', unit:'Score (0–100)', gold:'≥ 90' },
+        { kpi:'Readability', method:'Readability index', tool:'Hemingway Editor', unit:'Readability score', gold:'≥ 60' },
+      ]},
+      { h:'SEO compliance', rows:[
+        { kpi:'On-page SEO score', method:'On-page audit', tool:'Yoast SEO', unit:'Score (0–100)', gold:'≥ 85' },
+        { kpi:'Focus keyword usage', method:'Keyword density check', tool:'SurferSEO', unit:'%', gold:'1–2' },
+        { kpi:'Meta title length', method:'Character count', tool:'Manual entry', unit:'Count', gold:'≤ 60' },
+        { kpi:'Meta description length', method:'Character count', tool:'Manual entry', unit:'Count', gold:'≤ 160' },
+      ]},
+      { h:'Editorial & factual', rows:[
+        { kpi:'Citation accuracy', method:'Source verification', tool:'Manual editorial review', unit:'%', gold:'100' },
+        { kpi:'Brand tone adherence', method:'Style-guide review', tool:'Beetloop QC checklist', unit:'Score (0–100)', gold:'≥ 90' },
+      ]},
+    ],
+    Graphics:[
+      { h:'Design quality', rows:[
+        { kpi:'Brand guideline adherence', method:'Visual audit', tool:'Beetloop QC checklist', unit:'Score (0–100)', gold:'≥ 90' },
+        { kpi:'Asset resolution', method:'File inspection', tool:'Manual entry', unit:'Count', gold:'≥ 300 dpi' },
+        { kpi:'Licensing compliance', method:'Rights check', tool:'Manual entry', unit:'%', gold:'100' },
+      ]},
+    ],
+    Web:[
+      { h:'Technical quality', rows:[
+        { kpi:'Lighthouse performance', method:'Automated audit', tool:'Lighthouse', unit:'Score (0–100)', gold:'≥ 90' },
+        { kpi:'Core Web Vitals — LCP', method:'Field/lab measurement', tool:'PageSpeed Insights', unit:'Seconds', gold:'≤ 2.5' },
+        { kpi:'Broken links', method:'Crawl', tool:'Screaming Frog', unit:'Errors', gold:'0' },
+        { kpi:'Accessibility score', method:'Automated audit', tool:'Lighthouse', unit:'Score (0–100)', gold:'≥ 90' },
+      ]},
+    ],
+    SEO:[
+      { h:'Link quality', rows:[
+        { kpi:'Referring domain authority', method:'Authority lookup', tool:'Ahrefs', unit:'Domain Authority', gold:'≥ 40' },
+        { kpi:'Spam score', method:'Spam analysis', tool:'Moz', unit:'Spam score %', gold:'≤ 3' },
+        { kpi:'Anchor text relevance', method:'Manual review', tool:'Manual editorial review', unit:'Score (0–100)', gold:'≥ 85' },
+      ]},
+    ],
+    SMM:[
+      { h:'Post quality', rows:[
+        { kpi:'Brand tone adherence', method:'Style-guide review', tool:'Beetloop QC checklist', unit:'Score (0–100)', gold:'≥ 90' },
+        { kpi:'Asset spec compliance', method:'Platform spec check', tool:'Manual entry', unit:'%', gold:'100' },
+        { kpi:'Caption & hashtag review', method:'Editorial review', tool:'Manual editorial review', unit:'Score (0–100)', gold:'≥ 85' },
+      ]},
+    ],
+  }; }
+  complianceSections(kind){
+    const seed=this.COMPLIANCE_SEED()[kind]||this.COMPLIANCE_SEED().Content;
+    return seed.concat((this.state.clCustom||{})[kind]||[]);
+  }
+  clKind(t){ const d=this.tkDivision(t)||'Content';
+    if(/graphic|design/i.test(d)) return 'Graphics';
+    if(/web/i.test(d)) return 'Web';
+    if(/smm|social/i.test(d)) return 'SMM';
+    if(/seo/i.test(d)) return 'SEO';
+    return 'Content'; }
+  clPass(val,gold){
+    const v=parseFloat(String(val).replace(/[^0-9.]/g,''));
+    if(isNaN(v)) return null;
+    const g=String(gold);
+    const num=parseFloat(g.replace(/[^0-9.]/g,''));
+    if(g.indexOf('≤')===0||/^\s*≤/.test(g)) return v<=num;
+    if(g.indexOf('≥')===0||/^\s*≥/.test(g)) return v>=num;
+    if(/–|-/.test(g)){ const p=g.split(/–|-/).map(x=>parseFloat(x)); return v>=p[0]&&v<=p[1]; }
+    return v>=num;
+  }
+  complianceAtQc(t){ return ['Submitted','Rework','Approved','Closed'].includes(t.status); }
+  complianceSubmitted(t){ return (!!(this.state.clSubmitted||{})[t.id]) || this.complianceAtQc(t); }
+  complianceFill(t){
+    const stored=(this.state.clFill||{})[t.id];
+    if(stored) return stored;
+    if(!this.complianceAtQc(t)) return {};
+    const o={};
+    this.complianceSections(this.clKind(t)).forEach((s,si)=>s.rows.forEach((r,ri)=>{
+      const g=String(r.gold), n=parseFloat(g.replace(/[^0-9.]/g,''))||0;
+      const lower=/^\s*≤/.test(g);
+      const miss=((si+ri)%4===3); // mostly meets, occasionally misses
+      const val=lower?(miss?(n+Math.max(1,Math.round(n*0.4))):Math.max(0,n-Math.max(1,Math.round(n*0.3))))
+                     :(miss?Math.round(n*0.88):Math.round(n*1.03));
+      const slug=String(r.kpi).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+      o[si+'-'+ri]={ self:String(val), note:'', files:[slug+'-report-1'+(/score|readab|authority|position/i.test(r.kpi)?'.png':'.pdf')] };
+    }));
+    return o;
+  }
+  // every QC comment recorded against a task — per-line checklist comments + the overall note
+  qcCommentDigest(t){
+    const q=(this.state.clQc||{})[t.id]||{};
+    const secs=this.complianceSections(this.clKind(t));
+    const lines=[];
+    secs.forEach((s,si)=>s.rows.forEach((r,ri)=>{
+      const e=q[si+'-'+ri]||{};
+      if(e.verdict&&(e.comment||'').trim()) lines.push({ kpi:r.kpi, verdict:e.verdict, text:e.comment.trim() });
+    }));
+    let compliant=0, conditional=0, rework=0, reviewed=0, total=0;
+    secs.forEach((s,si)=>s.rows.forEach((r,ri)=>{ total++; const v=(q[si+'-'+ri]||{}).verdict;
+      if(v){ reviewed++; if(v==='Compliant') compliant++; else if(v==='Accept conditional') conditional++; else if(v==='Rework') rework++; } }));
+    const overall=(t.qcFeedback||'').trim();
+    return { lines, compliant, conditional, rework, reviewed, total, overall,
+      verdictLabel:reviewed?(compliant+' compliant · '+conditional+' conditional · '+rework+' rework of '+reviewed+' reviewed'):'',
+      hasAny:lines.length>0||!!overall||reviewed>0 };
+  }
+  complianceStats(taskList){
+    const qc=this.state.clQc||{};
+    let filled=0, total=0, meets=0, scored=0, compliant=0, conditional=0, rework=0, reviewed=0, submitted=0, evidence=0;
+    const byDiv={};
+    (taskList||this.allTasks()).forEach(t=>{
+      const kind=this.clKind(t);
+      const secs=this.complianceSections(kind);
+      const f=this.complianceFill(t), q=qc[t.id]||{};
+      if(this.complianceSubmitted(t)) submitted++;
+      byDiv[kind]=byDiv[kind]||{ meets:0, scored:0, rework:0, reviewed:0 };
+      secs.forEach((s,si)=>s.rows.forEach((r,ri)=>{
+        const key=si+'-'+ri; total++;
+        const ff=f[key]||{}, qq=q[key]||{};
+        if(ff.self!==undefined&&String(ff.self)!==''){ filled++; scored++;
+          const p=this.clPass(ff.self,r.gold);
+          if(p){ meets++; byDiv[kind].meets++; }
+          byDiv[kind].scored++; }
+        if((ff.files||[]).length) evidence++;
+        if(qq.verdict){ reviewed++; byDiv[kind].reviewed++;
+          if(qq.verdict==='Compliant') compliant++;
+          else if(qq.verdict==='Accept conditional') conditional++;
+          else if(qq.verdict==='Rework'){ rework++; byDiv[kind].rework++; } }
+      }));
+    });
+    return { filled, total, meets, scored, compliant, conditional, rework, reviewed, submitted, evidence,
+      selfPct:scored?Math.round(meets/scored*100):0,
+      firstPassPct:reviewed?Math.round(compliant/reviewed*100):0,
+      reworkPct:reviewed?Math.round(rework/reviewed*100):0,
+      evidencePct:scored?Math.round(evidence/scored*100):0,
+      byDiv:Object.entries(byDiv).filter(([,v])=>v.scored||v.reviewed).map(([k,v])=>({ label:k,
+        selfPct:v.scored?Math.round(v.meets/v.scored*100):0,
+        reworkPct:v.reviewed?Math.round(v.rework/v.reviewed*100):0,
+        scored:v.scored, reviewed:v.reviewed })) };
   }
   tkDivision(t){
     if(t.division) return t.division;
