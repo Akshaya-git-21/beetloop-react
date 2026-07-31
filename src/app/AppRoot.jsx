@@ -58,6 +58,8 @@ class AppRoot extends React.Component {
       { name:'Sameer Iyer', sub:'Senior SEO Executive', role:'Senior Executive', dept:'SEO', status:'Active', statusTone:'ok' },
       { name:'Neha Verma', sub:'Junior SEO Executive', role:'Junior Executive', dept:'SEO', status:'Pending Invitation', statusTone:'warn' },
       { name:'Farhan Ali', sub:'QC Reviewer', role:'QC Reviewer', dept:'Quality', status:'Active', statusTone:'ok' },
+      { name:'Ritu Malhotra', sub:'Digital Marketing Executive', role:'Digital Marketing Executive', dept:'Marketing', status:'Active', statusTone:'ok' },
+      { name:'Vikram Singh', sub:'Sales Executive', role:'Sales Executive', dept:'Marketing', status:'Active', statusTone:'ok' },
     ],
     services: [
       { name:'SEO', sub:'Search engine optimization', subs:'4 sub-services', status:'Active' },
@@ -4894,7 +4896,13 @@ class AppRoot extends React.Component {
   sopView(rk){
     const me=this.currentPerson();
     const canAuthor=['manager','team_lead','admin'].includes(rk);
-    const all=this.allSops();
+    // role-based visibility: leadership/QC see every SOP; everyone else only
+    // sees SOPs for their own division (plus any explicitly marked 'All')
+    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc'];
+    const myDept=(this.state.users||[]).find(u=>u.name===me);
+    const myDivision=myDept?myDept.dept:'';
+    const visibleToMe=(s)=>leadershipRoles.includes(rk) || !s.division || s.division==='All' || s.division===myDivision;
+    const all=this.allSops().filter(visibleToMe);
     const F=this.state.sopF||{ division:'All', status:'All', mine:'All', category:'All', priority:'All', frequency:'All', approver:'All', tag:'All' };
     const setF=(k)=>(e)=>this.setState({ sopF:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),sop:0} });
     let list=all.filter(s=>
@@ -4969,6 +4977,12 @@ class AppRoot extends React.Component {
     const id=this.state.sopOpen; if(!id) return { sopDrawerOpen:false };
     const s=this.allSops().find(x=>x.id===id); if(!s) return { sopDrawerOpen:false };
     const me=this.currentPerson();
+    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc'];
+    const myUser=(this.state.users||[]).find(u=>u.name===me);
+    const myDivision=myUser?myUser.dept:'';
+    if(!leadershipRoles.includes(rk) && s.division && s.division!=='All' && s.division!==myDivision){
+      return { sopDrawerOpen:false };
+    }
     const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
     const acked=(s.ack||[]).includes(me);
     const canAuthor=['manager','team_lead','admin'].includes(rk)&&(s.owner===me||rk==='admin');
