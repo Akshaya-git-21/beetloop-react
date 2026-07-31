@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContactDetailDrawer({ vm }) {
-  const { cnDrawerOpen, cnD, cnDClose, cnDStop, cnDSetStage, cnStageOptions2, cnMeta, cnLog } = vm;
+  const { cnDrawerOpen, cnD, cnDClose, cnDStop, cnDSetStage, cnStageOptions2, cnMeta, cnLog, cnDCanWrite } = vm;
   const d = cnD || {};
   return (
     <React.Fragment>
@@ -23,7 +23,7 @@ export default function ContactDetailDrawer({ vm }) {
 </div>
 <div style={{"display":"flex","alignItems":"center","gap":"9px","marginTop":"12px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>Conversion stage</span>
-<select value={d.stage||''} onChange={cnDSetStage} style={cssTextToObject(`padding:7px 13px;border-radius:999px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:${d.stageBg};color:${d.stageColor}`)}>
+<select value={d.stage||''} onChange={cnDSetStage} disabled={!cnDCanWrite} style={cssTextToObject(`padding:7px 13px;border-radius:999px;border:none;font-size:12px;font-weight:700;cursor:${cnDCanWrite?'pointer':'default'};background:${d.stageBg};color:${d.stageColor}`)}>
 {(cnStageOptions2||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>

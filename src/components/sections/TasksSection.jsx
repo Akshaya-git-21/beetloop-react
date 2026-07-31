@@ -410,9 +410,15 @@ LOCKED
 </span>
 
 
+{t.statusCanSet ? (
+<select value={t.statusVal} onChange={t.setStatusSel} onClick={(e) => e.stopPropagation()} style={cssTextToObject(`justify-self:start;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;border:none;cursor:pointer;background:${t.statusBg};color:${t.statusColor}`)}>
+{(t.statusOptions || []).map((o, oi) => (<option key={oi} value={o}>{o}</option>))}
+</select>
+) : (
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:${t.statusBg};color:${t.statusColor};justify-self:start`)}>
 {t.status}
 </span>
+)}
 
 
 <span style={{"minWidth":"0","fontSize":"11.5px","fontWeight":"600","color":"var(--ink-600)","display":"-webkit-box","WebkitLineClamp":"2","WebkitBoxOrient":"vertical","overflow":"hidden"}}>

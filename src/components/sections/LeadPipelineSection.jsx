@@ -9,6 +9,7 @@ export default function LeadPipelineSection({ vm }) {
     okrModLeads, ldStats, ldTodayPct, ldTodayW, ldTodayColor, ldTodayNote, ldReadOnly, ldCanEnter, ldPendingToday,
     ldf, ldSetDate, ldSetService, ldServiceOptions, ldServicePageNote, ldSetSource, ldSourceOptions,
     ldSetVisitors, ldSetCount, ldSetQualified, ldSetValue, ldSetCampaign, ldCampaignOptions, ldCampaignNote,
+    ldSetBrand, ldBrandOptions, ldBrandVal, ldBrandLocked, ldBrandNote,
     ldSetNotes, ldSave, ldFilterDefs, ldReset, ldReportTitle, ldPeriodBtns, ldReportSummary, ldTrendLabel, ldTrendColor,
     ldReportRows, ldSplit, ldSplitNote, ldSvcRows, ldRows, ldEmpty, ldPg } = vm;
   return (
@@ -173,7 +174,7 @@ View only — lead volumes and service performance are visible to you; entry and
 <span style={{"fontSize":"10.5px","fontWeight":"700","padding":"3px 10px","borderRadius":"999px","background":"var(--warn-100)","color":"var(--warn-600)"}}>Pending for today</span>
 )}
 </div>
-<div style={{"display":"grid","gridTemplateColumns":"repeat(4,1fr)","gap":"10px","marginBottom":"10px"}}>
+<div style={{"display":"grid","gridTemplateColumns":"repeat(5,1fr)","gap":"10px","marginBottom":"10px"}}>
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Date</label>
 <input type="date" value={ldf.date||''} onInput={ldSetDate} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","color":"var(--ink-700)"}} /></div>
 <div style={{"gridColumn":"span 2"}}><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Service <span style={{"color":"var(--danger-600)"}}>*</span></label>
@@ -190,6 +191,17 @@ View only — lead volumes and service performance are visible to you; entry and
 <select value={ldf.source||''} onChange={ldSetSource} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
 {(ldSourceOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
+<div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Brand</label>
+{ldBrandLocked ? (
+<div style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--surface-50)","color":"var(--ink-700)","fontWeight":"600"}}>{ldBrandVal}</div>
+) : (
+<select value={ldBrandVal||''} onChange={ldSetBrand} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<option value="">Select brand…</option>
+{(ldBrandOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
+</select>
+)}
+{Boolean(ldBrandNote) && (<div style={{"fontSize":"10px","color":"var(--ink-500)","marginTop":"4px"}}>{ldBrandNote}</div>)}
+</div>
 </div>
 <div style={{"display":"grid","gridTemplateColumns":".7fr .6fr .6fr .8fr 1.2fr","gap":"10px","marginBottom":"10px"}}>
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Visitors</label>

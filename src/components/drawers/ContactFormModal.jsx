@@ -4,7 +4,7 @@ import Icon from '../../components/Icon.jsx';
 export default function ContactFormModal({ vm }) {
   const { cnFormOpen, cnClose, cnStop, cnFromDaily, cnFromDailyNote, cnf, cnSetName, cnSetCompany, cnSetPhone, cnSetEmail,
     cnSetCountry, cnCountryOptions, cnSetService, cnServiceOptions, cnSetSource, cnSourceOptions, cnSetStage, cnStageOptions,
-    cnSetValue, cnSetDate, cnSetDesc, cnSave } = vm;
+    cnSetValue, cnSetDate, cnSetDesc, cnSetBrand, cnBrandOptions, cnBrandVal, cnBrandLocked, cnBrandNote, cnSave } = vm;
   const f = cnf || {};
   return (
     <React.Fragment>
@@ -40,6 +40,16 @@ export default function ContactFormModal({ vm }) {
 <select value={f.country||''} onChange={cnSetCountry} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
 {(cnCountryOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Brand</label>
+{cnBrandLocked ? (
+<div style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--surface-50)","color":"var(--ink-700)","fontWeight":"600"}}>{cnBrandVal}</div>
+) : (
+<select value={cnBrandVal||''} onChange={cnSetBrand} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+{(cnBrandOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
+</select>
+)}
+{Boolean(cnBrandNote) && (<div style={{"fontSize":"10.5px","color":"var(--ink-500)","marginTop":"4px"}}>{cnBrandNote}</div>)}
+</div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Service requested</label>
 <select value={f.service||''} onChange={cnSetService} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
 {(cnServiceOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}

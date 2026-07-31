@@ -3617,6 +3617,18 @@ class AppRoot extends React.Component {
       reviewer:t.reviewer||'—', qcFb:t.qcFeedback||'—', hasQcFb:!!t.qcFeedback,
       priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end,
       status:t.status, statusBg:tn.bg, statusColor:tn.c,
+      ...(()=>{
+        const mine=t.assignee===person, isLead=['manager','team_lead','admin'].includes(rk);
+        const canSet=(mine||isLead) && !['Approved','Closed'].includes(t.status);
+        const base=['Assigned','In Progress','Completed — send to QC'];
+        const cur=t.status==='Submitted'?'Completed — send to QC':t.status;
+        const opts=base.includes(cur)?base:[cur].concat(base);
+        return { statusCanSet:canSet, statusOptions:opts, statusVal:cur,
+          setStatusSel:(e)=>{ if(e)e.stopPropagation(); const v=e.target.value;
+            if(v==='Completed — send to QC'){
+              this.tkPatch(t.id,{ status:'Submitted' },'Marked complete — routed to QC ('+(t.reviewer||'QC team')+')');
+              this.flash(t.id+' marked complete and sent to '+(t.reviewer||'the QC team')+' for review.');
+            } else { this.tkPatch(t.id,{ status:v },'Status → '+v); this.flash(t.id+' → '+v+'.'); } } }; })(),
       ...(()=>{ const rc=this.reworkCycles(t);
         return { hasRework:rc>0, reworkLabel:rc===1?'1 QC rework':(rc+' QC reworks'),
           reworkBg:rc>=3?'var(--danger-100)':rc===2?'var(--warn-100)':'var(--surface-50)',
@@ -6245,6 +6257,7 @@ class AppRoot extends React.Component {
     if(this.state.roleKey==='sales'){ const b=this.ROLES.sales.brand; return all.filter(l=>!l.brand||l.brand===b); }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
+  BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India']; }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
@@ -6328,9 +6341,11 @@ class AppRoot extends React.Component {
       cnStop:(e)=>e.stopPropagation(),
       cnSetName:set('name'), cnSetPhone:set('phone'), cnSetEmail:set('email'), cnSetCountry:set('country'),
       cnSetCompany:set('company'), cnSetService:set('service'), cnSetSource:set('source'), cnSetStage:set('stage'),
-      cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'),
+      cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
       cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
+      cnBrandOptions:this.BRAND_LIST(),
+      cnBrandVal: this.state.roleKey==='sales' ? this.ROLES.sales.brand : (f.brand||''),
       cnBrandLocked: this.state.roleKey==='sales',
       cnBrandNote: this.state.roleKey==='sales' ? ('Brand: '+this.ROLES.sales.brand+' — your assigned brand.') : '',
       cnSave:()=>{
@@ -6351,15 +6366,20 @@ class AppRoot extends React.Component {
     const id=this.state.cnOpen; if(!id) return { cnDrawerOpen:false };
     const c=this.allContacts().find(x=>x.id===id); if(!c) return { cnDrawerOpen:false };
     const t=this.stageTone(c.stage); const me=this.currentPerson();
+    const rk=this.state.roleKey;
+    const canWrite=['admin','manager','sales'].includes(rk);
+    const phone=canWrite?c.phone:'•••• ••••', email=canWrite?c.email:'restricted';
     return { cnDrawerOpen:true,
-      cnD:{ ...c, stageBg:t.bg, stageColor:t.c },
+      cnD:{ ...c, phone, email, stageBg:t.bg, stageColor:t.c },
       cnDClose:()=>this.setState({ cnOpen:null }),
       cnDStop:(e)=>e.stopPropagation(),
-      cnMeta:[['Lead ID',c.id],['Company',c.company],['Phone',c.phone],['Email',c.email],['Country',c.country],
+      cnMeta:[['Lead ID',c.id],['Company',c.company],['Phone',phone],['Email',email],['Country',c.country],
         ['Service requested',c.service],['Source',c.source],['Campaign',c.campaign],['Est. value',c.value],['Captured',c.date],['Owner',c.owner]].map(x=>({k:x[0],v:x[1]||'—'})),
       cnLog:(c.log||[]).slice().reverse().map(l=>({ what:l[0], who:l[1], when:l[2] })),
       cnStageOptions2:this.LEAD_STAGES(),
-      cnDSetStage:(e)=>{ const v=e.target.value; const u={...(this.state.contactUpd||{})};
+      cnDCanWrite:canWrite,
+      cnDSetStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin, Manager and Sales.'); return; }
+        const v=e.target.value; const u={...(this.state.contactUpd||{})};
         u[c.id]={...(u[c.id]||{}), stage:v, log:[...(c.log||[]),['Stage → '+v,me,this.todayStr()]]};
         this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); } };
   }
@@ -6504,6 +6524,10 @@ class AppRoot extends React.Component {
           : (f.service?'No campaign targets this service page yet — pick one manually.':'Select a service to auto-fill the campaign.'); })(),
       ldSetDate:set('date'), ldSetSource:set('source'), ldSetCount:set('count'), ldSetQualified:set('qualified'), ldSetValue:set('value'), ldSetNotes:set('notes'), ldSetVisitors:set('visitors'),
       ldSetCampaign:set('campaign'), ldCampaignOptions:['— None —'].concat(this.campaignNames(false)),
+      ldSetBrand:set('brand'), ldBrandOptions:this.BRAND_LIST(),
+      ldBrandVal: rk==='sales' ? this.ROLES.sales.brand : (f.brand||''),
+      ldBrandLocked: rk==='sales',
+      ldBrandNote: rk==='sales' ? ('Brand: '+this.ROLES.sales.brand+' — your assigned brand.') : '',
       ldSave:()=>{
         const n=parseInt(f.count,10)||0;
         if(!f.service){ this.flash('Select the service these leads came in for.'); return; }
