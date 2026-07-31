@@ -711,11 +711,6 @@ class AppRoot extends React.Component {
       cmpGoOkr:()=>this.setState({ route:'okr', cmpOpen:null }),
     };
   }
-  // Simplified vs. the source design: KPI/effort/team rows are plain manual
-  // fields here rather than auto-linking to Effort Planner pools and
-  // auto-counting tasks as you pick — that auto-link magic is deferred (see
-  // implementation report). The 6-section structure, validation-free
-  // add/remove rows, and section-jump nav all work as designed.
   cmpFormData(){
     const f=this.state.cmpForm||{};
     const set=(k)=>(e)=>this.setState({ cmpForm:{...f,[k]:e.target.value} });
@@ -1465,9 +1460,7 @@ class AppRoot extends React.Component {
       return { mod:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:l, bg:t.bg, color:t.color };
     });
 
-    // "Needs attention" tiles — computed live from Tasks/OKRs/SOPs/Support,
-    // which all already exist. The Leads/CRM pipeline panel below is hidden
-    // entirely rather than shown empty, since that subsystem isn't built.
+    // "Needs attention" tiles — computed live from Tasks/OKRs/SOPs/Support.
     const X=(label,value,sub,color)=>({label,value,sub,color});
     const tasks=this.allTasks(), me=this.currentPerson();
     const mineT=tasks.filter(t=>t.assignee===me);
@@ -1683,10 +1676,12 @@ class AppRoot extends React.Component {
     this.flash(msg);
   }
 
-  // Simplified from source: no live start/stop stopwatch feature is ported,
-  // so "hours logged" reads the task's recorded actual hours directly rather
-  // than a running timer session on top of a base value.
-  hrsOf(t){ return parseFloat(t.actH)||0; }
+  hrsOf(t){
+    const base=parseFloat(t.actH)||0;
+    const tm=this.timerOf(t.id);
+    if(tm.running && tm.startedAt) return Math.round((base+(Date.now()-tm.startedAt)/3600000)*100)/100;
+    return base;
+  }
   dashboardsView(rk, role){
     const b=role.bucket;
     const may={ exec:['exec','capacity','dept','team'], ops:['exec','capacity','dept','team'], admin:['exec','capacity','dept','team'],
@@ -3175,9 +3170,6 @@ class AppRoot extends React.Component {
     return { prev, next };
   }
   // ---- Compliance checklists — self-assessment against gold standards, reconciled at QC ----
-  // Data layer only in this phase: the interactive per-task self-assessment/QC-verdict
-  // UI (a "Compliance" tab in Task Detail) is deferred; complianceFill() auto-synthesizes
-  // plausible self-scores for any task that has reached QC so the stats below are real.
   COMPLIANCE_SEED(){ return {
     Content:[
       { h:'Content excellence', rows:[
@@ -3762,10 +3754,6 @@ class AppRoot extends React.Component {
   }
 
   // ============ Time & Effort report (new tab on Tasks) ============
-  // Simplified vs. source: no live start/stop task timer exists in this app,
-  // so "actual hours" reads t.actH directly instead of a running-timer
-  // computation — the report math (variance, grouping, utilization) is
-  // otherwise a verbatim port.
   timeReportData(){
     const rk=this.state.roleKey, person=this.currentPerson();
     const isOwn=['junior','senior'].includes(rk);
@@ -3776,14 +3764,14 @@ class AppRoot extends React.Component {
     if(F.campaign!=='All') list=list.filter(t=>this.campaignOpt(t.campaign)===F.campaign);
     if(F.period!=='All'){ const win=F.period==='This week'?7:31;
       list=list.filter(t=>{ const df=this.dayDiff(t); return df===null?true:Math.abs(df)<=win; }); }
-    const rows=list.map(t=>{ const act=Math.round((parseFloat(t.actH)||0)*100)/100, est=parseFloat(t.estH)||0, v=Math.round((act-est)*100)/100;
+    const rows=list.map(t=>{ const act=Math.round(this.hrsOf(t)*100)/100, est=parseFloat(t.estH)||0, v=Math.round((act-est)*100)/100;
       const tn=this.tkTone(t.status);
       return { id:t.id, name:t.name, assignee:t.assignee, division:this.tkDivision(t), campaign:this.campaignOpt(t.campaign),
         est:est?est+' h':'—', act:act?act+' h':'0 h', actNum:act, estNum:est,
         variance:(v>0?'+':'')+v+' h', varianceColor:v>0?'var(--danger-600)':(v<0?'var(--verify-600)':'var(--ink-500)'),
         pct:est?Math.round(act/est*100)+'%':'—', pctW:est?Math.min(100,Math.round(act/est*100))+'%':'0%',
         pctColor:est&&act>est?'var(--danger-500)':act>=est*0.8?'var(--verify-500)':'var(--info-500)',
-        running:false,
+        running:this.timerOf(t.id).running,
         status:t.status, statusBg:tn.bg, statusColor:tn.c,
         open:()=>this.setState({ tkOpen:t.id }) }; });
     const pg=this.pgData('tr',rows,10);
