@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrSaveLabel,
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel,
     okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions,
     okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal,
     okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions } = vm;
