@@ -2235,8 +2235,16 @@ class AppRoot extends React.Component {
     if(t==='senior' || t==='lead' || t==='kpi'){
       const kpis = this.MY_KPIS()[this.state.roleKey]||[];
       const actuals={...this.state.kpiActuals};
-      kpis.forEach(k=>{ const v=cf['act_'+k.id]; if(v!==undefined && String(v).trim()!==''){ actuals[k.id]={ val:String(v).trim(), date }; reported.push(k.kpi+' → '+String(v).trim()+' '+k.unit); } });
-      this.setState({ kpiActuals:actuals });
+      const okrPatch={...(this.state.okrUpd||{})};
+      const patchOkrKr=(kpiName, okrTitle, val)=>{
+        const o=this.allOkrs().find(x=>x.title===okrTitle); if(!o||!(o.krs||[]).length) return;
+        const krs=o.krs.map(kr=>kr.kpi===kpiName?{...kr, current:val, lastReported:date, lastReportedBy:role.person}:kr);
+        okrPatch[o.id]={...(okrPatch[o.id]||{}), krs};
+      };
+      kpis.forEach(k=>{ const v=cf['act_'+k.id]; if(v!==undefined && String(v).trim()!==''){
+        actuals[k.id]={ val:String(v).trim(), date }; reported.push(k.kpi+' → '+String(v).trim()+' '+k.unit);
+        patchOkrKr(k.kpi, k.okr, String(v).trim()); } });
+      this.setState({ kpiActuals:actuals, okrUpd:okrPatch });
       if(reported.length===0 && t!=='kpi'){ this.flash('Enter at least one actual value to report.'); return; }
     }
     const qual=[cf.flag&&'Flagged for Manager review', cf.challenges&&('Blockers: '+cf.challenges), cf.risks&&('Risks: '+cf.risks), cf.dependencies&&('Dependencies: '+cf.dependencies), cf.support&&('Support needed: '+cf.support), cf.next&&('Next week: '+cf.next), (cf.files&&cf.files.length)&&('Evidence: '+cf.files.join(', '))].filter(Boolean).join(' · ');
