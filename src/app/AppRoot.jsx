@@ -49,6 +49,7 @@ class AppRoot extends React.Component {
     epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '', epRowAdds: {},
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [], cUpd: {}, npEditId: null,
+    umTab: 'list', rolePerms: {}, permRole: 'manager',
     uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' },
     users: [
       { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
@@ -121,6 +122,35 @@ class AppRoot extends React.Component {
     return Object.keys(this.ACCESS).filter(m=>this.ACCESS[m][roleKey]).map(m=>({
       module:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:this.ACCESS[m][roleKey],
     }));
+  }
+  // Granular Create/Edit/Delete/View permissions, one boolean set per
+  // role x module. Defaults are derived from the existing ACCESS level
+  // strings (e.g. 'Full' -> everything, 'View' -> read-only, 'No access'
+  // -> nothing) the first time a role/module is looked at, then Admin can
+  // override individual actions from the Permissions matrix in User
+  // Management — overrides persist in state.rolePerms.
+  PERMISSION_MODULES(){ return Object.keys(this.ACCESS); }
+  defaultPermsFromLevel(level){
+    if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false };
+    const l=String(level).toLowerCase();
+    const rw=/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
+    const del=/full/.test(l);
+    return { view:true, create:rw, edit:rw, delete:del };
+  }
+  getPerm(moduleKey, roleKey){
+    const stored=(this.state.rolePerms||{})[moduleKey]&&(this.state.rolePerms||{})[moduleKey][roleKey];
+    if(stored) return stored;
+    return this.defaultPermsFromLevel(this.ACCESS[moduleKey]&&this.ACCESS[moduleKey][roleKey]);
+  }
+  setPerm(moduleKey, roleKey, action, value){
+    const cur=this.state.rolePerms||{};
+    const modPerms=cur[moduleKey]||{};
+    const rolePerm=this.getPerm(moduleKey, roleKey);
+    const next={...cur, [moduleKey]:{...modPerms, [roleKey]:{...rolePerm, [action]:value}}};
+    this.setState({ rolePerms:next });
+  }
+  hasPerm(moduleKey, action){
+    return !!this.getPerm(moduleKey, this.state.roleKey)[action];
   }
 
   // The name of whoever is actually logged in — real accounts must resolve
@@ -6983,6 +7013,37 @@ class AppRoot extends React.Component {
       .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true }));
     return addedRows.concat(seedRows);
   }
+  permissionsData(){
+    const permCanManage=this.state.roleKey==='admin';
+    const roleKeys=Object.keys(this.ROLES);
+    const permRole=roleKeys.includes(this.state.permRole)?this.state.permRole:'manager';
+    const mods=this.PERMISSION_MODULES();
+    const toggle=(m,action)=>()=>{
+      if(!permCanManage) return;
+      const cur=this.getPerm(m,permRole);
+      this.setPerm(m,permRole,action,!cur[action]);
+    };
+    const dotStyle=(on)=>'display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;cursor:'+(permCanManage?'pointer':'default')+';border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-400)');
+    return {
+      permCanManage,
+      permRoleOptions:roleKeys.map(k=>({ key:k, label:this.ROLES[k].label })),
+      permRoleVal:permRole,
+      permSetRole:(e)=>this.setState({ permRole:e.target.value }),
+      permRows:mods.map(m=>{
+        const p=this.getPerm(m,permRole);
+        return { key:m, label:(this.MODMETA[m]&&this.MODMETA[m].label)||m,
+          defaultLevel:this.ACCESS[m][permRole]||'No access',
+          view:p.view, create:p.create, edit:p.edit, delete:p.delete,
+          viewStyle:dotStyle(p.view), createStyle:dotStyle(p.create), editStyle:dotStyle(p.edit), deleteStyle:dotStyle(p.delete),
+          toggleView:toggle(m,'view'), toggleCreate:toggle(m,'create'), toggleEdit:toggle(m,'edit'), toggleDelete:toggle(m,'delete') };
+      }),
+      permReset:()=>{ if(!permCanManage) return;
+        const cur={...(this.state.rolePerms||{})};
+        mods.forEach(m=>{ if(cur[m]) cur[m]={...cur[m]}; if(cur[m]) delete cur[m][permRole]; });
+        this.setState({ rolePerms:cur });
+        this.flash('Permissions for '+this.ROLES[permRole].label+' reset to defaults.'); },
+    };
+  }
   tableData(route, rk, lvl, readOnly){
     const canEdit = this.EDIT_LEVELS.includes(lvl);
     const tag=(t,tone)=>({tag:t,tagBg:{ok:'var(--verify-100)',warn:'var(--warn-100)',info:'var(--info-100)',draft:'var(--surface-50)'}[tone],tagColor:{ok:'var(--verify-600)',warn:'var(--warn-600)',info:'var(--info-600)',draft:'var(--ink-500)'}[tone]});
@@ -6992,8 +7053,14 @@ class AppRoot extends React.Component {
 
     if(route==='users'){
       const empOf=(name)=>{ const idx=this.state.users.findIndex(u=>u.name===name); return 'EMP-'+String(100+idx+1).slice(-3); };
+      const umTab=this.state.umTab||'list';
+      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
       return {
-        umIsList:true,
+        umTabList:umTab==='list', umTabPerms:umTab==='perms',
+        umSegListStyle:seg(umTab==='list'), umSegPermStyle:seg(umTab==='perms'),
+        umGoList:()=>this.setState({ umTab:'list' }), umGoPerm:()=>this.setState({ umTab:'perms' }),
+        umIsList:umTab==='list',
+        ...this.permissionsData(rk),
         umRows:this.state.users.map(u=>{
           const open=this.allTasks().filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
           const assigned=open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0);

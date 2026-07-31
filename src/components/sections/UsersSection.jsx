@@ -3,10 +3,62 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function UsersSection({ vm }) {
-  const { showUsersTable, umIsList, umStats, umRows } = vm;
+  const { showUsersTable, umIsList, umStats, umRows,
+    umTabList, umTabPerms, umSegListStyle, umSegPermStyle, umGoList, umGoPerm,
+    permCanManage, permRoleOptions, permRoleVal, permSetRole, permRows, permReset } = vm;
   return (
     <React.Fragment>
-{Boolean(showUsersTable && umIsList) && (
+{Boolean(showUsersTable) && (
+<React.Fragment>
+
+<div style={{"display":"inline-flex","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"3px","marginBottom":"16px"}}>
+<button onClick={umGoList} style={cssTextToObject(umSegListStyle)}><Icon name={"users"} style={{"width":"15px","height":"15px"}} />User list</button>
+<button onClick={umGoPerm} style={cssTextToObject(umSegPermStyle)}><Icon name={"shield-check"} style={{"width":"15px","height":"15px"}} />Permissions</button>
+</div>
+
+{Boolean(umTabPerms) && (
+<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"padding":"16px 20px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"12px","flexWrap":"wrap"}}>
+<div style={{"flex":"1","minWidth":"200px"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)"}}>Module permissions</div>
+<div style={{"fontSize":"12px","color":"var(--ink-500)","marginTop":"2px"}}>{permCanManage ? 'Click a dot to grant or revoke that action for the selected role.' : 'View only — only Admin can change permissions.'}</div>
+</div>
+<select value={permRoleVal||''} onChange={permSetRole} style={{"padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff","fontWeight":"700","color":"var(--beet-700)"}}>
+{(permRoleOptions || []).map((o, $i) => (<option key={$i} value={o.key}>{o.label}</option>))}
+</select>
+{Boolean(permCanManage) && (
+<button onClick={permReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<Icon name={"rotate-ccw"} style={{"width":"13px","height":"13px"}} />
+Reset to defaults
+</button>
+)}
+</div>
+<div className="blscroll" style={{"overflowX":"auto"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"680px"}}>
+<thead><tr style={{"background":"var(--surface-50)"}}>
+<th style={{"textAlign":"left","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Module</th>
+<th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>View</th>
+<th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Create</th>
+<th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Edit</th>
+<th style={{"textAlign":"center","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Delete</th>
+</tr></thead>
+<tbody>
+{(permRows || []).map((r, $index) => (
+<tr key={$index} style={{"borderBottom":"1px solid var(--line-200)"}}>
+<td style={{"padding":"11px 18px","fontSize":"13px","fontWeight":"700","color":"var(--ink-900)"}}>{r.label}</td>
+<td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleView} disabled={!permCanManage} style={cssTextToObject(r.viewStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.view?1:0}} /></button></td>
+<td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleCreate} disabled={!permCanManage} style={cssTextToObject(r.createStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.create?1:0}} /></button></td>
+<td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleEdit} disabled={!permCanManage} style={cssTextToObject(r.editStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.edit?1:0}} /></button></td>
+<td style={{"padding":"11px 18px","textAlign":"center"}}><button onClick={r.toggleDelete} disabled={!permCanManage} style={cssTextToObject(r.deleteStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.delete?1:0}} /></button></td>
+</tr>
+))}
+</tbody>
+</table>
+</div>
+</div>
+)}
+
+{Boolean(umTabList) && (
 <React.Fragment>
 
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(150px,1fr))","gap":"12px","marginBottom":"16px"}}>
@@ -94,6 +146,9 @@ export default function UsersSection({ vm }) {
 </table>
 </div>
 </div>
+
+</React.Fragment>
+)}
 
 </React.Fragment>
 )}
