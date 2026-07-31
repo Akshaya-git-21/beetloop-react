@@ -1286,6 +1286,7 @@ class AppRoot extends React.Component {
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
+    if(showIdeas||showQC) Object.assign(out, this.convertData());
     if(showAnalytics){ out.analyticsCards = this.analyticsData(role.bucket); Object.assign(out, this.dashboardsView(rk, role)); }
     if(showMastersHub) out.masterGroups = this.mastersData();
     if(showMasterDetail) Object.assign(out, this.masterDetailData());
@@ -2620,12 +2621,73 @@ class AppRoot extends React.Component {
   ideaPatch(id,patch){ const u={...(this.state.ideaUpd||{})}; u[id]={...(u[id]||{}),...patch}; this.setState({ ideaUpd:u }); }
   ideaTone(s){ return {'Idea Captured':{bg:'var(--surface-50)',c:'var(--ink-500)'},'Submitted for QC':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},'Approved':{bg:'var(--verify-100)',c:'var(--verify-600)'},'Rework':{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   ideaToTask(i){
-    const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
-    const who=this.currentPerson();
-    const task={ id, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'), template:'Write Article', project:i.service||'Content', campaign:i.effortPlan||'—', start:this.relDate(0), end:this.relDate(14), priority:i.priority||'Medium', assignee: i.owner==='Neha Verma'?'Neha Verma':'Sameer Iyer', kpiId:'sr3', kpi:'Content Published', units:1, unit:'articles', estH:10, actH:0, recurrence:'None', reviewer:'Priya Nair (Manager)', effortPlan:i.effortPlan||'', effortType:'Content idea', contentIdea:i.id, checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}], dep:'—', evidence:[], status:'Assigned', activity:[[who,'Created from approved content idea '+i.id,this.todayStr()]] };
-    this.setState({ tkAdded:[...(this.state.tkAdded||[]),task] });
-    this.ideaPatch(i.id,{ taskId:id });
-    this.flash('Task '+id+' created from '+i.id+' — linked to the effort plan & Content KPI.');
+    // open the convert step — effort line decides how many tasks are generated
+    const plan=this.allEpPlans().find(p=>p.name===i.effortPlan)||this.allEpPlans()[0];
+    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', count:'1', assignee:i.owner||'Sameer Iyer', start:'', end:'', reviewer:'Priya Nair (Manager)' } });
+  }
+  convertData(){
+    const iid=this.state.cvIdea; if(!iid) return { cvOpen:false };
+    const i=this.allIdeas().find(x=>x.id===iid); if(!i) return { cvOpen:false };
+    const f=this.state.cvForm||{};
+    const set=(k)=>(e)=>this.setState({ cvForm:{...f,[k]:e.target.value} });
+    const plans=this.allEpPlans();
+    const plan=plans.find(p=>p.id===f.planId);
+    const row=plan&&(plan.rows||[]).find(r=>r.type===f.rowType);
+    const kpiPool=this.epKpiPool();
+    const isNew=f.kpiMode==='new';
+    return {
+      cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f,
+      cvClose:()=>this.setState({ cvIdea:null, cvForm:{} }),
+      cvStop:(e)=>e.stopPropagation(),
+      cvPlanOptions:[{v:'',label:'— Select an effort plan —'}].concat(plans.map(p=>({v:p.id,label:p.id+' · '+p.name+' — '+p.division}))),
+      cvSetPlan:(e)=>this.setState({ cvForm:{...f, planId:e.target.value, rowType:'', kpiId:'', count:'1'} }),
+      cvRowOptions:plan?[{v:'',label:'— Select the effort line this idea delivers —'}].concat((plan.rows||[]).map(r=>({v:r.type,label:r.type+' — '+(r.monthly||0)+' '+r.unit+' / month'}))):[{v:'',label:'Pick an effort plan first'}],
+      cvSetRow:(e)=>{ const v=e.target.value; const r=plan&&(plan.rows||[]).find(x=>x.type===v);
+        const kid=r?((r.kpiIds&&r.kpiIds[0])||r.kpiId||''):'';
+        this.setState({ cvForm:{...f, rowType:v, kpiId:kid, kpiMode:kid?'existing':f.kpiMode, count:r?String(r.monthly||1):'1'} });
+        if(r) this.flash('Effort "'+v+'" sets '+(r.monthly||1)+' task'+((r.monthly||1)===1?'':'s')+(kid?' and links its KPI.':'.')); },
+      cvEffortInfo:row?(row.monthly+' '+row.unit+' / month · priority '+row.priority):'',
+      cvHasRow:!!row,
+      cvKpiExisting:!isNew, cvKpiNew:isNew,
+      cvModeBtns:[{k:'existing',l:'Link existing KPI'},{k:'new',l:'Create new KPI'}].map(m=>({ label:m.l,
+        style:'flex:1;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(f.kpiMode===m.k?'var(--beet-700)':'var(--line-300)')+';background:'+(f.kpiMode===m.k?'var(--beet-700)':'#fff')+';color:'+(f.kpiMode===m.k?'#fff':'var(--ink-700)'),
+        set:()=>this.setState({ cvForm:{...f,kpiMode:m.k} }) })),
+      cvKpiOptions:[{v:'',label:'— Select a KPI —'}].concat(kpiPool.map(k=>({v:k.id,label:k.kpi+' — '+k.who+' ('+k.target+' '+k.unit+')'}))),
+      cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
+      cvSetCount:set('count'), cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
+      cvAssignees:(this.state.users||[]).map(u=>u.name),
+      cvReviewers:['Priya Nair (Manager)','Aditi Rao (Team Lead)','Farhan Ali (QC)'],
+      cvCountNote:(()=>{ const n=parseInt(f.count,10)||0; return n+' task'+(n===1?'':'s')+' will be created'+(row?(' — from the effort target of '+row.monthly+' '+row.unit):'')+'.'; })(),
+      cvSave:()=>{
+        if(!f.rowType){ this.flash('Select the effort line — it decides how many tasks are created.'); return; }
+        if(f.kpiMode==='existing'&&!f.kpiId){ this.flash('Link a KPI, or switch to Create new KPI.'); return; }
+        if(f.kpiMode==='new'&&!(f.newKpiName||'').trim()){ this.flash('Name the new KPI.'); return; }
+        const n=Math.max(1,Math.min(60,parseInt(f.count,10)||1));
+        const who=this.currentPerson();
+        const k=kpiPool.find(x=>x.id===f.kpiId);
+        const kpiName=f.kpiMode==='new'?f.newKpiName.trim():(k?k.kpi:'Not linked');
+        const kpiUnit=f.kpiMode==='new'?(f.newKpiUnit||'units'):(k?k.unit:'');
+        const base=(this.state.tkAdded||[]).length;
+        const added=[];
+        for(let n2=0;n2<n;n2++){
+          const id='TSK-'+(2060+base+n2+1);
+          added.push({ id, name:i.title+(n>1?(' — '+(n2+1)+'/'+n):''), desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
+            template:'Write Article', project:i.service||'Content', campaign:plan?plan.campaign:'—',
+            start:this.fmtDate(f.start)||this.relDate(0), end:this.fmtDate(f.end)||this.relDate(14),
+            priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||'Sameer Iyer',
+            kpiId:f.kpiMode==='new'?'':(f.kpiId||''), kpi:kpiName, units:1, unit:kpiUnit||(row&&row.unit)||'articles',
+            estH:10, actH:0, recurrence:'None', reviewer:f.reviewer||'Priya Nair (Manager)',
+            effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id,
+            checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
+            dep:'—', evidence:[], status:'Assigned', division:plan?plan.division:'Content',
+            activity:[[who,'Generated from approved idea '+i.id+' · effort "'+f.rowType+'"',this.todayStr()]] });
+        }
+        this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added], cvIdea:null, cvForm:{},
+          tkFilter:'All', tkFilters:{status:'All',priority:'All',assignee:'All'} });
+        this.ideaPatch(i.id,{ taskId:added[0].id, taskIds:added.map(t=>t.id), effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName });
+        this.flash(n+' task'+(n===1?'':'s')+' generated from '+i.id+' — linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".');
+      },
+    };
   }
   ideasView(){
     const rk=this.state.roleKey;

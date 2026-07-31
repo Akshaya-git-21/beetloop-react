@@ -28,6 +28,7 @@ import OkrTemplateFormDrawer from '../components/drawers/OkrTemplateFormDrawer.j
 import KpiTemplateFormDrawer from '../components/drawers/KpiTemplateFormDrawer.jsx';
 import OkrDetailDrawer from '../components/drawers/OkrDetailDrawer.jsx';
 import AddContentIdeaDrawer from '../components/drawers/AddContentIdeaDrawer.jsx';
+import ConvertToTasksModal from '../components/drawers/ConvertToTasksModal.jsx';
 import TaskDetailDrawer from '../components/drawers/TaskDetailDrawer.jsx';
 import CreateTaskModal from '../components/drawers/CreateTaskModal.jsx';
 import CheckInModal from '../components/drawers/CheckInModal.jsx';
@@ -285,6 +286,7 @@ export default function AppShell({ vm }) {
 
 
 <AddContentIdeaDrawer vm={vm} />
+<ConvertToTasksModal vm={vm} />
 
 
 
