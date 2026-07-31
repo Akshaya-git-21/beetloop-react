@@ -48,7 +48,7 @@ class AppRoot extends React.Component {
     epForm: null, epRows: null, epGenerated: false, epView: 'list', epDivision: 'Content Writer', epPlanId: null, epAdded: [],
     epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '', epRowAdds: {},
     pg: {}, tblQuery: '', qcStatusF: 'All',
-    showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [],
+    showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [], cUpd: {}, npEditId: null,
     uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' },
     users: [
       { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
@@ -6043,7 +6043,8 @@ class AppRoot extends React.Component {
     return this._cpages;
   }
 
-  allContentPages(){ return (this.state.cAdded||[]).slice().reverse().concat(this.CONTENT_PAGES()); }
+  allContentPages(){ const upd=this.state.cUpd||{};
+    return (this.state.cAdded||[]).slice().reverse().concat(this.CONTENT_PAGES()).map(p=>upd[p.id]?{...p,...upd[p.id]}:p); }
   contentStatusTone(s){ return { Published:{bg:'var(--verify-100)',color:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',color:'var(--ink-500)'}, 'Under Review':{bg:'var(--warn-100)',color:'var(--warn-600)'}, 'SEO Review':{bg:'var(--info-100)',color:'var(--info-600)'}, Scheduled:{bg:'var(--orchid-100)',color:'var(--orchid-700)'}, Archived:{bg:'var(--surface-50)',color:'var(--ink-400)'} }[s]||{bg:'var(--surface-50)',color:'var(--ink-500)'}; }
 
   contentView(){
@@ -6104,8 +6105,9 @@ class AppRoot extends React.Component {
   newPageData(){
     const f=this.state.npForm||{};
     const repos=this.CONTENT_REPOS().filter(r=>r.key!=='all');
+    const editId=this.state.npEditId;
     const nextNum = 1000 + this.allContentPages().length + 1;
-    const code = 'PG-'+nextNum;
+    const code = editId||('PG-'+nextNum);
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
     const baseSlug = f.slug || slugify(f.name);
     const repoPath = { service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' }[f.repo||'service'] || '/';
@@ -6114,7 +6116,7 @@ class AppRoot extends React.Component {
     const url = baseSlug ? (base + baseSlug) : (base + '…');
     const set=(k)=>(e)=>this.setState({ npForm:{...this.state.npForm,[k]:e.target.value} });
     return {
-      showNewPage:this.state.showNewPage, npCode:code,
+      showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
       npParentOptions:[{id:'',label:'None — top-level page'}].concat(this.allContentPages().map(p=>({ id:p.id, label:p.name+'  ·  '+p.url }))),
       npSetParentId:(e)=>this.setState({ npForm:{...this.state.npForm, pid:e.target.value} }),
@@ -6157,7 +6159,7 @@ class AppRoot extends React.Component {
       npBack:()=>this.setState({ npTab: Math.max(0,(this.state.npTab||0)-1) }),
       npNotLast:(this.state.npTab||0)<9, npNotFirst:(this.state.npTab||0)>0,
       npSlug:baseSlug, npUrl:url,
-      closeNewPage:()=>this.setState({ showNewPage:false }),
+      closeNewPage:()=>this.setState({ showNewPage:false, npEditId:null }),
       npAI:()=>this.flash('AI drafted meta title & description (demo).'),
       submitNewPageDraft:()=>this.submitNewPage(false),
       submitNewPageCreate:()=>this.submitNewPage(true),
@@ -6166,8 +6168,10 @@ class AppRoot extends React.Component {
   submitNewPage(activate){
     const f=this.state.npForm||{};
     if(!f.name || !f.name.trim()){ this.flash('Enter a page name.'); return; }
+    const editId=this.state.npEditId;
+    const existing=editId?this.allContentPages().find(x=>x.id===editId):null;
     const repo=f.repo||'service';
-    const code='PG-'+(1000+this.allContentPages().length+1);
+    const code=editId||('PG-'+(1000+this.allContentPages().length+1));
     const repoName=(this.CONTENT_REPOS().find(r=>r.key===repo)||{}).name;
     const name=f.name.trim();
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
@@ -6197,10 +6201,22 @@ class AppRoot extends React.Component {
       internal: (()=>{ const ls=(this.state.npLinks||[]).filter(l=>l.anchor||l.target); return ls.length? ls.map(l=>[l.anchor||f.keyword||name.toLowerCase(), l.target||url, l.ltype||'Internal', '—']) : [[f.keyword||name.toLowerCase(), url, 'Internal', '—']]; })(),
       aiLinks:[['Run AI internal-link suggestions', '—', '—']],
       media:(()=>{ const ms=(this.state.npMedia||[]).filter(m=>m.name||m.alt); return ms.length? ms.map(m=>[m.type||'Image', m.name||'untitled', m.alt||'—','—','0']) : [['Image','hero-placeholder.jpg','Add a hero image · alt text','—','0']]; })(),
-      workflow: activate?'Under Review':'Draft', publishDate:this.fmtDate(f.publishDate)||'—', expiry:'—', version:'v0.1',
-      analytics:{traffic:'—',ctr:'—',pos:'—',bounce:'—',time:'—',conv:'—',backlinks:'0',speed:'—'},
-      activity:[[owner, activate?'Submitted for review':'Created draft', today],[owner,'Page created — '+code, today]],
+      workflow: existing?existing.workflow:(activate?'Under Review':'Draft'),
+      publishDate:this.fmtDate(f.publishDate)||(existing?existing.publishDate:'—'),
+      expiry:existing?existing.expiry:'—', version:existing?existing.version:'v0.1',
+      analytics:existing?existing.analytics:{traffic:'—',ctr:'—',pos:'—',bounce:'—',time:'—',conv:'—',backlinks:'0',speed:'—'},
+      activity: existing
+        ? [[owner,'Page updated',today], ...(existing.activity||[])]
+        : [[owner, activate?'Submitted for review':'Created draft', today],[owner,'Page created — '+code, today]],
     };
+    if(existing){
+      page.status=existing.status;
+      const upd={...(this.state.cUpd||{}), [code]:page};
+      this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npEditId:null, cOpen:code, cTab:0 });
+      try{ localStorage.setItem('beetloop_content_page_upd', JSON.stringify(upd)); }catch(e){}
+      this.flash('Page “'+name+'” updated.');
+      return;
+    }
     const next=[...(this.state.cAdded||[]), page];
     this.setState({ cAdded:next, showNewPage:false, npForm:{}, cRepo:repo, cStatus:'All', cQuery:'', cOpen:code, cTab:0 });
     try{ localStorage.setItem('beetloop_content_pages', JSON.stringify(next)); }catch(e){}
@@ -6663,7 +6679,39 @@ class AppRoot extends React.Component {
       ...this.pageWorkView(p),
       closeContent:()=>this.setState({cOpen:null}),
       contentAINote:()=>this.flash('AI suggestion accepted (demo).'),
+      cdCanEdit:['manager','admin','team_lead'].includes(this.state.roleKey),
+      cdEdit:()=>this.editContentPage(p.id),
     };
+  }
+  editContentPage(id){
+    const p=this.allContentPages().find(x=>x.id===id); if(!p) return;
+    const clsGet=(label)=>{ const row=(p.cls||[]).find(x=>x[0]===label); return row?row[1]:''; };
+    const seoGet=(label)=>{ const row=(p.seoMeta||[]).find(x=>x[0]===label); return row?row[1]:''; };
+    const h2Block=(p.blocks||[]).find(b=>b[0]==='Heading'&&b[1]==='H2');
+    const h2ParaIdx=h2Block?(p.blocks||[]).indexOf(h2Block)+1:-1;
+    const h3Block=(p.blocks||[]).find(b=>b[0]==='Heading'&&b[1]==='H3');
+    const h3ParaIdx=h3Block?(p.blocks||[]).indexOf(h3Block)+1:-1;
+    const introBlock=(p.blocks||[]).find(b=>b[0]==='Paragraph');
+    const ctaBlock=(p.blocks||[]).find(b=>b[0]==='CTA');
+    const svc=(p.rel&&p.rel.Services&&p.rel.Services[0])||'';
+    const svcMatch=this.allContentPages().find(x=>svc.indexOf(x.name)===0);
+    const insight=(p.rel&&p.rel.Insights&&p.rel.Insights[0])||'';
+    const insightMatch=this.allContentPages().find(x=>insight.indexOf(x.name)===0);
+    this.setState({ showNewPage:true, npTab:0, npEditId:id,
+      npLinks:(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})).length?(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})):[{anchor:'',target:'',ltype:'Internal'}],
+      npMedia:(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})).length?(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})):[{name:'',alt:'',type:'Image'}],
+      npForm:{ repo:p.repo, type:p.type, name:p.name, slug:p.slug, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
+        metaTitle:seoGet('Meta Title'), metaDesc:p.description, owner:p.owner, reviewer:p.reviewer!=='—'?p.reviewer:'',
+        subService:clsGet('Sub-Service')!=='To be assigned'?clsGet('Sub-Service'):'', sector:clsGet('Sector')!=='—'?clsGet('Sector'):'',
+        countries:clsGet('Target Countries')!=='—'?clsGet('Target Countries'):'', pid:p.pid||'',
+        menuCat:p.menuCat, menuOrder:String(p.menuOrder||0), secondaryKw:seoGet('Secondary Keywords')!=='—'?seoGet('Secondary Keywords'):'',
+        intent:seoGet('Keyword Intent')!=='—'?seoGet('Keyword Intent'):'', schema:seoGet('Schema Type'),
+        primaryKw:seoGet('Primary Keywords')!=='—'?seoGet('Primary Keywords'):'', ogTitle:seoGet('OG Title'), ogDesc:seoGet('OG Description'),
+        ogImage:seoGet('OG Image')!=='—'?seoGet('OG Image'):'', robots:seoGet('Robots'),
+        intro:introBlock?introBlock[2]:'', h2:h2Block?h2Block[2]:'', h2body:h2ParaIdx>=0&&(p.blocks||[])[h2ParaIdx]?(p.blocks||[])[h2ParaIdx][2]:'',
+        h3:h3Block?h3Block[2]:'', h3body:h3ParaIdx>=0&&(p.blocks||[])[h3ParaIdx]?(p.blocks||[])[h3ParaIdx][2]:'',
+        cta:ctaBlock?ctaBlock[2]:'', publishDate:this.isoDate(p.publishDate),
+        relServiceId:svcMatch?svcMatch.id:'', relInsightId:insightMatch?insightMatch.id:'' } });
   }
 
   okrBulkAct(name){ return ()=>{ const n=this.state.okrSelected.length; this.setState({ okrSelected:[] }); this.flash(name+' '+n+' OKR'+(n===1?'':'s')); }; }

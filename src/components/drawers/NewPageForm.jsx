@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft } = vm;
+  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -31,10 +31,10 @@ Content Repository
 
             
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"3px 0 0"}}>
-Create new page
+{npPanelTitle || 'Create new page'}
 </h3>
 
-            
+
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"6px"}}>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>
 Page code
@@ -43,7 +43,7 @@ Page code
 {npCode}
 </span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
-auto-generated
+{npIsEdit ? 'editing' : 'auto-generated'}
 </span>
 </div>
 

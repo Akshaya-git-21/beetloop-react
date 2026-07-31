@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentPageDetailDrawer({ vm }) {
-  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop,
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop, cdCanEdit, cdEdit,
     cwLinkedCount, cwModeBtns, cwCanRun, cwApprove, cwApproveLabel, cwGenerate, cwHasTasks, cwOpenTasks, cwProgressW, cwStages, cwOpenKpi, cwKpiNote,
     cd_liveHas, cd_liveNote, cd_live, cd_liveWarn, cd_liveWarnMsg } = vm;
   return (
@@ -49,10 +49,18 @@ export default function ContentPageDetailDrawer({ vm }) {
           
 </div>
 
-          
-<button onClick={closeContent} style={{"flex":"none","width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+
+<div style={{"flex":"none","display":"flex","alignItems":"center","gap":"8px"}}>
+{Boolean(cdCanEdit) && (
+<button onClick={cdEdit} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","fontSize":"13px","fontWeight":"700","color":"var(--ink-700)"}}>
+<Icon name={"pencil"} style={{"width":"15px","height":"15px"}} />
+Edit
+</button>
+)}
+<button onClick={closeContent} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
+</div>
 
         
 </div>
