@@ -22,7 +22,7 @@ class AppRoot extends React.Component {
     ldFilters: {service:'All',source:'All',range:'This week'}, ldForm: {}, ldTarget: '10', ldPeriod: 'Weekly',
     pipeFilters: {stage:'All',service:'All',country:'All',owner:'All'},
     showUserModal: false,
-    showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {},
+    showMasterRecordEdit: false, mrKey: null, mrIndex: null, mrForm: {}, masterAdded: {}, masterDeleted: {},
     masterKey: null, masterRecord: null, masterTab: 0, masterQuery: '',
     okrExpanded: [], showOkrPanel: false, okrRecord: null, okrSection: 'okrA', okrOpen: null,
     okrAdded: [], okrUpd: {}, okrEditId: null,
@@ -148,8 +148,12 @@ class AppRoot extends React.Component {
     const cur=this.state.rolePerms||{};
     const modPerms=cur[moduleKey]||{};
     const rolePerm=this.getPerm(moduleKey, roleKey);
-    const next={...cur, [moduleKey]:{...modPerms, [roleKey]:{...rolePerm, [action]:value}}};
+    const nextPerm={...rolePerm, [action]:value};
+    const next={...cur, [moduleKey]:{...modPerms, [roleKey]:nextPerm}};
     this.setState({ rolePerms:next });
+    supabase.from('role_permissions').upsert({ module_key:moduleKey, role_key:roleKey, perms:nextPerm }).then(({error})=>{
+      if(error) console.warn('[supabase] role permission upsert failed:', error.message);
+    });
   }
   hasPerm(moduleKey, action){
     return !!this.getPerm(moduleKey, this.state.roleKey)[action];
@@ -269,8 +273,34 @@ class AppRoot extends React.Component {
       Status:u.status,
     }));
   }
+  // Builds the merged registry fresh on every call: this._mastersSeed is the
+  // immutable hardcoded base (computed once), overlaid with masterAdded
+  // (new/edited rows, keyed by masterKey then by the row's own id field —
+  // same overlay pattern as sopUpd/tktUpd/etc. elsewhere) and filtered by
+  // masterDeleted. Older code used to push/splice straight into the cached
+  // seed array in place, which "worked" only because every read shared the
+  // same mutated object in memory — none of it survived a reload.
   MASTERS_REG(){
-    if(this._masters){ this._masters.user.rows = this._userMasterRows(); return this._masters; }
+    const seed=this._mastersSeedOnly();
+    const added=this.state.masterAdded||{};
+    const deleted=this.state.masterDeleted||{};
+    const out={ _st: seed._st };
+    Object.keys(seed).forEach(key=>{
+      if(key==='_st') return;
+      const m=seed[key];
+      if(key==='user'){ out[key]={ ...m, rows:this._userMasterRows() }; return; }
+      const idField=m.fields[0];
+      const addedForKey=added[key]||{};
+      const addedIds=new Set(Object.keys(addedForKey));
+      const delForKey=deleted[key]||[];
+      const baseRows=m.rows.filter(r=>!addedIds.has(String(r[idField])));
+      const rows=baseRows.concat(Object.values(addedForKey)).filter(r=>!delForKey.includes(String(r[idField])));
+      out[key]={ ...m, rows };
+    });
+    return out;
+  }
+  _mastersSeedOnly(){
+    if(this._masters){ return this._masters; }
     const st = (s)=>{ const m={Live:'ok',Active:'ok','On track':'ok',Approved:'ok',Draft:'draft',Deprecated:'danger','Merge Candidate':'warn',Pending:'warn'}; return m[s]||'info'; };
     this._masters = {
       service: {
@@ -457,7 +487,6 @@ class AppRoot extends React.Component {
     };
     // attach status-tone helper on registry
     this._masters._st = st;
-    this._masters.user.rows = this._userMasterRows();
     return this._masters;
   }
 
@@ -848,9 +877,12 @@ class AppRoot extends React.Component {
             let planId;
             if(plan){ planId=plan.id;
               this.setState({ epRowAdds:{...(this.state.epRowAdds||{}), [plan.id]:[...((this.state.epRowAdds||{})[plan.id]||[]), row]} });
+              this._persistEpPlan({ ...plan, rows:[...(plan.rows||[]), row] });
             } else {
               planId='EP-'+String(100+plans.length+1).slice(-3);
-              this.setState({ epAdded:[...(this.state.epAdded||[]),{ id:planId, name:(f.name||'Campaign')+' — '+ne.division+' effort', division:ne.division, period:f.cycle||'Q3 2026', owner:f.owner||this.currentPerson(), dept:f.dept||'SEO', campaign:f.name||'—', okr:(f.kpis&&f.kpis[0]&&f.kpis[0].okrTitle)||'—', start:f.start||this.todayStr(), end:f.end||'—', type:'Monthly', status:'Draft', rows:[row] }] });
+              const newPlan={ id:planId, name:(f.name||'Campaign')+' — '+ne.division+' effort', division:ne.division, period:f.cycle||'Q3 2026', owner:f.owner||this.currentPerson(), dept:f.dept||'SEO', campaign:f.name||'—', okr:(f.kpis&&f.kpis[0]&&f.kpis[0].okrTitle)||'—', start:f.start||this.todayStr(), end:f.end||'—', type:'Monthly', status:'Draft', rows:[row] };
+              this.setState({ epAdded:[...(this.state.epAdded||[]),newPlan] });
+              this._persistEpPlan(newPlan);
             }
             const line={ srcKey:planId+' :: '+row.type, name:row.type, qty:String(qty), unit:row.unit, cadence:Math.round(qty/25)+' /day · '+qty+' /month', division:ne.division, owner:f.owner||this.currentPerson(), kpi:row.kpiName, planId, tasks:String(qty), tasksDone:'0', mode:'direct', driverKpi:'', perUnit:'', conv:'' };
             this.setState({ cmpForm:{...f, efforts:[...(f.efforts||[]), line]}, cmpNewEffort:null });
@@ -1122,12 +1154,24 @@ class AppRoot extends React.Component {
   }
   allOkrs(){
     const upd=this.state.okrUpd||{};
-    return this.OKR_SEED().concat(this.state.okrAdded||[])
+    // Dedupe by `code`, not `id` — a seed OKR's id ('1'), a locally-created
+    // one's id ('okr-local-<ts>') and a DB-loaded one's id ('okr-<uuid>')
+    // are all differently shaped, so `code` (the one field the app keeps
+    // stable everywhere, same as how `tasks.code` works) is the only safe
+    // join key once a seed OKR has been edited and gained a real DB row.
+    const added=this.state.okrAdded||[];
+    const addedCodes=new Set(added.map(o=>o.code));
+    return this.OKR_SEED().filter(o=>!addedCodes.has(o.code)).concat(added)
       .map(o=>upd[o.id]?{...o,...upd[o.id]}:o)
       .map(o=>{
         const p=Math.min(100,this.okrProgress(o));
         return { ...o, progress:p, progressRaw:this.okrProgress(o), cycleElapsed:this.cycleElapsedOf(o) };
       });
+  }
+  _persistOkr(code, fields){
+    supabase.from('okrs').upsert({ code, ...fields }, { onConflict:'code' }).then(({error})=>{
+      if(error) console.warn('[supabase] okr upsert failed:', error.message);
+    });
   }
   OKR_DATA(){ return this.allOkrs(); }
 
@@ -1951,10 +1995,17 @@ class AppRoot extends React.Component {
     if(!String(row[idField]||'').trim()){
       row[idField] = m.label.replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'X')+String(m.rows.length+1).padStart(3,'0');
     }
-    if(mrIndex!=null && m.rows[mrIndex]) m.rows[mrIndex] = row;
-    else m.rows.push(row);
-    this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
+    const rowId=String(row[idField]);
+    const added={...(this.state.masterAdded||{})};
+    added[mrKey]={...(added[mrKey]||{}), [rowId]:row};
+    this.setState({ masterAdded:added, showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} });
     this.flash((mrIndex!=null?'Updated ':'Added ')+m.label+' entry: '+row[labelField]+'.');
+    supabase.from('master_records').upsert({
+      id:mrKey+':'+rowId, master_key:mrKey, payload:row,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] master record upsert failed:', error.message);
+    });
   }
   // User Master edits write straight into the real Supabase-backed user
   // list (and the profiles table), not a disposable local row — so changes
@@ -2000,11 +2051,26 @@ class AppRoot extends React.Component {
     if(mrKey==='user'){ this._deleteUserMasterRow(mrIndex); return; }
     const m = this.MASTERS_REG()[mrKey];
     if(!m || mrIndex==null) return;
-    const labelField = m.fields[1]||m.fields[0];
-    const removedLabel = m.rows[mrIndex] ? m.rows[mrIndex][labelField] : '';
-    m.rows.splice(mrIndex,1);
-    this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{}, masterRecord:null });
+    const idField = m.fields[0];
+    const labelField = m.fields[1]||idField;
+    const row = m.rows[mrIndex];
+    const removedLabel = row ? row[labelField] : '';
+    const rowId = row ? String(row[idField]) : null;
+    const del={...(this.state.masterDeleted||{})};
+    if(rowId) del[mrKey]=[...(del[mrKey]||[]), rowId];
+    this.setState({ masterDeleted:del, showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{}, masterRecord:null });
     this.flash('Deleted '+m.label+' entry: '+removedLabel+'.');
+    // upsert (not delete) — a record still only in the hardcoded seed has no
+    // row yet, so this is what makes the deletion stick past reload instead
+    // of the seed entry silently reappearing.
+    if(rowId){
+      supabase.from('master_records').upsert({
+        id:mrKey+':'+rowId, master_key:mrKey, payload:row||{}, deleted:true,
+        created_by:this.state.authUser?this.state.authUser.id:null,
+      }).then(({error})=>{
+        if(error) console.warn('[supabase] master record delete failed:', error.message);
+      });
+    }
   }
   _deleteUserMasterRow(mrIndex){
     if(mrIndex==null) return;
@@ -2338,10 +2404,17 @@ class AppRoot extends React.Component {
         const o=this.allOkrs().find(x=>x.title===okrTitle); if(!o||!(o.krs||[]).length) return;
         const krs=o.krs.map(kr=>kr.kpi===kpiName?{...kr, current:val, lastReported:date, lastReportedBy:role.person}:kr);
         okrPatch[o.id]={...(okrPatch[o.id]||{}), krs};
+        if(o.code) this._persistOkr(o.code, {
+          title:o.title, description:o.desc, category:o.category,
+          scope:o.scope, division:o.dept, status:o.status, key_results:krs,
+        });
       };
       kpis.forEach(k=>{ const v=cf['act_'+k.id]; if(v!==undefined && String(v).trim()!==''){
         actuals[k.id]={ val:String(v).trim(), date }; reported.push(k.kpi+' → '+String(v).trim()+' '+k.unit);
-        patchOkrKr(k.kpi, k.okr, String(v).trim()); } });
+        patchOkrKr(k.kpi, k.okr, String(v).trim());
+        supabase.from('kpi_actuals').upsert({ kpi_id:k.id, val:String(v).trim(), date }).then(({error})=>{
+          if(error) console.warn('[supabase] kpi actual upsert failed:', error.message);
+        }); } });
       this.setState({ kpiActuals:actuals, okrUpd:okrPatch });
       if(reported.length===0 && t!=='kpi'){ this.flash('Enter at least one actual value to report.'); return; }
     }
@@ -2353,6 +2426,9 @@ class AppRoot extends React.Component {
     if(t==='kpi'){ py={...(this.state.ciPendingY||this.defaultPendingY())}; delete py[ctx.kpiId]; }
     this.setState({ ciAdded:added, ciOpen:false, ciPendingY:py });
     this.flash(kind+' saved'+(escalate?' & escalated to Manager':'')+(reported.length?(' · '+reported.length+' KPI actual'+(reported.length>1?'s':'')+' logged'):'')+'.');
+    supabase.from('check_ins').insert({ ref_id:okrId, payload:entry, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] check-in insert failed:', error.message);
+    });
   }
 
   JUNIOR_TASKS(){
@@ -2390,7 +2466,10 @@ class AppRoot extends React.Component {
       ],
     };
   }
-  toggleTask(id){ const t=this.JUNIOR_TASKS().find(x=>x.id===id); if(!t) return; const cur=this.taskIsDone(t); this.setState({ taskDone:{...this.state.taskDone,[id]:!cur} }); this.flash(!cur?('Task completed · +'+t.units+' '+t.unit+' to “'+t.kpi+'”'):'Task reopened.'); }
+  toggleTask(id){ const t=this.JUNIOR_TASKS().find(x=>x.id===id); if(!t) return; const cur=this.taskIsDone(t); this.setState({ taskDone:{...this.state.taskDone,[id]:!cur} }); this.flash(!cur?('Task completed · +'+t.units+' '+t.unit+' to “'+t.kpi+'”'):'Task reopened.');
+    supabase.from('task_done').upsert({ task_id:id, done:!cur, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] task-done upsert failed:', error.message);
+    }); }
   juniorRollup(kpiId){ const tasks=this.allTasks().filter(t=>t.kpiId===kpiId); const done=tasks.filter(t=>t.status==='Approved'); return { val:done.reduce((s,t)=>s+t.units,0), done:done.length, total:tasks.length }; }
 
   EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'Q3 SEO push', dept:'SEO', owner:'Neha Verma', okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
@@ -2410,8 +2489,18 @@ class AppRoot extends React.Component {
     { id:'EP-002', name:'Jul SEO Effort Plan', division:'SEO', period:'Jul 2026', owner:'Neha Verma', dept:'SEO', campaign:'Q3 SEO push', okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly', status:'Active', rows:this.EP_DIV_ROWS('SEO') },
     { id:'EP-003', name:'Jul Graphics Effort Plan', division:'Graphics', period:'Jul 2026', owner:'Neha Verma', dept:'Design', campaign:'Social Push Q1', okr:'Grow Social Engagement 3×', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly', status:'Draft', rows:this.EP_DIV_ROWS('Graphics') },
   ]; }
-  allEpPlans(){ const adds=this.state.epRowAdds||{};
-    return this.EP_PLANS().concat(this.state.epAdded||[]).map(p=>adds[p.id]?{...p, rows:(p.rows||[]).concat(adds[p.id])}:p); }
+  allEpPlans(){
+    const adds=this.state.epRowAdds||{};
+    const added=this.state.epAdded||[];
+    const addedIds=new Set(added.map(p=>p.id));
+    const base=this.EP_PLANS().filter(p=>!addedIds.has(p.id)).concat(added);
+    return base.map(p=>adds[p.id]?{...p, rows:(p.rows||[]).concat(adds[p.id])}:p);
+  }
+  _persistEpPlan(plan){
+    supabase.from('effort_plans').upsert({ id:plan.id, payload:plan, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] effort plan upsert failed:', error.message);
+    });
+  }
   epKpiPool(){ return [].concat((this.MY_KPIS().junior||[]).map(k=>({...k,who:'Junior'})),(this.MY_KPIS().senior||[]).map(k=>({...k,who:'Senior'})),(this.MY_KPIS().team_lead||[]).map(k=>({...k,who:'Team Lead'})),this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ id:t.id, kpi:t.name, unit:t.unit, baseline:'0', target:t.defTarget, current:'0', freq:t.freq, who:'Template' }))); }
   KPI_TEMPLATES(){ return [
     { id:'kt1', name:'Organic Sessions', category:'Traffic', division:'SEO', unit:'sessions', direction:'Increase', defTarget:'100,000', freq:'Monthly', source:'GA4', desc:'Total organic search sessions on tracked domains.', status:'Active', owner:'Priya Nair', updated:'Jun 10, 2026' },
@@ -2613,17 +2702,30 @@ class AppRoot extends React.Component {
       epAddingDiv:this.state.epAddingDiv,
       epNewDiv:this.state.epNewDiv||'',
       epOnNewDiv:(e)=>this.setState({ epNewDiv:e.target.value }),
-      epSaveDiv:()=>{ const n=(this.state.epNewDiv||'').trim(); if(!n){ this.flash('Enter a role / division name.'); return; } if(this.EP_DIVISIONS().includes(n)){ this.flash('"'+n+'" already exists.'); this.setState({ epAddingDiv:false, epNewDiv:'', epDivision:n }); return; } this.setState({ epCustomDivs:[...(this.state.epCustomDivs||[]),n], epDivision:n, epAddingDiv:false, epNewDiv:'' }); this.flash('Custom role "'+n+'" added — create its effort plan.'); },
+      epSaveDiv:()=>{ const n=(this.state.epNewDiv||'').trim(); if(!n){ this.flash('Enter a role / division name.'); return; } if(this.EP_DIVISIONS().includes(n)){ this.flash('"'+n+'" already exists.'); this.setState({ epAddingDiv:false, epNewDiv:'', epDivision:n }); return; } this.setState({ epCustomDivs:[...(this.state.epCustomDivs||[]),n], epDivision:n, epAddingDiv:false, epNewDiv:'' }); this.flash('Custom role "'+n+'" added — create its effort plan.');
+        supabase.from('custom_divisions').upsert({ name:n, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] custom division insert failed:', error.message);
+        }); },
       epCancelDiv:()=>this.setState({ epAddingDiv:false, epNewDiv:'' }),
       epNew:()=>{ const d=this.state.epDivision||'Content Writer'; const deptMap={'Content Writer':'Content','Graphics':'Design','Web Developers':'Web Development','SMM':'SMM','SEO':'SEO'}; this.setState({ epView:'create', epPlanId:null, epForm:{ ...this.EP_FORM(), name:'Jul '+d+' Effort Plan', dept:deptMap[d]||d }, epRows:this.EP_DIV_ROWS(d).map(r=>({...r})) }); },
       epBack:()=>this.setState({ epView:'list' }),
       epAddRow:()=>this.setState({ epRows:[...rows,{ type:'Custom effort — name it', icon:'plus', monthly:0, days:25, unit:'units', priority:'Medium', weight:0, kpiId:'', custom:true }] }),
       epSave:()=>{ const totalW=rows.reduce((s,r)=>s+(r.weight||0),0); if(!f.name.trim()){ this.flash('Name the plan.'); return; }
-        const existing=(this.state.epAdded||[]).find(p=>p.id===this.state.epPlanId);
+        // Check against every plan (seed + added), not just epAdded — editing
+        // a seed plan (EP-001 etc.) must replace it, not create a duplicate
+        // id when it later gets upserted into epAdded.
+        const existing=this.allEpPlans().find(p=>p.id===this.state.epPlanId);
         const plan={ id:this.state.epPlanId||('EP-'+String(this.allEpPlans().length+1).padStart(3,'0')), name:f.name, division, period:this.fmtMonth(f.quarter), owner:f.owner, dept:f.dept, campaign:f.campaign, okr:f.okr, start:this.fmtDate(f.start), end:this.fmtDate(f.end), type:f.type, status: totalW===100?'Active':'Draft', rows:rows.map(r=>({...r})) };
-        const added= existing ? (this.state.epAdded||[]).map(p=>p.id===plan.id?plan:p) : [...(this.state.epAdded||[]),plan];
-        this.setState({ epAdded:added, epView:'list', epPlanId:plan.id });
-        this.flash('Effort plan “'+f.name+'” saved for '+division+(totalW===100?'.':' — weightages incomplete, saved as Draft.')); },
+        const already=(this.state.epAdded||[]).some(p=>p.id===plan.id);
+        const added= already ? (this.state.epAdded||[]).map(p=>p.id===plan.id?plan:p) : [...(this.state.epAdded||[]),plan];
+        // epRows already includes any epRowAdds-appended rows (see the edit()
+        // handler below, which seeds epRows from the already-merged
+        // allEpPlans() output) — so they're now baked into plan.rows and the
+        // overlay entry would double them up on the next read if left in place.
+        const rowAdds={...(this.state.epRowAdds||{})}; delete rowAdds[plan.id];
+        this.setState({ epAdded:added, epRowAdds:rowAdds, epView:'list', epPlanId:plan.id });
+        this.flash('Effort plan “'+f.name+'” saved for '+division+(totalW===100?'.':' — weightages incomplete, saved as Draft.'));
+        this._persistEpPlan(plan); },
       epForm:f, epRows2:epRows, epAlloc:alloc, epCanEdit:canEdit,
       epIsEdit:!!this.state.epPlanId,
       epEditTitle:this.state.epPlanId?('Edit effort plan · '+this.state.epPlanId):'Create effort plan',
@@ -2714,8 +2816,20 @@ class AppRoot extends React.Component {
     { id:'CI-004', title:'Infographic: Beetroot Bioavailability Pathways', source:'Research Team', type:'Infographic', category:'Science', priority:'Medium', owner:'Neha Verma', service:'Content Writing', effortPlan:'Jul Graphics Effort Plan', quarter:'Q3 2026', publishMonth:'Sep 2026', keyword:'beetroot bioavailability', intent:'Informational', objective:'Repurpose lab findings into shareable science visual.', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 },
     { id:'CI-005', title:'Case Study: 3× Organic Traffic for Food Research Lab', source:'Employee', type:'Case Study', category:'Marketing', priority:'Low', owner:'Sameer Iyer', service:'SEO', effortPlan:'Jul Content Effort Plan', quarter:'Q3 2026', publishMonth:'Sep 2026', keyword:'seo case study food industry', intent:'Commercial', objective:'Social proof asset for sales; reusable across decks.', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:2 },
   ]; }
-  allIdeas(){ return this.IDEAS().concat(this.state.ideaAdded||[]).map(i=>({ ...i, ...((this.state.ideaUpd||{})[i.id]||{}) })); }
-  ideaPatch(id,patch){ const u={...(this.state.ideaUpd||{})}; u[id]={...(u[id]||{}),...patch}; this.setState({ ideaUpd:u }); }
+  allIdeas(){
+    const added=this.state.ideaAdded||[];
+    const addedIds=new Set(added.map(i=>i.id));
+    return this.IDEAS().filter(i=>!addedIds.has(i.id)).concat(added).map(i=>({ ...i, ...((this.state.ideaUpd||{})[i.id]||{}) }));
+  }
+  ideaPatch(id,patch){
+    const u={...(this.state.ideaUpd||{})};
+    const cur=this.allIdeas().find(x=>x.id===id)||{};
+    u[id]={...(u[id]||{}),...patch}; this.setState({ ideaUpd:u });
+    const nx={...cur,...patch};
+    supabase.from('ideas').upsert({ id, payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] idea upsert failed:', error.message);
+    });
+  }
   ideaTone(s){ return {'Idea Captured':{bg:'var(--surface-50)',c:'var(--ink-500)'},'Submitted for QC':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},'Approved':{bg:'var(--verify-100)',c:'var(--verify-600)'},'Rework':{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   ideaToTask(i){
     // open the convert step — effort line decides how many tasks are generated
@@ -2808,7 +2922,10 @@ class AppRoot extends React.Component {
       submit:(e)=>{ if(e)e.stopPropagation(); this.ideaPatch(i.id,{status:'Submitted for QC'}); this.flash(i.id+' sent to QC Review for approval.'); },
       convert:(e)=>{ if(e)e.stopPropagation(); this.ideaToTask(i); },
       reuseIdea:(e)=>{ if(e)e.stopPropagation(); const nid='CI-'+String(this.allIdeas().length+1).padStart(3,'0'); const clone={...i, id:nid, title:i.title+' — reuse', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
-        this.setState({ ideaAdded:[...(this.state.ideaAdded||[]),clone] }); this.ideaPatch(i.id,{reuse:(i.reuse||0)+1}); this.flash('Idea duplicated as '+nid+' — stored for reuse.'); },
+        this.setState({ ideaAdded:[...(this.state.ideaAdded||[]),clone] }); this.ideaPatch(i.id,{reuse:(i.reuse||0)+1}); this.flash('Idea duplicated as '+nid+' — stored for reuse.');
+        supabase.from('ideas').insert({ id:nid, payload:clone, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] idea insert failed:', error.message);
+        }); },
       openTask:(e)=>{ if(e)e.stopPropagation(); if(i.taskId) this.setState({ route:'tasks', tkOpen:i.taskId }); },
     };});
     const all=this.allIdeas();
@@ -2995,6 +3112,9 @@ class AppRoot extends React.Component {
       pubDest:f.pubDest||'Internal', intType:f.intType||'', intUrl:f.intUrl||'', extUrl:f.extUrl||'', extCat:f.extCat||'', status: toQC?'Submitted for QC':'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
     this.setState({ ideaAdded:[...(this.state.ideaAdded||[]),idea], showIdeaForm:false, ideaForm:{}, ideaStep:1 });
     this.flash(id+' created'+(toQC?' — sent to QC Review for approval.':' — saved as captured idea.'));
+    supabase.from('ideas').insert({ id, payload:idea, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] idea insert failed:', error.message);
+    });
   }
   TASK_TEMPLATES(){ return [
     { id:'TPL-001', name:'Update Meta Descriptions', division:'SEO', desc:'Rewrite meta descriptions for target pages using primary keywords.', kpiId:'jr1', unit:'pages', estH:8, priority:'High', recurrence:'None', status:'Active', owner:'Priya Nair', updated:'Jun 12, 2026', checklist:['Pull page list from GSC','Write descriptions ≤160 chars','QA in SERP preview'] },
@@ -5878,6 +5998,10 @@ class AppRoot extends React.Component {
       this.setState({ okrUpd:{...(this.state.okrUpd||{}), [editId]:{...shared, v:ver}},
         showOkrPanel:false, okrEditId:null, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
       this.flash('Changes saved to '+(prev.code||editId)+' ('+ver+').');
+      if(prev.code) this._persistOkr(prev.code, {
+        title:shared.title, description:shared.desc, category:shared.category,
+        scope:shared.scope, division:shared.dept, status:shared.status, key_results:krs,
+      });
       return;
     }
     const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
@@ -6051,6 +6175,66 @@ class AppRoot extends React.Component {
       otAdded:rows.filter(r=>r.kind==='okr').map(r=>({ ...r.payload, id:r.id })),
       ktAdded:rows.filter(r=>r.kind==='kpi').map(r=>({ ...r.payload, id:r.id })),
     });
+  }
+  async _loadCheckIns(){
+    const { data, error } = await supabase.from('check_ins').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] check-ins load failed:', error.message); return; }
+    const grouped={};
+    (data||[]).forEach(r=>{ (grouped[r.ref_id]=grouped[r.ref_id]||[]).push(r.payload); });
+    this.setState({ ciAdded:grouped });
+  }
+  async _loadKpiActuals(){
+    const { data, error } = await supabase.from('kpi_actuals').select('*');
+    if(error){ console.warn('[supabase] kpi actuals load failed:', error.message); return; }
+    const actuals={};
+    (data||[]).forEach(r=>{ actuals[r.kpi_id]={ val:r.val, date:r.date }; });
+    this.setState({ kpiActuals:actuals });
+  }
+  async _loadTaskDone(){
+    const { data, error } = await supabase.from('task_done').select('*');
+    if(error){ console.warn('[supabase] task-done load failed:', error.message); return; }
+    const taskDone={};
+    (data||[]).forEach(r=>{ taskDone[r.task_id]=r.done; });
+    this.setState({ taskDone });
+  }
+  async _loadDocumentRepo(){
+    const { data, error } = await supabase.from('document_repo').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] document repo load failed:', error.message); return; }
+    this.setState({ repoAdded:(data||[]).map(r=>({ ...r.payload, key:r.id })) });
+  }
+  async _loadEffortPlans(){
+    const { data, error } = await supabase.from('effort_plans').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] effort plans load failed:', error.message); return; }
+    this.setState({ epAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })), epRowAdds:{} });
+  }
+  async _loadCustomDivisions(){
+    const { data, error } = await supabase.from('custom_divisions').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] custom divisions load failed:', error.message); return; }
+    this.setState({ epCustomDivs:(data||[]).map(r=>r.name) });
+  }
+  async _loadIdeas(){
+    const { data, error } = await supabase.from('ideas').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] ideas load failed:', error.message); return; }
+    this.setState({ ideaAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadRolePerms(){
+    const { data, error } = await supabase.from('role_permissions').select('*');
+    if(error){ console.warn('[supabase] role permissions load failed:', error.message); return; }
+    const rolePerms={};
+    (data||[]).forEach(r=>{ (rolePerms[r.module_key]=rolePerms[r.module_key]||{})[r.role_key]=r.perms; });
+    this.setState({ rolePerms });
+  }
+  async _loadMasterRecords(){
+    const { data, error } = await supabase.from('master_records').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] master records load failed:', error.message); return; }
+    const rows=data||[];
+    const added={}, deleted={};
+    rows.forEach(r=>{
+      const rowId=r.id.slice(r.master_key.length+1); // id is "<master_key>:<rowId>"
+      if(r.deleted){ (deleted[r.master_key]=deleted[r.master_key]||[]).push(rowId); }
+      else { (added[r.master_key]=added[r.master_key]||{})[rowId]=r.payload; }
+    });
+    this.setState({ masterAdded:added, masterDeleted:deleted });
   }
 
   checkinView(){
@@ -7083,12 +7267,25 @@ class AppRoot extends React.Component {
         toggleMenu:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu: this.state.okrMenu===o.id?null:o.id }); },
         viewAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null, okrOpen:o.id }); },
         editAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null }); this.openOkrEdit(o.id); },
-        cloneAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null,
-            okrAdded:[...(this.state.okrAdded||[]), { ...o, id:'okr-local-'+Date.now(), code:o.code+'-COPY', v:'v1.0', title:o.title+' (Copy)', status:'Draft', progress:0 }] });
-          this.flash('Cloned "'+o.title+'" as a new draft.'); },
-        archiveAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null,
-            okrUpd:{...(this.state.okrUpd||{}), [o.id]:{...(this.state.okrUpd||{})[o.id], status:'Archived'}} });
-          this.flash('Archived "'+o.title+'".'); },
+        cloneAct:(e)=>{ if(e)e.stopPropagation();
+          const clone={ ...o, id:'okr-local-'+Date.now(), code:o.code+'-COPY', v:'v1.0', title:o.title+' (Copy)', status:'Draft', progress:0 };
+          this.setState({ okrMenu:null, okrAdded:[...(this.state.okrAdded||[]), clone] });
+          this.flash('Cloned "'+o.title+'" as a new draft.');
+          supabase.from('okrs').insert({
+            code:clone.code, title:clone.title, description:clone.desc, category:clone.category,
+            scope:clone.scope, division:clone.dept, status:clone.status, key_results:clone.krs||[],
+            created_by:this.state.authUser?this.state.authUser.id:null,
+          }).then(({error})=>{
+            if(error) console.warn('[supabase] okr clone insert failed:', error.message);
+          }); },
+        archiveAct:(e)=>{ if(e)e.stopPropagation();
+          const nextPatch={...(this.state.okrUpd||{})[o.id], status:'Archived'};
+          this.setState({ okrMenu:null, okrUpd:{...(this.state.okrUpd||{}), [o.id]:nextPatch} });
+          this.flash('Archived "'+o.title+'".');
+          this._persistOkr(o.code, {
+            title:o.title, description:o.desc, category:o.category, scope:o.scope,
+            division:o.dept, status:'Archived', key_results:o.krs||[],
+          }); },
         histAct:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrMenu:null, historyOkr:o.id }); },
         isManagerReviewer: rk==='manager'||rk==='admin', isExecReviewer: rk==='ceo'||rk==='coo',
         reviewAct:(e)=>{ if(e)e.stopPropagation(); this.openCi('manager',{id:o.id,title:o.title,progress:o.progress+'%'}); },
@@ -7319,7 +7516,10 @@ class AppRoot extends React.Component {
         const cur={...(this.state.rolePerms||{})};
         mods.forEach(m=>{ if(cur[m]) cur[m]={...cur[m]}; if(cur[m]) delete cur[m][permRole]; });
         this.setState({ rolePerms:cur });
-        this.flash('Permissions for '+this.ROLES[permRole].label+' reset to defaults.'); },
+        this.flash('Permissions for '+this.ROLES[permRole].label+' reset to defaults.');
+        supabase.from('role_permissions').delete().eq('role_key', permRole).then(({error})=>{
+          if(error) console.warn('[supabase] role permission reset failed:', error.message);
+        }); },
     };
   }
   tableData(route, rk, lvl, readOnly){
@@ -7611,6 +7811,9 @@ class AppRoot extends React.Component {
           cat:f.cat||'Content', icon:'database', owner:f.owner||'Karan Shah' };
         this.setState({ repoAdded:[rec,...(this.state.repoAdded||[])], repoNew:false, repoForm:{} });
         this.flash('“'+rec.name+'” created under '+rec.cat+' — owned by '+rec.owner+'.');
+        supabase.from('document_repo').insert({ id:rec.key, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] document repo insert failed:', error.message);
+        });
       },
     };
   }
@@ -7717,6 +7920,15 @@ class AppRoot extends React.Component {
     this._loadContacts();
     this._loadThreads();
     this._loadTemplates();
+    this._loadMasterRecords();
+    this._loadRolePerms();
+    this._loadIdeas();
+    this._loadEffortPlans();
+    this._loadCustomDivisions();
+    this._loadDocumentRepo();
+    this._loadCheckIns();
+    this._loadKpiActuals();
+    this._loadTaskDone();
     this._subscribeRealtime();
     this._catchUpNotifications();
   }
