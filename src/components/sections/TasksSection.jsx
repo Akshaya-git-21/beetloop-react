@@ -273,7 +273,7 @@ Today
 
 <div className="blscroll" style={{"overflowX":"auto"}}>
 <div style={{"minWidth":"1290px"}}>
-<div style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 172px","gap":"10px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
+<div style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 110px 172px","gap":"10px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
 
 
 <span>
@@ -301,6 +301,9 @@ Status
 QC feedback
 </span>
 <span>
+QC Rework
+</span>
+<span>
 Action
 </span>
 
@@ -312,7 +315,7 @@ Action
 <React.Fragment key={$index}>
 
 
-<div onClick={t.open} style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 172px","gap":"10px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
+<div onClick={t.open} style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 110px 172px","gap":"10px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
 
 
 <span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>
@@ -427,14 +430,17 @@ LOCKED
 
 
 <span style={{"minWidth":"0"}}>
-{Boolean(t.hasRework) && (
-<React.Fragment>
-<span style={cssTextToObject(`display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:${t.reworkBg};color:${t.reworkColor};margin-bottom:4px`)}>
-<Icon name={"rotate-ccw"} style={{"width":"10px","height":"10px"}} />
-{t.reworkLabel}
+{Boolean(t.hasRework) ? (
+<span style={cssTextToObject(`display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:${t.reworkBg};color:${t.reworkColor}`)}>
+<Icon name={"rotate-ccw"} style={{"width":"11px","height":"11px"}} />
+{t.reworkCount}
 </span>
-</React.Fragment>
+) : (
+<span style={{"fontSize":"11px","color":"var(--ink-400)"}}>—</span>
 )}
+</span>
+
+<span style={{"minWidth":"0"}}>
 <button onClick={t.naGo} style={cssTextToObject(t.naStyle)}>
 <Icon name={t.naIcon} style={{"width":"12px","height":"12px"}} />
 {t.naLabel}
