@@ -871,12 +871,21 @@ class AppRoot extends React.Component {
       outcomeKpi:f.outcomeKpi||(kp[0]&&kp[0].kpi)||'Outcome', outcomeTarget:f.outcomeTarget||(kp[0]&&kp[0].target)||'0', outcomeCurrent:f.outcomeCurrent||(kp[0]&&kp[0].current)||'0', outcomeUnit:f.outcomeUnit||(kp[0]&&kp[0].unit)||'',
       taskCount:ef.reduce((s,e)=>s+(parseInt(e.tasks,10)||0),0), taskDone:ef.reduce((s,e)=>s+(parseInt(e.tasksDone,10)||0),0) };
     if(this.state.cmpEditId){
-      this.setState({ cmpUpd:{...(this.state.cmpUpd||{}),[this.state.cmpEditId]:base}, cmpNew:false, cmpEditId:null, cmpForm:{} });
+      const editId=this.state.cmpEditId;
+      const existing=this.allCampaigns().find(x=>x.id===editId);
+      this.setState({ cmpUpd:{...(this.state.cmpUpd||{}),[editId]:base}, cmpNew:false, cmpEditId:null, cmpForm:{} });
       this.flash('Campaign updated.');
+      supabase.from('campaigns').update({ payload:{...existing,...base,id:editId} }).eq('id', editId).then(({error})=>{
+        if(error) console.warn('[supabase] campaign update failed:', error.message);
+      });
     } else {
       const nid='CMP-'+String(100+this.allCampaigns().length+1).slice(-3);
-      this.setState({ cmpAdded:[...(this.state.cmpAdded||[]),{id:nid,...base}], cmpNew:false, cmpForm:{} });
+      const rec={id:nid,...base};
+      this.setState({ cmpAdded:[...(this.state.cmpAdded||[]),rec], cmpNew:false, cmpForm:{} });
       this.flash(nid+' created — '+kp.length+' KPI'+(kp.length===1?'':'s')+' and '+ef.length+' effort line'+(ef.length===1?'':'s')+' linked. Generate tasks from Effort Planner.');
+      supabase.from('campaigns').insert({ id:nid, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error) console.warn('[supabase] campaign insert failed:', error.message);
+      });
     }
   }
   _deleteCampaign(){
@@ -884,6 +893,9 @@ class AppRoot extends React.Component {
     const c=this.allCampaigns().find(x=>x.id===id);
     this.setState({ cmpDeleted:[...(this.state.cmpDeleted||[]), id], cmpNew:false, cmpEditId:null, cmpForm:{} });
     this.flash('Deleted campaign: '+(c?c.name:id)+'.');
+    supabase.from('campaigns').update({ deleted:true }).eq('id', id).then(({error})=>{
+      if(error) console.warn('[supabase] campaign delete failed:', error.message);
+    });
   }
 
   // ============ Messages (new module) ============
@@ -985,7 +997,10 @@ class AppRoot extends React.Component {
         const msg={ id, who:me, role:this.ROLES[rk].label, when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt||'(attachment)', files };
         const add={...(this.state.thAdded||{})}; add[cur.id]=[...(add[cur.id]||[]), msg];
         this.setState({ thAdded:add, msgDraft:'', msgFiles:[] });
-        if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.'); },
+        if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.');
+        supabase.from('messages').insert({ thread_id:cur.id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] message insert failed:', error.message);
+        }); },
       msgCanAct:['manager','team_lead','admin','ceo'].includes(rk),
       ...(()=>{ const nf=this.state.thForm;
         const people=(this.state.users||[]).map(u=>u.name).filter(p=>p!==me);
@@ -1019,9 +1034,18 @@ class AppRoot extends React.Component {
               msgs.push({ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
                 when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
                 text:nf.first.trim() }); }
-            this.setState({ thNew:[{ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem, msgs }].concat(this.state.thNew||[]),
+            const threadRec={ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem };
+            this.setState({ thNew:[{...threadRec, msgs}].concat(this.state.thNew||[]),
               thForm:null, thOpen:id });
             this.flash((k==='channel'?'Group ':'Conversation ')+name+' created.');
+            supabase.from('threads').insert({ id, payload:threadRec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+              if(error) console.warn('[supabase] thread insert failed:', error.message);
+            });
+            msgs.forEach(msg=>{
+              supabase.from('messages').insert({ thread_id:id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+                if(error) console.warn('[supabase] message insert failed:', error.message);
+              });
+            });
           } }; })(),
     };
   }
@@ -3100,8 +3124,20 @@ class AppRoot extends React.Component {
         const krs=(of2.krs||[]).filter(k=>k.t&&k.t.trim());
         if(!krs.length){ this.flash('Add at least one key result.'); return; }
         const rec={ name:of2.name.trim(), category:of2.category||'SEO', scope:of2.scope||'Department', division:of2.division||'SEO', objective:of2.objective||'', desc:of2.desc||'', status:of2.status||'Active', krs, owner:this.currentPerson(), updated:this.todayStr() };
-        if(this.state.otEditId){ this.setState({ otUpd:{...(this.state.otUpd||{}),[this.state.otEditId]:rec}, otNew:false, otEditId:null, otForm:{} }); this.flash('OKR template updated.'); }
-        else { const nid='ot'+(this.allOkrTemplates().length+1); this.setState({ otAdded:[...(this.state.otAdded||[]),{id:nid,...rec}], otNew:false, otForm:{} }); this.flash('OKR template created — pull it from Create New OKR.'); }
+        if(this.state.otEditId){
+          const editId=this.state.otEditId;
+          const existing=this.allOkrTemplates().find(x=>x.id===editId);
+          this.setState({ otUpd:{...(this.state.otUpd||{}),[editId]:rec}, otNew:false, otEditId:null, otForm:{} }); this.flash('OKR template updated.');
+          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
+            if(error) console.warn('[supabase] okr template update failed:', error.message);
+          });
+        } else {
+          const nid='ot'+(this.allOkrTemplates().length+1); const okrec={id:nid,...rec};
+          this.setState({ otAdded:[...(this.state.otAdded||[]),okrec], otNew:false, otForm:{} }); this.flash('OKR template created — pull it from Create New OKR.');
+          supabase.from('templates').insert({ id:nid, kind:'okr', payload:okrec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] okr template insert failed:', error.message);
+          });
+        }
       },
       ktRows:kpg.rows, ktPg:kpg, ktStats,
       ktNew:this.state.ktNew, ktf:kf,
@@ -3118,8 +3154,20 @@ class AppRoot extends React.Component {
       ktSave:()=>{
         if(!(kf.name&&kf.name.trim())){ this.flash('Enter a KPI name.'); return; }
         const rec={ tool:kf.tool||'', method:kf.method||'', mfreq:kf.mfreq||'', evidence:kf.evidence||'', name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
-        if(this.state.ktEditId){ this.setState({ ktUpd:{...(this.state.ktUpd||{}),[this.state.ktEditId]:rec}, ktNew:false, ktEditId:null, ktForm:{} }); this.flash('KPI template updated.'); }
-        else { const nid='kt'+(this.allKpiTemplates().length+1); this.setState({ ktAdded:[...(this.state.ktAdded||[]),{id:nid,...rec}], ktNew:false, ktForm:{} }); this.flash('KPI template created — now available in Create Task, OKR key results and Effort plans.'); }
+        if(this.state.ktEditId){
+          const editId=this.state.ktEditId;
+          const existing=this.allKpiTemplates().find(x=>x.id===editId);
+          this.setState({ ktUpd:{...(this.state.ktUpd||{}),[editId]:rec}, ktNew:false, ktEditId:null, ktForm:{} }); this.flash('KPI template updated.');
+          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
+            if(error) console.warn('[supabase] kpi template update failed:', error.message);
+          });
+        } else {
+          const nid='kt'+(this.allKpiTemplates().length+1); const ktrec={id:nid,...rec};
+          this.setState({ ktAdded:[...(this.state.ktAdded||[]),ktrec], ktNew:false, ktForm:{} }); this.flash('KPI template created — now available in Create Task, OKR key results and Effort plans.');
+          supabase.from('templates').insert({ id:nid, kind:'kpi', payload:ktrec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] kpi template insert failed:', error.message);
+          });
+        }
       },
       ttStats, ttRows:pg.rows, ttPg:pg, ttCanEdit:canEdit,
       ttFilterDefs:[
@@ -3143,12 +3191,21 @@ class AppRoot extends React.Component {
         if(!steps.length){ this.flash('Add at least one checklist step.'); return; }
         const rec={ name:f.name.trim(), division:f.division||'SEO', desc:f.desc||'', kpiId:f.kpiId||'', unit:f.unit||'', estH:parseInt(f.estH,10)||0, priority:f.priority||'Medium', recurrence:f.recurrence||'None', status:f.status||'Active', checklist:steps, owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.ttEditId){
-          this.setState({ ttUpd:{...(this.state.ttUpd||{}),[this.state.ttEditId]:rec}, ttNew:false, ttEditId:null, ttForm:{} });
+          const editId=this.state.ttEditId;
+          const existing=this.allTaskTemplates().find(x=>x.id===editId);
+          this.setState({ ttUpd:{...(this.state.ttUpd||{}),[editId]:rec}, ttNew:false, ttEditId:null, ttForm:{} });
           this.flash('Template updated — changes apply to new tasks created from it.');
+          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
+            if(error) console.warn('[supabase] task template update failed:', error.message);
+          });
         } else {
           const nid='TPL-'+String(100+this.allTaskTemplates().length+1).slice(-3);
-          this.setState({ ttAdded:[...(this.state.ttAdded||[]),{id:nid,...rec}], ttNew:false, ttForm:{} });
+          const ttrec={id:nid,...rec};
+          this.setState({ ttAdded:[...(this.state.ttAdded||[]),ttrec], ttNew:false, ttForm:{} });
           this.flash('Template '+nid+' created — available in Create Task.');
+          supabase.from('templates').insert({ id:nid, kind:'task', payload:ttrec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] task template insert failed:', error.message);
+          });
         }
       },
     };
@@ -4985,6 +5042,9 @@ class AppRoot extends React.Component {
         if(f.status==='Published') rec.audit.push(['Published',this.currentPerson(),this.todayStr()]);
         this.setState({ sopAdded:[rec,...(this.state.sopAdded||[])], sopNew:false, sopForm:{}, sopOpen:rec.id, sopTabD:'overview' });
         this.flash(rec.id+' created as '+rec.status+' — '+rec.steps.length+' step'+(rec.steps.length===1?'':'s')+', approver '+rec.approver+'.');
+        supabase.from('sops').insert({ id:rec.id, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] sop insert failed:', error.message);
+        });
       } };
   }
   sopView(rk){
@@ -5086,7 +5146,10 @@ class AppRoot extends React.Component {
       const nx={...s,...cur,...p};
       if(auditRow) nx.audit=[...(nx.audit||[]),auditRow];
       u[s.id]={...cur,...p, audit:nx.audit};
-      this.setState({ sopUpd:u }); if(msg) this.flash(msg); };
+      this.setState({ sopUpd:u }); if(msg) this.flash(msg);
+      supabase.from('sops').update({ payload:nx }).eq('id', s.id).then(({error})=>{
+        if(error) console.warn('[supabase] sop update failed:', error.message);
+      }); };
     const tab=this.state.sopTabD||'overview';
     const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
     const byId=(x)=>this.allSops().find(y=>y.id===x);
@@ -5267,6 +5330,10 @@ class AppRoot extends React.Component {
     const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr()]]:(cur.thread||[]);
     upd[id]={ ...(upd[id]||{}), ...patch, thread };
     this.setState({ tktUpd:upd });
+    const nx={ ...cur, ...patch, thread };
+    supabase.from('tickets').update({ payload:nx }).eq('id', id).then(({error})=>{
+      if(error) console.warn('[supabase] ticket update failed:', error.message);
+    });
   }
   ticketAge(t){
     if(t.createdAt) return Math.max(0, Math.round((Date.now()-t.createdAt)/3600000));
@@ -5306,6 +5373,9 @@ class AppRoot extends React.Component {
           thread:[[me,f.desc.trim(),this.todayStr()]] };
         this.setState({ tktAdded:[rec,...(this.state.tktAdded||[])], tktNew:false, tktForm:{}, tktOpen:rec.id });
         this.flash(rec.id+' raised — routed to '+c.queue+' ('+c.owner+'), target response '+c.sla+' h.');
+        supabase.from('tickets').insert({ id:rec.id, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] ticket insert failed:', error.message);
+        });
       } };
   }
   supportView(rk){
@@ -5864,6 +5934,64 @@ class AppRoot extends React.Component {
     this.setState({ recordsAdded:mapped });
   }
 
+  // The modules below (SOPs, Tickets, Content Pages, Campaigns, Leads,
+  // Contacts, Threads/Messages, Templates) all store their full record as a
+  // single `payload` jsonb column — see supabase/schema_v2.sql for why: none
+  // of them are ever filtered/sorted server-side, so per-field columns would
+  // just be dead weight. Loading always means `{...row.payload, id:row.id}`.
+  async _loadSops(){
+    const { data, error } = await supabase.from('sops').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] sops load failed:', error.message); return; }
+    this.setState({ sopAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadTickets(){
+    const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] tickets load failed:', error.message); return; }
+    this.setState({ tktAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadContentPages(){
+    const { data, error } = await supabase.from('content_pages').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] content_pages load failed:', error.message); return; }
+    this.setState({ cAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadCampaigns(){
+    const { data, error } = await supabase.from('campaigns').select('*').eq('deleted', false).order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] campaigns load failed:', error.message); return; }
+    this.setState({ cmpAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadLeads(){
+    const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] leads load failed:', error.message); return; }
+    this.setState({ leadAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadContacts(){
+    const { data, error } = await supabase.from('contacts').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] contacts load failed:', error.message); return; }
+    this.setState({ contactAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+  }
+  async _loadThreads(){
+    const { data:threadRows, error:tErr } = await supabase.from('threads').select('*').order('created_at', { ascending:true });
+    if(tErr){ console.warn('[supabase] threads load failed:', tErr.message); return; }
+    const { data:msgRows, error:mErr } = await supabase.from('messages').select('*').order('created_at', { ascending:true });
+    if(mErr){ console.warn('[supabase] messages load failed:', mErr.message); return; }
+    const byThread={};
+    (msgRows||[]).forEach(r=>{ (byThread[r.thread_id]=byThread[r.thread_id]||[]).push(r.payload); });
+    this.setState({
+      thNew:(threadRows||[]).map(r=>({ ...r.payload, id:r.id, msgs:[] })),
+      thAdded:byThread,
+    });
+  }
+  async _loadTemplates(){
+    const { data, error } = await supabase.from('templates').select('*').order('created_at', { ascending:true });
+    if(error){ console.warn('[supabase] templates load failed:', error.message); return; }
+    const rows=data||[];
+    this.setState({
+      ttAdded:rows.filter(r=>r.kind==='task').map(r=>({ ...r.payload, id:r.id })),
+      otAdded:rows.filter(r=>r.kind==='okr').map(r=>({ ...r.payload, id:r.id })),
+      ktAdded:rows.filter(r=>r.kind==='kpi').map(r=>({ ...r.payload, id:r.id })),
+    });
+  }
+
   checkinView(){
     const rk = this.state.roleKey;
     const person = this.currentPerson();
@@ -6323,12 +6451,18 @@ class AppRoot extends React.Component {
       this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npEditId:null, cOpen:code, cTab:0 });
       try{ localStorage.setItem('beetloop_content_page_upd', JSON.stringify(upd)); }catch(e){}
       this.flash('Page “'+name+'” updated.');
+      supabase.from('content_pages').update({ payload:{...existing,...page} }).eq('id', code).then(({error})=>{
+        if(error) console.warn('[supabase] content page update failed:', error.message);
+      });
       return;
     }
     const next=[...(this.state.cAdded||[]), page];
     this.setState({ cAdded:next, showNewPage:false, npForm:{}, cRepo:repo, cStatus:'All', cQuery:'', cOpen:code, cTab:0 });
     try{ localStorage.setItem('beetloop_content_pages', JSON.stringify(next)); }catch(e){}
     this.flash('Page “'+name+'” created as '+code+' — added to '+repoName+' (top of list).');
+    supabase.from('content_pages').insert({ id:code, payload:page, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] content page insert failed:', error.message);
+    });
   }
 
   // a service page is "targeted" when a campaign KPI links it
@@ -6427,7 +6561,10 @@ class AppRoot extends React.Component {
           const v=e.target.value; const u={...(this.state.contactUpd||{})};
           const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
           u[c.id]={...(u[c.id]||{}), stage:v, log};
-          this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); },
+          this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.');
+          supabase.from('contacts').update({ payload:{...c, stage:v, log} }).eq('id', c.id).then(({error})=>{
+            if(error) console.warn('[supabase] contact update failed:', error.message);
+          }); },
         open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin, Manager and Sales.'); return; }
           this.setState({ cnOpen:c.id }); } }; }),8);
     return {
@@ -6484,6 +6621,9 @@ class AppRoot extends React.Component {
           log:[['Lead created',me,this.todayStr()]] };
         this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
         this.flash(rec.id+' — '+rec.name+' added to the lead pipeline as '+rec.stage+'.');
+        supabase.from('contacts').insert({ id:rec.id, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] contact insert failed:', error.message);
+        });
       } };
   }
   contactDetailData(){
@@ -6504,8 +6644,12 @@ class AppRoot extends React.Component {
       cnDCanWrite:canWrite,
       cnDSetStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin, Manager and Sales.'); return; }
         const v=e.target.value; const u={...(this.state.contactUpd||{})};
-        u[c.id]={...(u[c.id]||{}), stage:v, log:[...(c.log||[]),['Stage → '+v,me,this.todayStr()]]};
-        this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.'); } };
+        const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
+        u[c.id]={...(u[c.id]||{}), stage:v, log};
+        this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.');
+        supabase.from('contacts').update({ payload:{...c, stage:v, log} }).eq('id', c.id).then(({error})=>{
+          if(error) console.warn('[supabase] contact update failed:', error.message);
+        }); } };
   }
   leadsView(canWrite){
     const rk=this.state.roleKey, me=this.currentPerson();
@@ -6663,6 +6807,9 @@ class AppRoot extends React.Component {
           brand: rk==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||'') };
         this.setState({ leadAdded:[rec,...(this.state.leadAdded||[])], ldForm:{} });
         this.flash(n+' lead'+(n===1?'':'s')+' logged for '+f.service+' — counted toward today’s KPI.');
+        supabase.from('leads').insert({ id:rec.id, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] lead insert failed:', error.message);
+        });
       },
     };
   }
@@ -7497,6 +7644,14 @@ class AppRoot extends React.Component {
     this._loadOkrs();
     this._loadTeam();
     this._loadRecords();
+    this._loadSops();
+    this._loadTickets();
+    this._loadContentPages();
+    this._loadCampaigns();
+    this._loadLeads();
+    this._loadContacts();
+    this._loadThreads();
+    this._loadTemplates();
     this._subscribeRealtime();
     this._catchUpNotifications();
   }
