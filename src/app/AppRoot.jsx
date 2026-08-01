@@ -3813,7 +3813,15 @@ class AppRoot extends React.Component {
   okrTitleOptionsFor(stored){ const base=['— None —'].concat(this.allOkrs().map(o=>o.title));
     const v=this.okrTitleOpt(stored); return base.includes(v)?base:base.concat([v]); }
   tkOv(t){ const o=((this.state.tkUpd||{})[t.id])||{}; return {...t, ...o}; }
-  allTasks(){ return this.WTASKS().concat(this.state.tkAdded||[]).map(t=>this.tkOv(t)); }
+  // tkAdded must win over WTASKS() on a code collision — once a seed task
+  // gets its first real edit (_persistTaskPatch upserts it), the DB row
+  // loads back into tkAdded with the same code, and the hardcoded seed
+  // version needs to step aside instead of showing up as a duplicate row.
+  allTasks(){
+    const added=this.state.tkAdded||[];
+    const addedIds=new Set(added.map(t=>t.id));
+    return this.WTASKS().filter(t=>!addedIds.has(t.id)).concat(added).map(t=>this.tkOv(t));
+  }
   tkPatch(id, patch, act){
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
     if(patch && patch.status==='Rework') patch={...patch, reworkCount:this.reworkCycles(t)+1};
@@ -3841,11 +3849,13 @@ class AppRoot extends React.Component {
     const cur=this.timerOf(id);
     const baseH=(cur.baseH!==undefined)?cur.baseH:(parseFloat(t.actH)||0);
     const upd={...this.timers(), [id]:{...cur, baseH, running:true, startedAt:Date.now()}};
+    const statusPatch={status: t.status==='Assigned'?'In Progress':t.status};
     const patch={...(this.state.tkUpd||{})};
-    patch[id]={...(patch[id]||{}), status: t.status==='Assigned'?'In Progress':t.status};
+    patch[id]={...(patch[id]||{}), ...statusPatch};
     this.setState({ tkTimers:upd, tkUpd:patch });
     this.ensureTick();
     this.flash('Timer started on '+id+(t.status==='Assigned'?' — task moved to In Progress.':'.'));
+    this._persistTaskPatch(id, statusPatch);
   }
   stopTimer(id){
     const cur=this.timerOf(id); if(!cur.running) return;
@@ -3853,21 +3863,34 @@ class AppRoot extends React.Component {
     const sessions=[...(cur.sessions||[]), { start:cur.startedAt, secs, who:this.currentPerson(), date:this.todayStr() }];
     const total=cur.elapsed+secs;
     const baseH=cur.baseH||0;
+    const actH=Math.round((baseH+total/3600)*100)/100;
     const patch={...(this.state.tkUpd||{})};
-    patch[id]={...(patch[id]||{}), actH:Math.round((baseH+total/3600)*100)/100 };
+    patch[id]={...(patch[id]||{}), actH };
     this.setState({ tkTimers:{...this.timers(), [id]:{ running:false, startedAt:null, elapsed:total, sessions, baseH }}, tkUpd:patch });
     this.flash('Timer stopped — '+this.hms(secs)+' logged on '+id+'.');
+    this._persistTaskPatch(id, {actH});
   }
-  // Fire-and-forget: syncs to Supabase when this task exists there (created
-  // via tkSubmitNew). No-ops harmlessly for the built-in demo-only tasks.
+  // Upserts (not update) so a seed task (WTASKS()) gets a real row the
+  // first time it's touched — same "first edit creates the row" pattern
+  // used everywhere else in this migration. Needs the task's full current
+  // record, not just the patch, since payload-less columns on an insert
+  // path would otherwise fall back to the table's (mostly empty) defaults.
   _persistTaskPatch(code, patch){
-    const dbPatch={};
-    if('status' in patch) dbPatch.status=patch.status;
-    if('checklist' in patch) dbPatch.checklist=patch.checklist;
-    if('assignee' in patch) dbPatch.assignee_name=patch.assignee;
-    if(!Object.keys(dbPatch).length) return;
-    supabase.from('tasks').update(dbPatch).eq('code', code).then(({error})=>{
-      if(error) console.warn('[supabase] task update failed:', error.message);
+    const t=this.allTasks().find(x=>x.id===code); if(!t) return;
+    const full={...t, ...patch};
+    supabase.from('tasks').upsert({
+      code, name:full.name, description:full.desc, priority:full.priority, status:full.status,
+      division:full.division, project:full.project, campaign:full.campaign,
+      assignee_name:full.assignee, reviewer_name:full.reviewer,
+      effort_estimate:full.estH, effort_actual:full.actH, recurrence:full.recurrence,
+      checklist:full.checklist||[], linked_kpi:full.kpi, kpi_id:full.kpiId,
+      units:full.units, unit:full.unit, dependency:full.dep,
+      effort_plan:full.effortPlan, effort_row:full.effortType, dep_mode:full.depMode,
+      evidence:full.evidence||[], comments:full.comments||[], activity:full.activity||[],
+      qc_feedback:full.qcFeedback||null, rework_count:full.reworkCount||0,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }, { onConflict:'code' }).then(({error})=>{
+      if(error) console.warn('[supabase] task upsert failed:', error.message);
     });
   }
   tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'},Closed:{bg:'#EAE4E8',c:'var(--beet-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
@@ -5949,7 +5972,7 @@ class AppRoot extends React.Component {
       depMode:r.dep_mode||'Parallel', division:r.division||'Content',
       checklist:r.checklist||[], dep:r.dependency||'—', evidence:r.evidence||[],
       comments:r.comments||[], status:r.status||'Assigned', activity:r.activity||[],
-      qcFeedback:r.qc_feedback||'',
+      qcFeedback:r.qc_feedback||'', reworkCount:r.rework_count||0,
     }));
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
@@ -6082,10 +6105,20 @@ class AppRoot extends React.Component {
         if(error) console.warn('[supabase] record update failed:', error.message);
       });
     } else {
-      // edit a demo/seed record — local override only
-      const recordOverrides={...this.state.recordOverrides, [editKey]:{ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status }};
+      // Editing a demo/seed record (RECORDS_SEED) — its synthetic key
+      // ('projects#seed#0' etc.) isn't a real records.id, so this upserts
+      // by the unique seed_key column instead, same "first edit creates a
+      // real row" pattern used everywhere else in this migration.
+      const ov={ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status };
+      const recordOverrides={...this.state.recordOverrides, [editKey]:ov};
       this.setState({ recordOverrides, showRecordModal:false });
-      this.flash(label+' "'+f.name.trim()+'" updated (demo record — local only).');
+      this.flash(label+' "'+f.name.trim()+'" updated.');
+      supabase.from('records').upsert({
+        seed_key:editKey, kind, name:ov.name, type:ov.type, owner:ov.owner, status:ov.status, deleted:false,
+        created_by:this.state.authUser?this.state.authUser.id:null,
+      }, { onConflict:'seed_key' }).then(({error})=>{
+        if(error) console.warn('[supabase] record seed-override upsert failed:', error.message);
+      });
     }
   }
 
@@ -6099,7 +6132,14 @@ class AppRoot extends React.Component {
         if(error) console.warn('[supabase] record delete failed:', error.message);
       });
     } else {
-      this.setState({ recordOverrides:{...this.state.recordOverrides, [editKey]:{deleted:true}}, showRecordModal:false });
+      const prevOv=(this.state.recordOverrides||{})[editKey]||{};
+      this.setState({ recordOverrides:{...this.state.recordOverrides, [editKey]:{...prevOv, deleted:true}}, showRecordModal:false });
+      supabase.from('records').upsert({
+        seed_key:editKey, kind, name:prevOv.name||'', type:prevOv.type||'', owner:prevOv.owner||'', status:prevOv.status||'Draft', deleted:true,
+        created_by:this.state.authUser?this.state.authUser.id:null,
+      }, { onConflict:'seed_key' }).then(({error})=>{
+        if(error) console.warn('[supabase] record seed-delete upsert failed:', error.message);
+      });
     }
     this.flash((kind==='campaigns'?'Campaign':'Project')+' deleted.');
   }
@@ -6107,8 +6147,15 @@ class AppRoot extends React.Component {
   async _loadRecords(){
     const { data, error } = await supabase.from('records').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] records load failed:', error.message); return; }
-    const mapped=(data||[]).map(r=>({ id:'record-'+r.id, kind:r.kind, name:r.name, type:r.type||'', owner:r.owner||'', status:r.status||'Draft' }));
-    this.setState({ recordsAdded:mapped });
+    const rows=data||[];
+    // Rows with a seed_key are an edit/delete of one of the hardcoded demo
+    // Projects/Campaigns rows (RECORDS_SEED) — those go into recordOverrides
+    // keyed by that seed_key, same overlay recordsFor() already reads.
+    // Genuinely new records (seed_key null) go into recordsAdded as before.
+    const mapped=rows.filter(r=>!r.seed_key).map(r=>({ id:'record-'+r.id, kind:r.kind, name:r.name, type:r.type||'', owner:r.owner||'', status:r.status||'Draft' }));
+    const overrides={};
+    rows.filter(r=>r.seed_key).forEach(r=>{ overrides[r.seed_key]={ name:r.name, type:r.type, owner:r.owner, status:r.status, deleted:r.deleted }; });
+    this.setState({ recordsAdded:mapped, recordOverrides:overrides });
   }
 
   // The modules below (SOPs, Tickets, Content Pages, Campaigns, Leads,

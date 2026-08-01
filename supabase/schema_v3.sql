@@ -17,6 +17,24 @@ begin
 end;
 $$ language plpgsql;
 
+-- ============ records (fix from schema.sql): support editing/deleting a demo row ============
+-- The Master Data "Projects/Campaigns" quick-add screen also lets you edit
+-- or delete the hardcoded demo rows (RECORDS_SEED in AppRoot.jsx), not just
+-- ones you created. Those demo rows use a synthetic key like
+-- "projects#seed#0" that isn't a real records.id (a uuid) — seed_key is
+-- what lets that first edit/delete upsert a real row instead of only ever
+-- living in local React state.
+alter table public.records add column if not exists seed_key text unique;
+alter table public.records add column if not exists deleted boolean not null default false;
+
+-- ============ tasks (fix from schema.sql): persist every patchable field, not just status/checklist/assignee ============
+-- _persistTaskPatch previously only ever wrote status, checklist and
+-- assignee_name to Supabase — comments, QC feedback, evidence, rework
+-- count and logged hours all silently stayed local-only. It also used
+-- update() instead of upsert(), so even those three fields never actually
+-- reached a seed task (WTASKS()) that had never been inserted before.
+alter table public.tasks add column if not exists rework_count integer not null default 0;
+
 -- ============ master_records (every Master Data type except User Master, which is `profiles`) ============
 -- id is "<master_key>:<record_id>" (record_id = the master's own first
 -- field, e.g. Service_ID) so a record that started life as hardcoded seed
