@@ -3473,7 +3473,7 @@ class AppRoot extends React.Component {
   }
   scopedSops(rk){
     const all=this.allSops();
-    if(['admin','ceo','coo','qc'].includes(rk)) return all;
+    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
     const d=this.myScopeDivision();
     return d?all.filter(s=>!s.division||s.division==='All'||s.division===d):all;
   }
