@@ -563,7 +563,9 @@ class AppRoot extends React.Component {
   allCampaigns(){
     const upd=this.state.cmpUpd||{};
     const del=this.state.cmpDeleted||[];
-    return this.CAMPAIGNS_SEED().concat(this.state.cmpAdded||[])
+    const added=this.state.cmpAdded||[];
+    const addedIds=new Set(added.map(c=>c.id));
+    return this.CAMPAIGNS_SEED().filter(c=>!addedIds.has(c.id)).concat(added)
       .filter(c=>!del.includes(c.id))
       .map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
   }
@@ -875,8 +877,8 @@ class AppRoot extends React.Component {
       const existing=this.allCampaigns().find(x=>x.id===editId);
       this.setState({ cmpUpd:{...(this.state.cmpUpd||{}),[editId]:base}, cmpNew:false, cmpEditId:null, cmpForm:{} });
       this.flash('Campaign updated.');
-      supabase.from('campaigns').update({ payload:{...existing,...base,id:editId} }).eq('id', editId).then(({error})=>{
-        if(error) console.warn('[supabase] campaign update failed:', error.message);
+      supabase.from('campaigns').upsert({ id:editId, payload:{...existing,...base,id:editId}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error) console.warn('[supabase] campaign upsert failed:', error.message);
       });
     } else {
       const nid='CMP-'+String(100+this.allCampaigns().length+1).slice(-3);
@@ -893,7 +895,10 @@ class AppRoot extends React.Component {
     const c=this.allCampaigns().find(x=>x.id===id);
     this.setState({ cmpDeleted:[...(this.state.cmpDeleted||[]), id], cmpNew:false, cmpEditId:null, cmpForm:{} });
     this.flash('Deleted campaign: '+(c?c.name:id)+'.');
-    supabase.from('campaigns').update({ deleted:true }).eq('id', id).then(({error})=>{
+    // upsert (not update) — a campaign that's still only in CAMPAIGNS_SEED()
+    // has no row yet, so this is what makes the deletion stick past reload
+    // instead of the seed entry silently reappearing.
+    supabase.from('campaigns').upsert({ id, payload:c||{}, deleted:true, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
       if(error) console.warn('[supabase] campaign delete failed:', error.message);
     });
   }
@@ -920,10 +925,37 @@ class AppRoot extends React.Component {
     ];
     return this._threads;
   }
+  // thAdded is keyed {threadId: {msgId: payload}} — a patch/overlay, same
+  // pattern as sopUpd/tktUpd/etc., not a plain append array. This is what
+  // lets a message that already exists (including one baked into the
+  // hardcoded THREADS_SEED()) get *edited* — e.g. linked to a task after
+  // the fact — instead of only ever supporting brand-new messages.
   allThreads(){
     const added=(this.state.thAdded||{});
     const base=this.THREADS_SEED().concat(this.state.thNew||[]);
-    return base.map(t=>({ ...t, msgs:[...t.msgs, ...(added[t.id]||[])] }));
+    return base.map(t=>{
+      const overlay=added[t.id]||{};
+      const baseIds=new Set(t.msgs.map(m=>m.id));
+      const merged=t.msgs.map(m=>overlay[m.id]?{...m,...overlay[m.id]}:m);
+      const extra=Object.keys(overlay).filter(id=>!baseIds.has(id)).map(id=>overlay[id]);
+      return { ...t, msgs:[...merged, ...extra] };
+    });
+  }
+  // Shared write path for both a brand-new message and an edit to an
+  // existing one (e.g. task-linking) — same overlay, same upsert, so a
+  // message that started life in the hardcoded THREADS_SEED() can still be
+  // edited and have that edit survive a reload.
+  _patchMessage(threadId, msg, patch){
+    const full={...msg, ...patch};
+    const add={...(this.state.thAdded||{})};
+    add[threadId]={...(add[threadId]||{}), [msg.id]:full};
+    this.setState({ thAdded:add });
+    supabase.from('messages').upsert({
+      id:threadId+':'+msg.id, thread_id:threadId, payload:full,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] message upsert failed:', error.message);
+    });
   }
   messagesView(){
     const rk=this.state.roleKey, me=this.currentPerson();
@@ -967,17 +999,7 @@ class AppRoot extends React.Component {
           linkPicker:this.state.msgLink===m.id,
           linkOptions:[{v:'',label:'— Select an existing task —'}].concat(tasks.map(t=>({ v:t.id, label:t.id+' · '+t.name }))),
           linkPick:(e)=>{ const v=e.target.value; if(!v) return;
-            // Seed/new-thread messages are mutated in place (same pattern used
-            // for Master Data and Backlink rows); messages sent this session
-            // live in thAdded and get patched there instead.
-            const seedThread=this.THREADS_SEED().find(x=>x.id===cur.id) || (this.state.thNew||[]).find(x=>x.id===cur.id);
-            const seedMsg=seedThread && seedThread.msgs.find(x=>x.id===m.id);
-            if(seedMsg){ seedMsg.taskId=v; }
-            else {
-              const add={...(this.state.thAdded||{})};
-              add[cur.id]=(add[cur.id]||[]).map(x=>x.id===m.id?{...x,taskId:v}:x);
-              this.setState({ thAdded:add });
-            }
+            this._patchMessage(cur.id, m, { taskId:v });
             this.setState({ msgLink:null });
             const t=tasks.find(x=>x.id===v); this.flash('Message linked to '+v+(t?(' — '+t.name):'')+'.'); },
           linkCancel:()=>this.setState({ msgLink:null }) }; }),
@@ -995,12 +1017,9 @@ class AppRoot extends React.Component {
         const id='M'+Date.now();
         const now=new Date();
         const msg={ id, who:me, role:this.ROLES[rk].label, when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt||'(attachment)', files };
-        const add={...(this.state.thAdded||{})}; add[cur.id]=[...(add[cur.id]||[]), msg];
-        this.setState({ thAdded:add, msgDraft:'', msgFiles:[] });
-        if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.');
-        supabase.from('messages').insert({ thread_id:cur.id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
-          if(error) console.warn('[supabase] message insert failed:', error.message);
-        }); },
+        this._patchMessage(cur.id, msg, {});
+        this.setState({ msgDraft:'', msgFiles:[] });
+        if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.'); },
       msgCanAct:['manager','team_lead','admin','ceo'].includes(rk),
       ...(()=>{ const nf=this.state.thForm;
         const people=(this.state.users||[]).map(u=>u.name).filter(p=>p!==me);
@@ -1042,7 +1061,7 @@ class AppRoot extends React.Component {
               if(error) console.warn('[supabase] thread insert failed:', error.message);
             });
             msgs.forEach(msg=>{
-              supabase.from('messages').insert({ thread_id:id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+              supabase.from('messages').upsert({ id:id+':'+msg.id, thread_id:id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
                 if(error) console.warn('[supabase] message insert failed:', error.message);
               });
             });
@@ -2404,14 +2423,16 @@ class AppRoot extends React.Component {
     { id:'kt7', name:'Conversion Rate', category:'Conversion', division:'All', unit:'%', direction:'Increase', defTarget:'4.5', freq:'Monthly', source:'GA4', desc:'Sitewide goal conversion rate.', status:'Active', owner:'Priya Nair', updated:'May 20, 2026' },
     { id:'kt8', name:'Creatives Delivered', category:'Design', division:'Graphics', unit:'assets', direction:'Increase', defTarget:'40', freq:'Monthly', source:'KPI Log', desc:'QC-approved design assets delivered.', status:'Draft', owner:'Aditi Rao', updated:'Jun 22, 2026' },
   ]; }
-  allKpiTemplates(){ const upd=this.state.ktUpd||{}; return this.KPI_TEMPLATES().concat(this.state.ktAdded||[]).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+  allKpiTemplates(){ const upd=this.state.ktUpd||{}; const added=this.state.ktAdded||[]; const addedIds=new Set(added.map(t=>t.id));
+    return this.KPI_TEMPLATES().filter(t=>!addedIds.has(t.id)).concat(added).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   OKR_TEMPLATES(){ return [
     { id:'ot1', name:'Organic Growth OKR', category:'SEO', scope:'Department', division:'SEO', objective:'Increase organic traffic by X% this quarter', desc:'Standard quarterly SEO growth objective — traffic, rankings and authority.', status:'Active', owner:'Priya Nair', updated:'Jun 15, 2026', krs:[ {t:'Grow organic sessions', kpi:'Organic Sessions', unit:'sessions', target:'100,000', weight:'40', freq:'Monthly'}, {t:'Increase keywords in top 10', kpi:'Keywords in Top 10', unit:'keywords', target:'250', weight:'30', freq:'Weekly'}, {t:'Build referring domains', kpi:'Referring Domains', unit:'domains', target:'200', weight:'30', freq:'Monthly'} ] },
     { id:'ot2', name:'Content Engine OKR', category:'Content', scope:'Department', division:'Content', objective:'Ship consistent, high-quality content every month', desc:'Publishing cadence and content-led traffic objective.', status:'Active', owner:'Aditi Rao', updated:'Jun 18, 2026', krs:[ {t:'Publish articles on schedule', kpi:'Articles Published', unit:'articles', target:'12', weight:'50', freq:'Monthly'}, {t:'Grow content-led sessions', kpi:'Organic Sessions', unit:'sessions', target:'40,000', weight:'50', freq:'Monthly'} ] },
     { id:'ot3', name:'Site Performance OKR', category:'Technical', scope:'Department', division:'Web Developers', objective:'Make the site measurably faster and more stable', desc:'Core Web Vitals and technical health objective.', status:'Active', owner:'Priya Nair', updated:'Jun 1, 2026', krs:[ {t:'Cut median page load time', kpi:'Page Load Time', unit:'seconds', target:'2.0', weight:'60', freq:'Weekly'}, {t:'Lift conversion rate', kpi:'Conversion Rate', unit:'%', target:'4.5', weight:'40', freq:'Monthly'} ] },
     { id:'ot4', name:'Social Engagement OKR', category:'Social', scope:'Department', division:'SMM', objective:'Grow engaged social audience across platforms', desc:'Engagement-first social objective.', status:'Draft', owner:'Aditi Rao', updated:'Jun 22, 2026', krs:[ {t:'Raise average engagement rate', kpi:'Avg. Engagement Rate', unit:'%', target:'4.5', weight:'100', freq:'Weekly'} ] },
   ]; }
-  allOkrTemplates(){ const upd=this.state.otUpd||{}; return this.OKR_TEMPLATES().concat(this.state.otAdded||[]).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+  allOkrTemplates(){ const upd=this.state.otUpd||{}; const added=this.state.otAdded||[]; const addedIds=new Set(added.map(t=>t.id));
+    return this.OKR_TEMPLATES().filter(t=>!addedIds.has(t.id)).concat(added).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   fmtDate(v){ if(!v) return v; const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return v; const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return M[parseInt(m[2],10)-1]+' '+parseInt(m[3],10)+', '+m[1]; }
   fmtMonth(v){ if(!v) return v; const m=String(v).match(/^(\d{4})-(\d{2})$/); if(!m) return v; const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return M[parseInt(m[2],10)-1]+' '+m[1]; }
   filesView(){
@@ -2983,7 +3004,8 @@ class AppRoot extends React.Component {
     { id:'TPL-005', name:'Write Article', division:'Content', desc:'Long-form article from approved outline through editor review.', kpiId:'sr3', unit:'articles', estH:12, priority:'High', recurrence:'None', status:'Active', owner:'Aditi Rao', updated:'Jun 20, 2026', checklist:['Outline approved','Draft complete','SEO pass','Editor review'] },
     { id:'TPL-006', name:'Custom task', division:'All', desc:'Blank template — define scope and acceptance criteria per task.', kpiId:'', unit:'', estH:0, priority:'Medium', recurrence:'None', status:'Active', owner:'Admin', updated:'Jan 5, 2026', checklist:['Define acceptance criteria'] },
   ]; }
-  allTaskTemplates(){ const upd=this.state.ttUpd||{}; return this.TASK_TEMPLATES().concat(this.state.ttAdded||[]).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+  allTaskTemplates(){ const upd=this.state.ttUpd||{}; const added=this.state.ttAdded||[]; const addedIds=new Set(added.map(t=>t.id));
+    return this.TASK_TEMPLATES().filter(t=>!addedIds.has(t.id)).concat(added).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   UNIT_MASTER(){ return ['%','Count','Sessions','Users','Visitors','Leads','Keywords','Backlinks','Articles','Pages','Posts','Reels','Impressions','Clicks','CTR %','Ranking position','Score (0–100)','Words','Hours','Days','Seconds','₹ (INR)','$ (USD)','Ratio','Index','Errors','Tickets','Conversions','Conversion rate %','Engagement rate %','Bounce rate %','Domain Authority','Spam score %','Plagiarism %','Readability score','Case studies','Documents','Designs','Infographics','Assets','Fixes']; }
   normUnit(u){
     const s=String(u||'').trim(); if(!s) return 'Count';
@@ -3057,8 +3079,17 @@ class AppRoot extends React.Component {
         statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
         priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[t.priority]||'var(--ink-400)',
         edit:()=>this.setState({ ttNew:true, ttEditId:t.id, ttForm:{...t, checklist:t.checklist.slice()} }),
-        duplicate:()=>{ const nid='TPL-'+String(100+all.length+1).slice(-3); this.setState({ ttAdded:[...(this.state.ttAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('Template duplicated as '+nid+' (Draft).'); },
-        toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ ttUpd:{...(this.state.ttUpd||{}),[t.id]:{...(this.state.ttUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.id+' '+(ns==='Active'?'activated':'archived')+'.'); },
+        duplicate:()=>{ const nid='TPL-'+String(100+all.length+1).slice(-3);
+          const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
+          this.setState({ ttAdded:[...(this.state.ttAdded||[]),copy] }); this.flash('Template duplicated as '+nid+' (Draft).');
+          supabase.from('templates').insert({ id:nid, kind:'task', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] task template insert failed:', error.message);
+          }); },
+        toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; const nx={...t,status:ns,updated:this.todayStr()};
+          this.setState({ ttUpd:{...(this.state.ttUpd||{}),[t.id]:{...(this.state.ttUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.id+' '+(ns==='Active'?'activated':'archived')+'.');
+          supabase.from('templates').upsert({ id:t.id, kind:'task', payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] task template upsert failed:', error.message);
+          }); },
         statusAction:t.status==='Active'?'Archive':'Activate',
       };
     }),8);
@@ -3079,8 +3110,17 @@ class AppRoot extends React.Component {
       used:String(ktUsage(t)),
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       edit:()=>this.setState({ ktNew:true, ktEditId:t.id, ktForm:{...t} }),
-      duplicate:()=>{ const nid='kt'+(allK.length+1)+'c'; this.setState({ ktAdded:[...(this.state.ktAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('KPI template duplicated (Draft).'); },
-      toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ ktUpd:{...(this.state.ktUpd||{}),[t.id]:{...(this.state.ktUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.'); },
+      duplicate:()=>{ const nid='kt'+(allK.length+1)+'c';
+        const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
+        this.setState({ ktAdded:[...(this.state.ktAdded||[]),copy] }); this.flash('KPI template duplicated (Draft).');
+        supabase.from('templates').insert({ id:nid, kind:'kpi', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] kpi template insert failed:', error.message);
+        }); },
+      toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; const nx={...t,status:ns,updated:this.todayStr()};
+        this.setState({ ktUpd:{...(this.state.ktUpd||{}),[t.id]:{...(this.state.ktUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.');
+        supabase.from('templates').upsert({ id:t.id, kind:'kpi', payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] kpi template upsert failed:', error.message);
+        }); },
       statusAction:t.status==='Active'?'Archive':'Activate',
     })),8);
     const ktStats=[K('KPI templates',String(allK.length),'var(--beet-700)'),K('Active',String(allK.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('Auto-tracked (API source)',String(allK.filter(t=>t.source!=='KPI Log'&&t.source!=='Manual').length),'var(--info-600)'),K('Pulled into tasks / KRs',String(allK.reduce((s,t)=>s+ktUsage(t),0)),'var(--orchid-600)')];
@@ -3095,8 +3135,17 @@ class AppRoot extends React.Component {
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       use:()=>{ this.setState({ route:'okr', showOkrPanel:true, okrSection:'okrA', okrTpl:t.id, okrDraftKRs:t.krs.map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:'0', target:k.target, current:'0', weight:k.weight })), okrKRSeq:t.krs.length+1 }); this.flash('Create OKR opened from "'+t.name+'" — objective & KRs pre-filled.'); },
       edit:()=>this.setState({ otNew:true, otEditId:t.id, otForm:{...t, krs:t.krs.map(k=>({...k}))} }),
-      duplicate:()=>{ const nid='ot'+(allO.length+1)+'c'; this.setState({ otAdded:[...(this.state.otAdded||[]),{...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()}] }); this.flash('OKR template duplicated (Draft).'); },
-      toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; this.setState({ otUpd:{...(this.state.otUpd||{}),[t.id]:{...(this.state.otUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.'); },
+      duplicate:()=>{ const nid='ot'+(allO.length+1)+'c';
+        const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
+        this.setState({ otAdded:[...(this.state.otAdded||[]),copy] }); this.flash('OKR template duplicated (Draft).');
+        supabase.from('templates').insert({ id:nid, kind:'okr', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] okr template insert failed:', error.message);
+        }); },
+      toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; const nx={...t,status:ns,updated:this.todayStr()};
+        this.setState({ otUpd:{...(this.state.otUpd||{}),[t.id]:{...(this.state.otUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.');
+        supabase.from('templates').upsert({ id:t.id, kind:'okr', payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] okr template upsert failed:', error.message);
+        }); },
       statusAction:t.status==='Active'?'Archive':'Activate',
     })),8);
     const otStats=[K('OKR templates',String(allO.length),'var(--beet-700)'),K('Active',String(allO.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked key results',String(allO.reduce((s,t)=>s+t.krs.length,0)),'var(--orchid-600)'),K('Departments covered',String([...new Set(allO.map(t=>t.division))].length),'var(--info-600)')];
@@ -3128,8 +3177,8 @@ class AppRoot extends React.Component {
           const editId=this.state.otEditId;
           const existing=this.allOkrTemplates().find(x=>x.id===editId);
           this.setState({ otUpd:{...(this.state.otUpd||{}),[editId]:rec}, otNew:false, otEditId:null, otForm:{} }); this.flash('OKR template updated.');
-          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
-            if(error) console.warn('[supabase] okr template update failed:', error.message);
+          supabase.from('templates').upsert({ id:editId, kind:'okr', payload:{...existing,...rec,id:editId}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] okr template upsert failed:', error.message);
           });
         } else {
           const nid='ot'+(this.allOkrTemplates().length+1); const okrec={id:nid,...rec};
@@ -3158,8 +3207,8 @@ class AppRoot extends React.Component {
           const editId=this.state.ktEditId;
           const existing=this.allKpiTemplates().find(x=>x.id===editId);
           this.setState({ ktUpd:{...(this.state.ktUpd||{}),[editId]:rec}, ktNew:false, ktEditId:null, ktForm:{} }); this.flash('KPI template updated.');
-          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
-            if(error) console.warn('[supabase] kpi template update failed:', error.message);
+          supabase.from('templates').upsert({ id:editId, kind:'kpi', payload:{...existing,...rec,id:editId}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] kpi template upsert failed:', error.message);
           });
         } else {
           const nid='kt'+(this.allKpiTemplates().length+1); const ktrec={id:nid,...rec};
@@ -3195,8 +3244,8 @@ class AppRoot extends React.Component {
           const existing=this.allTaskTemplates().find(x=>x.id===editId);
           this.setState({ ttUpd:{...(this.state.ttUpd||{}),[editId]:rec}, ttNew:false, ttEditId:null, ttForm:{} });
           this.flash('Template updated — changes apply to new tasks created from it.');
-          supabase.from('templates').update({ payload:{...existing,...rec,id:editId} }).eq('id', editId).then(({error})=>{
-            if(error) console.warn('[supabase] task template update failed:', error.message);
+          supabase.from('templates').upsert({ id:editId, kind:'task', payload:{...existing,...rec,id:editId}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] task template upsert failed:', error.message);
           });
         } else {
           const nid='TPL-'+String(100+this.allTaskTemplates().length+1).slice(-3);
@@ -4910,8 +4959,14 @@ class AppRoot extends React.Component {
       audit:[['Created','Aditi Rao',d(260)],['Published','Aditi Rao',d(250)],['Version updated','Aditi Rao',d(140)],['Reviewed','Priya Nair',d(110)],['Version updated','Sameer Iyer',d(18)]],
       comments:[], ack:['Sameer Iyer'] },
   ]; }
+  // sopAdded comes from Supabase (both genuinely new SOPs and any hardcoded
+  // seed SOP that's been edited at least once, since editing upserts a real
+  // row keyed by the seed id) — so it must win over SOP_SEED() on an id
+  // clash, or an edited seed SOP would render twice.
   allSops(){ const upd=this.state.sopUpd||{};
-    return (this.state.sopAdded||[]).concat(this.SOP_SEED()).map(s=>upd[s.id]?{...s,...upd[s.id]}:s); }
+    const added=this.state.sopAdded||[];
+    const addedIds=new Set(added.map(s=>s.id));
+    return added.concat(this.SOP_SEED().filter(s=>!addedIds.has(s.id))).map(s=>upd[s.id]?{...s,...upd[s.id]}:s); }
   sopTone(s){ return { Published:{bg:'var(--verify-100)',c:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},
     'In review':{bg:'var(--warn-100)',c:'var(--warn-600)'}, Retired:{bg:'#EAE4E8',c:'var(--beet-700)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   sopReviewState(s){
@@ -5147,8 +5202,8 @@ class AppRoot extends React.Component {
       if(auditRow) nx.audit=[...(nx.audit||[]),auditRow];
       u[s.id]={...cur,...p, audit:nx.audit};
       this.setState({ sopUpd:u }); if(msg) this.flash(msg);
-      supabase.from('sops').update({ payload:nx }).eq('id', s.id).then(({error})=>{
-        if(error) console.warn('[supabase] sop update failed:', error.message);
+      supabase.from('sops').upsert({ id:s.id, payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error) console.warn('[supabase] sop upsert failed:', error.message);
       }); };
     const tab=this.state.sopTabD||'overview';
     const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
@@ -5323,7 +5378,9 @@ class AppRoot extends React.Component {
       thread:[['Aditi Rao','Two logs on the same day.',d(5)],['Karan Shah','Duplicate removed, validation added.',d(4)]] },
   ]; }
   allTickets(){ const upd=this.state.tktUpd||{};
-    return (this.state.tktAdded||[]).concat(this.TICKET_SEED()).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
+    const added=this.state.tktAdded||[];
+    const addedIds=new Set(added.map(t=>t.id));
+    return added.concat(this.TICKET_SEED().filter(t=>!addedIds.has(t.id))).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   tktPatch(id,patch,note){
     const upd={...(this.state.tktUpd||{})};
     const cur=this.allTickets().find(t=>t.id===id)||{};
@@ -5331,8 +5388,8 @@ class AppRoot extends React.Component {
     upd[id]={ ...(upd[id]||{}), ...patch, thread };
     this.setState({ tktUpd:upd });
     const nx={ ...cur, ...patch, thread };
-    supabase.from('tickets').update({ payload:nx }).eq('id', id).then(({error})=>{
-      if(error) console.warn('[supabase] ticket update failed:', error.message);
+    supabase.from('tickets').upsert({ id, payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] ticket upsert failed:', error.message);
     });
   }
   ticketAge(t){
@@ -5752,12 +5809,8 @@ class AppRoot extends React.Component {
   _linkMessageToTask(msgId, taskId){
     const th=this.allThreads().find(t=>t.msgs.some(x=>x.id===msgId));
     if(!th) return;
-    const seedThread=this.THREADS_SEED().find(x=>x.id===th.id) || (this.state.thNew||[]).find(x=>x.id===th.id);
-    const seedMsg=seedThread && seedThread.msgs.find(x=>x.id===msgId);
-    if(seedMsg){ seedMsg.taskId=taskId; return; }
-    const add={...(this.state.thAdded||{})};
-    add[th.id]=(add[th.id]||[]).map(x=>x.id===msgId?{...x,taskId}:x);
-    this.setState({ thAdded:add });
+    const msg=th.msgs.find(x=>x.id===msgId);
+    this._patchMessage(th.id, msg, { taskId });
   }
 
   // Loads every Supabase-backed task and replaces tkAdded with the persisted
@@ -5955,9 +6008,17 @@ class AppRoot extends React.Component {
     this.setState({ cAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
   }
   async _loadCampaigns(){
-    const { data, error } = await supabase.from('campaigns').select('*').eq('deleted', false).order('created_at', { ascending:true });
+    // Loads every row regardless of `deleted` — a deleted seed campaign
+    // still needs its id in cmpDeleted on every load, or the hardcoded
+    // CAMPAIGNS_SEED() entry (which the delete never actually removes,
+    // it's baked into the JS bundle) would silently reappear.
+    const { data, error } = await supabase.from('campaigns').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] campaigns load failed:', error.message); return; }
-    this.setState({ cmpAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+    const rows=data||[];
+    this.setState({
+      cmpAdded:rows.filter(r=>!r.deleted).map(r=>({ ...r.payload, id:r.id })),
+      cmpDeleted:rows.filter(r=>r.deleted).map(r=>r.id),
+    });
   }
   async _loadLeads(){
     const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending:true });
@@ -5975,7 +6036,7 @@ class AppRoot extends React.Component {
     const { data:msgRows, error:mErr } = await supabase.from('messages').select('*').order('created_at', { ascending:true });
     if(mErr){ console.warn('[supabase] messages load failed:', mErr.message); return; }
     const byThread={};
-    (msgRows||[]).forEach(r=>{ (byThread[r.thread_id]=byThread[r.thread_id]||[]).push(r.payload); });
+    (msgRows||[]).forEach(r=>{ (byThread[r.thread_id]=byThread[r.thread_id]||{})[r.payload.id]=r.payload; });
     this.setState({
       thNew:(threadRows||[]).map(r=>({ ...r.payload, id:r.id, msgs:[] })),
       thAdded:byThread,
@@ -6280,7 +6341,9 @@ class AppRoot extends React.Component {
   }
 
   allContentPages(){ const upd=this.state.cUpd||{};
-    return (this.state.cAdded||[]).slice().reverse().concat(this.CONTENT_PAGES()).map(p=>upd[p.id]?{...p,...upd[p.id]}:p); }
+    const added=(this.state.cAdded||[]).slice().reverse();
+    const addedIds=new Set(added.map(p=>p.id));
+    return added.concat(this.CONTENT_PAGES().filter(p=>!addedIds.has(p.id))).map(p=>upd[p.id]?{...p,...upd[p.id]}:p); }
   contentStatusTone(s){ return { Published:{bg:'var(--verify-100)',color:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',color:'var(--ink-500)'}, 'Under Review':{bg:'var(--warn-100)',color:'var(--warn-600)'}, 'SEO Review':{bg:'var(--info-100)',color:'var(--info-600)'}, Scheduled:{bg:'var(--orchid-100)',color:'var(--orchid-700)'}, Archived:{bg:'var(--surface-50)',color:'var(--ink-400)'} }[s]||{bg:'var(--surface-50)',color:'var(--ink-500)'}; }
 
   contentView(){
@@ -6451,8 +6514,8 @@ class AppRoot extends React.Component {
       this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npEditId:null, cOpen:code, cTab:0 });
       try{ localStorage.setItem('beetloop_content_page_upd', JSON.stringify(upd)); }catch(e){}
       this.flash('Page “'+name+'” updated.');
-      supabase.from('content_pages').update({ payload:{...existing,...page} }).eq('id', code).then(({error})=>{
-        if(error) console.warn('[supabase] content page update failed:', error.message);
+      supabase.from('content_pages').upsert({ id:code, payload:{...existing,...page}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error) console.warn('[supabase] content page upsert failed:', error.message);
       });
       return;
     }
@@ -6529,7 +6592,9 @@ class AppRoot extends React.Component {
     { id:'CN-006', leadId:'LD-006', name:'Dr. Kenji Tanaka', phone:'+81 90 1234 5678', email:'k.tanaka@bioclin.jp', country:'Japan', company:'BioClin', service:'Clinical Trial Support', source:'Organic Search', stage:'Lost', value:'₹80,000', date:d(3), owner:'Aditi Rao', desc:'Timeline mismatch — needed delivery in 3 weeks.', brand:'Food Research Lab', log:[['Enquiry received','Organic Search',d(3)],['Lost — timeline mismatch','Aditi Rao',d(2)]] },
   ]; }
   allContacts(){ const upd=this.state.contactUpd||{};
-    let list=(this.state.contactAdded||[]).concat(this.CONTACT_SEED()).map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
+    const added=this.state.contactAdded||[];
+    const addedIds=new Set(added.map(c=>c.id));
+    let list=added.concat(this.CONTACT_SEED().filter(c=>!addedIds.has(c.id))).map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
     if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); list=list.filter(c=>!c.brand||bs.includes(c.brand)); }
     return list; }
   pipelineView(canWrite){
@@ -6562,8 +6627,8 @@ class AppRoot extends React.Component {
           const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
           u[c.id]={...(u[c.id]||{}), stage:v, log};
           this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.');
-          supabase.from('contacts').update({ payload:{...c, stage:v, log} }).eq('id', c.id).then(({error})=>{
-            if(error) console.warn('[supabase] contact update failed:', error.message);
+          supabase.from('contacts').upsert({ id:c.id, payload:{...c, stage:v, log}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] contact upsert failed:', error.message);
           }); },
         open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin, Manager and Sales.'); return; }
           this.setState({ cnOpen:c.id }); } }; }),8);
@@ -6647,8 +6712,8 @@ class AppRoot extends React.Component {
         const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
         u[c.id]={...(u[c.id]||{}), stage:v, log};
         this.setState({ contactUpd:u }); this.flash(c.name+' moved to '+v+'.');
-        supabase.from('contacts').update({ payload:{...c, stage:v, log} }).eq('id', c.id).then(({error})=>{
-          if(error) console.warn('[supabase] contact update failed:', error.message);
+        supabase.from('contacts').upsert({ id:c.id, payload:{...c, stage:v, log}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] contact upsert failed:', error.message);
         }); } };
   }
   leadsView(canWrite){
