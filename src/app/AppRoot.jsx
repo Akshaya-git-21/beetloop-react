@@ -1478,6 +1478,22 @@ class AppRoot extends React.Component {
     const overCap=(this.state.users||[]).filter(u=>{ const wk=this.weeklyCapacity(u.name)||40;
       const open=tasks.filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
       return open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)>wk; }).length;
+    // manager/team_lead see only their own department's slice of every number above
+    const myDivision=this.myScopeDivision();
+    const dTasks=this.scopedTasks(rk), dOkrs=this.scopedOkrs(rk), dSops=this.scopedSops(rk);
+    const dInQC=dTasks.filter(t=>t.status==='Submitted').length;
+    const dRework=dTasks.filter(t=>t.status==='Rework').length;
+    const dAtRisk=dOkrs.filter(o=>this.okrHealth(o).label!=='On Track'&&o.status!=='Completed').length;
+    const dSopOverdue=dSops.filter(s=>this.sopReviewState(s).overdue).length;
+    const dOverCap=(this.state.users||[]).filter(u=>{ if(myDivision && u.dept!==myDivision) return false;
+      const wk=this.weeklyCapacity(u.name)||40;
+      const open=dTasks.filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
+      return open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)>wk; }).length;
+    // Manager oversees the whole delivery org in this company's structure
+    // (matches the existing SOP-visibility rule), so its numbers stay
+    // company-wide — only Team Lead's are actually department-scoped, and
+    // only Team Lead's tiles get the "— division" note.
+    const leadScopeNote=myDivision?(' — '+myDivision):'';
     const EXTRA={
       exec:[X('OKRs at risk',String(atRisk),'need leadership attention',atRisk?'var(--danger-600)':'var(--verify-600)'),
         X('Avg OKR progress',(okrs.length?Math.round(okrs.reduce((s,o)=>s+o.progress,0)/okrs.length):0)+'%','across '+okrs.length+' objectives','var(--beet-700)'),
@@ -1487,14 +1503,14 @@ class AppRoot extends React.Component {
         X('Rework queue',String(rework),'sent back by QC',rework?'var(--warn-600)':'var(--verify-600)'),
         X('Open tickets',String(tOpen),tUnassigned+' unassigned','var(--info-600)'),
         X('Overdue tasks',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)')],
-      manager:[X('Awaiting QC',String(inQC),'in the review queue','var(--info-600)'),
-        X('Rework',String(rework),'needs correction',rework?'var(--warn-600)':'var(--verify-600)'),
-        X('OKRs at risk',String(atRisk),'in your scope',atRisk?'var(--danger-600)':'var(--verify-600)'),
-        X('SOPs overdue review',String(sopOverdue),'governance debt',sopOverdue?'var(--danger-600)':'var(--verify-600)')],
-      lead:[X('Awaiting QC',String(inQC),'from your team','var(--info-600)'),
-        X('Rework',String(rework),'to reassign',rework?'var(--warn-600)':'var(--verify-600)'),
-        X('Overdue in team',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)'),
-        X('Over capacity',String(overCap),'people to rebalance',overCap?'var(--warn-600)':'var(--verify-600)')],
+      manager:[X('Awaiting QC',String(dInQC),'in the review queue','var(--info-600)'),
+        X('Rework',String(dRework),'needs correction',dRework?'var(--warn-600)':'var(--verify-600)'),
+        X('OKRs at risk',String(dAtRisk),'in your scope',dAtRisk?'var(--danger-600)':'var(--verify-600)'),
+        X('SOPs overdue review',String(dSopOverdue),'governance debt',dSopOverdue?'var(--danger-600)':'var(--verify-600)')],
+      lead:[X('Awaiting QC',String(dInQC),'from your team'+leadScopeNote,'var(--info-600)'),
+        X('Rework',String(dRework),'to reassign'+leadScopeNote,dRework?'var(--warn-600)':'var(--verify-600)'),
+        X('Overdue in team',String(overdue(dTasks)),'past due date'+leadScopeNote,overdue(dTasks)?'var(--danger-600)':'var(--verify-600)'),
+        X('Over capacity',String(dOverCap),'people to rebalance'+leadScopeNote,dOverCap?'var(--warn-600)':'var(--verify-600)')],
       senior:[X('My overdue',String(overdue(mineT)),'clear these first',overdue(mineT)?'var(--danger-600)':'var(--verify-600)'),
         X('In QC',String(mineT.filter(t=>t.status==='Submitted').length),'awaiting review','var(--info-600)'),
         X('My rework',String(mineT.filter(t=>t.status==='Rework').length),'QC comments to address',mineT.filter(t=>t.status==='Rework').length?'var(--warn-600)':'var(--verify-600)'),
@@ -1690,7 +1706,12 @@ class AppRoot extends React.Component {
     const cur=may.includes(this.state.dbTab)?this.state.dbTab:may[0];
     const META={ exec:{label:'Executive',icon:'crown'}, capacity:{label:'Resource & Capacity',icon:'users'}, dept:{label:'Department',icon:'building-2'}, team:{label:'Team',icon:'user-check'} };
     const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
-    const tasks=this.allTasks(), okrs=this.allOkrs(), camps=this.allCampaigns(), plans2=this.allEpPlans();
+    // Team Lead only ever sees their own division's slice here — Resource &
+    // Capacity, Department and Team dashboards all derive from this same
+    // scoped list, so a Team Lead can't browse other divisions' people,
+    // tasks or OKRs through this screen. Manager oversees the whole
+    // delivery org in this company's structure, same as the SOP rule.
+    const tasks=this.scopedTasks(rk), okrs=this.scopedOkrs(rk), camps=this.allCampaigns(), plans2=this.allEpPlans();
     const hrsOf=(t)=>this.hrsOf(t);
     const KP=(label,value,sub,color)=>({label,value,sub,color});
     const done=tasks.filter(t=>['Approved','Closed'].includes(t.status)).length;
@@ -3428,6 +3449,40 @@ class AppRoot extends React.Component {
   }
   deptLabel(v){ const k=this.deptKey(v); const hit=this.DEPT_MASTER().find(d=>d.key===k); return hit?hit.label:(v||'—'); }
   userOf(name){ return (this.state.users||[]).find(u=>u.name===name)||null; }
+  // Real per-role data scoping for Dashboard/Analytics — not just different
+  // widgets per role, but the underlying records actually filtered: Admin/
+  // CEO/COO/QC see the whole company (their ACCESS level is already 'Full'/
+  // company-wide by design), Manager/Team Lead see only their own
+  // department, everyone else sees only their own assigned work.
+  myScopeDivision(){ const u=this.userOf(this.currentPerson()); return u?u.dept:''; }
+  scopedTasks(rk){
+    const all=this.allTasks();
+    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(rk==='team_lead'){ const d=this.myScopeDivision(); return d?all.filter(t=>this.tkDivision(t)===d):all; }
+    const me=this.currentPerson(); return all.filter(t=>t.assignee===me);
+  }
+  scopedOkrs(rk){
+    const all=this.allOkrs();
+    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(rk==='team_lead'){ const d=this.myScopeDivision(); return d?all.filter(o=>o.dept===d):all; }
+    const me=this.currentPerson(); return all.filter(o=>o.owner===me);
+  }
+  scopedSops(rk){
+    const all=this.allSops();
+    if(['admin','ceo','coo','qc'].includes(rk)) return all;
+    const d=this.myScopeDivision();
+    return d?all.filter(s=>!s.division||s.division==='All'||s.division===d):all;
+  }
+  scopedTickets(rk){
+    const all=this.allTickets();
+    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(rk==='team_lead'){
+      const d=this.myScopeDivision(); if(!d) return all;
+      const inDept=(name)=>{ const u=this.userOf(name); return !!(u && u.dept===d); };
+      return all.filter(t=>inDept(t.by)||inDept(t.assignee));
+    }
+    const me=this.currentPerson(); return all.filter(t=>t.by===me||t.assignee===me);
+  }
   // Sales brand assignment lives on the user's own record (Admin-configurable
   // via User Management), not a fixed constant — falls back to the demo
   // role's default brand only if the signed-in user has no record/assignment.
