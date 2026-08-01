@@ -60,7 +60,7 @@ class AppRoot extends React.Component {
       { name:'Neha Verma', sub:'Junior SEO Executive', role:'Junior Executive', dept:'SEO', status:'Pending Invitation', statusTone:'warn' },
       { name:'Farhan Ali', sub:'QC Reviewer', role:'QC Reviewer', dept:'Quality', status:'Active', statusTone:'ok' },
       { name:'Ritu Malhotra', sub:'Digital Marketing Executive', role:'Digital Marketing Executive', dept:'Marketing', status:'Active', statusTone:'ok' },
-      { name:'Vikram Singh', sub:'Sales Executive', role:'Sales Executive', dept:'Marketing', status:'Active', statusTone:'ok' },
+      { name:'Vikram Singh', sub:'Sales Executive', role:'Sales Executive', dept:'Marketing', status:'Active', statusTone:'ok', brands:['Food Research Lab'] },
     ],
     services: [
       { name:'SEO', sub:'Search engine optimization', subs:'4 sub-services', status:'Active' },
@@ -1414,11 +1414,11 @@ class AppRoot extends React.Component {
           K('Leads today',String(this.allLeads().filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0)),'','info','users'),
           K('Pipeline total',String(c.length),'','brand','filter'),
           K('Won this month',String(c.filter(x=>x.stage==='Won').length),'','ok','check-circle-2')]; })(),
-      sales:(()=>{ const brand=this.ROLES.sales.brand; const c=this.allContacts().filter(x=>!x.brand||x.brand===brand); const today=this.todayStr();
+      sales:(()=>{ const brands=this.mySalesBrands(); const c=this.allContacts(); const today=this.todayStr();
         return [K('Leads today',String(this.allLeads().filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0)),'','info','users'),
           K('My pipeline',String(c.length),'','brand','filter'),
           K('Won this month',String(c.filter(x=>x.stage==='Won').length),'','ok','check-circle-2'),
-          K('My brand',brand,'','info','tag')]; })(),
+          K(brands.length===1?'My brand':'My brands',brands.join(', ')||'—','','info','tag')]; })(),
     };
     const rowsMap = {
       exec:[['CEO strategy review','Q3 board deck · Leadership','On track','ok','target'],['Food Research Lab retainer','Renewal · ₹18L','Won','ok','folder-kanban'],['Nutraceutical vertical launch','Cross-department','At risk','warn','alert-triangle'],['Pubrica SEO program','12-month · SEO','On track','ok','search']],
@@ -1450,7 +1450,7 @@ class AppRoot extends React.Component {
       qc:{eyebrow:'Quality scope',big:'QC only',sub:'Independent review',note:'You approve, reject or request rework and view Gold Standards. You cannot modify task content or masters.'},
       admin:{eyebrow:'Platform scope',big:'Full',sub:'Configuration & security',note:'You manage users, masters, roles and integrations — but business decisions like OKRs and campaign approvals belong to leadership.'},
       dm:{eyebrow:'Marketing scope',big:'Digital Marketing',sub:'View across campaigns',note:'You view campaigns, content and your own tasks. Lead contact details (phone/email) are restricted — only stage and volume are visible.'},
-      sales:{eyebrow:'Personal scope',big:this.ROLES.sales.brand,sub:'Assigned brand only',note:'You create and manage leads and pipeline contacts for your assigned brand only. Other brands are hidden.'},
+      sales:{eyebrow:'Personal scope',big:this.mySalesBrands().join(', ')||'No brand assigned',sub:'Assigned brand(s) only',note:'You create and manage leads and pipeline contacts for your assigned brand(s) only — set by Admin in User Management. Other brands are hidden.'},
     };
     const scopeBox = scopeMap[b];
     const modsFor = ['dashboard','campaigns','tasks','qc','analytics','support','masters'];
@@ -3428,6 +3428,14 @@ class AppRoot extends React.Component {
   }
   deptLabel(v){ const k=this.deptKey(v); const hit=this.DEPT_MASTER().find(d=>d.key===k); return hit?hit.label:(v||'—'); }
   userOf(name){ return (this.state.users||[]).find(u=>u.name===name)||null; }
+  // Sales brand assignment lives on the user's own record (Admin-configurable
+  // via User Management), not a fixed constant — falls back to the demo
+  // role's default brand only if the signed-in user has no record/assignment.
+  mySalesBrands(){
+    const u=this.userOf(this.currentPerson());
+    if(u && u.brands && u.brands.length) return u.brands;
+    return this.state.roleKey==='sales' ? [this.ROLES.sales.brand] : [];
+  }
   dailyCapacity(name){
     const u=this.userOf(name); if(!u) return 8;
     const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
@@ -3460,7 +3468,7 @@ class AppRoot extends React.Component {
       umMeta:[['Role',u.role],['Department',u.dept],['Designation',u.sub],['Account status',u.status],
         ['Shift',(u.shiftStart||'09:00')+' – '+(u.shiftEnd||'18:00')],['Break',(u.breakMin||60)+' minutes'],
         ['Working days',(u.days||5)+' / week'],['Daily capacity',this.dailyCapacity(name)+' h'],
-        ['Weekly capacity',wk+' h']].map(x=>({k:x[0],v:x[1]})),
+        ['Weekly capacity',wk+' h']].concat(u.role==='Sales Executive'?[['Assigned brand(s)',(u.brands||[]).join(', ')||'None']]:[]).map(x=>({k:x[0],v:x[1]})),
       umLoad:{ assigned:assigned.toFixed(1)+' h assigned', cap:wk+' h capacity',
         free:(wk-assigned>=0?((wk-assigned).toFixed(1)+' h free'):(Math.abs(wk-assigned).toFixed(1)+' h over')),
         freeColor:(wk-assigned)>=0?'var(--verify-600)':'var(--danger-600)',
@@ -3476,7 +3484,7 @@ class AppRoot extends React.Component {
       umHasTasks:tasks.length>0,
       umTaskMore:tasks.length>8?('+'+(tasks.length-8)+' more'):'',
       umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
-        breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status } }),
+        breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice() } }),
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
@@ -3484,10 +3492,19 @@ class AppRoot extends React.Component {
       umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
+      // brand assignment only matters for Sales — but shown whenever editing so
+      // Admin can pre-assign brands right when they change someone's role to Sales
+      umIsSalesRole:(editing?d.role:u.role)==='Sales Executive',
+      umBrandRows:this.BRAND_LIST().map(b=>{ const on=(d.brands||[]).includes(b);
+        return { label:b, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const cur=d.brands||[]; this.setState({ umDraft:{...d, brands: on?cur.filter(x=>x!==b):[...cur,b]} }); } }; }),
+      umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,
           shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
           breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
           role:d.role||x.role, dept:d.dept||x.dept, status:d.status||x.status,
+          brands:(d.role||x.role)==='Sales Executive'?(d.brands||x.brands||[]):x.brands,
           statusTone:(d.status||x.status)==='Active'?'ok':'warn' }:x);
         this.setState({ users, umEdit:false, umDraft:{} });
         const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
@@ -6302,7 +6319,7 @@ class AppRoot extends React.Component {
     return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
   }
   allLeads(){ const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED());
-    if(this.state.roleKey==='sales'){ const b=this.ROLES.sales.brand; return all.filter(l=>!l.brand||l.brand===b); }
+    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return all.filter(l=>!l.brand||bs.includes(l.brand)); }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
   BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India']; }
@@ -6320,7 +6337,7 @@ class AppRoot extends React.Component {
   ]; }
   allContacts(){ const upd=this.state.contactUpd||{};
     let list=(this.state.contactAdded||[]).concat(this.CONTACT_SEED()).map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
-    if(this.state.roleKey==='sales'){ const b=this.ROLES.sales.brand; list=list.filter(c=>!c.brand||c.brand===b); }
+    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); list=list.filter(c=>!c.brand||bs.includes(c.brand)); }
     return list; }
   pipelineView(canWrite){
     const me=this.currentPerson();
@@ -6392,10 +6409,10 @@ class AppRoot extends React.Component {
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
       cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
-      cnBrandOptions:this.BRAND_LIST(),
-      cnBrandVal: this.state.roleKey==='sales' ? this.ROLES.sales.brand : (f.brand||''),
-      cnBrandLocked: this.state.roleKey==='sales',
-      cnBrandNote: this.state.roleKey==='sales' ? ('Brand: '+this.ROLES.sales.brand+' — your assigned brand.') : '',
+      cnBrandOptions: this.state.roleKey==='sales' ? this.mySalesBrands() : this.BRAND_LIST(),
+      cnBrandVal: this.state.roleKey==='sales' ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
+      cnBrandLocked: this.state.roleKey==='sales' && this.mySalesBrands().length<=1,
+      cnBrandNote: this.state.roleKey==='sales' ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
       cnSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
         if(!(f.email&&f.email.trim())&&!(f.phone&&f.phone.trim())){ this.flash('Enter a phone number or email.'); return; }
@@ -6404,7 +6421,7 @@ class AppRoot extends React.Component {
         const rec={ id, leadId:f.leadId||'', name:f.name.trim(), phone:f.phone||'—', email:f.email||'—', country:f.country||'India',
           company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
           stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
-          brand: this.state.roleKey==='sales'?this.ROLES.sales.brand:(f.brand||''),
+          brand: this.state.roleKey==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||''),
           log:[['Lead created',me,this.todayStr()]] };
         this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
         this.flash(rec.id+' — '+rec.name+' added to the lead pipeline as '+rec.stage+'.');
@@ -6572,10 +6589,10 @@ class AppRoot extends React.Component {
           : (f.service?'No campaign targets this service page yet — pick one manually.':'Select a service to auto-fill the campaign.'); })(),
       ldSetDate:set('date'), ldSetSource:set('source'), ldSetCount:set('count'), ldSetQualified:set('qualified'), ldSetValue:set('value'), ldSetNotes:set('notes'), ldSetVisitors:set('visitors'),
       ldSetCampaign:set('campaign'), ldCampaignOptions:['— None —'].concat(this.campaignNames(false)),
-      ldSetBrand:set('brand'), ldBrandOptions:this.BRAND_LIST(),
-      ldBrandVal: rk==='sales' ? this.ROLES.sales.brand : (f.brand||''),
-      ldBrandLocked: rk==='sales',
-      ldBrandNote: rk==='sales' ? ('Brand: '+this.ROLES.sales.brand+' — your assigned brand.') : '',
+      ldSetBrand:set('brand'), ldBrandOptions: rk==='sales' ? this.mySalesBrands() : this.BRAND_LIST(),
+      ldBrandVal: rk==='sales' ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
+      ldBrandLocked: rk==='sales' && this.mySalesBrands().length<=1,
+      ldBrandNote: rk==='sales' ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
       ldSave:()=>{
         const n=parseInt(f.count,10)||0;
         if(!f.service){ this.flash('Select the service these leads came in for.'); return; }
@@ -6584,7 +6601,7 @@ class AppRoot extends React.Component {
         const sp=this.servicePageOf(f.service);
         const rec={ id, date:this.fmtDate(f.date)||today, service:f.service, servicePage:(sp&&sp.url)||'', source:f.source||'Organic Search',
           visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'',
-          brand: rk==='sales'?this.ROLES.sales.brand:(f.brand||'') };
+          brand: rk==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||'') };
         this.setState({ leadAdded:[rec,...(this.state.leadAdded||[])], ldForm:{} });
         this.flash(n+' lead'+(n===1?'':'s')+' logged for '+f.service+' — counted toward today’s KPI.');
       },

@@ -5,7 +5,8 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function UserDetailDrawer({ vm }) {
   const { umDrawerOpen, umU, umClose, umStop, umLoad, umEditing, umD, umSetStart, umSetEnd, umSetBreak, umSetDays, umDayOptions,
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
-    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend } = vm;
+    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
+    umIsSalesRole, umBrandRows } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -72,6 +73,19 @@ export default function UserDetailDrawer({ vm }) {
 {(umStatusOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 </div>
+{Boolean(umIsSalesRole) && (
+<div style={{"marginTop":"14px"}}>
+<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Assigned brand(s) — leads restricted to these</label>
+<div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>
+{(umBrandRows || []).map((b, $i) => (
+<button key={$i} onClick={b.toggle} style={cssTextToObject(b.style)}>
+{b.on && <Icon name={"check"} style={{"width":"11px","height":"11px"}} />}
+{b.label}
+</button>
+))}
+</div>
+</div>
+)}
 <div style={{"display":"flex","justifyContent":"flex-end","gap":"9px","marginTop":"14px"}}>
 <button onClick={umCancelEdit} style={{"padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={umSave} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 17px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
