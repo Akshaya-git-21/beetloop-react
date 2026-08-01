@@ -35,6 +35,7 @@ class AppRoot extends React.Component {
     cmpAdded: [], cmpUpd: {}, cmpDeleted: [], cmpNewEffort: null,
     thOpen: null, thAdded: {}, thNew: [], thForm: null, msgDraft: '', msgFiles: [], msgLink: null,
     fpTarget: null, fpTitle: '', fpTab: 'browse', fpSel: [], fpQuery: '', fpType: 'All', fpName: '', fpKind: 'PDF',
+    fileBlobs: {}, fpvFile: null,
     tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
     showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
@@ -1271,7 +1272,7 @@ class AppRoot extends React.Component {
         const daily=Math.max(0,Math.round((gross-((parseInt(f.breakMin,10)||60)/60))*100)/100);
         const weekly=Math.round(daily*(parseFloat(f.days)||5)*100)/100;
         return daily+' h/day · '+weekly+' h/week capacity'; })(),
-      ...this.filePickerData(),
+      ...this.filePickerData(), ...this.filePreviewData(),
       showRoleConfirm:this.state.showRoleConfirm,
       roleConfirmLabel:this.state.roleConfirmKey?this.ROLES[this.state.roleConfirmKey].label:'',
       roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
@@ -5452,7 +5453,7 @@ class AppRoot extends React.Component {
     const checklist=(t.checklist||[]).map((c,i)=>({ t:c.t, done:c.done,
       boxBg:c.done?'var(--verify-500)':'#fff', boxBorder:c.done?'var(--verify-500)':'var(--line-300)', op:c.done?'1':'0',
       toggle:()=>{ if(!isAssignee){ this.flash('Only the assignee updates the checklist.'); return; } const arr=(t.checklist||[]).map((x,j)=>j===i?{...x,done:!x.done}:x); this.tkPatch(t.id,{checklist:arr},(c.done?'Unchecked':'Completed')+' checklist item — '+c.t); } }));
-    const evidence=(t.evidence||[]).map(f=>({name:f, open:()=>this.setState({ route:'files', flQuery:f })}));
+    const evidence=(t.evidence||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)}));
     const actions=[];
     const btn=(label,icon,bg,fg,go,border)=>actions.push({label,icon,go,style:'display:flex;align-items:center;gap:7px;border-radius:11px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;background:'+bg+';color:'+fg+';border:'+(border||'none')});
     if(isAssignee){
@@ -5549,7 +5550,7 @@ class AppRoot extends React.Component {
           isQC:/QC|Manager|Lead|Admin/i.test(c.role),
           bubbleBg:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-100)':'var(--surface-50)',
           bubbleBorder:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-200)':'var(--line-200)',
-          files:(c.files||[]).map(f=>({name:f, open:()=>this.setState({ route:'files', flQuery:f })})), hasFiles:(c.files||[]).length>0 }));
+          files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 }));
         const cfl=(this.state.tkCommentFiles||[]).map((f,i)=>({ name:f, remove:()=>{ const a=(this.state.tkCommentFiles||[]).slice(); a.splice(i,1); this.setState({tkCommentFiles:a}); } }));
         return {
           tkComments:comments, tkHasComments:comments.length>0, tkCanComment:canComment,
@@ -5577,7 +5578,7 @@ class AppRoot extends React.Component {
       tkQcPanel:qcPanel,
       tkQcFbVal:(this.state.qcFb||{})[t.id]||'', tkQcOnFb:(e)=>this.setState({ qcFb:{...(this.state.qcFb||{}),[t.id]:e.target.value} }),
       tkQcUrl:ref.url||'', tkQcOnUrl:(e)=>setRef({url:e.target.value}),
-      tkQcFiles:(ref.files||[]).map((f,i2)=>({ name:f, open:()=>this.setState({ route:'files', flQuery:f }), remove:()=>{ const a=(ref.files||[]).slice(); a.splice(i2,1); setRef({files:a}); } })),
+      tkQcFiles:(ref.files||[]).map((f,i2)=>({ name:f, open:()=>this.openFilePreview(f), remove:()=>{ const a=(ref.files||[]).slice(); a.splice(i2,1); setRef({files:a}); } })),
       tkQcHasFiles:(ref.files||[]).length>0,
       tkQcAddFile:()=>this.openFilePicker('qcref:'+t.id,'Attach QC reference'),
       tkStages, tkHasChain:tkStages.length>1,
@@ -7307,6 +7308,9 @@ class AppRoot extends React.Component {
         this.applyPickedFiles(target, [name]); },
       // Opens the device's native file explorer (real <input type=file>); the
       // chosen file(s) are attached immediately using their real filenames.
+      // Content is also read into fileBlobs so this specific file can be
+      // genuinely previewed/downloaded later — the only files in this app
+      // that ever carry real bytes, since nothing else has a storage backend.
       fpFilesPicked:(e)=>{
         const files=Array.from(e.target.files||[]);
         e.target.value='';
@@ -7314,7 +7318,32 @@ class AppRoot extends React.Component {
         const names=files.map(f=>f.name);
         this.setState({ fpTarget:null, fpSel:[], fpName:'' });
         this.applyPickedFiles(target, names);
+        files.forEach(file=>{
+          const reader=new FileReader();
+          reader.onload=()=>{
+            this.setState({ fileBlobs:{...(this.state.fileBlobs||{}), [file.name]:{ dataUrl:reader.result, type:file.type, size:file.size } } });
+          };
+          reader.readAsDataURL(file);
+        });
       },
+    };
+  }
+  openFilePreview(name){ this.setState({ fpvFile:name }); }
+  filePreviewData(){
+    const name=this.state.fpvFile; if(!name) return { fpvOpen:false };
+    const blob=(this.state.fileBlobs||{})[name];
+    const k=this.fileKind(name);
+    return {
+      fpvOpen:true, fpvName:name, fpvKind:k.t, fpvIcon:k.icon, fpvIconBg:k.bg, fpvIconColor:k.color,
+      fpvHasContent:!!blob,
+      fpvIsImage:!!blob && k.t==='Image',
+      fpvIsPdf:!!blob && k.t==='PDF',
+      fpvIsOther:!!blob && k.t!=='Image' && k.t!=='PDF',
+      fpvDataUrl:blob?blob.dataUrl:'',
+      fpvSize:blob?(blob.size>1048576?(Math.round(blob.size/104857.6)/10+' MB'):(Math.round(blob.size/102.4)/10+' KB')):'',
+      fpvClose:()=>this.setState({ fpvFile:null }),
+      fpvStop:(e)=>e.stopPropagation(),
+      fpvGoRepo:()=>this.setState({ fpvFile:null, route:'files', flQuery:name }),
     };
   }
   REPO_REGISTRY(){

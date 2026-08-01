@@ -56,6 +56,7 @@ import TicketDetailDrawer from '../components/drawers/TicketDetailDrawer.jsx';
 import RaiseTicketModal from '../components/drawers/RaiseTicketModal.jsx';
 import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
 import FilePickerModal from '../components/drawers/FilePickerModal.jsx';
+import TaskFilePreviewModal from '../components/drawers/TaskFilePreviewModal.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -396,6 +397,7 @@ export default function AppShell({ vm }) {
 <RaiseTicketModal vm={vm} />
 <CreateRepositoryModal vm={vm} />
 <FilePickerModal vm={vm} />
+<TaskFilePreviewModal vm={vm} />
 <ContactFormModal vm={vm} />
 <ContactDetailDrawer vm={vm} />
 
