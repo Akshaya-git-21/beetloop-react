@@ -34,13 +34,15 @@ Reset to defaults
 )}
 </div>
 <div className="blscroll" style={{"overflowX":"auto"}}>
-<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"680px"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"860px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
 <th style={{"textAlign":"left","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Module</th>
 <th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>View</th>
 <th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Create</th>
 <th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Edit</th>
-<th style={{"textAlign":"center","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Delete</th>
+<th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Delete</th>
+<th style={{"textAlign":"center","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Approve</th>
+<th style={{"textAlign":"center","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Export</th>
 </tr></thead>
 <tbody>
 {(permRows || []).map((r, $index) => (
@@ -49,7 +51,9 @@ Reset to defaults
 <td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleView} disabled={!permCanManage} style={cssTextToObject(r.viewStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.view?1:0}} /></button></td>
 <td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleCreate} disabled={!permCanManage} style={cssTextToObject(r.createStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.create?1:0}} /></button></td>
 <td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleEdit} disabled={!permCanManage} style={cssTextToObject(r.editStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.edit?1:0}} /></button></td>
-<td style={{"padding":"11px 18px","textAlign":"center"}}><button onClick={r.toggleDelete} disabled={!permCanManage} style={cssTextToObject(r.deleteStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.delete?1:0}} /></button></td>
+<td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleDelete} disabled={!permCanManage} style={cssTextToObject(r.deleteStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.delete?1:0}} /></button></td>
+<td style={{"padding":"11px 14px","textAlign":"center"}}><button onClick={r.toggleApprove} disabled={!permCanManage} style={cssTextToObject(r.approveStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.approve?1:0}} /></button></td>
+<td style={{"padding":"11px 18px","textAlign":"center"}}><button onClick={r.toggleExport} disabled={!permCanManage} style={cssTextToObject(r.exportStyle)}><Icon name={"check"} style={{"width":"13px","height":"13px","opacity":r.export?1:0}} /></button></td>
 </tr>
 ))}
 </tbody>

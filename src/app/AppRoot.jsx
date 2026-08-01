@@ -131,11 +131,12 @@ class AppRoot extends React.Component {
   // Management — overrides persist in state.rolePerms.
   PERMISSION_MODULES(){ return Object.keys(this.ACCESS); }
   defaultPermsFromLevel(level){
-    if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false };
+    if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false, approve:false, export:false };
     const l=String(level).toLowerCase();
     const rw=/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
     const del=/full/.test(l);
-    return { view:true, create:rw, edit:rw, delete:del };
+    const approve=/full|review|qc|approv/.test(l);
+    return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del };
   }
   getPerm(moduleKey, roleKey){
     const stored=(this.state.rolePerms||{})[moduleKey]&&(this.state.rolePerms||{})[moduleKey][roleKey];
@@ -1103,8 +1104,10 @@ class AppRoot extends React.Component {
     const onLeadTab = route==='okr' && leadAccess && otab2!=='okrs';
     const showMyKpi = route==='okr' && !onLeadTab && ['team_lead','senior','junior'].includes(rk);
 
-    // nav
-    const buildNav = (mods) => mods.filter(m=>acc[m] && acc[m][rk]).map(m=>{
+    // nav — hidden entirely if Admin has revoked View for this role/module in
+    // the Permissions matrix; defaults to the existing ACCESS-derived
+    // visibility so nothing changes unless Admin actually overrides a cell.
+    const buildNav = (mods) => mods.filter(m=>acc[m] && acc[m][rk] && this.getPerm(m, rk).view).map(m=>{
       const active = route===m;
       const lvl = acc[m][rk];
       const canEdit = this.EDIT_LEVELS.includes(lvl);
@@ -7093,9 +7096,11 @@ class AppRoot extends React.Component {
         const p=this.getPerm(m,permRole);
         return { key:m, label:(this.MODMETA[m]&&this.MODMETA[m].label)||m,
           defaultLevel:this.ACCESS[m][permRole]||'No access',
-          view:p.view, create:p.create, edit:p.edit, delete:p.delete,
+          view:p.view, create:p.create, edit:p.edit, delete:p.delete, approve:p.approve, export:p.export,
           viewStyle:dotStyle(p.view), createStyle:dotStyle(p.create), editStyle:dotStyle(p.edit), deleteStyle:dotStyle(p.delete),
-          toggleView:toggle(m,'view'), toggleCreate:toggle(m,'create'), toggleEdit:toggle(m,'edit'), toggleDelete:toggle(m,'delete') };
+          approveStyle:dotStyle(p.approve), exportStyle:dotStyle(p.export),
+          toggleView:toggle(m,'view'), toggleCreate:toggle(m,'create'), toggleEdit:toggle(m,'edit'), toggleDelete:toggle(m,'delete'),
+          toggleApprove:toggle(m,'approve'), toggleExport:toggle(m,'export') };
       }),
       permReset:()=>{ if(!permCanManage) return;
         const cur={...(this.state.rolePerms||{})};
