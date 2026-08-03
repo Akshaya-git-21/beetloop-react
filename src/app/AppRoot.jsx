@@ -1324,7 +1324,9 @@ class AppRoot extends React.Component {
       okrParentVal:(this.state.okrForm||{}).parent||'None (top level)',
       roleOptions:['admin','ceo','coo'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
       onRoleChange:e=>{ const k=e.target.value; const allowed = this.ACCESS[route]&&this.ACCESS[route][k]; this.setState({ roleKey:k, route: allowed?route:'dashboard' }); },
-      notifications:this.state.notifications, unreadCount:(this.state.notifications||[]).filter(n=>!n.read).length,
+      notifications:(this.state.notifications||[]).map(n=>({ ...n,
+        go:n.nav?(()=>this.setState({ ...n.nav, showNotifications:false })):undefined })),
+      unreadCount:(this.state.notifications||[]).filter(n=>!n.read).length,
       showNotifications:this.state.showNotifications,
       toggleNotifications:()=>{
         const opening=!this.state.showNotifications;
@@ -8194,6 +8196,7 @@ class AppRoot extends React.Component {
       text:'You have a task assigned: '+(t.name||t.code),
       time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
       read:false,
+      nav:{ route:'tasks', tkTab:'list', tkOpen:t.code },
     }));
     this.setState(s=>({ notifications:[...entries, ...(s.notifications||[])].slice(0,30) }));
   }
@@ -8207,8 +8210,8 @@ class AppRoot extends React.Component {
   //   - everything else → silent for you, still refreshes the underlying data
   _subscribeRealtime(){
     if(this._realtimeChannel) return;
-    const push=(text)=>{
-      const entry={ id:Date.now()+Math.random(), text, time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), read:false };
+    const push=(text, nav)=>{
+      const entry={ id:Date.now()+Math.random(), text, time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), read:false, nav };
       this.setState(s=>({ notifications:[entry, ...(s.notifications||[])].slice(0,30) }));
     };
     const me=()=>this.currentPerson();
@@ -8225,74 +8228,78 @@ class AppRoot extends React.Component {
 
     this._realtimeChannel = supabase.channel('beetloop-changes')
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'tasks' }, (payload)=>{
-        const t=payload.new;
-        if(t.assignee_name===me()) push('You were assigned a new task: '+(t.name||t.code));
-        else if(canManageTasks()) push('New task created: '+(t.name||t.code)+' — assigned to '+(t.assignee_name||'Unassigned'));
+        const t=payload.new; const nav={ route:'tasks', tkTab:'list', tkOpen:t.code };
+        if(t.assignee_name===me()) push('You were assigned a new task: '+(t.name||t.code), nav);
+        else if(canManageTasks()) push('New task created: '+(t.name||t.code)+' — assigned to '+(t.assignee_name||'Unassigned'), nav);
         this._loadTasks();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tasks' }, (payload)=>{
-        const t=payload.new;
-        if(t.assignee_name===me()) push('Your task '+t.code+' was updated — status: '+t.status);
-        else if(t.reviewer_name===me()) push('Task '+t.code+' you\'re reviewing — status: '+t.status);
-        else if(canManageTasks()) push('Task '+t.code+' updated — status: '+t.status+' (assignee: '+(t.assignee_name||'Unassigned')+')');
+        const t=payload.new; const nav={ route:'tasks', tkTab:'list', tkOpen:t.code };
+        if(t.assignee_name===me()) push('Your task '+t.code+' was updated — status: '+t.status, nav);
+        else if(t.reviewer_name===me()) push('Task '+t.code+' you\'re reviewing — status: '+t.status, nav);
+        else if(canManageTasks()) push('Task '+t.code+' updated — status: '+t.status+' (assignee: '+(t.assignee_name||'Unassigned')+')', nav);
         this._loadTasks();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'okrs' }, (payload)=>{
         const o=payload.new; const owner=o.key_results&&o.key_results[0]&&o.key_results[0].who;
-        if(owner===me()) push('You were set as owner on a new OKR: '+o.title);
-        else if(canManageOkrs()) push('New OKR created: '+o.title);
+        const nav={ route:'okr', okrOpen:'okr-'+o.id };
+        if(owner===me()) push('You were set as owner on a new OKR: '+o.title, nav);
+        else if(canManageOkrs()) push('New OKR created: '+o.title, nav);
         this._loadOkrs();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'okrs' }, (payload)=>{
         const o=payload.new; const owner=o.key_results&&o.key_results[0]&&o.key_results[0].who;
-        if(owner===me()) push('Your OKR '+o.code+' was updated — status: '+o.status);
-        else if(canManageOkrs()) push('OKR '+o.code+' updated — status: '+o.status);
+        const nav={ route:'okr', okrOpen:'okr-'+o.id };
+        if(owner===me()) push('Your OKR '+o.code+' was updated — status: '+o.status, nav);
+        else if(canManageOkrs()) push('OKR '+o.code+' updated — status: '+o.status, nav);
         this._loadOkrs();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'profiles' }, (payload)=>{
-        if(canManageUsers()) push('New team member: '+(payload.new.full_name||payload.new.email));
+        if(canManageUsers()) push('New team member: '+(payload.new.full_name||payload.new.email), { route:'users', umOpen:payload.new.full_name });
         this._loadTeam();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles' }, (payload)=>{
         const roleLabel=(this.ROLES[payload.new.role_key]&&this.ROLES[payload.new.role_key].label)||payload.new.role_key;
-        if(payload.new.id===myId()) push('Your profile was updated — role: '+roleLabel+', status: '+payload.new.status);
-        else if(canManageUsers()) push((payload.new.full_name||payload.new.email)+' updated — role: '+roleLabel+', status: '+payload.new.status);
+        const nav={ route:'users', umOpen:payload.new.full_name };
+        if(payload.new.id===myId()) push('Your profile was updated — role: '+roleLabel+', status: '+payload.new.status, { route:'profile' });
+        else if(canManageUsers()) push((payload.new.full_name||payload.new.email)+' updated — role: '+roleLabel+', status: '+payload.new.status, nav);
         this._loadTeam();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'records' }, (payload)=>{
-        const r=payload.new;
-        if(r.owner===me()) push('You were set as owner on a new '+r.kind.slice(0,-1)+': '+r.name);
-        else if(canManageRecords()) push('New '+r.kind.slice(0,-1)+': '+r.name);
+        const r=payload.new; const nav={ route: r.kind==='campaigns'?'campaigns':'masters' };
+        if(r.owner===me()) push('You were set as owner on a new '+r.kind.slice(0,-1)+': '+r.name, nav);
+        else if(canManageRecords()) push('New '+r.kind.slice(0,-1)+': '+r.name, nav);
         this._loadRecords();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'records' }, (payload)=>{
         const r=payload.new; const label=r.kind==='campaigns'?'Campaign':'Project';
-        if(r.owner===me()) push('Your '+label.toLowerCase()+' '+r.name+' was updated — status: '+r.status);
-        else if(canManageRecords()) push(label+' updated: '+r.name+' — status: '+r.status);
+        const nav={ route: r.kind==='campaigns'?'campaigns':'masters' };
+        if(r.owner===me()) push('Your '+label.toLowerCase()+' '+r.name+' was updated — status: '+r.status, nav);
+        else if(canManageRecords()) push(label+' updated: '+r.name+' — status: '+r.status, nav);
         this._loadRecords();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'campaigns' }, (payload)=>{
-        const c=payload.new.payload||{};
-        if(c.owner===me()) push('You were set as owner on a new campaign: '+(c.name||payload.new.id));
-        else if(canManageCampaigns()) push('New campaign created: '+(c.name||payload.new.id));
+        const c=payload.new.payload||{}; const nav={ route:'campaigns', cmpOpen:payload.new.id };
+        if(c.owner===me()) push('You were set as owner on a new campaign: '+(c.name||payload.new.id), nav);
+        else if(canManageCampaigns()) push('New campaign created: '+(c.name||payload.new.id), nav);
         this._loadCampaigns();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'campaigns' }, (payload)=>{
-        const c=payload.new.payload||{};
-        if(c.owner===me()) push('Your campaign '+(c.name||payload.new.id)+' was updated — status: '+(c.status||'—'));
-        else if(canManageCampaigns()) push('Campaign updated: '+(c.name||payload.new.id)+' — status: '+(c.status||'—'));
+        const c=payload.new.payload||{}; const nav={ route:'campaigns', cmpOpen:payload.new.id };
+        if(c.owner===me()) push('Your campaign '+(c.name||payload.new.id)+' was updated — status: '+(c.status||'—'), nav);
+        else if(canManageCampaigns()) push('Campaign updated: '+(c.name||payload.new.id)+' — status: '+(c.status||'—'), nav);
         this._loadCampaigns();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'tickets' }, (payload)=>{
-        const t=payload.new.payload||{};
-        if(t.assignee===me()) push('You were assigned a new ticket: '+(t.subject||payload.new.id));
-        else if(canManageTickets()) push('New ticket raised: '+(t.subject||payload.new.id)+' by '+(t.by||'—'));
+        const t=payload.new.payload||{}; const nav={ route:'support', tktOpen:payload.new.id };
+        if(t.assignee===me()) push('You were assigned a new ticket: '+(t.subject||payload.new.id), nav);
+        else if(canManageTickets()) push('New ticket raised: '+(t.subject||payload.new.id)+' by '+(t.by||'—'), nav);
         this._loadTickets();
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tickets' }, (payload)=>{
-        const t=payload.new.payload||{};
-        if(t.assignee===me()) push('Your ticket '+(t.subject||payload.new.id)+' was updated — status: '+(t.status||'—'));
-        else if(canManageTickets()) push('Ticket updated: '+(t.subject||payload.new.id)+' — status: '+(t.status||'—'));
+        const t=payload.new.payload||{}; const nav={ route:'support', tktOpen:payload.new.id };
+        if(t.assignee===me()) push('Your ticket '+(t.subject||payload.new.id)+' was updated — status: '+(t.status||'—'), nav);
+        else if(canManageTickets()) push('Ticket updated: '+(t.subject||payload.new.id)+' — status: '+(t.status||'—'), nav);
         this._loadTickets();
       })
       .subscribe();

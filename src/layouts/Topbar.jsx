@@ -36,10 +36,17 @@ export default function Topbar({ vm }) {
 {(notifications||[]).length===0 ? (
 <div style={{"padding":"24px 16px","fontSize":"12.5px","color":"var(--ink-400)","textAlign":"center"}}>No activity yet.</div>
 ) : (notifications||[]).map(n=>(
+n.go ? (
+<button key={n.id} onClick={n.go} style={{"display":"block","width":"100%","textAlign":"left","padding":"11px 16px","borderBottom":"1px solid var(--line-100)","fontSize":"12.5px","color":"var(--ink-700)","background":n.read?"none":"var(--orchid-50, #FBF3F8)","border":"none","borderBottomWidth":"1px","borderBottomStyle":"solid","borderBottomColor":"var(--line-100)","cursor":"pointer"}}>
+<div>{n.text}</div>
+<div style={{"fontSize":"11px","color":"var(--ink-400)","marginTop":"2px"}}>{n.time}</div>
+</button>
+) : (
 <div key={n.id} style={{"padding":"11px 16px","borderBottom":"1px solid var(--line-100)","fontSize":"12.5px","color":"var(--ink-700)"}}>
 <div>{n.text}</div>
 <div style={{"fontSize":"11px","color":"var(--ink-400)","marginTop":"2px"}}>{n.time}</div>
 </div>
+)
 ))}
 </div>
 )}
