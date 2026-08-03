@@ -77,13 +77,14 @@ Reset to defaults
 
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div className="blscroll" style={{"overflowX":"auto"}}>
-<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1240px"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1340px"}}>
 <thead>
 <tr style={{"background":"var(--surface-50)"}}>
 <th style={{"textAlign":"left","padding":"11px 18px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Emp ID</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Name</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Dept</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Role</th>
+<th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Brands</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Shift</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Capacity</th>
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Workload</th>
@@ -106,6 +107,7 @@ Reset to defaults
 </td>
 <td style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{u.dept}</td>
 <td style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{u.role}</td>
+<td style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":u.hasBrands?"var(--ink-700)":"var(--ink-400)"}}>{u.brandsLabel}</td>
 <td style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)"}}>
 <div style={{"fontFamily":"'Space Mono'","fontSize":"11.5px","fontWeight":"700","color":"var(--ink-900)"}}>{u.shift}</div>
 <div style={{"fontSize":"10px","color":"var(--ink-400)"}}>{u.shiftSub}</div>

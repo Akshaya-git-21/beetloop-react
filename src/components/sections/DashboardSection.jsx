@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function DashboardSection({ vm }) {
-  const { accessSummary, dashExtras, dashExtrasLabel, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash,
+  const { accessSummary, dashExtras, dashExtrasLabel, dashAccessLine, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash,
     dashHasLeads, dashLeadOpen, dashLeadStages, dashLeadToday, dashLeadW, dashLeadBar, dashLeadTargetNote,
     dashLeadOpenDaily, dashLeadTopSvc } = vm;
   return (
@@ -53,9 +53,12 @@ export default function DashboardSection({ vm }) {
 </div>
 
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"14px 18px","marginBottom":"20px"}}>
-<div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"11px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"11px","flexWrap":"wrap"}}>
 <Icon name="bell-ring" style={{"width":"13px","height":"13px","color":"var(--orchid-600)"}} />
-<span style={{"fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>{dashExtrasLabel}</span>
+<span style={{"fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","flex":"1"}}>{dashExtrasLabel}</span>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"5px","fontSize":"10px","fontWeight":"700","padding":"2px 9px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-500)"}}>
+<Icon name="shield" style={{"width":"10px","height":"10px"}} />{dashAccessLine}
+</span>
 </div>
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(128px,1fr))","gap":"14px"}}>
 {(dashExtras || []).map((x, $index) => (

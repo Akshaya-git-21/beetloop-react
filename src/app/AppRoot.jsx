@@ -51,7 +51,7 @@ class AppRoot extends React.Component {
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [], cUpd: {}, npEditId: null,
     umTab: 'list', rolePerms: {}, permRole: 'manager',
-    uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' },
+    uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] },
     users: [
       { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
       { name:'Rahul Menon', sub:'COO · Operations', role:'COO', dept:'Operations', status:'Active', statusTone:'ok' },
@@ -1354,6 +1354,11 @@ class AppRoot extends React.Component {
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
+      ufIsSalesRole:(this.state.uf||{}).role==='Sales Executive',
+      ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
+        return { label:b, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const f=this.state.uf||{}; const c=f.brands||[]; this.setState({ uf:{...f, brands: on?c.filter(x=>x!==b):[...c,b]} }); } }; }),
       ufCapNote:(()=>{ const f=this.state.uf||{}; const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
         const gross=hm(f.shiftEnd||'18:00')-hm(f.shiftStart||'09:00');
         const daily=Math.max(0,Math.round((gross-((parseInt(f.breakMin,10)||60)/60))*100)/100);
@@ -1625,10 +1630,14 @@ class AppRoot extends React.Component {
         X('SOPs to acknowledge',String(sopUnack),'read and sign off',sopUnack?'var(--warn-600)':'var(--verify-600)')],
     };
 
-    // Lead pipeline snapshot on the dashboard, computed from real lead/contact records
+    // Lead pipeline snapshot on the dashboard, computed from real lead/contact records.
+    // Widgets resolve against the same ACCESS map the modules use, so no panel
+    // renders beyond the role's granted level — no new configuration screen.
+    const lvlOf=(mod)=>((this.ACCESS[mod]||{})[rk])||'No access';
+    const granted=(mod)=>String(lvlOf(mod)).toLowerCase()!=='no access';
     const leadRoles=['admin','manager','ceo','coo','team_lead','senior','junior','dm','sales'];
     let leadPanel={ dashHasLeads:false };
-    if(leadRoles.includes(rk)){
+    if(leadRoles.includes(rk) && granted('okr')){
       const contacts=this.allContacts();
       const leads=this.allLeads();
       const today=this.todayStr();
@@ -1671,6 +1680,8 @@ class AppRoot extends React.Component {
       };
     }
     return { kpis:KPI[b]||KPI.manager, dashExtras:EXTRA[b]||EXTRA.manager,
+      dashCanAnalytics:granted('analytics'), dashCanOkr:granted('okr'),
+      dashAccessLine:scopeBox.eyebrow+' · Dashboard '+lvlOf('dashboard')+' · Analytics '+lvlOf('analytics')+' · Tasks '+lvlOf('tasks'),
       dashExtrasLabel:'Needs attention · '+role.label+' scope',
       dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary, ...leadPanel };
   }
@@ -2554,7 +2565,9 @@ class AppRoot extends React.Component {
       return { ...f, type:ft.t, ftIcon:ft.icon, ftColor:ft.color, ftBg:ft.bg,
         taskId:f.task.id, taskName:f.task.name, status:f.task.status, statusBg:tn.bg, statusColor:tn.c,
         dates:f.task.start+' → '+f.task.end, dueLabel:due&&due.label?due.label:'', dueColor:due&&due.color?due.color:'var(--ink-400)',
-        open:()=>{ if(f.source==='Message attachment') this.setState({ route:'messages' });
+        preview:()=>this.openFilePreview(f.name),
+        download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(f.name); },
+        open:(e)=>{ if(e)e.stopPropagation(); if(f.source==='Message attachment') this.setState({ route:'messages' });
           else this.setState({ route:'tasks', tkOpen:f.task.id, tkFilter:'All' }); } }; });
     const filtered=enriched.filter(f=> (F.type==='All'||f.type===F.type) && (F.status==='All'||f.status===F.status) && (F.source==='All'||f.source===F.source) && (!q || (f.name+' '+f.taskName+' '+f.by).toLowerCase().includes(q)) );
     const pg=this.pgData('fl',filtered,10);
@@ -2759,6 +2772,7 @@ class AppRoot extends React.Component {
     const who=this.currentPerson();
     const division=this.state.epDivision||'SEO';
     const added=[...(this.state.tkAdded||[])];
+    const baseLen=added.length;
     const startFmt=this.fmtDate(f.start)||'Jul 1, 2026';
     const monthWord=startFmt.split(' ')[0];
     const year=startFmt.split(', ')[1]||'2026';
@@ -2807,6 +2821,7 @@ class AppRoot extends React.Component {
     });
     this.setState({ tkAdded:added, epGenerated:true, route:'tasks', tkFilter:f.name });
     this.flash(n+' task'+(n===1?'':'s')+' generated from '+rows.filter(r=>r.monthly).length+' effort line'+(rows.filter(r=>r.monthly).length===1?'':'s')+' · mode “'+mode+'” · assigned to '+f.owner+'.');
+    added.slice(baseLen).forEach(t=>this._persistNewTask(t, f.start||null, null));
   }
 
   IDEAS(){ return [
@@ -2897,6 +2912,7 @@ class AppRoot extends React.Component {
           tkFilter:'All', tkFilters:{status:'All',priority:'All',assignee:'All'} });
         this.ideaPatch(i.id,{ taskId:added[0].id, taskIds:added.map(t=>t.id), effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName });
         this.flash(n+' task'+(n===1?'':'s')+' generated from '+i.id+' — linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".');
+        added.forEach(t=>this._persistNewTask(t, f.start||null, f.end||null));
       },
     };
   }
@@ -3785,16 +3801,26 @@ class AppRoot extends React.Component {
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.brands||[]; this.setState({ umDraft:{...d, brands: on?cur.filter(x=>x!==b):[...cur,b]} }); } }; }),
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
-      umSave:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,
+      umSave:()=>{
+        const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
+        const newBrands=newRole==='Sales Executive'?(d.brands||u.brands||[]):(u.brands||[]);
+        const users=(this.state.users||[]).map(x=>x.name===name?{...x,
           shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
           breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
-          role:d.role||x.role, dept:d.dept||x.dept, status:d.status||x.status,
-          brands:(d.role||x.role)==='Sales Executive'?(d.brands||x.brands||[]):x.brands,
-          statusTone:(d.status||x.status)==='Active'?'ok':'warn' }:x);
+          role:newRole, dept:newDept, status:newStatus, brands:newBrands,
+          statusTone:newStatus==='Active'?'ok':'warn' }:x);
         this.setState({ users, umEdit:false, umDraft:{} });
         const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
         const newCap=Math.round((hm(d.shiftEnd||u.shiftEnd||'18:00')-hm(d.shiftStart||u.shiftStart||'09:00')-((parseInt(d.breakMin,10)||u.breakMin||60)/60))*(parseFloat(d.days)||u.days||5)*10)/10;
-        this.flash(name+' updated — capacity now '+newCap+' h/week.'); },
+        this.flash(name+' updated — capacity now '+newCap+' h/week.');
+        if(u.id){
+          const roleEntry=Object.entries(this.ROLES).find(([,r])=>r.label===newRole);
+          supabase.from('profiles').update({
+            role_key: roleEntry?roleEntry[0]:u.roleKey, department:newDept, status:newStatus, brands:newBrands,
+          }).eq('id', u.id).then(({error})=>{
+            if(error) console.warn('[supabase] profile update failed:', error.message);
+          });
+        } },
       umSuspend:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,status:x.status==='Suspended'?'Active':'Suspended',statusTone:x.status==='Suspended'?'ok':'warn'}:x);
         this.setState({ users }); this.flash(name+(u.status==='Suspended'?' reactivated.':' suspended — login blocked, records retained.')); },
       umSuspendLabel:u.status==='Suspended'?'Reactivate account':'Suspend account',
@@ -3979,9 +4005,9 @@ class AppRoot extends React.Component {
               this.flash(t.id+' marked complete and sent to '+(t.reviewer||'the QC team')+' for review.');
             } else { this.tkPatch(t.id,{ status:v },'Status → '+v); this.flash(t.id+' → '+v+'.'); } } }; })(),
       ...(()=>{ const rc=this.reworkCycles(t);
-        return { hasRework:rc>0, reworkCount:rc, reworkLabel:rc===1?'1 QC rework':(rc+' QC reworks'),
-          reworkBg:rc>=3?'var(--danger-100)':rc===2?'var(--warn-100)':'var(--surface-50)',
-          reworkColor:rc>=3?'var(--danger-600)':rc===2?'var(--warn-600)':'var(--ink-500)' }; })(),
+        return { hasRework:rc>0, reworkCount:String(rc), reworkLabel:rc===1?'1 QC rework':(rc+' QC reworks'),
+          reworkBg:rc>=3?'var(--danger-100)':rc===2?'var(--warn-100)':rc===1?'var(--info-100)':'var(--surface-50)',
+          reworkColor:rc>=3?'var(--danger-600)':rc===2?'var(--warn-600)':rc===1?'var(--info-600)':'var(--ink-400)' }; })(),
       open:()=>this.setState({ tkOpen:t.id }),
       ...(()=>{
         const mine=t.assignee===person, isQC=rk==='qc', isLead=['manager','team_lead','admin'].includes(rk);
@@ -5109,9 +5135,22 @@ class AppRoot extends React.Component {
   allSops(){ const upd=this.state.sopUpd||{};
     const added=this.state.sopAdded||[];
     const addedIds=new Set(added.map(s=>s.id));
-    return added.concat(this.SOP_SEED().filter(s=>!addedIds.has(s.id))).map(s=>upd[s.id]?{...s,...upd[s.id]}:s); }
+    return added.concat(this.SOP_SEED().filter(s=>!addedIds.has(s.id))).map(s=>upd[s.id]?{...s,...upd[s.id]}:s).filter(s=>!s.deleted); }
   sopTone(s){ return { Published:{bg:'var(--verify-100)',c:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},
     'In review':{bg:'var(--warn-100)',c:'var(--warn-600)'}, Retired:{bg:'#EAE4E8',c:'var(--beet-700)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  // SOP permissions resolved from the existing role model — no separate permission module
+  sopPerms(rk, s){
+    const P=(v,d,e,u,del,m)=>({ view:v, download:d, edit:e, update:u, del:del, manage:m });
+    const map={ admin:P(1,1,1,1,1,1), manager:P(1,1,1,1,0,1), team_lead:P(1,1,1,1,0,0),
+      ceo:P(1,1,0,0,0,0), coo:P(1,1,0,0,0,0), senior:P(1,1,0,0,0,0), junior:P(1,1,0,0,0,0), qc:P(1,1,0,0,0,0) };
+    const p={...(map[rk]||map.junior)};
+    if(s && s.owner===this.currentPerson() && ['manager','team_lead','admin'].includes(rk)){ p.edit=1; p.update=1; }
+    return p;
+  }
+  sopPermLabel(rk){
+    const p=this.sopPerms(rk);
+    return ['View','Download','Edit','Update','Delete','Manage'].filter((_,i)=>[p.view,p.download,p.edit,p.update,p.del,p.manage][i]).join(' · ');
+  }
   sopReviewState(s){
     const iso=this.isoDate(s.review); if(!iso) return { label:'no review set', color:'var(--ink-400)', overdue:false, soon:false };
     const days=Math.round((new Date(iso+'T00:00:00')-Date.now())/86400000);
@@ -5308,6 +5347,8 @@ class AppRoot extends React.Component {
         K('Categories',String([...new Set(all.map(s=>s.category))].length),'covered','var(--beet-700)')],
       sopRows:pg.rows, sopPg:pg, sopEmpty:list.length===0,
       sopCanAuthor:canAuthor,
+      sopPermSet:this.sopPermLabel(rk),
+      sopPermNote:'Your SOP permissions — assigned by role in Administration › User Management.',
       sopQuery:this.state.sopQuery||'', sopSetQuery:(e)=>this.setState({ sopQuery:e.target.value }),
       sopSearchHint:'Searches ID, title, tags, purpose, category, linked KPIs, linked SOPs and resources',
       sopFilters:[
@@ -5475,6 +5516,15 @@ class AppRoot extends React.Component {
           steps:(s.steps||[]).map(st=>({ t:st.t, d:st.d, outcome:st.outcome, dur:st.dur, ev:(st.ev||[]).slice(), subs:(st.subs||[]).slice(), notes:st.notes })) } });
         this.flash('Duplicated '+s.id+' — saved as a new draft when you submit.'); },
       sopSaveAsTemplate:()=>this.flash('“'+s.title+'” saved as a reusable SOP template — available in the New SOP duplicate list.'),
+      ...(()=>{ const p=this.sopPerms(rk,s);
+        return { sopCanDownload:!!p.download, sopCanEditD:!!p.edit, sopCanUpdateD:!!p.update,
+          sopCanDeleteD:!!p.del, sopCanManageD:!!p.manage,
+          sopPermLine:'Your permissions on this SOP — '+['View','Download','Edit','Update','Delete','Manage']
+            .filter((_,i)=>[p.view,p.download,p.edit,p.update,p.del,p.manage][i]).join(' · '),
+          sopDownload:()=>this.flash('Downloading '+s.id+' '+s.version+' — '+s.title+'.pdf'),
+          sopDelete:()=>{ if(!p.del){ this.flash('Delete is restricted to Admin.'); return; }
+            patch({ deleted:true }, s.id+' deleted — retained in the audit log for compliance.', ['Deleted',me,this.todayStr()]);
+            this.setState({ sopOpen:null }); } }; })(),
     };
   }
 
@@ -5723,7 +5773,9 @@ class AppRoot extends React.Component {
     const checklist=(t.checklist||[]).map((c,i)=>({ t:c.t, done:c.done,
       boxBg:c.done?'var(--verify-500)':'#fff', boxBorder:c.done?'var(--verify-500)':'var(--line-300)', op:c.done?'1':'0',
       toggle:()=>{ if(!isAssignee){ this.flash('Only the assignee updates the checklist.'); return; } const arr=(t.checklist||[]).map((x,j)=>j===i?{...x,done:!x.done}:x); this.tkPatch(t.id,{checklist:arr},(c.done?'Unchecked':'Completed')+' checklist item — '+c.t); } }));
-    const evidence=(t.evidence||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)}));
+    const evidence=(t.evidence||[]).map(f=>{ const k=this.fileKind(f);
+      return { name:f, icon:k.icon, open:()=>this.openFilePreview(f),
+        download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(f); } }; });
     const actions=[];
     const btn=(label,icon,bg,fg,go,border)=>actions.push({label,icon,go,style:'display:flex;align-items:center;gap:7px;border-radius:11px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;background:'+bg+';color:'+fg+';border:'+(border||'none')});
     if(isAssignee){
@@ -5935,11 +5987,22 @@ class AppRoot extends React.Component {
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
     this.flash('Task '+id+' created and assigned to '+task.assignee+(fromMsg?' — linked back to the message.':'.'));
+    this._persistNewTask(task, f.start||null, f.end||null);
+  }
+  // Shared by every task-creation path (single-task form, Convert Idea to
+  // Tasks, Generate from Effort Plan) so a task only has to be built once
+  // and persisted the same way everywhere. rawStart/rawEnd are the raw
+  // date-input values where available (ISO); the bulk generators don't
+  // always have one, so those pass null rather than the pre-formatted
+  // display string — Postgres's date column would reject or misparse
+  // "Jul 1, 2026", so null (shown as "today" on next load) is safer than
+  // a value that looks right but silently corrupts.
+  _persistNewTask(task, rawStart, rawEnd){
     supabase.from('tasks').insert({
-      code:id, name:task.name, description:task.desc, priority:task.priority, status:task.status,
+      code:task.id, name:task.name, description:task.desc, priority:task.priority, status:task.status,
       division:task.division, project:task.project, campaign:task.campaign,
       assignee_name:task.assignee, reviewer_name:task.reviewer,
-      start_date:f.start||null, end_date:f.end||null,
+      start_date:rawStart||null, end_date:rawEnd||null,
       effort_estimate:task.estH, effort_actual:task.actH, recurrence:task.recurrence, checklist:task.checklist,
       linked_kpi:task.kpi, kpi_id:task.kpiId, units:task.units, unit:task.unit,
       dependency:task.dep, effort_plan:task.effortPlan, effort_row:task.effortType, dep_mode:task.depMode,
@@ -6071,6 +6134,7 @@ class AppRoot extends React.Component {
       status:p.status||'Active', statusTone: (p.status||'Active')==='Active'?'ok':'warn',
       mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
+      brands:p.brands||[],
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -6852,7 +6916,6 @@ class AppRoot extends React.Component {
     const pg=this.pgData('pipe',list.map(c=>{ const t=this.stageTone(c.stage);
       return { ...c, stageBg:t.bg, stageColor:t.c,
         canWrite:!!canWrite,
-        phoneShown:canWrite?c.phone:'•••• ••••', emailShown:canWrite?c.email:'restricted',
         setStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin, Manager and Sales.'); return; }
           const v=e.target.value; const u={...(this.state.contactUpd||{})};
           const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
@@ -6896,7 +6959,7 @@ class AppRoot extends React.Component {
       cnFromDailyNote:f.leadId?('Linked to daily lead entry '+f.leadId+' — '+(f.service||'')+' · '+(f.source||'')):'',
       cnClose:()=>this.setState({ cnNew:false, cnForm:{} }),
       cnStop:(e)=>e.stopPropagation(),
-      cnSetName:set('name'), cnSetPhone:set('phone'), cnSetEmail:set('email'), cnSetCountry:set('country'),
+      cnSetName:set('name'), cnSetCountry:set('country'),
       cnSetCompany:set('company'), cnSetService:set('service'), cnSetSource:set('source'), cnSetStage:set('stage'),
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
@@ -6907,10 +6970,9 @@ class AppRoot extends React.Component {
       cnBrandNote: this.state.roleKey==='sales' ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
       cnSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
-        if(!(f.email&&f.email.trim())&&!(f.phone&&f.phone.trim())){ this.flash('Enter a phone number or email.'); return; }
         const me=this.currentPerson();
         const id='CN-'+String(this.allContacts().length+1).padStart(3,'0');
-        const rec={ id, leadId:f.leadId||'', name:f.name.trim(), phone:f.phone||'—', email:f.email||'—', country:f.country||'India',
+        const rec={ id, leadId:f.leadId||'', name:f.name.trim(), country:f.country||'India',
           company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
           stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
           brand: this.state.roleKey==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||''),
@@ -6928,12 +6990,11 @@ class AppRoot extends React.Component {
     const t=this.stageTone(c.stage); const me=this.currentPerson();
     const rk=this.state.roleKey;
     const canWrite=['admin','manager','sales'].includes(rk);
-    const phone=canWrite?c.phone:'•••• ••••', email=canWrite?c.email:'restricted';
     return { cnDrawerOpen:true,
-      cnD:{ ...c, phone, email, stageBg:t.bg, stageColor:t.c },
+      cnD:{ ...c, stageBg:t.bg, stageColor:t.c },
       cnDClose:()=>this.setState({ cnOpen:null }),
       cnDStop:(e)=>e.stopPropagation(),
-      cnMeta:[['Lead ID',c.id],['Company',c.company],['Phone',phone],['Email',email],['Country',c.country],
+      cnMeta:[['Lead ID',c.id],['Company',c.company],['Country',c.country],
         ['Service requested',c.service],['Source',c.source],['Campaign',c.campaign],['Est. value',c.value],['Captured',c.date],['Owner',c.owner]].map(x=>({k:x[0],v:x[1]||'—'})),
       cnLog:(c.log||[]).slice().reverse().map(l=>({ what:l[0], who:l[1], when:l[2] })),
       cnStageOptions2:this.LEAD_STAGES(),
@@ -7594,6 +7655,7 @@ class AppRoot extends React.Component {
           const free=Math.round((wk-assigned)*10)/10;
           return {
             emp:empOf(u.name), name:u.name, sub:u.sub, dept:u.dept, role:u.role,
+            hasBrands:u.role==='Sales Executive', brandsLabel:u.role==='Sales Executive'?((u.brands||[]).join(', ')||'None'):'—',
             initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
             shift:(u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00'),
             shiftSub:(u.breakMin||60)+'m break · '+(u.days||5)+' days',
@@ -7788,6 +7850,16 @@ class AppRoot extends React.Component {
     };
   }
   openFilePreview(name){ this.setState({ fpvFile:name }); }
+  // Quick-download from a chip/row without opening the modal first — falls
+  // back to the preview modal's "no content stored" explainer for
+  // legacy name-only attachments that never had a real device file picked.
+  downloadFile(name){
+    const blob=(this.state.fileBlobs||{})[name];
+    if(!blob){ this.openFilePreview(name); return; }
+    const a=document.createElement('a');
+    a.href=blob.dataUrl; a.download=name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
   filePreviewData(){
     const name=this.state.fpvFile; if(!name) return { fpvOpen:false };
     const blob=(this.state.fileBlobs||{})[name];
@@ -7881,12 +7953,14 @@ class AppRoot extends React.Component {
     const f=this.state.uf;
     const name=(f.first+' '+f.last).trim();
     const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn',
-      shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5 };
-    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5' } });
+      shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5,
+      brands:f.role==='Sales Executive'?(f.brands||[]):[] };
+    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
     try{
       const resp=await fetch('/api/invite-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation }),
+        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation,
+          brands:roleKey==='sales'?(f.brands||[]):[] }),
       });
       const body=await resp.json();
       if(!resp.ok) throw new Error(body.error||'Invite failed');

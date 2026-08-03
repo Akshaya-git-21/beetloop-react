@@ -6,7 +6,7 @@ export default function SopSection({ vm }) {
   const {
     showSop, sopGoPb, sopSegPb, sopGoSop, sopSegSop,
     sopIsList, sopStats, sopQuery, sopSetQuery, sopReset, sopCanAuthor, sopNewBtn,
-    sopSearchHint, sopFilters, sopRows, sopEmpty, sopPg,
+    sopSearchHint, sopPermSet, sopFilters, sopRows, sopEmpty, sopPg,
   } = vm;
   return (
     <React.Fragment>
@@ -43,7 +43,12 @@ export default function SopSection({ vm }) {
                 </button>
               )}
             </div>
-            <div style={{ fontSize: 10.5, color: 'var(--ink-400)', marginTop: 5 }}>{sopSearchHint}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{sopSearchHint}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 800, padding: '2px 9px', borderRadius: 999, background: 'var(--surface-50)', border: '1px solid var(--line-300)', color: 'var(--ink-500)' }}>
+                <Icon name="shield" style={{ width: 10, height: 10 }} />{sopPermSet}
+              </span>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 11, paddingTop: 11, borderTop: '1px solid var(--line-200)' }}>
               {(sopFilters || []).map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface-50)', border: '1px solid var(--line-300)', borderRadius: 10, padding: '5px 9px' }}>

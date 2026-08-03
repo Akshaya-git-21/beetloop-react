@@ -1,9 +1,10 @@
 import React from 'react';
 import Icon from '../../components/Icon.jsx';
+import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
   const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
-    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote } = vm;
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufIsSalesRole, ufBrandRows } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -263,10 +264,29 @@ Active
 </select>
 </div>
 
-        
+
 </div>
 
-        
+
+{Boolean(ufIsSalesRole) && (
+<div style={{"marginBottom":"8px"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Assigned brand(s)
+</label>
+<div style={{"display":"flex","flexWrap":"wrap","gap":"7px"}}>
+{(ufBrandRows || []).map((b, $i) => (
+<button key={$i} onClick={b.toggle} style={cssTextToObject(b.style)}>
+{b.label}
+</button>
+))}
+</div>
+<div style={{"fontSize":"10.5px","color":"var(--ink-500)","marginTop":"6px"}}>
+Restricts this user's leads, pipeline and reports to the selected brand(s) only.
+</div>
+</div>
+)}
+
+
 <div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"11px 14px","marginTop":"14px"}}>
 <Icon name={"mail-check"} style={{"width":"16px","height":"16px","color":"var(--verify-500)"}} />
 <span style={{"fontSize":"12.5px","color":"var(--ink-700)"}}>

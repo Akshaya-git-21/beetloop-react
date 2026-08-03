@@ -298,10 +298,10 @@ Dates
 Status
 </span>
 <span>
-QC feedback
+QC rework
 </span>
 <span>
-QC Rework
+QC feedback
 </span>
 <span>
 Action
@@ -424,11 +424,6 @@ LOCKED
 )}
 
 
-<span style={{"minWidth":"0","fontSize":"11.5px","fontWeight":"600","color":"var(--ink-600)","display":"-webkit-box","WebkitLineClamp":"2","WebkitBoxOrient":"vertical","overflow":"hidden"}}>
-{t.qcFb}
-</span>
-
-
 <span style={{"minWidth":"0"}}>
 {Boolean(t.hasRework) ? (
 <span style={cssTextToObject(`display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:${t.reworkBg};color:${t.reworkColor}`)}>
@@ -439,6 +434,11 @@ LOCKED
 <span style={{"fontSize":"11px","color":"var(--ink-400)"}}>—</span>
 )}
 </span>
+
+<span style={{"minWidth":"0","fontSize":"11.5px","fontWeight":"600","color":"var(--ink-600)","display":"-webkit-box","WebkitLineClamp":"2","WebkitBoxOrient":"vertical","overflow":"hidden"}}>
+{t.qcFb}
+</span>
+
 
 <span style={{"minWidth":"0"}}>
 <button onClick={t.naGo} style={cssTextToObject(t.naStyle)}>

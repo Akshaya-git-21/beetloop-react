@@ -102,7 +102,7 @@ Reset
 
             
 <div style={{"overflowX":"auto"}}>
-<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1080px"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1240px"}}>
 
               
 <thead>
@@ -143,7 +143,12 @@ Task / QC status
 Deadline
 </th>
 
-              
+
+<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>
+Actions
+</th>
+
+
 </tr>
 </thead>
 
@@ -155,7 +160,7 @@ Deadline
 <React.Fragment key={$index}>
 
                   
-<tr onClick={f.open} style={{"cursor":"pointer"}} style-hover="background:var(--surface-50)">
+<tr style-hover="background:var(--surface-50)">
 
                     
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
@@ -219,7 +224,23 @@ Deadline
 </div>
 </td>
 
-                  
+
+<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
+<div style={{"display":"flex","gap":"6px"}}>
+<button onClick={f.preview} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"eye"} style={{"width":"12px","height":"12px"}} />
+Preview
+</button>
+<button onClick={f.download} title="Download" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<Icon name={"download"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
+</button>
+<button onClick={f.open} title="Open task" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<Icon name={"external-link"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
+</button>
+</div>
+</td>
+
+
 </tr>
 
                 
@@ -279,7 +300,7 @@ Next
 <div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"11px 14px","fontSize":"12.5px","color":"var(--ink-500)","marginTop":"14px"}}>
 <Icon name={"info"} style={{"width":"15px","height":"15px","flexShrink":"0","color":"var(--orchid-600)"}} />
 <span>
-Auto-collected from task evidence, QC references and comment attachments — no separate upload needed. Click a row to open the linked task.
+Auto-collected from task evidence, QC references and comment attachments — no separate upload needed. Use Preview, Download or Open task on a row.
 </span>
 </div>
 

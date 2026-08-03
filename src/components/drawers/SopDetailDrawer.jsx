@@ -16,6 +16,7 @@ export default function SopDetailDrawer({ vm }) {
     sopHist, sopAudit,
     sopHasComments, sopComments, sopCmt, sopSetCmt, sopCmtStep, sopSetCmtStep, sopStepOptions, sopAddComment,
     sopNeedsAck, sopAck, sopAckList,
+    sopPermLine, sopCanDownload, sopDownload, sopCanDeleteD, sopDelete,
     sopCanAuthorD, sopPublish, sopPublishLabel, sopBump, sopMarkReviewed, sopDuplicate, sopSaveAsTemplate, sopRetire, sopRetireLabel,
   } = vm;
   if (!sopD) return null;
@@ -396,8 +397,17 @@ export default function SopDetailDrawer({ vm }) {
                 </div>
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', borderTop: '1px solid var(--line-200)', paddingTop: 14 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ink-400)', flex: 1, minWidth: 160 }}>{sopPermLine}</span>
+                {Boolean(sopCanDownload) && (
+                  <button onClick={sopDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <Icon name="download" style={{ width: 13, height: 13 }} />Download
+                  </button>
+                )}
+              </div>
+
               {Boolean(sopCanAuthorD) && (
-                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap', borderTop: '1px solid var(--line-200)', paddingTop: 14 }}>
+                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
                   <button onClick={sopPublish} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="upload-cloud" style={{ width: 13, height: 13 }} />{sopPublishLabel}
                   </button>
@@ -416,6 +426,11 @@ export default function SopDetailDrawer({ vm }) {
                   <button onClick={sopRetire} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="archive" style={{ width: 13, height: 13 }} />{sopRetireLabel}
                   </button>
+                  {Boolean(sopCanDeleteD) && (
+                    <button onClick={sopDelete} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid #F1C9CF', background: '#fff', color: 'var(--danger-600)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <Icon name="trash-2" style={{ width: 13, height: 13 }} />Delete
+                    </button>
+                  )}
                 </div>
               )}
             </div>

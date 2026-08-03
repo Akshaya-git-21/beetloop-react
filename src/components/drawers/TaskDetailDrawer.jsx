@@ -698,10 +698,15 @@ Attach
               
 {(tkEvidence || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<button onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"12px","fontWeight":"600","padding":"6px 11px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
-<Icon name={"file"} style={{"width":"12px","height":"12px"}} />
+<span style={{"display":"inline-flex","alignItems":"center","gap":"7px","padding":"5px 6px 5px 11px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)"}}>
+<Icon name={f.icon || "file"} style={{"width":"12px","height":"12px","color":"var(--orchid-600)"}} />
+<button onClick={f.open} title="Preview" style={{"border":"none","background":"none","padding":"0","fontFamily":"'Manrope'","fontSize":"12px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
 {f.name}
 </button>
+<button onClick={f.download} title="Download" style={{"width":"22px","height":"22px","borderRadius":"999px","border":"none","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<Icon name={"download"} style={{"width":"11px","height":"11px","color":"var(--ink-500)"}} />
+</button>
+</span>
 </React.Fragment>
 ))}
 

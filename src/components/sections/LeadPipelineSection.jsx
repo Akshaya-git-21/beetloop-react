@@ -85,10 +85,9 @@ Add lead
 </div>
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div style={{"overflowX":"auto"}}>
-<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1060px"}}>
+<table style={{"width":"100%","borderCollapse":"collapse","minWidth":"940px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
 <th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Lead</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Contact</th>
 <th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Country</th>
 <th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Service requested</th>
 <th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Value</th>
@@ -101,10 +100,6 @@ Add lead
 <td onClick={c.open} style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)","cursor":"pointer"}}>
 <div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-900)"}}>{c.name}</div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"1px"}}>{c.company} · {c.id}</div>
-</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
-<div style={{"fontSize":"11.5px","color":"var(--ink-700)"}}>{c.phoneShown}</div>
-<div style={{"fontSize":"11px","color":"var(--ink-500)"}}>{c.emailShown}</div>
 </td>
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.country}</td>
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.service}</td>
