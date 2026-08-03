@@ -14,7 +14,11 @@ export default function UserDetailDrawer({ vm }) {
 <div onClick={umClose} style={{"position":"fixed","inset":"0","zIndex":"160","background":"rgba(31,8,20,.5)","display":"flex","justifyContent":"flex-end"}}>
 <div onClick={umStop} className="blscroll" style={{"width":"100%","maxWidth":"620px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 <div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3","display":"flex","alignItems":"flex-start","gap":"12px"}}>
+{u.hasAvatar ? (
+<img src={u.avatarUrl} alt={u.name} style={{"width":"40px","height":"40px","borderRadius":"99px","objectFit":"cover","flexShrink":"0"}} />
+) : (
 <span style={{"width":"40px","height":"40px","borderRadius":"99px","background":"var(--beet-700)","color":"#fff","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"14px","fontWeight":"800","flexShrink":"0"}}>{u.initials}</span>
+)}
 <div style={{"flex":"1","minWidth":"0"}}>
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"0"}}>{u.name}</h3>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"3px","flexWrap":"wrap"}}>

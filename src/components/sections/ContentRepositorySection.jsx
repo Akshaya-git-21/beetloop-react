@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentRepositorySection({ vm }) {
-  const { cPg, contentAI, contentEmpty, contentKpis, contentNew, contentOnQuery, contentOnStatus, contentQuery, contentRepoLabel, contentRepoTabs, contentRows, contentStatusFilter, showContent } = vm;
+  const { cPg, contentAI, contentEmpty, contentExport, contentKpis, contentNew, contentOnQuery, contentOnStatus, contentQuery, contentRepoLabel, contentRepoTabs, contentRows, contentStatusFilter, showContent } = vm;
   return (
     <React.Fragment>
 {Boolean(showContent) && (
@@ -31,7 +31,7 @@ Import
 </button>
 
             
-<button onClick={contentAI} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
+<button onClick={contentExport} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
 <Icon name={"download"} style={{"width":"15px","height":"15px"}} />
 Export
 </button>

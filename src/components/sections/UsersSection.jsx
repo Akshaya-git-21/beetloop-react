@@ -98,7 +98,11 @@ Reset to defaults
 <td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>{u.emp}</td>
 <td onClick={u.open} style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)","cursor":"pointer"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"9px"}}>
+{u.hasAvatar ? (
+<img src={u.avatarUrl} alt={u.name} style={{"width":"28px","height":"28px","borderRadius":"99px","objectFit":"cover","flexShrink":"0"}} />
+) : (
 <span style={{"width":"28px","height":"28px","borderRadius":"99px","background":"var(--beet-700)","color":"#fff","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"10.5px","fontWeight":"800","flexShrink":"0"}}>{u.initials}</span>
+)}
 <span style={{"minWidth":"0"}}>
 <span style={{"display":"block","fontSize":"13px","fontWeight":"700","color":"var(--ink-900)"}}>{u.name}</span>
 <span style={{"display":"block","fontSize":"10.5px","color":"var(--ink-400)"}}>{u.sub}</span>

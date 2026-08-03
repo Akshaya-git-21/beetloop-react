@@ -102,9 +102,15 @@ Administration
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"8px 10px","borderRadius":"12px","background":"rgba(255,255,255,.05)"}}>
 
 
+{role.avatarUrl ? (
+<button onClick={openProfile} title="My Profile" style={{"width":"32px","height":"32px","borderRadius":"50%","flexShrink":"0","border":"none","cursor":"pointer","padding":"0","overflow":"hidden"}}>
+<img src={role.avatarUrl} alt={role.person} style={{"width":"100%","height":"100%","objectFit":"cover","display":"block"}} />
+</button>
+) : (
 <button onClick={openProfile} title="My Profile" style={cssTextToObject(`width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;background:${role.color};border:none;cursor:pointer`)}>
 {role.short}
 </button>
+)}
 
 
 <button onClick={openProfile} style={{"flex":"1","minWidth":"0","background":"none","border":"none","cursor":"pointer","textAlign":"left","padding":"0"}}>

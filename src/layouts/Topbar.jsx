@@ -46,9 +46,15 @@ export default function Topbar({ vm }) {
 </div>
 
 
+{role.avatarUrl ? (
+<button onClick={openProfile} title="My Profile" style={{"width":"38px","height":"38px","borderRadius":"50%","border":"none","cursor":"pointer","padding":"0","overflow":"hidden","flexShrink":"0"}}>
+<img src={role.avatarUrl} alt={role.person} style={{"width":"100%","height":"100%","objectFit":"cover","display":"block"}} />
+</button>
+) : (
 <button onClick={openProfile} title="My Profile" style={cssTextToObject(`width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;background:${role.color};border:none;cursor:pointer`)}>
 {role.short}
 </button>
+)}
 
     
 </header>

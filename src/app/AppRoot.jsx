@@ -1180,7 +1180,8 @@ class AppRoot extends React.Component {
     const profile = this.state.authProfile;
     const role = profile
       ? { ...this.ROLES[rk], person: profile.full_name||profile.email, tag: profile.designation||this.ROLES[rk].tag,
-          short: (profile.full_name||profile.email||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() }
+          short: (profile.full_name||profile.email||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(),
+          avatarUrl: profile.avatar_url||'' }
       : this.ROLES[rk];
     const route = this.state.route;
     const acc = this.ACCESS;
@@ -1486,8 +1487,67 @@ class AppRoot extends React.Component {
     return {
       pfName:name, pfRoleLabel:roleLabel, pfColor:role.color,
       pfShort:(name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(),
+      pfAvatarUrl:match.avatar_url||'',
+      pfHasAvatar:!!match.avatar_url,
+      pfAvatarBusy:!!this.state.avatarBusy,
+      pfUploadAvatar:(e)=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) this.setAvatarFile(f); },
+      pfRemoveAvatar:()=>this.removeAvatar(),
       pfFields:fields.map(([k,v])=>({k,v})),
     };
+  }
+  // Resizes/compresses to a small JPEG before storing — keeps the profiles
+  // row light since this is saved as a data: URL column, not Storage.
+  _readAndResizeImage(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(reader.error||new Error('Could not read file'));
+      reader.onload=()=>{
+        const img=new Image();
+        img.onerror=()=>reject(new Error('Could not read that image'));
+        img.onload=()=>{
+          let { width, height } = img;
+          if(width>height){ if(width>maxDim){ height=Math.round(height*maxDim/width); width=maxDim; } }
+          else if(height>maxDim){ width=Math.round(width*maxDim/height); height=maxDim; }
+          const canvas=document.createElement('canvas');
+          canvas.width=width; canvas.height=height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  async setAvatarFile(file){
+    if(!/^image\//.test(file.type)){ this.flash('Choose an image file.'); return; }
+    this.setState({ avatarBusy:true });
+    try{
+      const dataUrl = await this._readAndResizeImage(file, 256, 0.85);
+      const authP=this.state.authProfile||{};
+      this.setState({ avatarBusy:false,
+        authProfile:{...authP, avatar_url:dataUrl},
+        users:(this.state.users||[]).map(u=>(authP.id&&u.id===authP.id)?{...u, avatar_url:dataUrl}:u) });
+      this.flash('Profile photo updated.');
+      if(authP.id){
+        supabase.from('profiles').update({ avatar_url:dataUrl }).eq('id', authP.id).then(({error})=>{
+          if(error) console.warn('[supabase] avatar upload failed:', error.message);
+        });
+      }
+    }catch(err){
+      this.setState({ avatarBusy:false });
+      this.flash('Could not process that image — try a different file.');
+    }
+  }
+  removeAvatar(){
+    const authP=this.state.authProfile||{};
+    this.setState({ authProfile:{...authP, avatar_url:''},
+      users:(this.state.users||[]).map(u=>(authP.id&&u.id===authP.id)?{...u, avatar_url:''}:u) });
+    this.flash('Profile photo removed.');
+    if(authP.id){
+      supabase.from('profiles').update({ avatar_url:null }).eq('id', authP.id).then(({error})=>{
+        if(error) console.warn('[supabase] avatar remove failed:', error.message);
+      });
+    }
   }
   dashData(rk, role){
     const b = role.bucket;
@@ -2211,7 +2271,10 @@ class AppRoot extends React.Component {
       blFStatus:fS, blOnFStatus:e=>this.setState({blFStatus:e.target.value}),
       blFPlatform:fP, blOnFPlatform:e=>this.setState({blFPlatform:e.target.value}),
       blPlatformOptions:platforms,
-      blImport:()=>this.flash('Import domains — upload a CSV (demo).'), blExport:()=>this.flash('Exported domain repository (demo).'),
+      blImport:()=>this.flash('Import domains — upload a CSV (demo).'),
+      blExport:()=>this.exportCsv('backlink-domain-repository-'+this._todayIso()+'.csv',
+        ['Domain','URL','Platform','Category','Industry','DA','Spam score','Status','Active','Found','Accounts','Live backlinks','Last verified'],
+        rows.map(r=>[r.name, r.url, r.platform, r.category, r.industry, r.da, r.spam, r.status, r.activeLabel, r.found, r.accounts, r.live, r.lastVerified])),
       blRepoEmpty:rows.length===0 };
   }
 
@@ -3762,6 +3825,7 @@ class AppRoot extends React.Component {
       umDrawerOpen:true, umEditing:editing, umCanEdit:isAdmin,
       umU:{ name:u.name, sub:u.sub, role:u.role, dept:u.dept, status:u.status,
         initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
+        avatarUrl:u.avatar_url||'', hasAvatar:!!u.avatar_url,
         statusBg:u.statusTone==='ok'?'var(--verify-100)':'var(--warn-100)',
         statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)' },
       umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{} }),
@@ -4307,7 +4371,14 @@ class AppRoot extends React.Component {
       calUnscheduled:unscheduled.slice(0,6).map(t=>({ id:t.id, name:t.name, who:t.assignee,
         open:()=>this.setState({ tkTab:'list', tkOpen:t.id }) })),
       calHasUnscheduled:unscheduled.length>0,
-      calExport:()=>{ this.flash('Calendar feed ready — '+dueCount+' tasks exported as .ics for Outlook / Google Calendar.'); },
+      calExport:()=>{
+        const events=pool.map(t=>{ const e=this.isoDate(t.end); if(!e) return null;
+          const s=this.isoDate(t.start)||e;
+          return { id:t.id, name:t.name, startIso:s, endIso:e, assignee:t.assignee, status:t.status };
+        }).filter(Boolean);
+        if(!events.length){ this.flash('No scheduled tasks to export in this view.'); return; }
+        this.exportIcs('content-calendar-'+this._todayIso()+'.ics', events);
+      },
     };
   }
 
@@ -6134,7 +6205,7 @@ class AppRoot extends React.Component {
       status:p.status||'Active', statusTone: (p.status||'Active')==='Active'?'ok':'warn',
       mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
-      brands:p.brands||[],
+      brands:p.brands||[], avatar_url:p.avatar_url||'',
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -6691,6 +6762,9 @@ class AppRoot extends React.Component {
       contentRepoLabel:repoName(cRepo), ...(()=>{ const pg=this.pgData('content',rows,8); return { contentRows:pg.rows, cPg:pg }; })(), contentEmpty:rows.length===0,
       contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npForm:{ repo: cRepo==='all'?'service':cRepo } }):this.flash('View only for your role.'),
       contentAI:()=>this.setState({ route:'ideas' }),
+      contentExport:()=>this.exportCsv('content-repository-'+this._todayIso()+'.csv',
+        ['ID','Name','Repository','Type','Topic','Keyword','Status','SEO score','Owner','Reviewer','Updated'],
+        rows.map(r=>[r.id, r.name, r.repo, r.type, r.topic, r.keyword, r.status, r.seo, r.owner, r.reviewer, r.updated])),
       ...this.contentDetail(),
       ...this.newPageData(),
     };
@@ -7512,7 +7586,12 @@ class AppRoot extends React.Component {
       okrResetFilters:()=>this.setState({ okrFilters:{dept:'All',status:'All',priority:'All',brand:'All',scope:'All',kpiFreq:'All',due:'All'} }),
       okrSelCount:sel.length, okrHasSel:sel.length>0,
       okrClearSel:()=>this.setState({ okrSelected:[] }),
-      okrBulkReviewer:this.okrBulkAct('Assigned reviewer to'), okrBulkOwner:this.okrBulkAct('Changed owner for'), okrBulkArchive:this.okrBulkAct('Archived'), okrBulkExport:this.okrBulkAct('Exported'),
+      okrBulkReviewer:this.okrBulkAct('Assigned reviewer to'), okrBulkOwner:this.okrBulkAct('Changed owner for'), okrBulkArchive:this.okrBulkAct('Archived'),
+      okrBulkExport:()=>{ const chosen=sel.length?list.filter(o=>sel.includes(o.id)):list;
+        this.exportCsv('okrs-'+this._todayIso()+'.csv',
+          ['Code','Title','Category','Priority','Scope','Owner','Department','Brand','Status','Progress %','Due'],
+          chosen.map(o=>[o.code, o.title, o.category, this.okrPriority(o).label, o.scope||'Department', o.owner, o.dept, o.brand, o.status, o.progress, o.due]));
+        this.setState({ okrSelected:[] }); },
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
       okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false, okrEditId:null }),
@@ -7657,6 +7736,7 @@ class AppRoot extends React.Component {
             emp:empOf(u.name), name:u.name, sub:u.sub, dept:u.dept, role:u.role,
             hasBrands:u.role==='Sales Executive', brandsLabel:u.role==='Sales Executive'?((u.brands||[]).join(', ')||'None'):'—',
             initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
+            avatarUrl:u.avatar_url||'', hasAvatar:!!u.avatar_url,
             shift:(u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00'),
             shiftSub:(u.breakMin||60)+'m break · '+(u.days||5)+' days',
             daily:this.dailyCapacity(u.name)+' h/day',
@@ -7859,6 +7939,50 @@ class AppRoot extends React.Component {
     const a=document.createElement('a');
     a.href=blob.dataUrl; a.download=name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  // Generic file-download used by every "Export" action across the app —
+  // real data tables/calendars, not the mock "(demo)" toasts they used to be.
+  _downloadTextFile(filename, content, mime){
+    const blob=new Blob([content], { type: mime||'text/plain' });
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  _todayIso(){ return new Date().toISOString().slice(0,10); }
+  _csvCell(v){
+    const s=(v===null||v===undefined)?'':String(v);
+    return /[",\r\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }
+  // rows: array of arrays, values in the same order as headers.
+  exportCsv(filename, headers, rows){
+    const lines=[headers.map(h=>this._csvCell(h)).join(',')]
+      .concat(rows.map(r=>r.map(v=>this._csvCell(v)).join(',')));
+    this._downloadTextFile(filename, lines.join('\r\n'), 'text/csv;charset=utf-8;');
+    this.flash('Exported '+rows.length+' row'+(rows.length===1?'':'s')+' to '+filename+'.');
+  }
+  _icsEscape(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+  _icsDate(iso){ return String(iso||'').replace(/-/g,''); }
+  _icsDateAdd1(iso){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+1);
+    return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
+  // events: array of { id, name, startIso, endIso, assignee, status }.
+  exportIcs(filename, events){
+    const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Beetloop//Content Calendar//EN','CALSCALE:GREGORIAN'];
+    events.forEach(ev=>{
+      lines.push('BEGIN:VEVENT');
+      lines.push('UID:'+ev.id+'@beetloop');
+      lines.push('DTSTAMP:'+stamp);
+      lines.push('DTSTART;VALUE=DATE:'+this._icsDate(ev.startIso));
+      lines.push('DTEND;VALUE=DATE:'+this._icsDateAdd1(ev.endIso));
+      lines.push('SUMMARY:'+this._icsEscape(ev.id+' — '+ev.name));
+      lines.push('DESCRIPTION:'+this._icsEscape('Assignee: '+(ev.assignee||'—')+' · Status: '+(ev.status||'—')));
+      lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    this._downloadTextFile(filename, lines.join('\r\n'), 'text/calendar;charset=utf-8;');
+    this.flash('Calendar feed downloaded — '+events.length+' task'+(events.length===1?'':'s')+' exported as '+filename+'.');
   }
   filePreviewData(){
     const name=this.state.fpvFile; if(!name) return { fpvOpen:false };
@@ -8089,10 +8213,15 @@ class AppRoot extends React.Component {
     };
     const me=()=>this.currentPerson();
     const myId=()=>this.state.authUser&&this.state.authUser.id;
-    const canManageTasks=()=>['manager','team_lead','admin','ceo'].includes(this.state.roleKey);
-    const canManageOkrs=()=>['manager','admin','ceo'].includes(this.state.roleKey);
-    const canManageUsers=()=>['admin','coo','ceo'].includes(this.state.roleKey);
-    const canManageRecords=()=>['manager','admin','ceo'].includes(this.state.roleKey);
+    // Admin sees every notification regardless of module-specific management
+    // rules below — always OR'd in, so it can never be narrowed by mistake.
+    const isAdmin=()=>this.state.roleKey==='admin';
+    const canManageTasks=()=>isAdmin()||['manager','team_lead','ceo'].includes(this.state.roleKey);
+    const canManageOkrs=()=>isAdmin()||['manager','ceo'].includes(this.state.roleKey);
+    const canManageUsers=()=>isAdmin()||['coo','ceo'].includes(this.state.roleKey);
+    const canManageRecords=()=>isAdmin()||['manager','ceo'].includes(this.state.roleKey);
+    const canManageCampaigns=()=>isAdmin()||['manager','ceo','coo'].includes(this.state.roleKey);
+    const canManageTickets=()=>isAdmin()||['manager','team_lead'].includes(this.state.roleKey);
 
     this._realtimeChannel = supabase.channel('beetloop-changes')
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'tasks' }, (payload)=>{
@@ -8141,6 +8270,30 @@ class AppRoot extends React.Component {
         if(r.owner===me()) push('Your '+label.toLowerCase()+' '+r.name+' was updated — status: '+r.status);
         else if(canManageRecords()) push(label+' updated: '+r.name+' — status: '+r.status);
         this._loadRecords();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'campaigns' }, (payload)=>{
+        const c=payload.new.payload||{};
+        if(c.owner===me()) push('You were set as owner on a new campaign: '+(c.name||payload.new.id));
+        else if(canManageCampaigns()) push('New campaign created: '+(c.name||payload.new.id));
+        this._loadCampaigns();
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'campaigns' }, (payload)=>{
+        const c=payload.new.payload||{};
+        if(c.owner===me()) push('Your campaign '+(c.name||payload.new.id)+' was updated — status: '+(c.status||'—'));
+        else if(canManageCampaigns()) push('Campaign updated: '+(c.name||payload.new.id)+' — status: '+(c.status||'—'));
+        this._loadCampaigns();
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'tickets' }, (payload)=>{
+        const t=payload.new.payload||{};
+        if(t.assignee===me()) push('You were assigned a new ticket: '+(t.subject||payload.new.id));
+        else if(canManageTickets()) push('New ticket raised: '+(t.subject||payload.new.id)+' by '+(t.by||'—'));
+        this._loadTickets();
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tickets' }, (payload)=>{
+        const t=payload.new.payload||{};
+        if(t.assignee===me()) push('Your ticket '+(t.subject||payload.new.id)+' was updated — status: '+(t.status||'—'));
+        else if(canManageTickets()) push('Ticket updated: '+(t.subject||payload.new.id)+' — status: '+(t.status||'—'));
+        this._loadTickets();
       })
       .subscribe();
   }
