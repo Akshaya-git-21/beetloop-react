@@ -2639,12 +2639,7 @@ class AppRoot extends React.Component {
     const rk=this.state.roleKey;
     const me=this.currentPerson();
     const own=['senior','junior'].includes(rk);
-    const fileType=(n)=>{ const e=String(n).split('.').pop().toLowerCase();
-      if(['png','jpg','jpeg','gif','webp','svg'].includes(e)) return {t:'Image',icon:'image',color:'var(--orchid-600)',bg:'var(--orchid-100)'};
-      if(['mp4','mov','webm'].includes(e)) return {t:'Video',icon:'video',color:'var(--info-600)',bg:'var(--info-100)'};
-      if(e==='pdf') return {t:'PDF',icon:'file-text',color:'var(--danger-600)',bg:'var(--danger-100, #F7E3E6)'};
-      if(['xlsx','csv','xls'].includes(e)) return {t:'Spreadsheet',icon:'table',color:'var(--verify-600)',bg:'var(--verify-100)'};
-      return {t:'Document',icon:'file',color:'var(--ink-500)',bg:'var(--surface-50)'}; };
+    const fileType=(n)=>this.fileKind(n);
     let files=[];
     // message attachments — collected from every thread
     this.allThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>{
@@ -6503,6 +6498,17 @@ class AppRoot extends React.Component {
     if(error){ console.warn('[supabase] document repo load failed:', error.message); return; }
     this.setState({ repoAdded:(data||[]).map(r=>({ ...r.payload, key:r.id })) });
   }
+  // Real bytes for every device-picked attachment (task evidence, QC refs,
+  // messages, tickets, comments, check-ins, idea references) — loaded once
+  // at login so every attachment previews/downloads for every user, not
+  // just in the browser tab that originally picked the file.
+  async _loadFileBlobs(){
+    const { data, error } = await supabase.from('file_blobs').select('name, data_url, mime, size');
+    if(error){ console.warn('[supabase] file blobs load failed:', error.message); return; }
+    const blobs={};
+    (data||[]).forEach(r=>{ blobs[r.name]={ dataUrl:r.data_url, type:r.mime, size:r.size }; });
+    this.setState(s=>({ fileBlobs:{...blobs, ...(s.fileBlobs||{})} }));
+  }
   async _loadEffortPlans(){
     const { data, error } = await supabase.from('effort_plans').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] effort plans load failed:', error.message); return; }
@@ -7958,7 +7964,7 @@ class AppRoot extends React.Component {
   // across messages/tasks/tickets/compliance), Upload records a named file with
   // a type. Replaces the various buttons that previously fabricated a fake name.
   fileKind(n){ const e=String(n).split('.').pop().toLowerCase();
-    if(['png','jpg','jpeg','gif','webp','svg'].includes(e)) return {t:'Image',icon:'image',color:'var(--orchid-600)',bg:'var(--orchid-100)'};
+    if(['png','jpg','jpeg','gif','webp','svg','avif','bmp','ico'].includes(e)) return {t:'Image',icon:'image',color:'var(--orchid-600)',bg:'var(--orchid-100)'};
     if(['mp4','mov','webm'].includes(e)) return {t:'Video',icon:'video',color:'var(--info-600)',bg:'var(--info-100)'};
     if(e==='pdf') return {t:'PDF',icon:'file-text',color:'var(--danger-600)',bg:'var(--danger-100)'};
     if(['xlsx','csv','xls'].includes(e)) return {t:'Spreadsheet',icon:'table',color:'var(--verify-600)',bg:'var(--verify-100)'};
@@ -8031,9 +8037,9 @@ class AppRoot extends React.Component {
         this.applyPickedFiles(target, [name]); },
       // Opens the device's native file explorer (real <input type=file>); the
       // chosen file(s) are attached immediately using their real filenames.
-      // Content is also read into fileBlobs so this specific file can be
-      // genuinely previewed/downloaded later — the only files in this app
-      // that ever carry real bytes, since nothing else has a storage backend.
+      // Content is read into fileBlobs for immediate use, then persisted to
+      // Supabase (file_blobs) so this exact attachment previews/downloads
+      // for every user, in any session, not just this one browser tab.
       fpFilesPicked:(e)=>{
         const files=Array.from(e.target.files||[]);
         e.target.value='';
@@ -8045,6 +8051,12 @@ class AppRoot extends React.Component {
           const reader=new FileReader();
           reader.onload=()=>{
             this.setState({ fileBlobs:{...(this.state.fileBlobs||{}), [file.name]:{ dataUrl:reader.result, type:file.type, size:file.size } } });
+            supabase.from('file_blobs').upsert({
+              name:file.name, data_url:reader.result, mime:file.type, size:file.size,
+              created_by:this.state.authUser?this.state.authUser.id:null,
+            }).then(({error})=>{
+              if(error) console.warn('[supabase] file blob save failed:', error.message);
+            });
           };
           reader.readAsDataURL(file);
         });
@@ -8110,12 +8122,17 @@ class AppRoot extends React.Component {
     const name=this.state.fpvFile; if(!name) return { fpvOpen:false };
     const blob=(this.state.fileBlobs||{})[name];
     const k=this.fileKind(name);
+    const ext=String(name).split('.').pop().toLowerCase();
+    const isSheet=!!blob && k.t==='Spreadsheet';
+    const isDocx=!!blob && ext==='docx';
+    const isText=!!blob && ['txt','md'].includes(ext);
     return {
       fpvOpen:true, fpvName:name, fpvKind:k.t, fpvIcon:k.icon, fpvIconBg:k.bg, fpvIconColor:k.color,
       fpvHasContent:!!blob,
       fpvIsImage:!!blob && k.t==='Image',
       fpvIsPdf:!!blob && k.t==='PDF',
-      fpvIsOther:!!blob && k.t!=='Image' && k.t!=='PDF',
+      fpvIsSheet:isSheet, fpvIsDocx:isDocx, fpvIsText:isText,
+      fpvIsOther:!!blob && k.t!=='Image' && k.t!=='PDF' && !isSheet && !isDocx && !isText,
       fpvDataUrl:blob?blob.dataUrl:'',
       fpvSize:blob?(blob.size>1048576?(Math.round(blob.size/104857.6)/10+' MB'):(Math.round(blob.size/102.4)/10+' KB')):'',
       fpvClose:()=>this.setState({ fpvFile:null }),
@@ -8315,6 +8332,7 @@ class AppRoot extends React.Component {
     this._loadCheckIns();
     this._loadKpiActuals();
     this._loadTaskDone();
+    this._loadFileBlobs();
     this._subscribeRealtime();
     this._catchUpNotifications();
   }

@@ -1,14 +1,76 @@
 import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
+function SheetPreview({ dataUrl }) {
+  const ref = React.useRef(null);
+  const [error, setError] = React.useState('');
+  React.useEffect(() => {
+    let cancelled = false;
+    setError('');
+    (async () => {
+      try {
+        const XLSX = await import('xlsx');
+        const base64 = String(dataUrl).split(',')[1] || '';
+        const wb = XLSX.read(base64, { type: 'base64' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const html = XLSX.utils.sheet_to_html(ws);
+        if (!cancelled && ref.current) ref.current.innerHTML = html;
+      } catch (e) {
+        if (!cancelled) setError('Could not parse this spreadsheet.');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dataUrl]);
+  if (error) return <div style={{ fontSize: 12.5, color: 'var(--danger-600)', fontWeight: 600 }}>{error}</div>;
+  return <div ref={ref} className="blscroll" style={{ maxHeight: 420, overflow: 'auto', border: '1px solid var(--line-200)', borderRadius: 12, padding: 10, fontSize: 12 }} />;
+}
+
+function DocxPreview({ dataUrl }) {
+  const ref = React.useRef(null);
+  const [error, setError] = React.useState('');
+  React.useEffect(() => {
+    let cancelled = false;
+    setError('');
+    (async () => {
+      try {
+        const { renderAsync } = await import('docx-preview');
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        if (cancelled || !ref.current) return;
+        ref.current.innerHTML = '';
+        await renderAsync(blob, ref.current, undefined, { className: 'blscroll', inWrapper: false });
+      } catch (e) {
+        if (!cancelled) setError('Could not render this document.');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dataUrl]);
+  if (error) return <div style={{ fontSize: 12.5, color: 'var(--danger-600)', fontWeight: 600 }}>{error}</div>;
+  return <div ref={ref} className="blscroll" style={{ maxHeight: 420, overflow: 'auto', border: '1px solid var(--line-200)', borderRadius: 12, padding: 14, background: '#fff' }} />;
+}
+
+function TextPreview({ dataUrl }) {
+  const [text, setText] = React.useState('');
+  const [error, setError] = React.useState('');
+  React.useEffect(() => {
+    let cancelled = false;
+    setError('');
+    fetch(dataUrl).then(r => r.text()).then(t => { if (!cancelled) setText(t); })
+      .catch(() => { if (!cancelled) setError('Could not read this file.'); });
+    return () => { cancelled = true; };
+  }, [dataUrl]);
+  if (error) return <div style={{ fontSize: 12.5, color: 'var(--danger-600)', fontWeight: 600 }}>{error}</div>;
+  return <pre className="blscroll" style={{ maxHeight: 420, overflow: 'auto', border: '1px solid var(--line-200)', borderRadius: 12, padding: 14, background: 'var(--surface-50)', fontSize: 12, fontFamily: "'Space Mono'", whiteSpace: 'pre-wrap', margin: 0 }}>{text}</pre>;
+}
+
 export default function TaskFilePreviewModal({ vm }) {
   const { fpvOpen, fpvName, fpvKind, fpvIcon, fpvIconBg, fpvIconColor, fpvHasContent,
-    fpvIsImage, fpvIsPdf, fpvIsOther, fpvDataUrl, fpvSize, fpvClose, fpvStop, fpvGoRepo } = vm;
+    fpvIsImage, fpvIsPdf, fpvIsSheet, fpvIsDocx, fpvIsText, fpvIsOther, fpvDataUrl, fpvSize, fpvClose, fpvStop, fpvGoRepo } = vm;
   return (
     <React.Fragment>
       {Boolean(fpvOpen) && (
         <div onClick={fpvClose} style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(31,8,20,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
-          <div onClick={fpvStop} className="blscroll" style={{ width: '100%', maxWidth: 640, maxHeight: '100%', background: '#fff', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
+          <div onClick={fpvStop} className="blscroll" style={{ width: '100%', maxWidth: 720, maxHeight: '100%', background: '#fff', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
             <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '1px solid var(--line-200)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 2 }}>
               <span style={{ width: 38, height: 38, borderRadius: 11, background: fpvIconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon name={fpvIcon} style={{ width: 18, height: 18, color: fpvIconColor }} />
@@ -30,6 +92,9 @@ export default function TaskFilePreviewModal({ vm }) {
                   {Boolean(fpvIsPdf) && (
                     <iframe title={fpvName} src={fpvDataUrl} style={{ width: '100%', height: 420, border: '1px solid var(--line-200)', borderRadius: 12 }} />
                   )}
+                  {Boolean(fpvIsSheet) && <SheetPreview dataUrl={fpvDataUrl} />}
+                  {Boolean(fpvIsDocx) && <DocxPreview dataUrl={fpvDataUrl} />}
+                  {Boolean(fpvIsText) && <TextPreview dataUrl={fpvDataUrl} />}
                   {Boolean(fpvIsOther) && (
                     <div style={{ border: '1.5px dashed var(--line-300)', borderRadius: 12, padding: 30, textAlign: 'center', color: 'var(--ink-500)' }}>
                       <Icon name={fpvIcon} style={{ width: 26, height: 26, color: 'var(--ink-400)' }} />
