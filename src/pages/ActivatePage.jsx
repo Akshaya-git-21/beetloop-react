@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function ActivatePage({ vm }) {
-  const { backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa } = vm;
+  const { activateEmail, activateRoleLabel, activateIsRecovery, backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa } = vm;
   return (
     <React.Fragment>
 
@@ -31,21 +31,28 @@ BEETLOOP
 
     
 <div style={{"fontFamily":"'Manrope'","fontWeight":"700","fontSize":"11.5px","letterSpacing":".14em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
-Account activation
+{activateIsRecovery ? 'Password reset' : 'Account activation'}
 </div>
 
-    
+
 <h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"24px","color":"var(--beet-700)","margin":"8px 0 4px"}}>
-Set up your account
+{activateIsRecovery ? 'Set a new password' : 'Set up your account'}
 </h2>
 
-    
+
 <p style={{"margin":"0 0 22px","color":"var(--ink-500)","fontSize":"14px"}}>
-Invited as 
-<strong style={{"color":"var(--ink-700)"}}>
-Junior SEO Executive
-</strong>
- · seo.jr@beetloop.com
+{activateIsRecovery ? (
+  <React.Fragment>
+Resetting password for
+<strong style={{"color":"var(--ink-700)"}}>{activateEmail || 'your account'}</strong>
+  </React.Fragment>
+) : (
+  <React.Fragment>
+Invited as
+<strong style={{"color":"var(--ink-700)"}}>{activateRoleLabel || 'team member'}</strong>
+{activateEmail ? (' · '+activateEmail) : ''}
+  </React.Fragment>
+)}
 </p>
 
 
@@ -117,7 +124,7 @@ Recommended for your account
 
     
 <button onClick={doActivate} style={{"width":"100%","padding":"13px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":"pointer"}}>
-Activate & sign in
+{activateIsRecovery ? 'Set new password & sign in' : 'Activate & sign in'}
 </button>
 
     

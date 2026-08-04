@@ -203,6 +203,9 @@ class AppRoot extends React.Component {
       if(session && session.user && this.state.screen!=='activate'){
         this._loadProfile(session.user);
       }
+      if(session && session.user && this.state.screen==='activate'){
+        this._loadActivateInfo(session.user);
+      }
     });
     this._authSub = supabase.auth.onAuthStateChange((event, session)=>{
       if(event==='SIGNED_OUT'){
@@ -1317,6 +1320,8 @@ class AppRoot extends React.Component {
       backToLogin:e=>{e&&e.preventDefault();this.setState({screen:'login'});},
       noop:e=>{e&&e.preventDefault();this.flash('Demo — connect your identity provider to enable.');},
       // activate
+      activateEmail:this.state.activateEmail||'', activateRoleLabel:this.state.activateRoleLabel||'',
+      activateIsRecovery:!!this.state.activateIsRecovery,
       newPass:this.state.newPass, confirmPass:this.state.confirmPass,
       onNewPass:e=>this.setState({newPass:e.target.value}), onConfirm:e=>this.setState({confirmPass:e.target.value}),
       toggleMfa:()=>this.setState({mfa:!this.state.mfa}),
@@ -1761,11 +1766,21 @@ class AppRoot extends React.Component {
         dashLeadOpenDaily:()=>this.setState({ route:'okr', okrModTab:'leads' }),
       };
     }
-    return { kpis:KPI[b]||KPI.manager, dashExtras:EXTRA[b]||EXTRA.manager,
+    // Per-user widget visibility — Admin picks which Dashboard blocks a
+    // specific person sees (User Management -> edit user -> Dashboard
+    // widgets). Stored as the HIDDEN keys, so every account defaults to
+    // "everything visible" until Admin actually restricts one.
+    const hiddenWidgets=new Set((this.state.authProfile&&this.state.authProfile.dashboard_widgets)||[]);
+    return { kpis:hiddenWidgets.has('kpis')?[]:(KPI[b]||KPI.manager),
+      dashExtras:hiddenWidgets.has('needsAttention')?[]:(EXTRA[b]||EXTRA.manager),
+      dashShowKpis:!hiddenWidgets.has('kpis'), dashShowNeedsAttention:!hiddenWidgets.has('needsAttention'),
+      dashShowActivity:!hiddenWidgets.has('activity'), dashShowScope:!hiddenWidgets.has('scope'),
+      dashShowAccessSummary:!hiddenWidgets.has('accessSummary'),
       dashCanAnalytics:granted('analytics'), dashCanOkr:granted('okr'),
       dashAccessLine:scopeBox.eyebrow+' · Dashboard '+lvlOf('dashboard')+' · Analytics '+lvlOf('analytics')+' · Tasks '+lvlOf('tasks'),
       dashExtrasLabel:'Needs attention · '+role.label+' scope',
-      dashRows:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary, ...leadPanel };
+      dashRows:hiddenWidgets.has('activity')?[]:rows, dashPanelTitle:panelTitle, scopeBox, accessSummary,
+      ...leadPanel, dashHasLeads: leadPanel.dashHasLeads && !hiddenWidgets.has('leadPipeline') };
   }
 
   qcData(rk){
@@ -3801,6 +3816,14 @@ class AppRoot extends React.Component {
   scopedSops(rk){
     const all=this.allSops();
     if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    // Sales doesn't work division-based SOPs (SEO/Content/etc. procedures
+    // aren't relevant to them) — they only ever see SOPs explicitly tagged
+    // to a brand they're assigned. No brand assigned = nothing to show.
+    if(rk==='sales'){
+      const brands=this.mySalesBrands();
+      if(!brands.length) return [];
+      return all.filter(s=>s.brand && brands.includes(s.brand));
+    }
     const d=this.myScopeDivision();
     return d?all.filter(s=>!s.division||s.division==='All'||s.division===d):all;
   }
@@ -3874,7 +3897,8 @@ class AppRoot extends React.Component {
       umTaskMore:tasks.length>8?('+'+(tasks.length-8)+' more'):'',
       umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
         breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice(),
-        mobile:u.mobile||'', designation:u.designation||'', team:u.team||'', reportingManager:u.reportingManager||'', teamLead:u.teamLead||'', officeLocation:u.officeLocation||'' } }),
+        mobile:u.mobile||'', designation:u.designation||'', team:u.team||'', reportingManager:u.reportingManager||'', teamLead:u.teamLead||'', officeLocation:u.officeLocation||'',
+        hiddenWidgets:(u.hiddenWidgets||[]).slice() } }),
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
@@ -3891,6 +3915,16 @@ class AppRoot extends React.Component {
         return { label:b, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.brands||[]; this.setState({ umDraft:{...d, brands: on?cur.filter(x=>x!==b):[...cur,b]} }); } }; }),
+      // Dashboard widget visibility — Admin picks which Dashboard blocks this
+      // specific person sees. Stored as the list of HIDDEN keys; unticking a
+      // row here hides that block for them, everything starts ticked (shown).
+      umWidgetRows:[['kpis','Summary KPI cards'],['needsAttention','Needs attention tiles'],
+        ['leadPipeline','Lead pipeline snapshot'],['activity','Recent activity panel'],
+        ['scope','Scope & access card'],['accessSummary','Access-level breakdown']].map(([key,label])=>{
+        const hidden=(d.hiddenWidgets||[]).includes(key); const on=!hidden;
+        return { key, label, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const cur=d.hiddenWidgets||[]; this.setState({ umDraft:{...d, hiddenWidgets: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
@@ -3901,12 +3935,13 @@ class AppRoot extends React.Component {
         const newReportingManager=d.reportingManager!==undefined?d.reportingManager:u.reportingManager;
         const newTeamLead=d.teamLead!==undefined?d.teamLead:u.teamLead;
         const newOfficeLocation=d.officeLocation!==undefined?d.officeLocation:u.officeLocation;
+        const newHiddenWidgets=d.hiddenWidgets!==undefined?d.hiddenWidgets:(u.hiddenWidgets||[]);
         const users=(this.state.users||[]).map(x=>x.name===name?{...x,
           shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
           breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
           role:newRole, dept:newDept, status:newStatus, brands:newBrands,
           mobile:newMobile, designation:newDesignation, sub:newDesignation+' · '+newDept, team:newTeam, reportingManager:newReportingManager,
-          teamLead:newTeamLead, officeLocation:newOfficeLocation,
+          teamLead:newTeamLead, officeLocation:newOfficeLocation, hiddenWidgets:newHiddenWidgets,
           statusTone:newStatus==='Active'?'ok':'warn' }:x);
         this.setState({ users, umEdit:false, umDraft:{} });
         const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
@@ -3917,10 +3952,15 @@ class AppRoot extends React.Component {
           supabase.from('profiles').update({
             role_key: roleEntry?roleEntry[0]:u.roleKey, department:newDept, status:newStatus, brands:newBrands,
             mobile:newMobile, designation:newDesignation, team:newTeam, reporting_manager:newReportingManager,
-            team_lead:newTeamLead, office_location:newOfficeLocation,
+            team_lead:newTeamLead, office_location:newOfficeLocation, dashboard_widgets:newHiddenWidgets,
           }).eq('id', u.id).then(({error})=>{
             if(error) console.warn('[supabase] profile update failed:', error.message);
           });
+          // if the Admin is editing their OWN widgets, refresh authProfile
+          // immediately so the change is visible without a full reload.
+          if(this.state.authProfile && this.state.authProfile.id===u.id){
+            this.setState({ authProfile:{...this.state.authProfile, dashboard_widgets:newHiddenWidgets} });
+          }
         } },
       // Photo: reuses the same upload/remove path My Profile uses, just
       // targeted at this user's id instead of the signed-in user's.
@@ -5313,6 +5353,7 @@ class AppRoot extends React.Component {
       sopSecSteps:sec==='steps', sopSecLinks:sec==='links', sopSecGov:sec==='gov',
       sopSetTitle:set('title'), sopSetPurpose:set('purpose'), sopSetScope:set('scope'),
       sopSetDivision:set('division'), sopSetStatus:set('status'), sopSetApprover:set('approver'),
+      sopSetBrand:set('brand'),
       sopSetReview:set('review'), sopSetCategory:set('category'), sopSetPriority:set('priority'),
       sopSetFrequency:set('frequency'), sopSetEstTime:set('estTime'), sopSetTrigger:set('trigger'),
       sopSetApplicability:set('applicability'), sopSetInputs:set('inputs'), sopSetOutputs:set('outputs'),
@@ -5320,6 +5361,12 @@ class AppRoot extends React.Component {
       sopSetRisks:set('risks'), sopSetEscalation:set('escalation'), sopSetTags:set('tags'),
       sopSetChange:set('changeSummary'), sopSetReason:set('reason'),
       sopDivisionOptions:['Content','SEO','SMM','Web Development','Design','Quality','Marketing','Analytics','Operations'],
+      // optional brand tag — leave "All brands" for company-wide SOPs; pick a
+      // specific brand to restrict this SOP to Sales users assigned that
+      // brand (see scopedSops()). Sales sees NO SOPs at all until at least
+      // one is tagged to their brand — company-wide SOPs (SEO/Content/etc.)
+      // aren't relevant to their role.
+      sopBrandOptions:['All brands'].concat(this.BRAND_LIST()),
       sopStatusOptions:['Draft','In review','Published'],
       sopCategoryOptions:this.SOP_CATS(),
       sopPriorityOptions:this.SOP_PRIORITIES(),
@@ -5387,6 +5434,7 @@ class AppRoot extends React.Component {
         if(!real.length){ this.flash('Add at least one step — an SOP without steps is not a procedure.'); return; }
         const csv=(v)=>String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
         const rec={ id:nextId, title:f.title.trim(), division:f.division||'Content', category:f.category||'Content production',
+          brand:(f.brand&&f.brand!=='All brands')?f.brand:'',
           version:'v1.0', status:f.status||'Draft', priority:f.priority||'Medium', estTime:f.estTime||'—',
           frequency:f.frequency||'Per project', owner:this.currentPerson(), approver:f.approver||'Priya Nair',
           updated:this.todayStr(), updatedBy:this.currentPerson(), review:this.fmtDate(f.review)||this.relDate(90), lastReviewed:'',
@@ -6265,7 +6313,7 @@ class AppRoot extends React.Component {
       status:p.status||'Active', statusTone: (p.status||'Active')==='Active'?'ok':'warn',
       mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
-      brands:p.brands||[], avatar_url:p.avatar_url||'',
+      brands:p.brands||[], avatar_url:p.avatar_url||'', hiddenWidgets:p.dashboard_widgets||[],
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -7004,7 +7052,10 @@ class AppRoot extends React.Component {
     return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
   }
   allLeads(){ const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED());
-    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return all.filter(l=>!l.brand||bs.includes(l.brand)); }
+    // Strict brand fencing: a Sales account only ever sees leads tagged to a
+    // brand it's assigned to. No brand assigned = nothing, not "everything
+    // untagged" — an untagged lead is a data-entry gap, not a green light.
+    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
   BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India']; }
@@ -7024,7 +7075,7 @@ class AppRoot extends React.Component {
     const added=this.state.contactAdded||[];
     const addedIds=new Set(added.map(c=>c.id));
     let list=added.concat(this.CONTACT_SEED().filter(c=>!addedIds.has(c.id))).map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
-    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); list=list.filter(c=>!c.brand||bs.includes(c.brand)); }
+    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); list=bs.length?list.filter(c=>bs.includes(c.brand)):[]; }
     return list; }
   pipelineView(canWrite){
     const me=this.currentPerson();
@@ -8169,25 +8220,44 @@ class AppRoot extends React.Component {
     const labels=['Enter a password','Weak','Fair','Good','Strong'];
     return { pw1:c(1),pw2:c(2),pw3:c(3),pw4:c(4), pwLabel:labels[s] };
   }
+  // Fetches the invited/reset user's real email + role so the activation
+  // screen can show who's actually activating instead of static placeholder
+  // text — and tells whether this is a fresh invite (profile still "Pending
+  // Invitation") or a password reset for an already-active account, so the
+  // copy on screen matches what really happened.
+  async _loadActivateInfo(user){
+    const { data: profile } = await supabase.from('profiles').select('email, role_key, status').eq('id', user.id).single();
+    const roleLabel = profile ? ((this.ROLES[profile.role_key]&&this.ROLES[profile.role_key].label) || profile.role_key) : '';
+    this.setState({
+      activateEmail: (profile&&profile.email) || user.email || '',
+      activateRoleLabel: roleLabel,
+      activateIsRecovery: !!(profile && profile.status!=='Pending Invitation'),
+    });
+  }
   async doActivate(){
     if(this.state.newPass.length<12){ this.flash('Password must be at least 12 characters.'); return; }
     if(this.state.newPass!==this.state.confirmPass){ this.flash('Passwords do not match.'); return; }
     this.setState({ authBusy:true });
-    // A real invite link (sent via Supabase Auth) signs the browser into a
-    // temporary session automatically; activating just sets the real password.
+    // A real invite/reset link (sent via Supabase Auth) signs the browser
+    // into a temporary session automatically; activating just sets the real
+    // password. If Supabase can't find a session, the link has already
+    // expired or been used (a common cause: some email clients "pre-click"
+    // links to scan them, burning the one-time token before the person
+    // actually opens the mail) — that must be a hard error, never a fake
+    // success, or the person is told they're activated while their password
+    // was never actually changed and they can't sign in afterward.
     const { data: { session } } = await supabase.auth.getSession();
-    if(session && session.user){
-      const { error } = await supabase.auth.updateUser({ password:this.state.newPass });
+    if(!session || !session.user){
       this.setState({ authBusy:false });
-      if(error){ this.flash('Could not activate: '+error.message); return; }
-      const { error: statusErr } = await supabase.from('profiles').update({ status:'Active' }).eq('id', session.user.id);
-      if(statusErr) console.warn('[supabase] profile activation status update failed:', statusErr.message);
-      await this._loadProfile(session.user);
-      this.flash('Account activated. Welcome to Beetloop.');
+      this.flash('This link has expired or was already used. Please request a new invite or password reset link and try again.');
       return;
     }
-    // No invite session present (e.g. opened this screen directly, demo path).
-    this.setState({ screen:'app', roleKey:'junior', route:'dashboard', authBusy:false });
+    const { error } = await supabase.auth.updateUser({ password:this.state.newPass });
+    this.setState({ authBusy:false });
+    if(error){ this.flash('Could not activate: '+error.message); return; }
+    const { error: statusErr } = await supabase.from('profiles').update({ status:'Active' }).eq('id', session.user.id);
+    if(statusErr) console.warn('[supabase] profile activation status update failed:', statusErr.message);
+    await this._loadProfile(session.user);
     this.flash('Account activated. Welcome to Beetloop.');
   }
   async doLogin(){

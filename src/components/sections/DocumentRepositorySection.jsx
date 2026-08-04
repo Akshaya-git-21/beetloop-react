@@ -195,13 +195,13 @@ Actions
 {f.by}
 </td>
 
-                    
+
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
-<div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)"}}>
+<div onClick={f.open} title="Open task" style={{"display":"flex","alignItems":"center","gap":"7px","cursor":"pointer"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)","textDecoration":"underline"}}>
 {f.taskId}
 </span>
-<span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","maxWidth":"220px","display":"inline-block"}}>
+<span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--beet-700)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","maxWidth":"220px","display":"inline-block","textDecoration":"underline"}}>
 {f.taskName}
 </span>
 </div>

@@ -14,6 +14,7 @@ export default function CreateSopModal({ vm }) {
     sopDupOptions, sopDupFrom,
     sopSetTitle, sopSetPurpose, sopSetScope,
     sopCategoryOptions, sopSetCategory, sopDivisionOptions, sopSetDivision,
+    sopBrandOptions, sopSetBrand,
     sopPriorityOptions, sopSetPriority, sopFrequencyOptions, sopSetFrequency,
     sopSetEstTime, sopSetTags,
     sopSetTrigger, sopSetApplicability, sopSetInputs, sopSetOutputs, sopSetResources, sopSetDocs,
@@ -93,6 +94,12 @@ export default function CreateSopModal({ vm }) {
                     <label style={label}>Priority</label>
                     <select value={f.priority || ''} onChange={sopSetPriority} style={select}>
                       {(sopPriorityOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={label}>Brand</label>
+                    <select value={f.brand || 'All brands'} onChange={sopSetBrand} style={select}>
+                      {(sopBrandOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                   <div>

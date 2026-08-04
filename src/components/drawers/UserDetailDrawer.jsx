@@ -7,7 +7,7 @@ export default function UserDetailDrawer({ vm }) {
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
     umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
     umIsSalesRole, umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
-    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword } = vm;
+    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -116,6 +116,17 @@ Remove
 </div>
 </div>
 )}
+<div style={{"marginTop":"14px"}}>
+<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Dashboard widgets — untick to hide a block for this person</label>
+<div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>
+{(umWidgetRows || []).map((w, $i) => (
+<button key={$i} onClick={w.toggle} style={cssTextToObject(w.style)}>
+{w.on && <Icon name={"check"} style={{"width":"11px","height":"11px"}} />}
+{w.label}
+</button>
+))}
+</div>
+</div>
 <div style={{"display":"flex","justifyContent":"flex-end","gap":"9px","marginTop":"14px"}}>
 <button onClick={umCancelEdit} style={{"padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={umSave} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 17px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>

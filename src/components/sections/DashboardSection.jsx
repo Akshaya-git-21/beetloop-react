@@ -5,16 +5,18 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function DashboardSection({ vm }) {
   const { accessSummary, dashExtras, dashExtrasLabel, dashAccessLine, dashPanelTitle, dashRows, kpis, noop, scopeBox, showDash,
     dashHasLeads, dashLeadOpen, dashLeadStages, dashLeadToday, dashLeadW, dashLeadBar, dashLeadTargetNote,
-    dashLeadOpenDaily, dashLeadTopSvc } = vm;
+    dashLeadOpenDaily, dashLeadTopSvc,
+    dashShowKpis, dashShowNeedsAttention, dashShowActivity, dashShowScope, dashShowAccessSummary } = vm;
   return (
     <React.Fragment>
 {Boolean(showDash) && (
 <React.Fragment>
 
-          
+
+{Boolean(dashShowKpis) && (
 <div style={{"display":"grid","gridTemplateColumns":"repeat(4,1fr)","gap":"16px","marginBottom":"20px"}}>
 
-            
+
 {(kpis || []).map((k, $index) => (
 <React.Fragment key={$index}>
 
@@ -51,7 +53,9 @@ export default function DashboardSection({ vm }) {
 
 
 </div>
+)}
 
+{Boolean(dashShowNeedsAttention) && (
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"14px 18px","marginBottom":"20px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"11px","flexWrap":"wrap"}}>
 <Icon name="bell-ring" style={{"width":"13px","height":"13px","color":"var(--orchid-600)"}} />
@@ -72,6 +76,7 @@ export default function DashboardSection({ vm }) {
 ))}
 </div>
 </div>
+)}
 
 {Boolean(dashHasLeads) && (
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(420px,1fr))","gap":"16px","marginBottom":"16px"}}>
@@ -131,10 +136,11 @@ Daily leads
 
 <div style={{"display":"grid","gridTemplateColumns":"1.6fr 1fr","gap":"16px"}}>
 
-            
+
+{Boolean(dashShowActivity) && (
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
 
-              
+
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"18px"}}>
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--beet-700)","margin":"0"}}>
 {dashPanelTitle}
@@ -181,60 +187,59 @@ View all
 </React.Fragment>
 ))}
 
-              
-</div>
 
-            
 </div>
+</div>
+)}
 
-            
 <div style={{"display":"flex","flexDirection":"column","gap":"16px"}}>
 
-              
+{Boolean(dashShowScope) && (
 <div style={{"background":"linear-gradient(155deg,#3d1024,#7A1C46)","color":"#fff","borderRadius":"20px","padding":"22px"}}>
 
-                
+
 <div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-300)"}}>
 {scopeBox.eyebrow}
 </div>
 
-                
+
 <div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"34px","margin":"8px 0 2px"}}>
 {scopeBox.big}
 </div>
 
-                
+
 <div style={{"fontSize":"13px","color":"rgba(255,255,255,.72)"}}>
 {scopeBox.sub}
 </div>
 
-                
+
 <div style={{"height":"1px","background":"rgba(255,255,255,.14)","margin":"16px 0"}} />
 
-                
+
 <div style={{"fontSize":"13px","lineHeight":"1.6","color":"rgba(255,255,255,.82)"}}>
 {scopeBox.note}
 </div>
 
-              
-</div>
 
-              
+</div>
+)}
+
+{Boolean(dashShowAccessSummary) && (
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"20px"}}>
 
-                
+
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 14px"}}>
 Your access at a glance
 </h3>
 
-                
+
 <div style={{"display":"flex","flexDirection":"column","gap":"9px"}}>
 
-                  
+
 {(accessSummary || []).map((a, $index) => (
 <React.Fragment key={$index}>
 
-                    
+
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","gap":"10px"}}>
 <span style={{"fontSize":"13px","color":"var(--ink-700)"}}>
 {a.mod}
@@ -244,17 +249,17 @@ Your access at a glance
 </span>
 </div>
 
-                  
+
 </React.Fragment>
 ))}
 
-                
+
 </div>
 
-              
-</div>
 
-            
+</div>
+)}
+
 </div>
 
           
