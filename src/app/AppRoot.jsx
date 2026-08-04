@@ -4010,15 +4010,29 @@ class AppRoot extends React.Component {
   tkPatch(id, patch, act){
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
     if(patch && patch.status==='Rework') patch={...patch, reworkCount:this.reworkCycles(t)+1};
+    // The new activity entry must travel WITH patch into _persistTaskPatch,
+    // not just into the local tkUpd overlay — _persistTaskPatch re-fetches
+    // the task from this.state.tkUpd, which hasn't flushed yet at this point
+    // in the same tick, so without this it silently persists the task's
+    // PREVIOUS activity array (missing the entry just added here) every
+    // single time. That stale write is what made rework_count and other
+    // fields look right immediately but revert to blank after the next
+    // realtime reload wiped the local-only overlay.
+    const activity=[...(t.activity||[]), [this.currentPerson(), act, this.todayStr()]];
+    const fullPatch={...patch, activity};
     const upd={...(this.state.tkUpd||{})};
-    upd[id]={ ...(upd[id]||{}), ...patch, activity:[...(t.activity||[]), [this.currentPerson(), act, this.todayStr()]] };
+    upd[id]={ ...(upd[id]||{}), ...fullPatch };
     this.setState({ tkUpd:upd });
-    this._persistTaskPatch(id, patch);
+    this._persistTaskPatch(id, fullPatch);
   }
   reworkCycles(t){
     const fromActivity=(t.activity||[]).filter(a=>/rework/i.test(String(a[1]))).length;
     const fromState=((this.state.tkUpd||{})[t.id]||{}).reworkCount||0;
-    return Math.max(fromActivity, fromState);
+    // t.reworkCount is the persisted rework_count column itself — the most
+    // reliable source once a reload has wiped tkUpd and reset activity's
+    // text-matching options, so it must always win over the other two.
+    const fromField=t.reworkCount||0;
+    return Math.max(fromActivity, fromState, fromField);
   }
   timers(){ return this.state.tkTimers||{}; }
   timerOf(id){ return this.timers()[id]||{ running:false, elapsed:0, sessions:[] }; }
