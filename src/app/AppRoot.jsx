@@ -4974,10 +4974,21 @@ class AppRoot extends React.Component {
     return ch;
   }
   playbookView(rk){
-    // access: everyone reads; Manager / Team Lead / Admin author; governance chapters Admin-only
+    // access: everyone reads; Manager / Team Lead / Admin author; governance chapters Admin-only.
+    // Exception: Sales only ever works one (or a few) brands — same fencing
+    // rule as leads/contacts/SOPs — so they only ever see their own
+    // assigned brand's playbook(s), never the full company list. No brand
+    // assigned = nothing to show.
     const canAuthor=['manager','team_lead','admin'].includes(rk);
     const isAdmin=rk==='admin';
-    const bk=this.state.pbBrand||'beetloop';
+    const visibleBrands = rk==='sales'
+      ? this.PB_BRANDS().filter(x=>this.mySalesBrands().includes(x.name))
+      : this.PB_BRANDS();
+    if(!visibleBrands.length){
+      return { pbIsOpen:true, pbEmpty:true,
+        pbEmptyNote:'No brand assigned to your account yet — ask Admin to assign one in User Management before any brand playbook can show here.' };
+    }
+    const bk = visibleBrands.some(x=>x.key===this.state.pbBrand) ? this.state.pbBrand : visibleBrands[0].key;
     const b=this.PB_BRAND(bk);
     const chapters=this.PB_CHAPTERS(bk);
     const curKey=chapters.some(c=>c.key===this.state.pbChapter)?this.state.pbChapter:chapters[0].key;
@@ -5010,8 +5021,8 @@ class AppRoot extends React.Component {
         channels:(x.channels||[]).map(p=>({ text:p })), objections:(x.objections||[]).map(p=>({ text:p })) })),
     });
     return {
-      pbIsOpen:true,
-      pbBrandTabs:this.PB_BRANDS().map(x=>({ name:x.name, key:x.key, active:x.key===bk,
+      pbIsOpen:true, pbEmpty:false,
+      pbBrandTabs:visibleBrands.map(x=>({ name:x.name, key:x.key, active:x.key===bk,
         style:'display:flex;flex-direction:column;gap:2px;padding:9px 14px;border-radius:11px;cursor:pointer;text-align:left;border:1px solid '+(x.key===bk?'transparent':'var(--line-300)')+';background:'+(x.key===bk?x.color:'#fff')+';color:'+(x.key===bk?'#fff':'var(--ink-700)'),
         sub:x.sector.split(' · ')[0],
         set:()=>this.setState({ pbBrand:x.key, pbChapter:null }) })),

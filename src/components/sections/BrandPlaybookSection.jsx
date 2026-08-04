@@ -140,11 +140,24 @@ function Block({ bl }) {
 
 export default function BrandPlaybookSection({ vm }) {
   const {
-    pbIsOpen, pbBrandTabs, pbBrandName, pbBrandTagline, pbBrandSector, pbBrandSite,
+    pbIsOpen, pbEmpty, pbEmptyNote, pbBrandTabs, pbBrandName, pbBrandTagline, pbBrandSector, pbBrandSite,
     pbProgress, pbProgressW, pbChapters, pbCur, pbBlocks, pbEditable, pbEdit,
     pbMarkRead, pbGovLocked, pbGovNote, pbPrev, pbNext,
     pbQuery, pbSetQuery, pbHasHits, pbHits,
   } = vm;
+  if (pbEmpty) {
+    return (
+      <React.Fragment>
+        {Boolean(pbIsOpen) && (
+          <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '32px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+            <Icon name="tag" style={{ width: 22, height: 22, color: 'var(--ink-400)' }} />
+            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--beet-700)' }}>No brand playbook to show</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-500)', maxWidth: 420, lineHeight: 1.55 }}>{pbEmptyNote}</div>
+          </div>
+        )}
+      </React.Fragment>
+    );
+  }
   if (!pbCur) return null;
   return (
     <React.Fragment>
