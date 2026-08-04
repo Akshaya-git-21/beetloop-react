@@ -232,11 +232,19 @@ class AppRoot extends React.Component {
   async _forgotPassword(){
     const em=(this.state.email||'').trim().toLowerCase();
     if(!em){ this.flash('Enter your work email above first, then click "Forgot password?".'); return; }
-    const { error } = await supabase.auth.resetPasswordForEmail(em, {
-      redirectTo: window.location.origin + '/activate',
-    });
-    if(error) this.flash('Could not send reset email: '+error.message);
-    else this.flash('Password reset link sent to '+em+' (if an account exists).');
+    this.flash('Sending reset link…');
+    try{
+      const resp=await fetch('/api/reset-password', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ email:em }),
+      });
+      const body=await resp.json();
+      if(!resp.ok) throw new Error(body.error||'Reset failed');
+      if(body.emailSent) this.flash('Password reset link sent to '+em+'.');
+      else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
+    }catch(err){
+      this.flash('Could not send reset email: '+err.message);
+    }
   }
   componentDidUpdate(prevProps, prevState){
     if(prevProps.screenParam!==this.props.screenParam || prevProps.routeParam!==this.props.routeParam){
@@ -1520,18 +1528,22 @@ class AppRoot extends React.Component {
       reader.readAsDataURL(file);
     });
   }
-  async setAvatarFile(file){
+  // targetId lets Admin upload/remove another user's photo from User
+  // Management — omit it (or pass your own id) to act on your own profile.
+  async setAvatarFile(file, targetId){
     if(!/^image\//.test(file.type)){ this.flash('Choose an image file.'); return; }
     this.setState({ avatarBusy:true });
     try{
       const dataUrl = await this._readAndResizeImage(file, 256, 0.85);
       const authP=this.state.authProfile||{};
-      this.setState({ avatarBusy:false,
-        authProfile:{...authP, avatar_url:dataUrl},
-        users:(this.state.users||[]).map(u=>(authP.id&&u.id===authP.id)?{...u, avatar_url:dataUrl}:u) });
+      const id = targetId || authP.id;
+      const isSelf = !targetId || targetId===authP.id;
+      this.setState(s=>({ avatarBusy:false,
+        authProfile: isSelf ? {...authP, avatar_url:dataUrl} : s.authProfile,
+        users:(s.users||[]).map(u=>u.id===id?{...u, avatar_url:dataUrl}:u) }));
       this.flash('Profile photo updated.');
-      if(authP.id){
-        supabase.from('profiles').update({ avatar_url:dataUrl }).eq('id', authP.id).then(({error})=>{
+      if(id){
+        supabase.from('profiles').update({ avatar_url:dataUrl }).eq('id', id).then(({error})=>{
           if(error) console.warn('[supabase] avatar upload failed:', error.message);
         });
       }
@@ -1540,13 +1552,16 @@ class AppRoot extends React.Component {
       this.flash('Could not process that image — try a different file.');
     }
   }
-  removeAvatar(){
+  removeAvatar(targetId){
     const authP=this.state.authProfile||{};
-    this.setState({ authProfile:{...authP, avatar_url:''},
-      users:(this.state.users||[]).map(u=>(authP.id&&u.id===authP.id)?{...u, avatar_url:''}:u) });
+    const id = targetId || authP.id;
+    const isSelf = !targetId || targetId===authP.id;
+    this.setState(s=>({
+      authProfile: isSelf ? {...authP, avatar_url:''} : s.authProfile,
+      users:(s.users||[]).map(u=>u.id===id?{...u, avatar_url:''}:u) }));
     this.flash('Profile photo removed.');
-    if(authP.id){
-      supabase.from('profiles').update({ avatar_url:null }).eq('id', authP.id).then(({error})=>{
+    if(id){
+      supabase.from('profiles').update({ avatar_url:null }).eq('id', id).then(({error})=>{
         if(error) console.warn('[supabase] avatar remove failed:', error.message);
       });
     }
@@ -3833,6 +3848,8 @@ class AppRoot extends React.Component {
       umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{} }),
       umStop:(e)=>e.stopPropagation(),
       umMeta:[['Role',u.role],['Department',u.dept],['Designation',u.sub],['Account status',u.status],
+        ['Mobile',u.mobile||'—'],['Team',u.team||'—'],['Reporting manager',u.reportingManager||'—'],
+        ['Team lead',u.teamLead||'—'],['Office location',u.officeLocation||'—'],
         ['Shift',(u.shiftStart||'09:00')+' – '+(u.shiftEnd||'18:00')],['Break',(u.breakMin||60)+' minutes'],
         ['Working days',(u.days||5)+' / week'],['Daily capacity',this.dailyCapacity(name)+' h'],
         ['Weekly capacity',wk+' h']].concat(u.role==='Sales Executive'?[['Assigned brand(s)',(u.brands||[]).join(', ')||'None']]:[]).map(x=>({k:x[0],v:x[1]})),
@@ -3851,10 +3868,13 @@ class AppRoot extends React.Component {
       umHasTasks:tasks.length>0,
       umTaskMore:tasks.length>8?('+'+(tasks.length-8)+' more'):'',
       umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
-        breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice() } }),
+        breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice(),
+        mobile:u.mobile||'', designation:u.designation||'', team:u.team||'', reportingManager:u.reportingManager||'', teamLead:u.teamLead||'', officeLocation:u.officeLocation||'' } }),
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
+      umSetMobile:setD('mobile'), umSetDesignation:setD('designation'), umSetTeam:setD('team'),
+      umSetReportingManager:setD('reportingManager'), umSetTeamLead:setD('teamLead'), umSetOfficeLocation:setD('officeLocation'),
       umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive'],
       umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
@@ -3870,10 +3890,18 @@ class AppRoot extends React.Component {
       umSave:()=>{
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
         const newBrands=newRole==='Sales Executive'?(d.brands||u.brands||[]):(u.brands||[]);
+        const newMobile=d.mobile!==undefined?d.mobile:u.mobile;
+        const newDesignation=d.designation!==undefined?d.designation:u.designation;
+        const newTeam=d.team!==undefined?d.team:u.team;
+        const newReportingManager=d.reportingManager!==undefined?d.reportingManager:u.reportingManager;
+        const newTeamLead=d.teamLead!==undefined?d.teamLead:u.teamLead;
+        const newOfficeLocation=d.officeLocation!==undefined?d.officeLocation:u.officeLocation;
         const users=(this.state.users||[]).map(x=>x.name===name?{...x,
           shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
           breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
           role:newRole, dept:newDept, status:newStatus, brands:newBrands,
+          mobile:newMobile, designation:newDesignation, sub:newDesignation+' · '+newDept, team:newTeam, reportingManager:newReportingManager,
+          teamLead:newTeamLead, officeLocation:newOfficeLocation,
           statusTone:newStatus==='Active'?'ok':'warn' }:x);
         this.setState({ users, umEdit:false, umDraft:{} });
         const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
@@ -3883,9 +3911,34 @@ class AppRoot extends React.Component {
           const roleEntry=Object.entries(this.ROLES).find(([,r])=>r.label===newRole);
           supabase.from('profiles').update({
             role_key: roleEntry?roleEntry[0]:u.roleKey, department:newDept, status:newStatus, brands:newBrands,
+            mobile:newMobile, designation:newDesignation, team:newTeam, reporting_manager:newReportingManager,
+            team_lead:newTeamLead, office_location:newOfficeLocation,
           }).eq('id', u.id).then(({error})=>{
             if(error) console.warn('[supabase] profile update failed:', error.message);
           });
+        } },
+      // Photo: reuses the same upload/remove path My Profile uses, just
+      // targeted at this user's id instead of the signed-in user's.
+      umAvatarUrl:u.avatar_url||'', umHasAvatar:!!u.avatar_url, umAvatarBusy:!!this.state.avatarBusy,
+      umUploadAvatar:(e)=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) this.setAvatarFile(f, u.id); },
+      umRemoveAvatar:()=>this.removeAvatar(u.id),
+      // Password: Admin never sets/sees the actual password — this emails the
+      // user a reset link through the same reliable pipeline invites use,
+      // which is the safer pattern (nobody but the user ever knows it).
+      umResetPassword:async()=>{
+        if(!u.email){ this.flash('No email on file for '+name+'.'); return; }
+        this.flash('Sending password reset link to '+u.email+'…');
+        try{
+          const resp=await fetch('/api/reset-password', {
+            method:'POST', headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ email:u.email }),
+          });
+          const body=await resp.json();
+          if(!resp.ok) throw new Error(body.error||'Reset failed');
+          if(body.emailSent) this.flash('Password reset link sent to '+u.email+'.');
+          else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
+        }catch(err){
+          this.flash('Could not send reset email: '+err.message);
         } },
       umSuspend:()=>{ const users=(this.state.users||[]).map(x=>x.name===name?{...x,status:x.status==='Suspended'?'Active':'Suspended',statusTone:x.status==='Suspended'?'ok':'warn'}:x);
         this.setState({ users }); this.flash(name+(u.status==='Suspended'?' reactivated.':' suspended — login blocked, records retained.')); },
@@ -8208,6 +8261,30 @@ class AppRoot extends React.Component {
   //   - your own tasks/OKRs/projects/profile → always notified, worded as "you"
   //   - things you manage (as reviewer, or via role-based edit access) → notified
   //   - everything else → silent for you, still refreshes the underlying data
+  // Every task edit (timer start/stop, checklist tick, comment, evidence,
+  // status change...) upserts the FULL row via _persistTaskPatch, so the
+  // realtime UPDATE payload can't tell what actually changed just from the
+  // new row — it always looked like a generic "status: X" update, which was
+  // actively misleading for anything that isn't a status change (e.g.
+  // starting a timer re-announced the unchanged status as if it were news).
+  // Comparing against payload.old (needs REPLICA IDENTITY FULL — see
+  // schema_v6.sql) lets this describe what genuinely changed instead.
+  _describeTaskChange(oldT, newT){
+    // Without REPLICA IDENTITY FULL (see schema_v6.sql), payload.old only
+    // ever carries the primary key — not enough to diff — so fall back to
+    // the old generic message rather than misreading a blank old.status as
+    // "status changed" on every single edit.
+    if(!oldT || oldT.status===undefined) return 'updated — status: '+newT.status;
+    if(oldT.status!==newT.status) return 'status → '+newT.status;
+    if(oldT.effort_actual!==newT.effort_actual) return 'time logged — '+(newT.effort_actual||0)+' h actual';
+    if(JSON.stringify(oldT.checklist)!==JSON.stringify(newT.checklist)) return 'checklist updated';
+    if(oldT.qc_feedback!==newT.qc_feedback) return 'QC feedback added';
+    if(JSON.stringify(oldT.comments)!==JSON.stringify(newT.comments)) return 'new comment';
+    if(JSON.stringify(oldT.evidence)!==JSON.stringify(newT.evidence)) return 'evidence attached';
+    if(oldT.assignee_name!==newT.assignee_name) return 'reassigned to '+(newT.assignee_name||'Unassigned');
+    if(oldT.rework_count!==newT.rework_count) return 'sent back for rework';
+    return 'updated';
+  }
   _subscribeRealtime(){
     if(this._realtimeChannel) return;
     const push=(text, nav)=>{
@@ -8235,9 +8312,10 @@ class AppRoot extends React.Component {
       })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'tasks' }, (payload)=>{
         const t=payload.new; const nav={ route:'tasks', tkTab:'list', tkOpen:t.code };
-        if(t.assignee_name===me()) push('Your task '+t.code+' was updated — status: '+t.status, nav);
-        else if(t.reviewer_name===me()) push('Task '+t.code+' you\'re reviewing — status: '+t.status, nav);
-        else if(canManageTasks()) push('Task '+t.code+' updated — status: '+t.status+' (assignee: '+(t.assignee_name||'Unassigned')+')', nav);
+        const what=this._describeTaskChange(payload.old, t);
+        if(t.assignee_name===me()) push('Your task '+t.code+' — '+what, nav);
+        else if(t.reviewer_name===me()) push('Task '+t.code+' you\'re reviewing — '+what, nav);
+        else if(canManageTasks()) push('Task '+t.code+' — '+what+' (assignee: '+(t.assignee_name||'Unassigned')+')', nav);
         this._loadTasks();
       })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'okrs' }, (payload)=>{

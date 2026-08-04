@@ -6,7 +6,8 @@ export default function UserDetailDrawer({ vm }) {
   const { umDrawerOpen, umU, umClose, umStop, umLoad, umEditing, umD, umSetStart, umSetEnd, umSetBreak, umSetDays, umDayOptions,
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
     umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
-    umIsSalesRole, umBrandRows } = vm;
+    umIsSalesRole, umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
+    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -20,6 +21,19 @@ export default function UserDetailDrawer({ vm }) {
 <span style={{"width":"40px","height":"40px","borderRadius":"99px","background":"var(--beet-700)","color":"#fff","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"14px","fontWeight":"800","flexShrink":"0"}}>{u.initials}</span>
 )}
 <div style={{"flex":"1","minWidth":"0"}}>
+{Boolean(umCanEdit) && (
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"4px"}}>
+<label style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+{umAvatarBusy ? 'Uploading…' : (umHasAvatar ? 'Change photo' : 'Upload photo')}
+<input type="file" accept="image/*" onChange={umUploadAvatar} disabled={umAvatarBusy} style={{"display":"none"}} />
+</label>
+{Boolean(umHasAvatar) && (
+<button onClick={umRemoveAvatar} disabled={umAvatarBusy} style={{"padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--danger-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+Remove
+</button>
+)}
+</div>
+)}
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"0"}}>{u.name}</h3>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"3px","flexWrap":"wrap"}}>
 <span style={{"fontSize":"12.5px","color":"var(--ink-500)"}}>{u.sub}</span>
@@ -76,6 +90,18 @@ export default function UserDetailDrawer({ vm }) {
 <select value={umD.status} onChange={umSetStatus} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff"}}>
 {(umStatusOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Mobile</label>
+<input value={umD.mobile} onInput={umSetMobile} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Designation</label>
+<input value={umD.designation} onInput={umSetDesignation} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Team</label>
+<input value={umD.team} onInput={umSetTeam} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Office location</label>
+<input value={umD.officeLocation} onInput={umSetOfficeLocation} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Reporting manager</label>
+<input value={umD.reportingManager} onInput={umSetReportingManager} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Team lead</label>
+<input value={umD.teamLead} onInput={umSetTeamLead} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
 </div>
 {Boolean(umIsSalesRole) && (
 <div style={{"marginTop":"14px"}}>
@@ -131,6 +157,8 @@ export default function UserDetailDrawer({ vm }) {
 <Icon name={"pencil"} style={{"width":"13px","height":"13px"}} />Edit user & shift</button>
 <button onClick={umSuspend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"user-x"} style={{"width":"13px","height":"13px"}} />{umSuspendLabel}</button>
+<button onClick={umResetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"key-round"} style={{"width":"13px","height":"13px"}} />Reset password</button>
 {Boolean(umShowResend) && (
 <button onClick={umResend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"mail"} style={{"width":"13px","height":"13px"}} />Resend invitation</button>
