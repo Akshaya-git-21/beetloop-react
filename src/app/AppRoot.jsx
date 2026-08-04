@@ -1254,7 +1254,12 @@ class AppRoot extends React.Component {
     // masters/users always show action for admin
     if(route==='users') page.canEdit = ['admin','coo','ceo'].includes(rk);
     if(route==='repositories') page.canEdit = rk==='admin';
-    if(['dashboard','analytics','masters','config','qc','content','effort','profile'].includes(route)) page.canEdit = false;
+    // 'files' (Document Repository) has no create action — it's auto-collected
+    // from task evidence/QC refs/comments, not something you manually add to
+    // (see the page's own "no separate upload needed" note). Without this,
+    // any role with edit-level access showed an empty, unlabeled button here
+    // that — if clicked — flashed a false "Draft created" toast and did nothing.
+    if(['dashboard','analytics','masters','config','qc','content','effort','profile','files'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
 
     const primaryAction = ()=>{
