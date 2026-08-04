@@ -256,6 +256,15 @@ class AppRoot extends React.Component {
     if(prevState.screen!==this.state.screen || prevState.route!==this.state.route){
       this._syncLocationFromState();
     }
+    // WhatsApp-style read receipts: mark every message in the currently
+    // open thread as read by me the moment it's actually on screen —
+    // entering Messages, switching threads, or a new message landing in the
+    // thread you're already looking at (via realtime/_loadThreads).
+    const wasOnThread = prevState.route==='messages' ? prevState.thOpen : null;
+    const isOnThread = this.state.route==='messages' ? this.state.thOpen : null;
+    if(isOnThread && (isOnThread!==wasOnThread || prevState.thAdded!==this.state.thAdded)){
+      this._markThreadRead(isOnThread);
+    }
   }
 
   flash(msg){ this.setState({ toast: msg }); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({toast:''}),2400); }
@@ -984,6 +993,19 @@ class AppRoot extends React.Component {
       return { ...t, msgs:[...merged, ...extra] };
     });
   }
+  // Private-by-default, like WhatsApp: a group channel only shows to its
+  // actual members (DM threads store only the OTHER party in `members` —
+  // see thSave() — so every DM is implicitly the viewer's own and always
+  // stays visible; only channels need a real membership check). Admin is
+  // the one deliberate exception — full visibility into every conversation,
+  // same "no compromise" access Admin already has everywhere else in the
+  // app — not a role that just happens to be in every group.
+  myThreads(){
+    const all=this.allThreads();
+    if(this.state.roleKey==='admin') return all;
+    const me=this.currentPerson();
+    return all.filter(t=>t.kind!=='channel' || (t.members||[]).includes(me));
+  }
   // Shared write path for both a brand-new message and an edit to an
   // existing one (e.g. task-linking) — same overlay, same upsert, so a
   // message that started life in the hardcoded THREADS_SEED() can still be
@@ -1000,9 +1022,25 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] message upsert failed:', error.message);
     });
   }
+  // WhatsApp-style read receipts — appends {who, when} to a message's
+  // readBy the first time the current user actually has that thread open.
+  // Skips messages already marked and the user's own messages (you always
+  // implicitly "see" what you sent).
+  _markThreadRead(threadId){
+    const me=this.currentPerson();
+    const th=this.allThreads().find(t=>t.id===threadId);
+    if(!th) return;
+    const now=new Date();
+    const when=this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    th.msgs.forEach(m=>{
+      if(m.who===me) return;
+      if((m.readBy||[]).some(r=>r.who===me)) return;
+      this._patchMessage(threadId, m, { readBy:[...(m.readBy||[]), { who:me, when }] });
+    });
+  }
   messagesView(){
     const rk=this.state.roleKey, me=this.currentPerson();
-    const threads=this.allThreads();
+    const threads=this.myThreads();
     const curId=this.state.thOpen||threads[0].id;
     const cur=threads.find(t=>t.id===curId)||threads[0];
     const tasks=this.allTasks();
@@ -1017,12 +1055,36 @@ class AppRoot extends React.Component {
           style:'display:flex;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid '+(active?'var(--orchid-300)':'transparent')+';background:'+(active?'var(--orchid-100)':'transparent'),
           open:()=>this.setState({ thOpen:t.id }) }; }),
       msgCurName:cur.name, msgCurIcon:cur.kind==='channel'?'hash':'user',
-      msgCurMembers:cur.members.join(', '),
+      // DMs only ever have the other party in `members` (see thSave()), so
+      // joining it just repeats the header name right back — show their
+      // role instead. Channels genuinely have multiple members, so the
+      // joined list stays useful there.
+      msgCurMembers:cur.kind==='channel' ? cur.members.join(', ')
+        : (()=>{ const u=this.userOf(cur.name); return u ? u.role+' · '+u.dept : 'Direct message'; })(),
       msgRows:cur.msgs.map(m=>{ const linked=m.taskId&&tasks.find(t=>t.id===m.taskId);
         const mine=m.who===me;
+        // WhatsApp-style receipt — only meaningful for messages I sent.
+        // DM: single tick "Sent" until the other person's readBy entry
+        // shows up, then a colored "Seen · HH:MM". Group: "Seen by N of M"
+        // so it never falsely implies everyone's read it.
+        const others=(cur.members||[]).filter(x=>x!==m.who);
+        const readers=(m.readBy||[]).filter(r=>others.includes(r.who));
+        let receiptLabel='', receiptSeen=false;
+        if(mine && others.length){
+          if(cur.kind==='channel'){
+            receiptSeen=readers.length>0;
+            receiptLabel=readers.length===0?'Sent':(readers.length===others.length?'Seen by all':('Seen by '+readers.length+' of '+others.length));
+          } else {
+            receiptSeen=readers.length>0;
+            receiptLabel=readers.length?('Seen · '+(String(readers[0].when||'').split(' · ')[1]||'')):'Sent';
+          }
+        }
         return { ...m, initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
           bubbleBg:mine?'var(--orchid-100)':'var(--surface-50)',
           avatarBg:mine?'var(--orchid-500)':'var(--beet-700)',
+          hasReceipt:!!receiptLabel, receiptLabel, receiptSeen,
+          receiptIcon:receiptSeen?'check-check':'check',
+          receiptColor:receiptSeen?'var(--verify-600)':'var(--ink-400)',
           hasTask:!!linked,
           taskLabel:linked?(linked.id+' · '+linked.name):'',
           taskStatus:linked?linked.status:'',
@@ -2641,8 +2703,10 @@ class AppRoot extends React.Component {
     const own=['senior','junior'].includes(rk);
     const fileType=(n)=>this.fileKind(n);
     let files=[];
-    // message attachments — collected from every thread
-    this.allThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>{
+    // message attachments — collected from every thread the viewer can
+    // actually see (myThreads() — same DM/channel/Admin rules as Messages
+    // itself), not every thread in the system.
+    this.myThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>{
       if(own && m.who!==me) return;
       files.push({ name:n, source:'Message attachment', by:m.who,
         task:{ id:th.name, name:'“'+String(m.text).slice(0,48)+'”', status:'Shared', start:String(m.when).split(' · ')[0], end:'—', assignee:m.who } });
@@ -7964,7 +8028,7 @@ class AppRoot extends React.Component {
     const out=[]; const seen={};
     const add=(name,source,by,where)=>{ const k=name+'|'+source+'|'+where; if(seen[k]) return; seen[k]=1;
       out.push({ name, source, by, where }); };
-    this.allThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>add(n,'Message attachment',m.who,th.name))));
+    this.myThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>add(n,'Message attachment',m.who,th.name))));
     this.allTasks().forEach(t=>{ const ov=this.tkOv?this.tkOv(t):t;
       (ov.evidence||t.evidence||[]).forEach(n=>add(n,'Task evidence',t.assignee,t.id));
       (ov.comments||t.comments||[]).forEach(c=>(c.files||[]).forEach(n=>{ if(String(n).indexOf('http')===0) return;

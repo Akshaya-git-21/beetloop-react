@@ -63,6 +63,13 @@ export default function MessagesSection({ vm }) {
                       </div>
                       <div style={cssTextToObject(`background:${m.bubbleBg};border:1px solid var(--line-200);border-radius:13px;padding:11px 14px;font-size:13px;color:var(--ink-900);line-height:1.55`)}>{m.text}</div>
 
+                      {Boolean(m.hasReceipt) && (
+                        <div style={cssTextToObject(`display:flex;align-items:center;gap:4px;margin-top:4px;font-size:10.5px;font-weight:600;color:${m.receiptColor}`)}>
+                          <Icon name={m.receiptIcon} style={{ width: 12, height: 12 }} />
+                          {m.receiptLabel}
+                        </div>
+                      )}
+
                       {Boolean(m.hasFiles) && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
                           {(m.fileRows || []).map((fl, i) => (
