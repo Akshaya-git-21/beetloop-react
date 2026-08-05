@@ -1287,6 +1287,11 @@ class AppRoot extends React.Component {
   // _unreadInThread — no parallel Supabase calls), but its own open/
   // minimized/active-thread state so it survives route navigation
   // independently of the full Messages page's thOpen.
+  // Floating widget — full feature parity with the main Messages page
+  // (reply/forward/copy/edit/delete/pin/archive/emoji/attachments), but
+  // entirely separate `chatWidget*` state so editing/replying/attaching in
+  // the widget never collides with whatever the full page is doing with its
+  // own `msg*` state for a different thread.
   chatWidgetView(){
     const rk=this.state.roleKey, me=this.currentPerson();
     const online=this.state.onlineUsers||{};
@@ -1297,6 +1302,7 @@ class AppRoot extends React.Component {
     const minimized=!!this.state.chatWidgetMinimized;
     const curId=this.state.chatWidgetThread;
     const cur=curId ? allMine.find(t=>t.id===curId) : null;
+    const fileIcon=(n)=>/\.(png|jpe?g|gif|webp|svg)$/i.test(n)?'image':(/\.(mp4|mov|webm)$/i.test(n)?'video':(/\.pdf$/i.test(n)?'file-text':'file'));
     return {
       cwOpen:open, cwMinimized:minimized,
       cwHasUnread:totalUnread>0, cwUnreadTotal:totalUnread>99?'99+':String(totalUnread),
@@ -1309,10 +1315,12 @@ class AppRoot extends React.Component {
         const last=t.msgs[t.msgs.length-1]||{};
         const unread=this._unreadInThread(t, me);
         const isOnline=t.kind!=='channel' && !!online[t.name];
-        return { id:t.id, name:t.name, icon:t.kind==='channel'?'hash':'user',
+        const pinned=(t.pinnedBy||[]).includes(me);
+        return { id:t.id, name:t.name, icon:t.kind==='channel'?'hash':'user', pinned,
           preview:String(last.text||'').slice(0,44),
           hasUnread:unread>0, unreadCount:unread>99?'99+':String(unread),
           isOnline, onlineDotColor:isOnline?'var(--verify-500)':'var(--ink-300)',
+          togglePin:()=>this._patchThread(t.id, { pinnedBy: pinned?(t.pinnedBy||[]).filter(x=>x!==me):[...(t.pinnedBy||[]),me] }),
           open:()=>{ this.setState({ chatWidgetThread:t.id }); this._markThreadRead(t.id); } }; }),
       ...(cur ? {
         cwCurName:cur.name, cwCurIcon:cur.kind==='channel'?'hash':'user',
@@ -1322,21 +1330,78 @@ class AppRoot extends React.Component {
           if(cur.kind!=='channel') return online[cur.name] ? 'Online' : '';
           return ''; })(),
         cwRows:cur.msgs.map(m=>{ const mine=m.who===me;
-          return { id:m.id, mine, deleted:!!m.deleted, text:m.text, who:m.who,
+          const others=(cur.members||[]).filter(x=>x!==m.who);
+          const readers=(m.readBy||[]).filter(r=>others.includes(r.who));
+          let receiptLabel='', receiptSeen=false;
+          if(mine && others.length){
+            receiptSeen=readers.length>0;
+            receiptLabel=cur.kind==='channel'
+              ? (readers.length===0?'Sent':(readers.length===others.length?'Seen by all':('Seen by '+readers.length+' of '+others.length)))
+              : (readers.length?'Seen':'Sent');
+          }
+          const replySrc=m.replyTo&&cur.msgs.find(x=>x.id===m.replyTo);
+          const canDelete=mine||this.hasPerm('messages','delete')||this.hasPerm('messages','auditAll');
+          return { id:m.id, mine, deleted:!!m.deleted, text:m.text, who:m.who, forwarded:!!m.forwarded, edited:!!m.edited,
             when:String(m.when||'').split(' · ')[1]||'',
             initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
             bubbleBg:mine?'var(--orchid-100)':'var(--surface-50)',
             avatarBg:mine?'var(--orchid-500)':'var(--beet-700)',
-            showNameRow:!mine && cur.kind==='channel' }; }),
+            showNameRow:!mine && cur.kind==='channel',
+            hasReceipt:!!receiptLabel, receiptLabel, receiptSeen,
+            receiptIcon:receiptSeen?'check-check':'check',
+            receiptColor:receiptSeen?'var(--verify-600)':'var(--ink-400)',
+            hasFiles:(m.files||[]).length>0,
+            fileRows:(m.files||[]).map(n=>({ name:n, icon:fileIcon(n), openRepo:()=>this.setState({ route:'files' }) })),
+            replyPreview:replySrc?{ who:replySrc.who, text:String(replySrc.text||'').slice(0,80) }:null,
+            scrollToReply:()=>{ const el=document.getElementById('cw-msg-'+m.replyTo); if(el) el.scrollIntoView({ behavior:'smooth', block:'center' }); },
+            reply:()=>this.setState({ chatWidgetReplyTo:m.id, chatWidgetEditingId:null }),
+            forward:()=>this.setState({ chatWidgetForwardId:m.id }),
+            forwardPicker:this.state.chatWidgetForwardId===m.id,
+            forwardOptions:[{v:'',label:'— Choose a conversation —'}].concat(allMine.filter(t=>t.id!==cur.id).map(t=>({ v:t.id, label:t.name }))),
+            forwardPick:(e)=>{ const v=e.target.value; if(!v) return;
+              const now=new Date();
+              const fwd={ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
+                when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+                text:m.text, files:m.files||[], forwarded:true };
+              this._patchMessage(v, fwd, {});
+              this.setState({ chatWidgetForwardId:null });
+              const t=allMine.find(x=>x.id===v); this.flash('Message forwarded'+(t?(' to '+t.name):'')+'.'); },
+            forwardCancel:()=>this.setState({ chatWidgetForwardId:null }),
+            copy:()=>{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(String(m.text||'')); this.flash('Message copied.'); },
+            canEdit:mine && !m.deleted,
+            startEdit:()=>this.setState({ chatWidgetEditingId:m.id, chatWidgetDraft:String(m.text||''), chatWidgetReplyTo:null }),
+            canDelete:canDelete && !m.deleted,
+            remove:()=>this._patchMessage(cur.id, m, { deleted:true, text:'' }) }; }),
+        cwEmojiOpen:!!this.state.chatWidgetEmojiOpen,
+        cwToggleEmoji:()=>this.setState({ chatWidgetEmojiOpen:!this.state.chatWidgetEmojiOpen }),
+        cwEmojiList:['😀','😂','😊','😍','👍','🙏','🎉','🔥','❤️','😢','😮','👏','✅','⚠️','🚀','💡'],
+        cwPickEmoji:(em)=>this.setState({ chatWidgetDraft:(this.state.chatWidgetDraft||'')+em }),
+        cwReplyingTo:this.state.chatWidgetReplyTo ? (()=>{ const src=cur.msgs.find(x=>x.id===this.state.chatWidgetReplyTo); return src?{ who:src.who, text:String(src.text||'').slice(0,80) }:null; })() : null,
+        cwCancelReply:()=>this.setState({ chatWidgetReplyTo:null }),
+        cwEditingId:this.state.chatWidgetEditingId||null,
+        cwCancelEdit:()=>this.setState({ chatWidgetEditingId:null, chatWidgetDraft:'' }),
+        cwDraftFiles:(this.state.chatWidgetFiles||[]).map((n,i)=>({ name:n, icon:fileIcon(n),
+          remove:()=>{ const a=(this.state.chatWidgetFiles||[]).slice(); a.splice(i,1); this.setState({ chatWidgetFiles:a }); } })),
+        cwHasFiles:(this.state.chatWidgetFiles||[]).length>0,
+        cwAttach:()=>this.openFilePicker('chatwidget','Attach to message'),
+        cwAttachImage:()=>{ this.openFilePicker('chatwidget','Attach image to message'); this.setState({ fpType:'Image', fpKind:'Image' }); },
         cwDraft:this.state.chatWidgetDraft||'',
         cwOnDraft:(e)=>{ this.setState({ chatWidgetDraft:e.target.value }); this._broadcastTyping(cur.id); },
         cwSend:()=>{ const txt=(this.state.chatWidgetDraft||'').trim();
-          if(!txt) return;
+          const files=this.state.chatWidgetFiles||[];
+          if(!txt&&!files.length) return;
+          if(this.state.chatWidgetEditingId){
+            const orig=cur.msgs.find(x=>x.id===this.state.chatWidgetEditingId);
+            if(orig) this._patchMessage(cur.id, orig, { text:txt, edited:true, editHistory:[...(orig.editHistory||[]), orig.text] });
+            this.setState({ chatWidgetDraft:'', chatWidgetFiles:[], chatWidgetEditingId:null });
+            return;
+          }
           const id='M'+Date.now(); const now=new Date();
           const msg={ id, who:me, role:this.ROLES[rk].label,
-            when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt };
+            when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt||'(attachment)', files };
+          if(this.state.chatWidgetReplyTo) msg.replyTo=this.state.chatWidgetReplyTo;
           this._patchMessage(cur.id, msg, {});
-          this.setState({ chatWidgetDraft:'' }); },
+          this.setState({ chatWidgetDraft:'', chatWidgetFiles:[], chatWidgetReplyTo:null }); },
       } : {}),
     };
   }
@@ -8245,6 +8310,7 @@ class AppRoot extends React.Component {
     if(!names.length) return;
     const t=String(target||'');
     if(t==='msg') this.setState({ msgFiles:[...(this.state.msgFiles||[]), ...names] });
+    else if(t==='chatwidget') this.setState({ chatWidgetFiles:[...(this.state.chatWidgetFiles||[]), ...names] });
     else if(t==='ticket'){ const f=this.state.tktForm||{}; this.setState({ tktForm:{...f, files:[...(f.files||[]), ...names]} }); }
     else if(t==='comment') this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]), ...names] });
     else if(t==='checkin'){ const cf=this.state.ciForm||{}; this.setState({ ciForm:{...cf, files:[...(cf.files||[]), ...names]} }); }
