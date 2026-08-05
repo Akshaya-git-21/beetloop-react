@@ -57,6 +57,7 @@ import RaiseTicketModal from '../components/drawers/RaiseTicketModal.jsx';
 import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
 import FilePickerModal from '../components/drawers/FilePickerModal.jsx';
 import TaskFilePreviewModal from '../components/drawers/TaskFilePreviewModal.jsx';
+import FloatingChatWidget from '../components/drawers/FloatingChatWidget.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -401,7 +402,7 @@ export default function AppShell({ vm }) {
 <ContactFormModal vm={vm} />
 <ContactDetailDrawer vm={vm} />
 
-
+{route !== 'messages' && <FloatingChatWidget vm={vm} />}
 
     </React.Fragment>
   );

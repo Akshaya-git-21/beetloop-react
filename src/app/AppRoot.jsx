@@ -132,12 +132,15 @@ class AppRoot extends React.Component {
   // Management — overrides persist in state.rolePerms.
   PERMISSION_MODULES(){ return Object.keys(this.ACCESS); }
   defaultPermsFromLevel(level){
-    if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false, approve:false, export:false };
+    // auditAll never has a default — it must always come from an explicit
+    // rolePerms override written via setPerm(), never inferred from a
+    // module's normal access level, including for Admin. See myThreads().
+    if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false, approve:false, export:false, auditAll:false };
     const l=String(level).toLowerCase();
     const rw=/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
     const del=/full/.test(l);
     const approve=/full|review|qc|approv/.test(l);
-    return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del };
+    return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del, auditAll:false };
   }
   getPerm(moduleKey, roleKey){
     const stored=(this.state.rolePerms||{})[moduleKey]&&(this.state.rolePerms||{})[moduleKey][roleKey];
@@ -217,6 +220,7 @@ class AppRoot extends React.Component {
     clearTimeout(this._t);
     if(this._authSub) this._authSub.unsubscribe();
     if(this._realtimeChannel) supabase.removeChannel(this._realtimeChannel);
+    if(this._presenceChannel) supabase.removeChannel(this._presenceChannel);
   }
 
   async doLogout(){
@@ -984,25 +988,35 @@ class AppRoot extends React.Component {
   // the fact — instead of only ever supporting brand-new messages.
   allThreads(){
     const added=(this.state.thAdded||{});
-    const base=this.THREADS_SEED().concat(this.state.thNew||[]);
+    const patched=(this.state.thPatched||{});
+    const thNew=this.state.thNew||[];
+    // A seed thread (TH-001/002/003) only gets its own row in the `threads`
+    // table once something patches it (e.g. pin/archive via _patchThread) —
+    // at that point _loadThreads() will start returning it in thNew too, so
+    // the DB copy (authoritative, carries pinnedBy/archivedBy) must win over
+    // the hardcoded seed copy instead of both showing up side by side.
+    const newIds=new Set(thNew.map(t=>t.id));
+    const base=this.THREADS_SEED().filter(t=>!newIds.has(t.id)).concat(thNew);
     return base.map(t=>{
       const overlay=added[t.id]||{};
       const baseIds=new Set(t.msgs.map(m=>m.id));
       const merged=t.msgs.map(m=>overlay[m.id]?{...m,...overlay[m.id]}:m);
       const extra=Object.keys(overlay).filter(id=>!baseIds.has(id)).map(id=>overlay[id]);
-      return { ...t, msgs:[...merged, ...extra] };
+      return { ...t, ...(patched[t.id]||{}), msgs:[...merged, ...extra] };
     });
   }
   // Private-by-default, like WhatsApp: a group channel only shows to its
   // actual members (DM threads store only the OTHER party in `members` —
   // see thSave() — so every DM is implicitly the viewer's own and always
-  // stays visible; only channels need a real membership check). Admin is
-  // the one deliberate exception — full visibility into every conversation,
-  // same "no compromise" access Admin already has everywhere else in the
-  // app — not a role that just happens to be in every group.
+  // stays visible; only channels need a real membership check). Nobody,
+  // not even Admin, sees every conversation by default — that requires the
+  // explicit "Audit all conversations" permission (User Management ->
+  // Permissions -> Messages), which is off for every role until someone
+  // deliberately turns it on. This is the one place in the app where Admin
+  // does NOT get automatic full access — conversation privacy comes first.
   myThreads(){
     const all=this.allThreads();
-    if(this.state.roleKey==='admin') return all;
+    if(this.hasPerm('messages','auditAll')) return all;
     const me=this.currentPerson();
     return all.filter(t=>t.kind!=='channel' || (t.members||[]).includes(me));
   }
@@ -1022,6 +1036,19 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] message upsert failed:', error.message);
     });
   }
+  // Generic thread-payload patch (pin/archive live on the thread record
+  // itself, not a message) — same overlay-then-upsert shape as
+  // _patchMessage so a pin/archive survives a reload immediately.
+  _patchThread(threadId, patch){
+    const th=this.allThreads().find(t=>t.id===threadId);
+    if(!th) return;
+    const { msgs, ...rec }=th;
+    const full={...rec, ...patch};
+    this.setState(s=>({ thPatched:{ ...(s.thPatched||{}), [threadId]:{ ...((s.thPatched||{})[threadId]), ...patch } } }));
+    supabase.from('threads').upsert({ id:threadId, payload:full, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] thread upsert failed:', error.message);
+    });
+  }
   // WhatsApp-style read receipts — appends {who, when} to a message's
   // readBy the first time the current user actually has that thread open.
   // Skips messages already marked and the user's own messages (you always
@@ -1038,29 +1065,114 @@ class AppRoot extends React.Component {
       this._patchMessage(threadId, m, { readBy:[...(m.readBy||[]), { who:me, when }] });
     });
   }
+  // Unread = messages not sent by me that I haven't read yet (mirrors
+  // _markThreadRead's own readBy check, kept in sync by construction since
+  // both read the same field).
+  _unreadInThread(t, me){
+    return t.msgs.filter(m=>m.who!==me && !(m.readBy||[]).some(r=>r.who===me)).length;
+  }
   messagesView(){
     const rk=this.state.roleKey, me=this.currentPerson();
-    const threads=this.myThreads();
-    const curId=this.state.thOpen||threads[0].id;
+    const online=this.state.onlineUsers||{};
+    const typingMap=this.state.typingByThread||{};
+    const q=(this.state.msgThreadQuery||'').toLowerCase();
+    const archiveOpen=!!this.state.msgArchiveOpen;
+    const allMine=this.myThreads().filter(t=>archiveOpen===(t.archivedBy||[]).includes(me));
+    const filtered=q ? allMine.filter(t=>{ const last=t.msgs[t.msgs.length-1]||{};
+      return t.name.toLowerCase().includes(q) || String(last.text||'').toLowerCase().includes(q); }) : allMine;
+    const threads=filtered.slice().sort((a,b)=>((b.pinnedBy||[]).includes(me)?1:0)-((a.pinnedBy||[]).includes(me)?1:0));
+    const curId=this.state.thOpen||(threads[0]&&threads[0].id);
     const cur=threads.find(t=>t.id===curId)||threads[0];
     const tasks=this.allTasks();
+    const archiveToggle={ msgArchiveOpen:archiveOpen,
+      msgToggleArchiveView:()=>this.setState({ msgArchiveOpen:!archiveOpen, thOpen:null }) };
+    const threadFormVm=(()=>{ const nf=this.state.thForm;
+      const people=(this.state.users||[]).map(u=>u.name).filter(p=>p!==me);
+      const set=(k)=>(e)=>this.setState({ thForm:{...nf,[k]:e.target.value} });
+      return {
+        msgNewGroup:()=>this.setState({ thForm:{ kind:'channel', name:'', members:[], first:'' } }),
+        msgNewDm:()=>this.setState({ thForm:{ kind:'dm', name:'', members:[], first:'' } }),
+        thFormOpen:!!nf, thf:nf||{},
+        thIsChannel:!!nf&&nf.kind==='channel', thIsDm:!!nf&&nf.kind==='dm',
+        thFormTitle:nf?(nf.kind==='channel'?'New group':'New direct message'):'',
+        thClose:()=>this.setState({ thForm:null }),
+        thStop:(e)=>e.stopPropagation(),
+        thSetName:set('name'), thSetFirst:set('first'),
+        thKindBtns:['channel','dm'].map(k=>({ label:k==='channel'?'Group channel':'Direct message', active:!!nf&&nf.kind===k,
+          set:()=>this.setState({ thForm:{...nf, kind:k, members:[]} }) })),
+        thPeople:people.map(p=>{ const on=!!nf&&(nf.members||[]).includes(p);
+          return { name:p, initials:p.split(' ').map(s=>s[0]).join('').slice(0,2), on,
+            toggle:()=>{ const cur2=(nf.members||[]); const next=on?cur2.filter(x=>x!==p):(nf.kind==='dm'?[p]:[...cur2,p]);
+              this.setState({ thForm:{...nf, members:next} }); } }; }),
+        thMemberNote:nf?((nf.members||[]).length?((nf.members||[]).length+' member'+((nf.members||[]).length===1?'':'s')+' selected'+(nf.kind==='dm'?'':' — you are added automatically')):(nf.kind==='dm'?'Pick one person':'Pick the people for this group')):'',
+        thSave:()=>{
+          const k=nf.kind;
+          const mem=nf.members||[];
+          if(k==='dm'&&!mem.length){ this.flash('Pick the person to message.'); return; }
+          if(k==='channel'&&!(nf.name||'').trim()){ this.flash('Name the group.'); return; }
+          if(k==='channel'&&!mem.length){ this.flash('Add at least one member.'); return; }
+          const id='TH-'+String(100+threads.length+1).slice(-3);
+          const name=k==='channel'?('#'+String(nf.name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):mem[0];
+          const msgs=[];
+          if((nf.first||'').trim()){ const now=new Date();
+            msgs.push({ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
+              when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+              text:nf.first.trim() }); }
+          const threadRec={ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem };
+          this.setState({ thNew:[{...threadRec, msgs}].concat(this.state.thNew||[]),
+            thForm:null, thOpen:id });
+          this.flash((k==='channel'?'Group ':'Conversation ')+name+' created.');
+          supabase.from('threads').insert({ id, payload:threadRec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] thread insert failed:', error.message);
+          });
+          msgs.forEach(msg=>{
+            supabase.from('messages').upsert({ id:id+':'+msg.id, thread_id:id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+              if(error) console.warn('[supabase] message insert failed:', error.message);
+            });
+          });
+        } }; })();
+    if(!cur) return { msgThreads:[], msgEmpty:true, ...archiveToggle, ...threadFormVm,
+      msgThreadQuery:this.state.msgThreadQuery||'', msgSetThreadQuery:(e)=>this.setState({ msgThreadQuery:e.target.value }) };
+    const searchOpen=!!this.state.msgSearchOpen;
+    const searchQ=(this.state.msgSearchQuery||'').toLowerCase();
+    const searchHits=searchQ ? cur.msgs.filter(m=>String(m.text||'').toLowerCase().includes(searchQ)).length : 0;
     return {
+      ...archiveToggle,
+      msgThreadQuery:this.state.msgThreadQuery||'', msgSetThreadQuery:(e)=>this.setState({ msgThreadQuery:e.target.value }),
+      msgSearchOpen:searchOpen, msgSearchQuery:this.state.msgSearchQuery||'', msgSearchHitCount:searchHits,
+      msgToggleSearch:()=>this.setState({ msgSearchOpen:!searchOpen, msgSearchQuery:'' }),
+      msgSetSearchQuery:(e)=>this.setState({ msgSearchQuery:e.target.value }),
       msgThreads:threads.map(t=>{ const last=t.msgs[t.msgs.length-1]||{};
         const active=t.id===cur.id;
+        const unread=this._unreadInThread(t, me);
+        const isOnline=t.kind!=='channel' && !!online[t.name];
+        const pinned=(t.pinnedBy||[]).includes(me);
+        const archived=(t.archivedBy||[]).includes(me);
         return { id:t.id, name:t.name, isChannel:t.kind==='channel',
           icon:t.kind==='channel'?'hash':'user',
           preview:(last.who||'')+': '+String(last.text||'').slice(0,52)+'…',
           when:String(last.when||'').split(' · ')[1]||'',
           count:t.msgs.length+' message'+(t.msgs.length===1?'':'s'),
+          hasUnread:unread>0, unreadCount:unread>99?'99+':String(unread),
+          isOnline, onlineDotColor:isOnline?'var(--verify-500)':'var(--ink-300)',
+          pinned, archived,
+          togglePin:()=>this._patchThread(t.id, { pinnedBy: pinned?(t.pinnedBy||[]).filter(x=>x!==me):[...(t.pinnedBy||[]),me] }),
+          toggleArchive:()=>this._patchThread(t.id, { archivedBy: archived?(t.archivedBy||[]).filter(x=>x!==me):[...(t.archivedBy||[]),me] }),
           style:'display:flex;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid '+(active?'var(--orchid-300)':'transparent')+';background:'+(active?'var(--orchid-100)':'transparent'),
-          open:()=>this.setState({ thOpen:t.id }) }; }),
+          open:()=>{ this.setState({ thOpen:t.id }); this._markThreadRead(t.id); } }; }),
       msgCurName:cur.name, msgCurIcon:cur.kind==='channel'?'hash':'user',
+      msgCurOnline:cur.kind!=='channel' && !!online[cur.name],
       // DMs only ever have the other party in `members` (see thSave()), so
       // joining it just repeats the header name right back — show their
       // role instead. Channels genuinely have multiple members, so the
       // joined list stays useful there.
       msgCurMembers:cur.kind==='channel' ? cur.members.join(', ')
         : (()=>{ const u=this.userOf(cur.name); return u ? u.role+' · '+u.dept : 'Direct message'; })(),
+      msgCurStatusLine: (()=>{ const typing=typingMap[cur.id];
+        if(typing && Date.now()-typing.at<3500) return typing.who+' is typing…';
+        if(cur.kind!=='channel') return online[cur.name] ? 'Online' : '';
+        return ''; })(),
+      msgCurStatusIsTyping: !!(typingMap[cur.id] && Date.now()-typingMap[cur.id].at<3500),
       msgRows:cur.msgs.map(m=>{ const linked=m.taskId&&tasks.find(t=>t.id===m.taskId);
         const mine=m.who===me;
         // WhatsApp-style receipt — only meaningful for messages I sent.
@@ -1079,12 +1191,36 @@ class AppRoot extends React.Component {
             receiptLabel=readers.length?('Seen · '+(String(readers[0].when||'').split(' · ')[1]||'')):'Sent';
           }
         }
-        return { ...m, initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
+        const replySrc=m.replyTo&&cur.msgs.find(x=>x.id===m.replyTo);
+        const canDelete=mine||this.hasPerm('messages','delete')||this.hasPerm('messages','auditAll');
+        return { ...m, mine, initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
+          showNameRow: !mine && cur.kind==='channel',
           bubbleBg:mine?'var(--orchid-100)':'var(--surface-50)',
           avatarBg:mine?'var(--orchid-500)':'var(--beet-700)',
           hasReceipt:!!receiptLabel, receiptLabel, receiptSeen,
           receiptIcon:receiptSeen?'check-check':'check',
           receiptColor:receiptSeen?'var(--verify-600)':'var(--ink-400)',
+          searchDim: !!searchQ && !String(m.text||'').toLowerCase().includes(searchQ),
+          replyPreview: replySrc ? { who:replySrc.who, text:String(replySrc.text||'').slice(0,80) } : null,
+          scrollToReply:()=>{ const el=document.getElementById('msg-'+m.replyTo); if(el) el.scrollIntoView({ behavior:'smooth', block:'center' }); },
+          reply:()=>this.setState({ msgReplyTo:m.id, msgEditingId:null }),
+          forward:()=>this.setState({ msgForwardId:m.id }),
+          forwardPicker:this.state.msgForwardId===m.id,
+          forwardOptions:[{v:'',label:'— Choose a conversation —'}].concat(allMine.filter(t=>t.id!==cur.id).map(t=>({ v:t.id, label:t.name }))),
+          forwardPick:(e)=>{ const v=e.target.value; if(!v) return;
+            const now=new Date();
+            const fwd={ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
+              when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+              text:m.text, files:m.files||[], forwarded:true };
+            this._patchMessage(v, fwd, {});
+            this.setState({ msgForwardId:null });
+            const t=allMine.find(x=>x.id===v); this.flash('Message forwarded'+(t?(' to '+t.name):'')+'.'); },
+          forwardCancel:()=>this.setState({ msgForwardId:null }),
+          copy:()=>{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(String(m.text||'')); this.flash('Message copied.'); },
+          canEdit: mine && !m.deleted,
+          startEdit:()=>this.setState({ msgEditingId:m.id, msgDraft:String(m.text||''), msgReplyTo:null }),
+          canDelete: canDelete && !m.deleted,
+          remove:()=>this._patchMessage(cur.id, m, { deleted:true, text:'' }),
           hasTask:!!linked,
           taskLabel:linked?(linked.id+' · '+linked.name):'',
           taskStatus:linked?linked.status:'',
@@ -1109,68 +1245,99 @@ class AppRoot extends React.Component {
             const t=tasks.find(x=>x.id===v); this.flash('Message linked to '+v+(t?(' — '+t.name):'')+'.'); },
           linkCancel:()=>this.setState({ msgLink:null }) }; }),
       msgDraft:this.state.msgDraft||'',
-      msgOnDraft:(e)=>this.setState({ msgDraft:e.target.value }),
+      msgOnDraft:(e)=>{ this.setState({ msgDraft:e.target.value }); this._broadcastTyping(cur.id); },
       msgDraftFiles:(this.state.msgFiles||[]).map((n,i)=>({ name:n,
         icon:/\.(png|jpe?g|gif|webp|svg)$/i.test(n)?'image':(/\.(mp4|mov|webm)$/i.test(n)?'video':(/\.pdf$/i.test(n)?'file-text':'file')),
         remove:()=>{ const a=(this.state.msgFiles||[]).slice(); a.splice(i,1); this.setState({ msgFiles:a }); } })),
       msgHasFiles:(this.state.msgFiles||[]).length>0,
       msgAttach:()=>this.openFilePicker('msg','Attach to message'),
       msgAttachImage:()=>{ this.openFilePicker('msg','Attach image to message'); this.setState({ fpType:'Image', fpKind:'Image' }); },
+      msgEmojiOpen:!!this.state.msgEmojiOpen,
+      msgToggleEmoji:()=>this.setState({ msgEmojiOpen:!this.state.msgEmojiOpen }),
+      msgEmojiList:['😀','😂','😊','😍','👍','🙏','🎉','🔥','❤️','😢','😮','👏','✅','⚠️','🚀','💡'],
+      msgPickEmoji:(em)=>this.setState({ msgDraft:(this.state.msgDraft||'')+em }),
+      msgReplyingTo: this.state.msgReplyTo ? (()=>{ const src=cur.msgs.find(x=>x.id===this.state.msgReplyTo); return src?{ who:src.who, text:String(src.text||'').slice(0,80) }:null; })() : null,
+      msgCancelReply:()=>this.setState({ msgReplyTo:null }),
+      msgEditingId:this.state.msgEditingId||null,
+      msgCancelEdit:()=>this.setState({ msgEditingId:null, msgDraft:'' }),
       msgSend:()=>{ const txt=(this.state.msgDraft||'').trim();
         const files=this.state.msgFiles||[];
         if(!txt&&!files.length){ this.flash('Type a message or attach a file first.'); return; }
+        if(this.state.msgEditingId){
+          const orig=cur.msgs.find(x=>x.id===this.state.msgEditingId);
+          if(orig){
+            this._patchMessage(cur.id, orig, { text:txt, edited:true, editHistory:[...(orig.editHistory||[]), orig.text] });
+          }
+          this.setState({ msgDraft:'', msgFiles:[], msgEditingId:null });
+          return;
+        }
         const id='M'+Date.now();
         const now=new Date();
         const msg={ id, who:me, role:this.ROLES[rk].label, when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt||'(attachment)', files };
+        if(this.state.msgReplyTo) msg.replyTo=this.state.msgReplyTo;
         this._patchMessage(cur.id, msg, {});
-        this.setState({ msgDraft:'', msgFiles:[] });
+        this.setState({ msgDraft:'', msgFiles:[], msgReplyTo:null });
         if(files.length) this.flash(files.length+' file'+(files.length===1?'':'s')+' shared.'); },
       msgCanAct:['manager','team_lead','admin','ceo'].includes(rk),
-      ...(()=>{ const nf=this.state.thForm;
-        const people=(this.state.users||[]).map(u=>u.name).filter(p=>p!==me);
-        const set=(k)=>(e)=>this.setState({ thForm:{...nf,[k]:e.target.value} });
-        return {
-          msgNewGroup:()=>this.setState({ thForm:{ kind:'channel', name:'', members:[], first:'' } }),
-          msgNewDm:()=>this.setState({ thForm:{ kind:'dm', name:'', members:[], first:'' } }),
-          thFormOpen:!!nf, thf:nf||{},
-          thIsChannel:!!nf&&nf.kind==='channel', thIsDm:!!nf&&nf.kind==='dm',
-          thFormTitle:nf?(nf.kind==='channel'?'New group':'New direct message'):'',
-          thClose:()=>this.setState({ thForm:null }),
-          thStop:(e)=>e.stopPropagation(),
-          thSetName:set('name'), thSetFirst:set('first'),
-          thKindBtns:['channel','dm'].map(k=>({ label:k==='channel'?'Group channel':'Direct message', active:!!nf&&nf.kind===k,
-            set:()=>this.setState({ thForm:{...nf, kind:k, members:[]} }) })),
-          thPeople:people.map(p=>{ const on=!!nf&&(nf.members||[]).includes(p);
-            return { name:p, initials:p.split(' ').map(s=>s[0]).join('').slice(0,2), on,
-              toggle:()=>{ const cur2=(nf.members||[]); const next=on?cur2.filter(x=>x!==p):(nf.kind==='dm'?[p]:[...cur2,p]);
-                this.setState({ thForm:{...nf, members:next} }); } }; }),
-          thMemberNote:nf?((nf.members||[]).length?((nf.members||[]).length+' member'+((nf.members||[]).length===1?'':'s')+' selected'+(nf.kind==='dm'?'':' — you are added automatically')):(nf.kind==='dm'?'Pick one person':'Pick the people for this group')):'',
-          thSave:()=>{
-            const k=nf.kind;
-            const mem=nf.members||[];
-            if(k==='dm'&&!mem.length){ this.flash('Pick the person to message.'); return; }
-            if(k==='channel'&&!(nf.name||'').trim()){ this.flash('Name the group.'); return; }
-            if(k==='channel'&&!mem.length){ this.flash('Add at least one member.'); return; }
-            const id='TH-'+String(100+threads.length+1).slice(-3);
-            const name=k==='channel'?('#'+String(nf.name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):mem[0];
-            const msgs=[];
-            if((nf.first||'').trim()){ const now=new Date();
-              msgs.push({ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
-                when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
-                text:nf.first.trim() }); }
-            const threadRec={ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem };
-            this.setState({ thNew:[{...threadRec, msgs}].concat(this.state.thNew||[]),
-              thForm:null, thOpen:id });
-            this.flash((k==='channel'?'Group ':'Conversation ')+name+' created.');
-            supabase.from('threads').insert({ id, payload:threadRec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
-              if(error) console.warn('[supabase] thread insert failed:', error.message);
-            });
-            msgs.forEach(msg=>{
-              supabase.from('messages').upsert({ id:id+':'+msg.id, thread_id:id, payload:msg, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
-                if(error) console.warn('[supabase] message insert failed:', error.message);
-              });
-            });
-          } }; })(),
+      ...threadFormVm,
+    };
+  }
+  // Floating global widget — same underlying threads/messages as
+  // messagesView() (myThreads(), _patchMessage, _markThreadRead,
+  // _unreadInThread — no parallel Supabase calls), but its own open/
+  // minimized/active-thread state so it survives route navigation
+  // independently of the full Messages page's thOpen.
+  chatWidgetView(){
+    const rk=this.state.roleKey, me=this.currentPerson();
+    const online=this.state.onlineUsers||{};
+    const typingMap=this.state.typingByThread||{};
+    const allMine=this.myThreads().filter(t=>!(t.archivedBy||[]).includes(me));
+    const totalUnread=allMine.reduce((sum,t)=>sum+this._unreadInThread(t,me),0);
+    const open=!!this.state.chatWidgetOpen;
+    const minimized=!!this.state.chatWidgetMinimized;
+    const curId=this.state.chatWidgetThread;
+    const cur=curId ? allMine.find(t=>t.id===curId) : null;
+    return {
+      cwOpen:open, cwMinimized:minimized,
+      cwHasUnread:totalUnread>0, cwUnreadTotal:totalUnread>99?'99+':String(totalUnread),
+      cwToggleOpen:()=>this.setState({ chatWidgetOpen:!open, chatWidgetMinimized:false }),
+      cwClose:()=>this.setState({ chatWidgetOpen:false }),
+      cwToggleMinimize:()=>this.setState({ chatWidgetMinimized:!minimized }),
+      cwBack:()=>this.setState({ chatWidgetThread:null }),
+      cwShowList:!cur,
+      cwThreads:allMine.slice().sort((a,b)=>((b.pinnedBy||[]).includes(me)?1:0)-((a.pinnedBy||[]).includes(me)?1:0)).map(t=>{
+        const last=t.msgs[t.msgs.length-1]||{};
+        const unread=this._unreadInThread(t, me);
+        const isOnline=t.kind!=='channel' && !!online[t.name];
+        return { id:t.id, name:t.name, icon:t.kind==='channel'?'hash':'user',
+          preview:String(last.text||'').slice(0,44),
+          hasUnread:unread>0, unreadCount:unread>99?'99+':String(unread),
+          isOnline, onlineDotColor:isOnline?'var(--verify-500)':'var(--ink-300)',
+          open:()=>{ this.setState({ chatWidgetThread:t.id }); this._markThreadRead(t.id); } }; }),
+      ...(cur ? {
+        cwCurName:cur.name, cwCurIcon:cur.kind==='channel'?'hash':'user',
+        cwCurOnline:cur.kind!=='channel' && !!online[cur.name],
+        cwCurStatusLine:(()=>{ const typing=typingMap[cur.id];
+          if(typing && Date.now()-typing.at<3500) return typing.who+' is typing…';
+          if(cur.kind!=='channel') return online[cur.name] ? 'Online' : '';
+          return ''; })(),
+        cwRows:cur.msgs.map(m=>{ const mine=m.who===me;
+          return { id:m.id, mine, deleted:!!m.deleted, text:m.text, who:m.who,
+            when:String(m.when||'').split(' · ')[1]||'',
+            initials:m.who.split(' ').map(s=>s[0]).join('').slice(0,2),
+            bubbleBg:mine?'var(--orchid-100)':'var(--surface-50)',
+            avatarBg:mine?'var(--orchid-500)':'var(--beet-700)',
+            showNameRow:!mine && cur.kind==='channel' }; }),
+        cwDraft:this.state.chatWidgetDraft||'',
+        cwOnDraft:(e)=>{ this.setState({ chatWidgetDraft:e.target.value }); this._broadcastTyping(cur.id); },
+        cwSend:()=>{ const txt=(this.state.chatWidgetDraft||'').trim();
+          if(!txt) return;
+          const id='M'+Date.now(); const now=new Date();
+          const msg={ id, who:me, role:this.ROLES[rk].label,
+            when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'), text:txt };
+          this._patchMessage(cur.id, msg, {});
+          this.setState({ chatWidgetDraft:'' }); },
+      } : {}),
     };
   }
 
@@ -1535,6 +1702,11 @@ class AppRoot extends React.Component {
     if(showEffort) Object.assign(out, this.effortView());
     if(showIdeas) Object.assign(out, this.ideasView());
     if(showContent) Object.assign(out, this.contentView());
+
+    // Floating chat widget is a global, always-mounted sibling (see
+    // AppShell.jsx) so its vm must be present on every route, not just
+    // when route==='messages'.
+    Object.assign(out, this.chatWidgetView());
 
     return out;
   }
@@ -7903,7 +8075,13 @@ class AppRoot extends React.Component {
           viewStyle:dotStyle(p.view), createStyle:dotStyle(p.create), editStyle:dotStyle(p.edit), deleteStyle:dotStyle(p.delete),
           approveStyle:dotStyle(p.approve), exportStyle:dotStyle(p.export),
           toggleView:toggle(m,'view'), toggleCreate:toggle(m,'create'), toggleEdit:toggle(m,'edit'), toggleDelete:toggle(m,'delete'),
-          toggleApprove:toggle(m,'approve'), toggleExport:toggle(m,'export') };
+          toggleApprove:toggle(m,'approve'), toggleExport:toggle(m,'export'),
+          // "Audit all conversations" only ever makes sense for Messages —
+          // every other module already grants full visibility through the
+          // normal permission levels above, so this column stays blank
+          // everywhere else.
+          isMessages:m==='messages', auditAll:!!p.auditAll, auditAllStyle:dotStyle(p.auditAll),
+          toggleAuditAll:toggle(m,'auditAll') };
       }),
       permReset:()=>{ if(!permCanManage) return;
         const cur={...(this.state.rolePerms||{})};
@@ -8407,6 +8585,7 @@ class AppRoot extends React.Component {
     this._loadEffortPlans();
     this._loadCustomDivisions();
     this._loadDocumentRepo();
+    this._requestNotificationPermission();
     this._loadCheckIns();
     this._loadKpiActuals();
     this._loadTaskDone();
@@ -8562,7 +8741,142 @@ class AppRoot extends React.Component {
         else if(canManageTickets()) push('Ticket updated: '+(t.subject||payload.new.id)+' — status: '+(t.status||'—'), nav);
         this._loadTickets();
       })
+      // Messages/threads: merge the single changed row into local state
+      // instead of a full _loadThreads() reload — a wholesale reload here
+      // would race an optimistic local send exactly like the bug already
+      // fixed for tasks (tkPatch/_persistTaskPatch), silently reverting a
+      // message that hasn't round-tripped to the DB yet.
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages' }, (payload)=>{
+        const row=payload.new||{}; const msg=row.payload||{};
+        this._applyMessageRealtime(row.thread_id, msg);
+        if(msg.who===me()) return;
+        const visible=this.myThreads().some(t=>t.id===row.thread_id);
+        if(!visible) return;
+        const isOpen=this.state.route==='messages' && this.state.thOpen===row.thread_id;
+        this._notifyNewMessage(row.thread_id, msg, isOpen);
+        if(!isOpen) push((msg.who||'Someone')+' — '+String(msg.text||'sent an attachment').slice(0,60), { route:'messages', thOpen:row.thread_id });
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'messages' }, (payload)=>{
+        const row=payload.new||{};
+        this._applyMessageRealtime(row.thread_id, row.payload||{});
+      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'threads' }, (payload)=>{
+        const row=payload.new||{};
+        this._applyThreadRealtime({ ...(row.payload||{}), id:row.id });
+      })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'threads' }, (payload)=>{
+        const row=payload.new||{};
+        this._applyThreadUpdateRealtime({ ...(row.payload||{}), id:row.id });
+      })
       .subscribe();
+    this._subscribePresence();
+  }
+  // Merges one message row into the thAdded overlay (functional setState so
+  // it always applies against the latest state, not a stale closure — safe
+  // even if several messages land in quick succession).
+  _applyMessageRealtime(threadId, msg){
+    if(!threadId || !msg || !msg.id) return;
+    this.setState(s=>{
+      const add={...(s.thAdded||{})};
+      add[threadId]={ ...(add[threadId]||{}), [msg.id]:msg };
+      return { thAdded:add };
+    });
+  }
+  // Adds a newly-created thread (from another session) if we don't already
+  // have it — the creator's own client already added it optimistically in
+  // thSave(), so this only ever matters for everyone else in that thread.
+  _applyThreadRealtime(threadRec){
+    if(!threadRec || !threadRec.id) return;
+    this.setState(s=>{
+      const cur=s.thNew||[];
+      if(cur.some(t=>t.id===threadRec.id)) return null;
+      return { thNew:[...cur, { ...threadRec, msgs:[] }] };
+    });
+  }
+  // Merges a thread-record update (pin/archive/rename/membership change)
+  // from another session into the thPatched overlay — same merge-not-
+  // replace pattern as _applyMessageRealtime, so it can never race an
+  // optimistic local _patchThread() call and revert it.
+  _applyThreadUpdateRealtime(threadRec){
+    if(!threadRec || !threadRec.id) return;
+    this.setState(s=>({ thPatched:{ ...(s.thPatched||{}), [threadRec.id]:{ ...((s.thPatched||{})[threadRec.id]), ...threadRec } } }));
+  }
+  // Presence (who's online right now) + typing broadcasts — a genuinely
+  // different Realtime primitive from postgres_changes above: nothing here
+  // is a database row, it's ephemeral state that only exists while sockets
+  // are connected. Presence keys itself by the signed-in user's id.
+  _subscribePresence(){
+    if(this._presenceChannel) return;
+    const me=this.currentPerson();
+    const myId=(this.state.authUser&&this.state.authUser.id)||me;
+    const channel=supabase.channel('beetloop-presence', { config:{ presence:{ key:String(myId) } } });
+    channel.on('presence', { event:'sync' }, ()=>{
+      const state=channel.presenceState();
+      const online={};
+      Object.values(state).forEach(entries=>{ (entries||[]).forEach(p=>{ if(p&&p.name) online[p.name]=true; }); });
+      this.setState({ onlineUsers:online });
+    });
+    channel.on('broadcast', { event:'typing' }, (msg)=>{
+      const { thread, who } = (msg&&msg.payload)||{};
+      if(!thread || !who || who===me) return;
+      this.setState(s=>({ typingByThread:{ ...(s.typingByThread||{}), [thread]:{ who, at:Date.now() } } }));
+      this._typingClear=this._typingClear||{};
+      clearTimeout(this._typingClear[thread]);
+      this._typingClear[thread]=setTimeout(()=>{
+        this.setState(s=>{ const t={ ...(s.typingByThread||{}) }; delete t[thread]; return { typingByThread:t }; });
+      }, 3000);
+    });
+    channel.subscribe(async (status)=>{
+      if(status==='SUBSCRIBED'){
+        try{ await channel.track({ name:me, online_at:new Date().toISOString() }); }catch(e){}
+      }
+    });
+    this._presenceChannel=channel;
+  }
+  // Throttled so holding a key down doesn't flood the broadcast channel —
+  // one "I'm typing" ping per 1.5s is plenty for the other side to keep
+  // showing the indicator (it self-clears after 3s of silence anyway).
+  _broadcastTyping(threadId){
+    if(!this._presenceChannel || !threadId) return;
+    const now=Date.now();
+    if(this._lastTypingSent && now-this._lastTypingSent<1500) return;
+    this._lastTypingSent=now;
+    this._presenceChannel.send({ type:'broadcast', event:'typing', payload:{ thread:threadId, who:this.currentPerson() } });
+  }
+  _requestNotificationPermission(){
+    if(typeof Notification==='undefined') return;
+    if(Notification.permission==='default'){
+      Notification.requestPermission().catch(()=>{});
+    }
+  }
+  // Real OS-level notification for a message that arrived in a thread the
+  // user isn't actively looking at (either a different thread, a different
+  // route entirely, or the tab is backgrounded). Never fires for a thread
+  // that's both open AND visible — that's what the in-app read receipt/
+  // unread badge is for.
+  _notifyNewMessage(threadId, msg, isThreadOpen){
+    if(isThreadOpen && !document.hidden) return;
+    this._playNotificationSound();
+    if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
+    try{
+      const n=new Notification(msg.who||'New message', { body:String(msg.text||'Sent an attachment').slice(0,120) });
+      n.onclick=()=>{ window.focus(); this.setState({ screen:'app', route:'messages', thOpen:threadId }); n.close(); };
+    }catch(e){}
+  }
+  // A short two-tone beep synthesized on the fly — no bundled audio asset,
+  // no network fetch, works the moment the tab has been interacted with.
+  _playNotificationSound(){
+    try{
+      const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
+      const ctx=new Ctx();
+      const osc=ctx.createOscillator(); const gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1108, ctx.currentTime+0.09);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.28);
+      osc.start(); osc.stop(ctx.currentTime+0.3);
+    }catch(e){}
   }
 
   _syncStateFromLocation(){
