@@ -6,7 +6,7 @@ export default function UserDetailDrawer({ vm }) {
   const { umDrawerOpen, umU, umClose, umStop, umLoad, umEditing, umD, umSetStart, umSetEnd, umSetBreak, umSetDays, umDayOptions,
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
     umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
-    umIsSalesRole, umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
+    umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
     umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows } = vm;
   const u = umU || {};
   return (
@@ -103,9 +103,8 @@ Remove
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Team lead</label>
 <input value={umD.teamLead} onInput={umSetTeamLead} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
 </div>
-{Boolean(umIsSalesRole) && (
 <div style={{"marginTop":"14px"}}>
-<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Assigned brand(s) — leads restricted to these</label>
+<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Assigned brand(s) — Brand Playbook restricted to these (Sales also restricted for leads). Admin/CEO default to full access when left empty.</label>
 <div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>
 {(umBrandRows || []).map((b, $i) => (
 <button key={$i} onClick={b.toggle} style={cssTextToObject(b.style)}>
@@ -115,7 +114,6 @@ Remove
 ))}
 </div>
 </div>
-)}
 <div style={{"marginTop":"14px"}}>
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Dashboard widgets — untick to hide a block for this person</label>
 <div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>

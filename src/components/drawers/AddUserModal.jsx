@@ -4,7 +4,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
   const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
-    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufIsSalesRole, ufBrandRows } = vm;
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -268,7 +268,6 @@ Active
 </div>
 
 
-{Boolean(ufIsSalesRole) && (
 <div style={{"marginBottom":"8px"}}>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Assigned brand(s)
@@ -281,10 +280,9 @@ Assigned brand(s)
 ))}
 </div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-500)","marginTop":"6px"}}>
-Restricts this user's leads, pipeline and reports to the selected brand(s) only.
+Restricts this user's Brand Playbook to the selected brand(s) only (Sales Executives are also restricted for leads, pipeline and reports). Leave empty for Admin/CEO to see every brand by default — every other role sees none until a brand is assigned.
 </div>
 </div>
-)}
 
 
 <div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"11px 14px","marginTop":"14px"}}>

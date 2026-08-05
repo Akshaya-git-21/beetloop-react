@@ -1604,7 +1604,6 @@ class AppRoot extends React.Component {
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
-      ufIsSalesRole:(this.state.uf||{}).role==='Sales Executive',
       ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
         return { label:b, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
@@ -4139,9 +4138,12 @@ class AppRoot extends React.Component {
       umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
-      // brand assignment only matters for Sales — but shown whenever editing so
-      // Admin can pre-assign brands right when they change someone's role to Sales
-      umIsSalesRole:(editing?d.role:u.role)==='Sales Executive',
+      // Brand assignment is available for every role, including Admin/CEO —
+      // Admin/CEO default to full, unscoped Brand Playbook access when no
+      // brand is assigned, but an explicit assignment (e.g. an "Admin"
+      // account that's really scoped to one client/brand) is still honored.
+      // Sales additionally uses it to fence leads/pipeline/reports; every
+      // other role uses it only to fence Brand Playbook (see playbookView()).
       umBrandRows:this.BRAND_LIST().map(b=>{ const on=(d.brands||[]).includes(b);
         return { label:b, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
@@ -4159,7 +4161,7 @@ class AppRoot extends React.Component {
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
-        const newBrands=newRole==='Sales Executive'?(d.brands||u.brands||[]):(u.brands||[]);
+        const newBrands=d.brands!==undefined?d.brands:(u.brands||[]);
         const newMobile=d.mobile!==undefined?d.mobile:u.mobile;
         const newDesignation=d.designation!==undefined?d.designation:u.designation;
         const newTeam=d.team!==undefined?d.team:u.team;
@@ -5220,15 +5222,20 @@ class AppRoot extends React.Component {
   }
   playbookView(rk){
     // access: everyone reads; Manager / Team Lead / Admin author; governance chapters Admin-only.
-    // Exception: Sales only ever works one (or a few) brands — same fencing
-    // rule as leads/contacts/SOPs — so they only ever see their own
-    // assigned brand's playbook(s), never the full company list. No brand
-    // assigned = nothing to show.
+    // Brand Playbook is scoped to whatever brand(s) a person is assigned in
+    // User Management — same idea as Sales' lead/pipeline fencing, now
+    // applied to every role. Admin and CEO default to full, unscoped access
+    // (an Admin account with nothing assigned shouldn't see zero playbooks),
+    // but that default is only a fallback — an Admin/CEO who HAS been given
+    // specific brand(s) is scoped to exactly those, same as anyone else, so
+    // an "Admin"-labelled account tied to one brand still only sees that one.
     const canAuthor=['manager','team_lead','admin'].includes(rk);
     const isAdmin=rk==='admin';
-    const visibleBrands = rk==='sales'
-      ? this.PB_BRANDS().filter(x=>this.mySalesBrands().includes(x.name))
-      : this.PB_BRANDS();
+    const assignedBrands=this.mySalesBrands();
+    const fullAccess = (rk==='admin' || rk==='ceo') && !assignedBrands.length;
+    const visibleBrands = fullAccess
+      ? this.PB_BRANDS()
+      : this.PB_BRANDS().filter(x=>assignedBrands.includes(x.name));
     if(!visibleBrands.length){
       return { pbIsOpen:true, pbEmpty:true,
         pbEmptyNote:'No brand assigned to your account yet — ask Admin to assign one in User Management before any brand playbook can show here.' };
@@ -7325,7 +7332,7 @@ class AppRoot extends React.Component {
     if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
-  BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India']; }
+  BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India','PepCreations']; }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
@@ -8118,7 +8125,7 @@ class AppRoot extends React.Component {
           const free=Math.round((wk-assigned)*10)/10;
           return {
             emp:empOf(u.name), name:u.name, sub:u.sub, dept:u.dept, role:u.role,
-            hasBrands:u.role==='Sales Executive', brandsLabel:u.role==='Sales Executive'?((u.brands||[]).join(', ')||'None'):'—',
+            hasBrands:true, brandsLabel:(u.brands||[]).join(', ')||'None',
             initials:u.name.split(' ').map(x=>x[0]).join('').slice(0,2),
             avatarUrl:u.avatar_url||'', hasAvatar:!!u.avatar_url,
             shift:(u.shiftStart||'09:00')+'–'+(u.shiftEnd||'18:00'),
@@ -8473,13 +8480,13 @@ class AppRoot extends React.Component {
     const name=(f.first+' '+f.last).trim();
     const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn',
       shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5,
-      brands:f.role==='Sales Executive'?(f.brands||[]):[] };
+      brands:f.brands||[] };
     this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'Priya Nair (Manager)', lead:'Aditi Rao (SEO Lead)', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
     try{
       const resp=await fetch('/api/invite-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation,
-          brands:roleKey==='sales'?(f.brands||[]):[] }),
+          brands:f.brands||[] }),
       });
       const body=await resp.json();
       if(!resp.ok) throw new Error(body.error||'Invite failed');
