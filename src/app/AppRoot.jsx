@@ -2892,7 +2892,7 @@ class AppRoot extends React.Component {
       const okrPatch={...(this.state.okrUpd||{})};
       const patchOkrKr=(kpiName, okrTitle, val)=>{
         const o=this.allOkrs().find(x=>x.title===okrTitle); if(!o||!(o.krs||[]).length) return;
-        const krs=o.krs.map(kr=>kr.kpi===kpiName?{...kr, current:val, lastReported:date, lastReportedBy:role.person}:kr);
+        const krs=o.krs.map(kr=>kr.kpi===kpiName?{...kr, current:val, lastReported:date, lastReportedBy:this.currentPerson()}:kr);
         okrPatch[o.id]={...(okrPatch[o.id]||{}), krs};
         if(o.code) this._persistOkr(o.code, {
           title:o.title, description:o.desc, category:o.category,
@@ -2910,7 +2910,7 @@ class AppRoot extends React.Component {
     }
     const qual=[cf.flag&&'Flagged for Manager review', cf.challenges&&('Blockers: '+cf.challenges), cf.risks&&('Risks: '+cf.risks), cf.dependencies&&('Dependencies: '+cf.dependencies), cf.support&&('Support needed: '+cf.support), cf.next&&('Next week: '+cf.next), (cf.files&&cf.files.length)&&('Evidence: '+cf.files.join(', '))].filter(Boolean).join(' · ');
     const text = (reported.length?('Reported — '+reported.join('; ')):'') + (reported.length&&qual?' — ':'') + (qual||cf.comment||'');
-    const entry={ date, who:role.person, role:role.label, kind, health:cf.health||null, decision:cf.decision||null, progress:ctx.progress||null, confidence:cf.confidence||null, text:text||cf.comment||'' };
+    const entry={ date, who:this.currentPerson(), role:role.label, kind, health:cf.health||null, decision:cf.decision||null, progress:ctx.progress||null, confidence:cf.confidence||null, text:text||cf.comment||'' };
     const added={...this.state.ciAdded}; added[okrId]=[...(added[okrId]||[]), entry];
     let py=this.state.ciPendingY;
     if(t==='kpi'){ py={...(this.state.ciPendingY||this.defaultPendingY())}; delete py[ctx.kpiId]; }
@@ -3550,14 +3550,14 @@ class AppRoot extends React.Component {
       idFbBg: i.status==='Rework'?'var(--danger-100)':'var(--verify-100)', idFbBorder: i.status==='Rework'?'#F1C9CF':'#BFE3D0', idFbColor: i.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
       idCanAct: canAct && i.status==='Submitted for QC',
       idFbVal:fb, idOnFb:(e)=>this.setState({ qcFb:{...this.state.qcFb,[i.id]:e.target.value} }),
-      idApprove:()=>{ const note=(this.state.qcFb||{})[i.id]||''; this.ideaPatch(i.id,{status:'Approved', qcFeedback:note?('QC approved — '+note):'QC approved', comments:[...(i.comments||[]),{who:me.person,role:me.label+' (QC)',text:'Approved. '+note,when:this.todayStr()}]}); this.flash(i.id+' approved — move it to Tasks from the Content repository.'); },
-      idRework:()=>{ const note=(this.state.qcFb||{})[i.id]||''; if(!note.trim()){ this.flash('Enter QC feedback before requesting rework.'); return; } this.ideaPatch(i.id,{status:'Rework', qcFeedback:'Rework — '+note, comments:[...(i.comments||[]),{who:me.person,role:me.label+' (QC)',text:'Rework requested. '+note,when:this.todayStr()}]}); this.flash('Rework requested — feedback sent to '+i.owner+'.'); },
+      idApprove:()=>{ const note=(this.state.qcFb||{})[i.id]||''; this.ideaPatch(i.id,{status:'Approved', qcFeedback:note?('QC approved — '+note):'QC approved', comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Approved. '+note,when:this.todayStr()}]}); this.flash(i.id+' approved — move it to Tasks from the Content repository.'); },
+      idRework:()=>{ const note=(this.state.qcFb||{})[i.id]||''; if(!note.trim()){ this.flash('Enter QC feedback before requesting rework.'); return; } this.ideaPatch(i.id,{status:'Rework', qcFeedback:'Rework — '+note, comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Rework requested. '+note,when:this.todayStr()}]}); this.flash('Rework requested — feedback sent to '+i.owner+'.'); },
       idComments:(i.comments||[]).map(c=>({ who:c.who, role:c.role, text:c.text, when:c.when, initial:(c.who||'?').charAt(0) })),
       idHasComments:(i.comments||[]).length>0,
       idCmtVal:(this.state.ideaCmt||{})[i.id]||'',
       idOnCmt:(e)=>this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:e.target.value} }),
       idAddCmt:()=>{ const txt=((this.state.ideaCmt||{})[i.id]||'').trim(); if(!txt){ this.flash('Write a comment first.'); return; }
-        this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:me.person,role:me.label,text:txt,when:this.todayStr()}]});
+        this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label,text:txt,when:this.todayStr()}]});
         this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''} }); this.flash('Comment posted on '+i.id+'.'); },
       idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
       idConvert:()=>this.ideaToTask(i),
@@ -6396,7 +6396,7 @@ class AppRoot extends React.Component {
       const fbText=(status==='Approved'?'QC approved':'Rework')+(note?' — '+note:'')+(refs.length?(' · Ref: '+refs.join(', ')):'');
       const me=this.ROLES[rk];
       const cur=this.tkOv(t).comments||[];
-      const comment={ who:me.person, role:(rk==='qc'?'QC Reviewer':me.label+' (QC)'), text:(status==='Approved'?'Approved. ':'Rework requested. ')+(note||''), when:this.todayStr(), files:refs };
+      const comment={ who:this.currentPerson(), role:(rk==='qc'?'QC Reviewer':me.label+' (QC)'), text:(status==='Approved'?'Approved. ':'Rework requested. ')+(note||''), when:this.todayStr(), files:refs };
       this.tkPatch(t.id,{ status, qcFeedback:fbText, comments:[...cur,comment] }, label+(note?' — '+note:''));
       this.setState({ qcFb:{...(this.state.qcFb||{}),[t.id]:''}, qcRef:{...(this.state.qcRef||{}),[t.id]:{files:[],url:''}} });
       const unlocked=status==='Approved'?this.tkChain(t).next.filter(n=>(n.depMode||'Parallel')==='Sequential'):[];
@@ -6478,7 +6478,7 @@ class AppRoot extends React.Component {
             const me=this.ROLES[rk];
             const roleLabel = rk==='qc'?'QC Reviewer':(isAssignee?me.tag:me.label+' (QC)');
             const cur=this.tkOv(t).comments||[];
-            this.tkPatch(t.id,{ comments:[...cur,{ who:me.person, role:roleLabel, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
+            this.tkPatch(t.id,{ comments:[...cur,{ who:this.currentPerson(), role:roleLabel, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
             this.setState({ tkComment:'', tkCommentFiles:[] });
             this.flash('Comment posted — visible to assignee and QC.'); },
         };
