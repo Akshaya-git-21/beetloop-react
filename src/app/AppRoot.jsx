@@ -1070,7 +1070,14 @@ class AppRoot extends React.Component {
       const merged=t.msgs.map(m=>overlay[m.id]?{...m,...overlay[m.id]}:m);
       const extra=Object.keys(overlay).filter(id=>!baseIds.has(id)).map(id=>overlay[id]);
       return { ...t, ...(patched[t.id]||{}), msgs:[...merged, ...extra] };
-    });
+    }).filter(t=>!t.deleted);
+  }
+  // Deletes the whole conversation (not just one message) — the thread
+  // record itself gets a `deleted` flag via the same upsert path _patchThread
+  // uses, so it survives a reload instead of reappearing.
+  _deleteThread(threadId){
+    this._patchThread(threadId, { deleted:true });
+    this.flash('Conversation deleted.');
   }
   // Private-by-default, like WhatsApp: a group channel only shows to its
   // actual members (DM threads store only the OTHER party in `members` —
@@ -1177,7 +1184,13 @@ class AppRoot extends React.Component {
           if(k==='dm'&&!mem.length){ this.flash('Pick the person to message.'); return; }
           if(k==='channel'&&!(nf.name||'').trim()){ this.flash('Name the group.'); return; }
           if(k==='channel'&&!mem.length){ this.flash('Add at least one member.'); return; }
-          const id='TH-'+String(100+threads.length+1).slice(-3);
+          // A sequential id derived from threads.length collided with real
+          // DB rows the moment any thread was deleted or simply not visible
+          // to this user (myThreads() is privacy-filtered) — that count is
+          // never a reliable stand-in for "next free id", so new chats could
+          // silently fail to insert. Date.now() matches every other id
+          // generator in this file (messages, ideas, backlink domains, ...).
+          const id='TH-'+Date.now();
           const name=k==='channel'?('#'+String(nf.name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):mem[0];
           const msgs=[];
           if((nf.first||'').trim()){ const now=new Date();
@@ -1224,6 +1237,7 @@ class AppRoot extends React.Component {
           pinned, archived,
           togglePin:()=>this._patchThread(t.id, { pinnedBy: pinned?(t.pinnedBy||[]).filter(x=>x!==me):[...(t.pinnedBy||[]),me] }),
           toggleArchive:()=>this._patchThread(t.id, { archivedBy: archived?(t.archivedBy||[]).filter(x=>x!==me):[...(t.archivedBy||[]),me] }),
+          deleteThread:(e)=>{ if(e)e.stopPropagation(); this._deleteThread(t.id); if(active) this.setState({ thOpen:null }); },
           style:'display:flex;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid '+(active?'var(--orchid-300)':'transparent')+';background:'+(active?'var(--orchid-100)':'transparent'),
           open:()=>{ this.setState({ thOpen:t.id }); this._markThreadRead(t.id); } }; }),
       msgCurName:cur.name, msgCurIcon:cur.kind==='channel'?'hash':'user',

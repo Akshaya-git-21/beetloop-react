@@ -54,6 +54,9 @@ export default function MessagesSection({ vm }) {
                         <button onClick={(e) => { e.stopPropagation(); t.toggleArchive(); }} title={t.archived ? 'Unarchive' : 'Archive'} style={{ width: 18, height: 18, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.55 }}>
                           <Icon name="archive" style={{ width: 11, height: 11, color: 'var(--ink-500)' }} />
                         </button>
+                        <button onClick={t.deleteThread} title="Delete conversation" style={{ width: 18, height: 18, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.55 }}>
+                          <Icon name="trash-2" style={{ width: 11, height: 11, color: 'var(--danger-600)' }} />
+                        </button>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: t.hasUnread ? 'var(--ink-700)' : 'var(--ink-500)', fontWeight: t.hasUnread ? 700 : 400, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.preview}</div>
