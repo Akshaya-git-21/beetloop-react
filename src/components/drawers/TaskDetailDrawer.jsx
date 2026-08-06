@@ -481,7 +481,7 @@ Workflow pipeline — stages unlock on QC approval
 {(r.evFiles || []).map((ev, $ei) => (
 <span key={$ei} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 8px","border":"1px solid var(--line-300)","borderRadius":"8px","fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--ink-700)","background":"#fff"}}>
 <Icon name={ev.icon} style={{"width":"10px","height":"10px","color":"var(--orchid-600)","flexShrink":"0"}} />
-<span style={{"flex":"1","minWidth":"0"}}>{ev.name}</span>
+<button onClick={ev.open} style={{"flex":"1","minWidth":"0","textAlign":"left","background":"none","border":"none","padding":"0","cursor":"pointer","color":"var(--ink-700)","font":"inherit"}}>{ev.name}</button>
 {Boolean(r.writerEditable) && (
 <button onClick={ev.remove} style={{"border":"none","background":"none","padding":"0","cursor":"pointer","display":"flex","color":"var(--ink-400)"}}>
 <Icon name={"x"} style={{"width":"10px","height":"10px"}} />

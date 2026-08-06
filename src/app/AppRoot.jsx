@@ -330,8 +330,8 @@ class AppRoot extends React.Component {
       service: {
         label:'Service Master', icon:'layers', group:'Business',
         desc:'Service catalogue with SEO metadata, URL maps and linked keywords.',
-        cols:[ {k:'Service_ID',l:'ID',mono:1}, {k:'Service_Name',l:'Service'}, {k:'Page_Status',l:'Status',tag:1}, {k:'Hierarchy_Level',l:'Level'}, {k:'SEO_Score',l:'SEO'}, {k:'Content_Owner',l:'Owner'} ],
-        fields:['Service_ID','Service_Name','Slug','Parent_Service_ID','Hierarchy_Level','Breadcrumb_Path','Primary_URL','Page_Status','Title_Tag','Meta_Description','H1','Target_Industries','Target_Countries','Primary_Keywords','SEO_Score','Language_Score','Content_Owner','Tech_Owner','Last_Updated'],
+        cols:[ {k:'Service_ID',l:'ID',mono:1}, {k:'Service_Name',l:'Service'}, {k:'Brand',l:'Brand'}, {k:'Page_Status',l:'Status',tag:1}, {k:'Hierarchy_Level',l:'Level'}, {k:'SEO_Score',l:'SEO'}, {k:'Content_Owner',l:'Owner'} ],
+        fields:['Service_ID','Service_Name','Brand','Slug','Parent_Service_ID','Hierarchy_Level','Breadcrumb_Path','Primary_URL','Page_Status','Title_Tag','Meta_Description','H1','Target_Industries','Target_Countries','Primary_Keywords','SEO_Score','Language_Score','Content_Owner','Tech_Owner','Last_Updated'],
         rows:[
           {Service_ID:'SRV001',Service_Name:'Cloud Migration Services',Slug:'cloud-migration',Parent_Service_ID:'—',Hierarchy_Level:0,Breadcrumb_Path:'Services > Cloud Migration',Primary_URL:'/services/cloud-migration',Page_Status:'Live',Title_Tag:'Enterprise Cloud Migration Services | Beetloop',Meta_Description:'Seamless cloud migration services for enterprises',H1:'Cloud Migration Services',Target_Industries:'Technology, Finance, Healthcare',Target_Countries:'USA, UK, Canada',Primary_Keywords:'cloud migration, enterprise cloud, cloud transformation',SEO_Score:87,Language_Score:92,Content_Owner:'John Doe',Tech_Owner:'Tech Team',Last_Updated:'2024-10-28'},
           {Service_ID:'SRV001-1',Service_Name:'AWS Migration',Slug:'cloud-migration/aws',Parent_Service_ID:'SRV001',Hierarchy_Level:1,Breadcrumb_Path:'Services > Cloud Migration > AWS Migration',Primary_URL:'/services/cloud-migration/aws',Page_Status:'Live',Title_Tag:'AWS Cloud Migration Services | Beetloop',Meta_Description:'Expert AWS migration and optimization services',H1:'AWS Migration Services',Target_Industries:'Technology, Finance',Target_Countries:'USA, UK',Primary_Keywords:'aws migration, aws cloud, migrate to aws',SEO_Score:85,Language_Score:90,Content_Owner:'Jane Smith',Tech_Owner:'Tech Team',Last_Updated:'2024-10-25'},
@@ -353,8 +353,8 @@ class AppRoot extends React.Component {
       keyword: {
         label:'Keyword Master', icon:'key-round', group:'SEO & Content',
         desc:'Tracked keywords with intent, metrics, mapping, usage log and competitor map.',
-        cols:[ {k:'Keyword_Code',l:'Code',mono:1}, {k:'Keyword',l:'Keyword'}, {k:'Keyword_Type',l:'Type',tag:1}, {k:'Intent',l:'Intent'}, {k:'Search_Volume',l:'Volume'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['Keyword_ID','Keyword_Code','Keyword','Keyword_Type','Parent_Keyword','Keyword_SubCategory','Synonyms','Technical_Terms','Intent','Search_Volume','Keyword_Difficulty','CPC','SERP_Features','Language','Country','Industry_Name','Service_Name','Page_Name','Used_In_Campaign_Flag','Campaign_Usage_Count','Content_Usage_Count','Last_Audited_By','Last_Audited_Date','Status','Notes'],
+        cols:[ {k:'Keyword_Code',l:'Code',mono:1}, {k:'Keyword',l:'Keyword'}, {k:'Brand',l:'Brand'}, {k:'Keyword_Type',l:'Type',tag:1}, {k:'Intent',l:'Intent'}, {k:'Search_Volume',l:'Volume'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Keyword_ID','Keyword_Code','Keyword','Brand','Keyword_Type','Parent_Keyword','Keyword_SubCategory','Synonyms','Technical_Terms','Intent','Search_Volume','Keyword_Difficulty','CPC','SERP_Features','Language','Country','Industry_Name','Service_Name','Page_Name','Used_In_Campaign_Flag','Campaign_Usage_Count','Content_Usage_Count','Last_Audited_By','Last_Audited_Date','Status','Notes'],
         rows:[
           {Keyword_ID:'KW001',Keyword_Code:'KW-TECH-00123',Keyword:'enterprise cloud migration',Keyword_Type:'Main',Parent_Keyword:'—',Keyword_SubCategory:'Cloud Services',Synonyms:'enterprise cloud transformation, business cloud migration',Technical_Terms:'lift-and-shift migration, cloud replatforming',Intent:'Commercial',Search_Volume:'8,200',Keyword_Difficulty:68,CPC:'$12.50',SERP_Features:'Featured Snippet, People Also Ask, Video',Language:'en-US',Country:'US',Industry_Name:'Technology',Service_Name:'SEO Services',Page_Name:'Enterprise Cloud Migration Guide',Used_In_Campaign_Flag:'Yes',Campaign_Usage_Count:5,Content_Usage_Count:12,Last_Audited_By:'USR002',Last_Audited_Date:'2024-10-25',Status:'Active',Notes:'High-value keyword for enterprise segment. Focus on content depth.'},
           {Keyword_ID:'KW002',Keyword_Code:'KW-TECH-00124',Keyword:'cloud migration services',Keyword_Type:'Primary',Parent_Keyword:'enterprise cloud migration',Keyword_SubCategory:'Cloud Services',Synonyms:'cloud transition services, cloud relocation services',Technical_Terms:'IaaS migration, PaaS migration, SaaS migration',Intent:'Transactional',Search_Volume:'12,400',Keyword_Difficulty:72,CPC:'$18.75',SERP_Features:'Local Pack, Sitelinks, People Also Ask',Language:'en-US',Country:'US',Industry_Name:'Technology',Service_Name:'SEO Services',Page_Name:'—',Used_In_Campaign_Flag:'Yes',Campaign_Usage_Count:8,Content_Usage_Count:15,Last_Audited_By:'USR002',Last_Audited_Date:'2024-10-28',Status:'Active',Notes:'Strong transactional intent. Priority for paid campaigns.'},
@@ -395,6 +395,30 @@ class AppRoot extends React.Component {
           {Dept_Code:'DPT-DSN',Department:'Design',Head:'Priya Nair',Members:5,Cost_Center:'CC-105',Status:'Active'},
         ],
       },
+      businessUnit: {
+        label:'Business Unit Master', icon:'briefcase', group:'Organization & Security',
+        desc:'Business units available as a dropdown in OKR creation.',
+        cols:[ {k:'Unit_Code',l:'Code',mono:1}, {k:'Business_Unit',l:'Business unit'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Unit_Code','Business_Unit','Status'],
+        rows:[
+          {Unit_Code:'BU-01',Business_Unit:'Digital Marketing',Status:'Active'},
+          {Unit_Code:'BU-02',Business_Unit:'Research Services',Status:'Active'},
+        ],
+      },
+      websiteDomain: {
+        label:'Website Domain Master', icon:'globe-2', group:'Organization & Security',
+        desc:'Domains available as a dropdown in OKR creation.',
+        cols:[ {k:'Domain_Code',l:'Code',mono:1}, {k:'Domain',l:'Domain'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Domain_Code','Domain','Status'],
+        rows:[
+          {Domain_Code:'DOM-01',Domain:'beetloop.com',Status:'Active'},
+          {Domain_Code:'DOM-02',Domain:'foodresearchlab.com',Status:'Active'},
+          {Domain_Code:'DOM-03',Domain:'pubrica.com',Status:'Active'},
+          {Domain_Code:'DOM-04',Domain:'statswork.com',Status:'Active'},
+          {Domain_Code:'DOM-05',Domain:'tutorsindia.com',Status:'Active'},
+          {Domain_Code:'DOM-06',Domain:'pepcreations.com',Status:'Active'},
+        ],
+      },
       role: {
         label:'Role Master', icon:'key-round', group:'Organization & Security',
         desc:'Security roles and their permission scope.',
@@ -409,6 +433,36 @@ class AppRoot extends React.Component {
           {Role_Code:'R-JR',Role:'Junior Executive',Scope:'Assigned only',Users:18,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
           {Role_Code:'R-QC',Role:'QC Reviewer',Scope:'QC tasks',Users:3,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
           {Role_Code:'R-ADM',Role:'Admin',Scope:'Full platform',Users:1,Can_Edit_Masters:'Yes',Can_Manage_Users:'Yes',Status:'Active'},
+        ],
+      },
+      brand: {
+        label:'Brand Master', icon:'tag', group:'Business',
+        desc:'Every brand used across the app — the single source that feeds every brand dropdown (User Management, SOPs, Leads, Campaigns, OKRs, Brand Playbook).',
+        cols:[ {k:'Brand_Code',l:'Code',mono:1}, {k:'Brand_Name',l:'Brand'}, {k:'Sector',l:'Sector'}, {k:'Website',l:'Website'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Brand_Code','Brand_Name','Sector','Website','Tagline','Status'],
+        rows:[
+          {Brand_Code:'BRD-01',Brand_Name:'Beetloop',Sector:'B2B platform · Food, nutrition, cosmeceutical, agri, health',Website:'beetloop.com',Tagline:'Verified intelligence from formulation to market.',Status:'Active'},
+          {Brand_Code:'BRD-02',Brand_Name:'Food Research Lab',Sector:'Product development & food R&D services',Website:'foodresearchlab.com',Tagline:'From kitchen idea to compliant shelf-ready product.',Status:'Active'},
+          {Brand_Code:'BRD-03',Brand_Name:'Pubrica',Sector:'Scientific & medical writing',Website:'pubrica.com',Tagline:'Research communicated with clinical precision.',Status:'Active'},
+          {Brand_Code:'BRD-04',Brand_Name:'Statswork',Sector:'Statistics & data analysis services',Website:'statswork.com',Tagline:'Defensible analysis, explained plainly.',Status:'Active'},
+          {Brand_Code:'BRD-05',Brand_Name:'Tutors India',Sector:'Academic research support',Website:'tutorsindia.com',Tagline:'Guidance that gets research over the line.',Status:'Active'},
+          {Brand_Code:'BRD-06',Brand_Name:'PepCreations',Sector:'Creative & brand production',Website:'pepcreations.com',Tagline:'Craft that carries the claim.',Status:'Active'},
+        ],
+      },
+      country: {
+        label:'Country Master', icon:'map', group:'Business',
+        desc:'Countries available for Campaign targeting and other location-scoped fields.',
+        cols:[ {k:'Country_Code',l:'Code',mono:1}, {k:'Country_Name',l:'Country'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Country_Code','Country_Name','Status'],
+        rows:[
+          {Country_Code:'IN',Country_Name:'India',Status:'Active'},
+          {Country_Code:'US',Country_Name:'USA',Status:'Active'},
+          {Country_Code:'GB',Country_Name:'UK',Status:'Active'},
+          {Country_Code:'CA',Country_Name:'Canada',Status:'Active'},
+          {Country_Code:'SG',Country_Name:'Singapore',Status:'Active'},
+          {Country_Code:'DE',Country_Name:'Germany',Status:'Active'},
+          {Country_Code:'AE',Country_Name:'UAE',Status:'Active'},
+          {Country_Code:'AU',Country_Name:'Australia',Status:'Active'},
         ],
       },
       client: {
@@ -528,11 +582,13 @@ class AppRoot extends React.Component {
     service: {
       Parent_Service_ID:{ toMaster:'service', valueField:'Service_ID', labelField:'Service_Name', none:'—' },
       Content_Owner:{ toUsers:true }, Tech_Owner:{ toUsers:true },
+      Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name' },
     },
     keyword: {
       Parent_Keyword:{ toMaster:'keyword', valueField:'Keyword', labelField:'Keyword', none:'—' },
       Industry_Name:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' },
       Service_Name:{ toMaster:'service', valueField:'Service_Name', labelField:'Service_Name' },
+      Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name' },
     },
     user: {
       Department:{ toMaster:'department', valueField:'Department', labelField:'Department' },
@@ -881,6 +937,19 @@ class AppRoot extends React.Component {
         badgeBg:sec===id?'var(--beet-700)':'var(--surface-50)', badgeColor:sec===id?'#fff':'var(--ink-500)' })),
       cmpSetName:set('name'), cmpSetType:set('type'), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
       cmpSetCountries:set('countries'), cmpSetIndustries:set('industries'), cmpSetAudience:set('audience'), cmpSetPersona:set('persona'), cmpSetCompanySize:set('companySize'),
+      // Target countries/industries as Master-Data-backed pill toggles —
+      // same checkbox-chip pattern as ufBrandRows — storing the same
+      // comma-joined string shape the rest of the app already expects.
+      cmpCountryRows:this.MASTERS_REG().country.rows.filter(r=>r.Status!=='Inactive').map(r=>{ const name=r.Country_Name;
+        const cur=(f.countries||'').split(',').map(s=>s.trim()).filter(Boolean); const on=cur.includes(name);
+        return { label:name, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const c=on?cur.filter(x=>x!==name):[...cur,name]; this.setState({ cmpForm:{...f, countries:c.join(', ')} }); } }; }),
+      cmpIndustryRows:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive').map(r=>{ const name=r.Industry;
+        const cur=(f.industries||'').split(',').map(s=>s.trim()).filter(Boolean); const on=cur.includes(name);
+        return { label:name, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const c=on?cur.filter(x=>x!==name):[...cur,name]; this.setState({ cmpForm:{...f, industries:c.join(', ')} }); } }; }),
       cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
       cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortOptions:effOptions,
       cmpEffortEmpty:effArr.length===0,
@@ -923,6 +992,18 @@ class AppRoot extends React.Component {
     if(!(f.name&&f.name.trim())){ this.flash('Enter a campaign name.'); return; }
     const kp=(f.kpis||[]).filter(k=>k.kpi&&k.kpi.trim());
     if(!kp.length){ this.flash('Link at least one KPI — the campaign drives KPIs, which drive effort and tasks.'); return; }
+    // The campaign's own duration must fall within every linked OKR's
+    // start→due window — a campaign can't run outside the objective it
+    // serves. Checked against every distinct OKR among the linked KPIs,
+    // not just the first, since KPIs from different OKRs may be linked.
+    const linkedOkrCodes=Array.from(new Set(kp.map(k=>k.okrCode).filter(Boolean)));
+    for(const code of linkedOkrCodes){
+      const okr=this.OKR_DATA().find(x=>x.code===code); if(!okr) continue;
+      const okrStart=new Date(okr.start), okrDue=new Date(okr.due);
+      const cStart=f.start?new Date(f.start):null, cEnd=f.end?new Date(f.end):null;
+      if(cStart && (cStart<okrStart||cStart>okrDue)){ this.flash('Campaign start date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
+      if(cEnd && (cEnd<okrStart||cEnd>okrDue)){ this.flash('Campaign due date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
+    }
     const ef=(f.efforts||[]).filter(e=>e.name&&e.name.trim()).map(e=>({...e, mode:e.mode||'direct', tasks:e.tasks||e.qty, tasksDone:e.tasksDone||'0'}));
     const tm=(f.team||[]).filter(t=>t.who&&t.who.trim());
     const base={ name:f.name.trim(), type:f.type||'SEO Campaign', objective:f.objective||'Lead Generation', status:f.status||'Draft', brand:f.brand||'Beetloop', dept:f.dept||'SEO', cycle:f.cycle||'Q3 2026', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', owner:f.owner||this.currentPerson(), budget:f.budget||'—', spend:f.spend||'₹0', goal:f.goal||'', countries:f.countries||'—', industries:f.industries||'—', audience:f.audience||'—', persona:f.persona||'—', companySize:f.companySize||'—', kpis:kp, efforts:ef, team:tm.length?tm:[{who:f.owner||this.currentPerson(),role:'Campaign owner'}],
@@ -2091,7 +2172,7 @@ class AppRoot extends React.Component {
     const qcRows=list.map(t=>{ const tn=this.tkTone(t.status); return {
       id:t.id, name:t.name, kpi:t.kpi, contribution:'+'+t.units+' '+t.unit, effortPlan:t.effortPlan||'', hasEffort:!!t.effortPlan,
       module:'Task', moduleBg:'var(--info-100)', moduleColor:'var(--info-600)',
-      project:t.project, priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end, dueAlert:this.tkDueAlert(t),
+      priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end, dueAlert:this.tkDueAlert(t),
       status:t.status==='Submitted'?'Awaiting QC':t.status, statusBg:tn.bg, statusColor:tn.c,
       open:()=>this.setState({ tkOpen:t.id }),
       // comments are captured inside the review drawer — the list only reflects them
@@ -2122,7 +2203,7 @@ class AppRoot extends React.Component {
     const ideaRows=this.allIdeas().filter(i=>i.status==='Submitted for QC').map(i=>{ return {
       id:i.id, name:i.title, kpi:i.type, contribution:i.keyword||'—', effortPlan:i.effortPlan||'', hasEffort:!!i.effortPlan,
       module:'Content Idea', moduleBg:'var(--warn-100)', moduleColor:'var(--warn-600)',
-      project:i.service, priority:i.priority, priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[i.priority]||'var(--ink-400)',
+      priority:i.priority, priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[i.priority]||'var(--ink-400)',
       assignee:i.owner, dates:'Publish · '+i.publishMonth, dueAlert:null,
       status:'Awaiting QC', statusBg:'var(--orchid-100)', statusColor:'var(--orchid-700)',
       open:()=>this.setState({ ideaOpen:i.id }),
@@ -3156,7 +3237,7 @@ class AppRoot extends React.Component {
             set:()=>this.setState({ epGenMode:m }) })),
           epGenPreview:'Will create '+count+' task'+(count===1?'':'s')+' from '+live.length+' effort line'+(live.length===1?'':'s'),
           epGenWarn:count>20?('That is a lot of tasks — consider “One task per effort line”.'):'' }; })(),
-      epOwnerOptions:['Neha Verma','Sameer Iyer'],
+      epOwnerOptions:(this.state.users||[]).filter(u=>u.status==='Active').map(u=>u.name),
     };
   }
   epGenerate(){
@@ -3904,20 +3985,11 @@ class AppRoot extends React.Component {
   complianceAtQc(t){ return ['Submitted','Rework','Approved','Closed'].includes(t.status); }
   complianceSubmitted(t){ return (!!(this.state.clSubmitted||{})[t.id]) || this.complianceAtQc(t); }
   complianceFill(t){
-    const stored=(this.state.clFill||{})[t.id];
-    if(stored) return stored;
-    if(!this.complianceAtQc(t)) return {};
-    const o={};
-    this.complianceSections(this.clKind(t)).forEach((s,si)=>s.rows.forEach((r,ri)=>{
-      const g=String(r.gold), n=parseFloat(g.replace(/[^0-9.]/g,''))||0;
-      const lower=/^\s*≤/.test(g);
-      const miss=((si+ri)%4===3); // mostly meets, occasionally misses
-      const val=lower?(miss?(n+Math.max(1,Math.round(n*0.4))):Math.max(0,n-Math.max(1,Math.round(n*0.3))))
-                     :(miss?Math.round(n*0.88):Math.round(n*1.03));
-      const slug=String(r.kpi).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-      o[si+'-'+ri]={ self:String(val), note:'', files:[slug+'-report-1'+(/score|readab|authority|position/i.test(r.kpi)?'.png':'.pdf')] };
-    }));
-    return o;
+    // Never fabricate self-scores/evidence — a task reaching Submitted via
+    // the "Completed — send to QC" shortcut (which doesn't go through this
+    // checklist's own gated clSubmit()) must show genuinely blank fields
+    // until the assignee fills them in themselves, not synthesized data.
+    return (this.state.clFill||{})[t.id] || {};
   }
   // every QC comment recorded against a task — per-line checklist comments + the overall note
   qcCommentDigest(t){
@@ -4005,6 +4077,7 @@ class AppRoot extends React.Component {
           selfLocked:!writerEditable,
           evFiles:(f.files||[]).map((n,fi)=>({ name:n,
             icon:/\.(png|jpe?g|gif|webp)$/i.test(n)?'image':(/\.pdf$/i.test(n)?'file-text':'file'),
+            open:()=>this.openFilePreview(n),
             remove:()=>{ const cur={...(this.state.clFill||{})}; const arr=(((cur[id]||{})[key]||{}).files||[]).slice(); arr.splice(fi,1);
               cur[id]={...(cur[id]||{}),[key]:{...(cur[id]||{})[key],files:arr}}; this.setState({ clFill:cur }); } })),
           hasEv:(f.files||[]).length>0,
@@ -4462,7 +4535,7 @@ class AppRoot extends React.Component {
       tmToggle:(e)=>{ if(e)e.stopPropagation(); tmr.running?this.stopTimer(t.id):this.startTimer(t.id); },
       waiting: blockedBy && ['Assigned','In Progress'].includes(t.status) ? ('Waiting on '+blockedBy.id) : '',
       division:this.tkDivision(t), divBg:this.tkDivTone(this.tkDivision(t)).bg, divColor:this.tkDivTone(this.tkDivision(t)).c,
-      id:t.id, name:t.name, kpi:t.kpi, kpiId:t.kpiId, contribution:'+'+t.units+' '+t.unit, project:t.project,
+      id:t.id, name:t.name, kpi:t.kpi, kpiId:t.kpiId, contribution:'+'+t.units+' '+t.unit,
       effortPlan:t.effortPlan||'', hasEffort:!!t.effortPlan,
       dueAlert:this.tkDueAlert(t), day:this.dayTag(t), locked,
       reviewer:t.reviewer||'—', qcFb:t.qcFeedback||'—', hasQcFb:!!t.qcFeedback,
@@ -4798,19 +4871,29 @@ class AppRoot extends React.Component {
   // Read by every role. Authored by Manager / Team Lead / Admin.
   // Governance chapters (approval matrix, claims & compliance) are Admin-owned —
   // managers own execution, not platform governance.
-  PB_BRANDS(){ return [
-    { key:'beetloop', name:'Beetloop', sector:'B2B platform · Food, nutrition, cosmeceutical, agri, health',
-      site:'beetloop.com', tagline:'Verified intelligence from formulation to market.', color:'var(--beet-700)' },
-    { key:'frl', name:'Food Research Lab', sector:'Product development & food R&D services',
-      site:'foodresearchlab.com', tagline:'From kitchen idea to compliant shelf-ready product.', color:'var(--verify-600)' },
-    { key:'pubrica', name:'Pubrica', sector:'Scientific & medical writing',
-      site:'pubrica.com', tagline:'Research communicated with clinical precision.', color:'var(--info-600)' },
-    { key:'statswork', name:'Statswork', sector:'Statistics & data analysis services',
-      site:'statswork.com', tagline:'Defensible analysis, explained plainly.', color:'var(--orchid-600)' },
-    { key:'tutorsindia', name:'Tutors India', sector:'Academic research support',
-      site:'tutorsindia.com', tagline:'Guidance that gets research over the line.', color:'var(--warn-600)' },
-    { key:'pepcreations', name:'PepCreations', sector:'Creative & brand production',
-      site:'pepcreations.com', tagline:'Craft that carries the claim.', color:'var(--danger-600)' },
+  // Chapter content (PB_CHAPTERS) is keyed by the hardcoded `key` slug below
+  // and stays hardcoded editorial narrative — out of scope to make
+  // data-driven. But the identity fields (name/sector/site/tagline) are
+  // merged from Brand Master by name when a matching row exists, so editing
+  // a brand's tagline/sector in Master Data reflects here without a code
+  // change; falls back to these defaults if the row was renamed/removed.
+  PB_BRANDS(){
+    const reg=this.MASTERS_REG().brand.rows;
+    const merge=(name,defaults)=>{ const r=reg.find(x=>x.Brand_Name===name);
+      return r ? { ...defaults, name:r.Brand_Name, sector:r.Sector||defaults.sector, site:r.Website||defaults.site, tagline:r.Tagline||defaults.tagline } : defaults; };
+    return [
+    merge('Beetloop', { key:'beetloop', name:'Beetloop', sector:'B2B platform · Food, nutrition, cosmeceutical, agri, health',
+      site:'beetloop.com', tagline:'Verified intelligence from formulation to market.', color:'var(--beet-700)' }),
+    merge('Food Research Lab', { key:'frl', name:'Food Research Lab', sector:'Product development & food R&D services',
+      site:'foodresearchlab.com', tagline:'From kitchen idea to compliant shelf-ready product.', color:'var(--verify-600)' }),
+    merge('Pubrica', { key:'pubrica', name:'Pubrica', sector:'Scientific & medical writing',
+      site:'pubrica.com', tagline:'Research communicated with clinical precision.', color:'var(--info-600)' }),
+    merge('Statswork', { key:'statswork', name:'Statswork', sector:'Statistics & data analysis services',
+      site:'statswork.com', tagline:'Defensible analysis, explained plainly.', color:'var(--orchid-600)' }),
+    merge('Tutors India', { key:'tutorsindia', name:'Tutors India', sector:'Academic research support',
+      site:'tutorsindia.com', tagline:'Guidance that gets research over the line.', color:'var(--warn-600)' }),
+    merge('PepCreations', { key:'pepcreations', name:'PepCreations', sector:'Creative & brand production',
+      site:'pepcreations.com', tagline:'Craft that carries the claim.', color:'var(--danger-600)' }),
   ]; }
   PB_BRAND(k){ return this.PB_BRANDS().find(b=>b.key===k)||this.PB_BRANDS()[0]; }
   // block helpers
@@ -6270,10 +6353,13 @@ class AppRoot extends React.Component {
     const t=this.allTasks().find(x=>x.id===id); if(!t) return { tkDrawerOpen:false };
     const rk=this.state.roleKey, person=this.currentPerson();
     const isAssignee=t.assignee===person;
-    const isApprover=['manager','team_lead','admin'].includes(rk);
-    const canReassign=['manager','team_lead','admin','ceo'].includes(rk);
+    // QC Reviewer was missing from this list entirely (couldn't approve
+    // from the drawer, only from the QC queue) — added. Never lets someone
+    // approve/reassign their own submitted work, regardless of role.
+    const isApprover=['qc','manager','team_lead','admin'].includes(rk) && !isAssignee;
+    const canReassign=['manager','team_lead','admin','ceo'].includes(rk) && !isAssignee;
     const tn=this.tkTone(t.status);
-    const meta=[['Project',t.project],['Campaign',t.campaign],['Start date',t.start],['End date',t.end],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
+    const meta=[['Campaign',t.campaign],['Start date',t.start],['End date',t.end],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
@@ -6453,11 +6539,10 @@ class AppRoot extends React.Component {
           tkKpiOptions:[{id:'',label:pool.length?'None — not KPI-linked':'None — effort only'}]
             .concat(pool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
           tkKpiScoped:scoped, tkKpiNote:note }; })(),
-      tkProjectOptions:['—'].concat(this.recordsFor('projects').map(r=>r.name)),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
-      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetProject:set('project'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
+      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
       tkDivisionOptions:['Content','Graphics','Web Developers','SMM','SEO'],
       tkReviewerOptions:(this.state.users||[])
         .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
@@ -6555,7 +6640,7 @@ class AppRoot extends React.Component {
     const o=this.OKR_DATA().find(x=>x.id===id);
     if(!o) return;
     this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:id,
-      okrForm:{ title:o.title, desc:o.desc||'', owner:o.owner, dept:o.dept, brand:o.brand, campaign:o.campaign&&o.campaign!=='—'?o.campaign:'', category:o.category, scope:o.scope, priority:o.priority||this.okrPriority(o).label,
+      okrForm:{ title:o.title, desc:o.desc||'', owner:o.owner, dept:o.dept, brand:o.brand, businessUnit:o.businessUnit||'', websiteDomain:o.websiteDomain||'', campaign:o.campaign&&o.campaign!=='—'?o.campaign:'', category:o.category, scope:o.scope, priority:o.priority||this.okrPriority(o).label,
         cycle:o.cycle, reviewFreq:o.reviewFreq||'Weekly', start:this.isoDate(o.start), end:this.isoDate(o.due),
         parent:o.parent||'None (top level)', dependsOn:o.dependsOn||'', effortTargets:o.effortTargets||'',
         progressCalc:o.progressCalc||'Automatic (from KPI logs)', dataSource:o.dataSource||'GA4',
@@ -6579,7 +6664,7 @@ class AppRoot extends React.Component {
       taskLinks:(k.taskLinks||[]).filter(x=>x.key), effortLinks:(k.effortLinks||[]).filter(x=>x.key),
     }));
     const editId=this.state.okrEditId;
-    const shared={ title:f.title.trim(), desc:f.desc||'', owner:f.owner, dept:f.dept, brand:f.brand, campaign:f.campaign||'—', category:f.category||f.dept,
+    const shared={ title:f.title.trim(), desc:f.desc||'', owner:f.owner, dept:f.dept, brand:f.brand, businessUnit:f.businessUnit||'', websiteDomain:f.websiteDomain||'', campaign:f.campaign||'—', category:f.category||f.dept,
       scope:f.scope||'Department', priority:f.priority||'Medium', cycle:f.cycle||'Q1 2026', reviewFreq:f.reviewFreq||'Weekly',
       start:this.fmtDate(f.start)||this.todayStr(), due:this.fmtDate(f.end)||'Mar 31, 2026',
       parent:f.parent||'None (top level)', dependsOn:f.dependsOn||'', effortTargets:f.effortTargets||'',
@@ -6594,6 +6679,7 @@ class AppRoot extends React.Component {
       if(prev.code) this._persistOkr(prev.code, {
         title:shared.title, description:shared.desc, category:shared.category,
         scope:shared.scope, division:shared.dept, status:shared.status, key_results:krs,
+        business_unit:shared.businessUnit, website_domain:shared.websiteDomain,
       });
       return;
     }
@@ -6607,7 +6693,8 @@ class AppRoot extends React.Component {
     this.flash(activate ? 'OKR '+code+' saved & activated.' : 'OKR '+code+' saved as draft.');
     supabase.from('okrs').insert({
       code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
-      status:okr.status, key_results:krs, created_by:this.state.authUser?this.state.authUser.id:null,
+      status:okr.status, key_results:krs, business_unit:okr.businessUnit, website_domain:okr.websiteDomain,
+      created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] okr insert failed:', error.message);
     });
@@ -6621,7 +6708,7 @@ class AppRoot extends React.Component {
     const mapped=(data||[]).map(r=>({
       id:'okr-'+r.id, code:r.code, v:'v1.0', scope:r.scope||'Department', title:r.title, desc:r.description||'',
       owner:(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—', team:'', cycle:'Q1 2026',
-      brand:'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
+      brand:'', businessUnit:r.business_unit||'', websiteDomain:r.website_domain||'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
       progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
       status:r.status||'Draft', weight:100, reviewer:'', approver:'',
       krs:r.key_results||[],
@@ -7397,7 +7484,11 @@ class AppRoot extends React.Component {
     if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
-  BRAND_LIST(){ return ['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India','PepCreations']; }
+  // Brand Master (Master Data) is the single source of truth for every
+  // brand dropdown across the app — Sales/User brand assignment, SOP/Lead
+  // filters, Campaign/OKR forms, Brand Playbook. Inactive brands drop out
+  // of every dropdown but stay in Master Data (soft-disable, not delete).
+  BRAND_LIST(){ return this.MASTERS_REG().brand.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Brand_Name); }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
@@ -8043,7 +8134,7 @@ class AppRoot extends React.Component {
           chosen.map(o=>[o.code, o.title, o.category, this.okrPriority(o).label, o.scope||'Department', o.owner, o.dept, o.brand, o.status, o.progress, o.due]));
         this.setState({ okrSelected:[] }); },
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
-      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
+      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:this.BRAND_LIST()[0]||'Beetloop', businessUnit:'', websiteDomain:'', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false, okrEditId:null }),
       okrIsEdit:!!this.state.okrEditId, okrPanelTitle:this.state.okrEditId?'Edit OKR':'Create new OKR', okrSaveLabel:this.state.okrEditId?'Save changes':'Save & activate',
       ...(()=>{ const er=this.state.okrEditId?all.find(x=>x.id===this.state.okrEditId):null;
@@ -8054,7 +8145,13 @@ class AppRoot extends React.Component {
       okrSetOwner:e=>this.setState({ okrForm:{...this.state.okrForm, owner:e.target.value} }),
       okrOwnerOptions:(this.state.users||[]).map(u=>u.name),
       okrSetDept:e=>this.setState({ okrForm:{...this.state.okrForm, dept:e.target.value} }),
+      okrDeptOptions:this.MASTERS_REG().department.rows.map(r=>r.Department),
       okrSetBrand:e=>this.setState({ okrForm:{...this.state.okrForm, brand:e.target.value} }),
+      okrBrandOptions:this.BRAND_LIST(),
+      okrSetBusinessUnit:e=>this.setState({ okrForm:{...this.state.okrForm, businessUnit:e.target.value} }),
+      okrBusinessUnitOptions:this.MASTERS_REG().businessUnit.rows.map(r=>r.Business_Unit),
+      okrSetWebsiteDomain:e=>this.setState({ okrForm:{...this.state.okrForm, websiteDomain:e.target.value} }),
+      okrWebsiteDomainOptions:this.MASTERS_REG().websiteDomain.rows.map(r=>r.Domain),
       okrSetCampaign:e=>{ const v=e.target.value; this.setState({ okrForm:{...this.state.okrForm, campaign: v==='— None —'?'':v} }); },
       okrSetCategory:e=>this.setState({ okrForm:{...this.state.okrForm, category:e.target.value} }),
       okrSetScope:e=>this.setState({ okrForm:{...this.state.okrForm, scope:e.target.value} }),

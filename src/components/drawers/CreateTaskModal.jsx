@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkProjectOptions, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetProject, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCloseNew, tkCode, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -111,13 +111,6 @@ Description
         
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px"}}>
 
-
-{/* Projects module was retired in favor of Campaigns — field kept
-    (not rendered) so existing tasks that still reference a project
-    by name don't lose that data. */}
-<div style={{"display":"none"}}>
-<input value={tkf.project} onInput={tkSetProject} />
-</div>
 
 
 <div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '../../components/Icon.jsx';
+import { cssTextToObject } from '../../utils/cssText.js';
 
 const label = { display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 6 };
 const input = { width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, outline: 'none' };
@@ -18,7 +19,7 @@ export default function CreateCampaignModal({ vm }) {
   const {
     cmpFormOpen, cmpf, cmpFormTitle, cmpFormCode, cmpFormSaveLabel, cmpFormClose, cmpFormSave, cmpCanDelete, cmpFormDelete,
     cmpSections, cmpSetName, cmpSetType, cmpSetObjective, cmpSetStatus, cmpSetBrand, cmpSetDept, cmpSetCycle, cmpSetStart, cmpSetEnd,
-    cmpSetOwner, cmpSetBudget, cmpSetGoal, cmpSetCountries, cmpSetIndustries, cmpSetAudience, cmpSetPersona, cmpSetCompanySize,
+    cmpSetOwner, cmpSetBudget, cmpSetGoal, cmpSetAudience, cmpSetPersona, cmpSetCompanySize, cmpCountryRows, cmpIndustryRows,
     cmpPeopleNames, cmpKpiForm, cmpAddKpi, cmpKpiPoolOptions,
     cmpEffortForm, cmpAddEffort, cmpEffortEmpty, cmpEffortOptions,
     cmpNewEffortOpen, cmpNe, cmpNeSetName, cmpNeSetQty, cmpNeSetUnit, cmpNeSetCadence, cmpNeSetDivision, cmpNeSetKpi,
@@ -121,8 +122,16 @@ export default function CreateCampaignModal({ vm }) {
                   {sectionHead('C', 'Target audience')}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <div><label style={label}>Target countries</label><input value={f.countries || ''} onChange={cmpSetCountries} placeholder="e.g. India, UAE, Singapore, UK" style={input} /></div>
-                      <div><label style={label}>Target industries</label><input value={f.industries || ''} onChange={cmpSetIndustries} placeholder="e.g. Education, Healthcare, Pharma" style={input} /></div>
+                      <div style={{ gridColumn: '1 / -1' }}><label style={label}>Target countries</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                          {(cmpCountryRows || []).map((r, i) => <button key={i} onClick={r.toggle} style={cssTextToObject(r.style)}>{r.label}</button>)}
+                        </div>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}><label style={label}>Target industries</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                          {(cmpIndustryRows || []).map((r, i) => <button key={i} onClick={r.toggle} style={cssTextToObject(r.style)}>{r.label}</button>)}
+                        </div>
+                      </div>
                       <div><label style={label}>Decision-making persona</label><input value={f.persona || ''} onChange={cmpSetPersona} placeholder="e.g. Research Director / Head of R&D" style={input} /></div>
                       <div><label style={label}>Company size</label>
                         <select value={f.companySize || ''} onChange={cmpSetCompanySize} style={select}>

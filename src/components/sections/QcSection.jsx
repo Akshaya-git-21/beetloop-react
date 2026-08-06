@@ -182,14 +182,11 @@ Status
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
-<div style={{"display":"grid","gridTemplateColumns":"2fr .9fr .7fr .9fr .9fr .8fr 1.6fr","gap":"12px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
+<div style={{"display":"grid","gridTemplateColumns":"2fr .7fr .9fr .9fr .8fr 1.6fr","gap":"12px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
 
               
 <span>
 Task
-</span>
-<span>
-Project
 </span>
 <span>
 Priority
@@ -215,7 +212,7 @@ QC action & feedback
 <React.Fragment key={$index}>
 
               
-<div onClick={q.open} style={{"display":"grid","gridTemplateColumns":"2fr .9fr .7fr .9fr .9fr .8fr 1.6fr","gap":"12px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
+<div onClick={q.open} style={{"display":"grid","gridTemplateColumns":"2fr .7fr .9fr .9fr .8fr 1.6fr","gap":"12px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
 
                 
 <div style={{"minWidth":"0"}}>
@@ -255,12 +252,7 @@ QC action & feedback
                 
 </div>
 
-                
-<span style={{"fontSize":"12px","color":"var(--ink-700)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-{q.project}
-</span>
 
-                
 <span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)"}}>
 <span style={cssTextToObject(`width:8px;height:8px;border-radius:99px;background:${q.priDot}`)} />
 {q.priority}

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrSetBrand, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel,
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrDeptOptions, okrSetBrand, okrBrandOptions, okrSetBusinessUnit, okrBusinessUnitOptions, okrSetWebsiteDomain, okrWebsiteDomainOptions, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel,
     okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions,
     okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal,
     okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions } = vm;
@@ -193,51 +193,33 @@ Hierarchy · Company → Brand → Website → Department → Project/Campaign
 Company / Brand
 </label>
 <select value={okrForm.brand} onChange={okrSetBrand} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-Beetloop
-</option>
-<option>
-Tutors India
-</option>
-<option>
-Food Research Lab
-</option>
-<option>
-Pubrica
-</option>
+{(okrBrandOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Business unit
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-Digital Marketing
-</option>
-<option>
-Research Services
-</option>
+<select value={okrForm.businessUnit} onChange={okrSetBusinessUnit} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(okrBusinessUnitOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Website / Domain
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-beetloop.com
-</option>
-<option>
-tutorsindia.com
-</option>
-<option>
-foodresearchlab.com
-</option>
+<select value={okrForm.websiteDomain} onChange={okrSetWebsiteDomain} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+{(okrWebsiteDomainOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
@@ -247,21 +229,9 @@ foodresearchlab.com
 Department *
 </label>
 <select value={okrForm.dept} onChange={okrSetDept} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
-<option>
-SEO
-</option>
-<option>
-Content
-</option>
-<option>
-SMM
-</option>
-<option>
-Web Development
-</option>
-<option>
-Design
-</option>
+{(okrDeptOptions || []).map((o, $index) => (
+<option key={$index} value={o}>{o}</option>
+))}
 </select>
 </div>
 
