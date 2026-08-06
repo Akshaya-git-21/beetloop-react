@@ -6342,6 +6342,7 @@ class AppRoot extends React.Component {
           evidence:[], status:'Assigned',
           activity:[[me,'Created from support ticket '+t.id,this.todayStr()]] };
         this.setState({ tkAdded:[...(this.state.tkAdded||[]),task] });
+        this._persistNewTask(task, null, null);
         this.tktPatch(t.id,{ status:'In Progress', task:nid },'Converted to task '+nid);
         this.flash(nid+' created from '+t.id+' — assigned to '+task.assignee+', linked back to this ticket.');
       },
@@ -7847,6 +7848,7 @@ class AppRoot extends React.Component {
           activity:[[who,'Generated from '+p.id+' ('+mode+' chain, stage '+(i+1)+' of '+stages.length+')',this.todayStr()]] }));
         this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added] });
         this.flash(added.length+' sequential tasks generated for '+p.id+' — Content → '+(mode==='Revamp'?'SEO → Publish':'Graphics → Web → SEO → Publish')+', each with QC and effort linkage.');
+        added.forEach(t=>this._persistNewTask(t, null, null));
       },
       cwOpenTasks:()=>this.setState({ cOpen:null, route:'tasks', tkQuery:p.id }),
     };
@@ -8729,6 +8731,14 @@ class AppRoot extends React.Component {
 
   async _loadProfile(user){
     const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    // Tasks/OKRs must be loaded before the app becomes interactive: their
+    // "next code" is computed from the local array's length (TSK-2061,
+    // OKR-GEN-Q1-010, ...), so creating one before this load lands would
+    // compute a code that already exists in the DB, silently fail the
+    // insert on the unique `code` constraint, and vanish on next reload.
+    // Every other _load*() below is fire-and-forget since nothing else
+    // derives a uniqueness-critical value from it this early.
+    await Promise.all([this._loadTasks(), this._loadOkrs()]);
     if(error || !profile){
       this.setState({ authUser:user, authProfile:null, screen:'app', roleKey:'junior', route:'dashboard', loginError:'' });
     } else {
@@ -8737,8 +8747,6 @@ class AppRoot extends React.Component {
         screen:'app', roleKey:profile.role_key||'junior', route:'dashboard', loginError:'',
       });
     }
-    this._loadTasks();
-    this._loadOkrs();
     this._loadTeam();
     this._loadRecords();
     this._loadSops();
