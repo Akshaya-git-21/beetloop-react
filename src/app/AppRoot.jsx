@@ -197,7 +197,6 @@ class AppRoot extends React.Component {
   EDIT_LEVELS = ['Full','Create / Edit','Assign / edit','Manage team','Assign & monitor','All'];
 
   componentDidMount(){
-    try{ const saved=localStorage.getItem('beetloop_content_pages'); if(saved){ const arr=JSON.parse(saved); if(Array.isArray(arr)&&arr.length) this.setState({ cAdded:arr }); } }catch(e){}
     this._syncStateFromLocation();
     this._syncLocationFromState();
 
@@ -7605,7 +7604,6 @@ class AppRoot extends React.Component {
       page.status=existing.status;
       const upd={...(this.state.cUpd||{}), [code]:page};
       this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npEditId:null, cOpen:code, cTab:0 });
-      try{ localStorage.setItem('beetloop_content_page_upd', JSON.stringify(upd)); }catch(e){}
       this.flash('Page “'+name+'” updated.');
       supabase.from('content_pages').upsert({ id:code, payload:{...existing,...page}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
         if(error) console.warn('[supabase] content page upsert failed:', error.message);
@@ -7614,7 +7612,6 @@ class AppRoot extends React.Component {
     }
     const next=[...(this.state.cAdded||[]), page];
     this.setState({ cAdded:next, showNewPage:false, npForm:{}, cRepo:repo, cStatus:'All', cQuery:'', cOpen:code, cTab:0 });
-    try{ localStorage.setItem('beetloop_content_pages', JSON.stringify(next)); }catch(e){}
     this.flash('Page “'+name+'” created as '+code+' — added to '+repoName+' (top of list).');
     supabase.from('content_pages').insert({ id:code, payload:page, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
       if(error) console.warn('[supabase] content page insert failed:', error.message);
@@ -8538,7 +8535,14 @@ class AppRoot extends React.Component {
               if(u.id) supabase.from('profiles').update({ status:newStatus }).eq('id', u.id).then(({error})=>{
                 if(error) console.warn('[supabase] suspend/reactivate failed:', error.message);
               }); },
-            canSuspend:rk==='admin' };
+            canSuspend:rk==='admin',
+            canDelete:rk==='admin',
+            delete:(e)=>{ if(e)e.stopPropagation();
+              this.setState({ users:(this.state.users||[]).filter(x=>x.name!==u.name) });
+              this.flash(u.name+' removed from the platform.');
+              if(u.id) supabase.from('profiles').delete().eq('id', u.id).then(({error})=>{
+                if(error) console.warn('[supabase] user delete failed:', error.message);
+              }); } };
         }),
         umStats:(()=>{ const rows=this.state.users.map(u=>{
             const open=this.allTasks().filter(t=>t.assignee===u.name&&!['Approved','Closed'].includes(t.status));
@@ -8693,8 +8697,13 @@ class AppRoot extends React.Component {
       // Supabase (file_blobs) so this exact attachment previews/downloads
       // for every user, in any session, not just this one browser tab.
       fpFilesPicked:(e)=>{
-        const files=Array.from(e.target.files||[]);
+        const MAX_BYTES=1024*1024;
+        const picked=Array.from(e.target.files||[]);
         e.target.value='';
+        if(!picked.length) return;
+        const oversized=picked.filter(f=>f.size>MAX_BYTES);
+        const files=picked.filter(f=>f.size<=MAX_BYTES);
+        if(oversized.length) this.flash(oversized.map(f=>f.name).join(', ')+' — over the 1 MB attachment limit. Not uploaded.');
         if(!files.length) return;
         const names=files.map(f=>f.name);
         this.setState({ fpTarget:null, fpSel:[], fpName:'' });
@@ -8888,6 +8897,8 @@ class AppRoot extends React.Component {
   submitUser(){
     const f=this.state.uf;
     if(!f.first.trim()||!f.email.trim()){ this.flash('First name and email are required.'); return; }
+    if(/@/.test(f.first)||/@/.test(f.last||'')){ this.flash('The name fields shouldn’t contain an email address — check First/Last name and put the address in "Official email" instead.'); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())){ this.flash('Enter a valid email address.'); return; }
     const roleEntry=Object.entries(this.ROLES).find(([,r])=>r.label===f.role);
     const roleKey=roleEntry?roleEntry[0]:'junior';
     if(this.HIGH_PRIVILEGE_ROLES.includes(roleKey)){
@@ -8911,7 +8922,8 @@ class AppRoot extends React.Component {
       });
       const body=await resp.json();
       if(!resp.ok) throw new Error(body.error||'Invite failed');
-      this.flash('User created — activation link sent to '+f.email+'.');
+      if(body.emailSent) this.flash('User created — activation link sent to '+f.email+'.');
+      else this.flash('User created, but the invite email failed to send'+(body.mailError?(': '+body.mailError):'')+'. Use "Resend invite" once you\'ve confirmed mail delivery is set up.');
       this._loadTeam();
     }catch(err){
       this.flash('Could not send invite ('+err.message+'). The user still appears locally.');

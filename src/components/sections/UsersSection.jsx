@@ -156,6 +156,12 @@ Reset to defaults
 {u.suspendLabel}
 </button>
 )}
+{Boolean(u.canDelete) && (
+<button onClick={u.delete} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"12px","height":"12px"}} />
+Delete
+</button>
+)}
 </div>
 </td>
 </tr>

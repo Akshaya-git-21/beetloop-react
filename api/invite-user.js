@@ -95,22 +95,30 @@ export default async function handler(req, res) {
   const smtpPass = process.env.SMTP_PASS;
 
   if (smtpHost && smtpUser && smtpPass) {
-    try {
-      const smtpPort = Number(process.env.SMTP_PORT || 465);
-      const transporter = nodemailer.createTransport({
-        host: smtpHost, port: smtpPort, secure: smtpPort === 465,
-        auth: { user: smtpUser, pass: smtpPass },
-      });
-      await transporter.sendMail({ from: process.env.SMTP_FROM || smtpUser, to: email, subject, html });
-      res.status(200).json({ ok: true, userId, emailSent: true, via: 'smtp' });
-      return;
-    } catch (mailErr) {
-      // Fall through to Resend if SMTP fails at send time.
-      const resendKey = process.env.RESEND_API_KEY;
-      if (!resendKey) {
-        res.status(200).json({ ok: true, userId, emailSent: false, mailError: mailErr.message, actionLink, via: 'smtp' });
+    const smtpPort = Number(process.env.SMTP_PORT || 465);
+    const transporter = nodemailer.createTransport({
+      host: smtpHost, port: smtpPort, secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+    let mailErr;
+    // Transient SMTP hiccups (relay timeout, brief auth blip) are common
+    // enough that a single failed attempt shouldn't be reported as
+    // permanent — retry twice with backoff before falling through to Resend.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await transporter.sendMail({ from: process.env.SMTP_FROM || smtpUser, to: email, subject, html });
+        res.status(200).json({ ok: true, userId, emailSent: true, via: 'smtp' });
         return;
+      } catch (err) {
+        mailErr = err;
+        if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       }
+    }
+    // Fall through to Resend if SMTP failed on every attempt.
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) {
+      res.status(200).json({ ok: true, userId, emailSent: false, mailError: mailErr.message, actionLink, via: 'smtp' });
+      return;
     }
   }
 
