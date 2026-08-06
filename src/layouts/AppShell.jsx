@@ -34,6 +34,7 @@ import CreateTaskModal from '../components/drawers/CreateTaskModal.jsx';
 import CheckInModal from '../components/drawers/CheckInModal.jsx';
 import CheckInHistoryDrawer from '../components/drawers/CheckInHistoryDrawer.jsx';
 import Toast from '../components/drawers/Toast.jsx';
+import UploadTray from '../components/drawers/UploadTray.jsx';
 import CreateRecordModal from '../components/drawers/CreateRecordModal.jsx';
 import AddUserModal from '../components/drawers/AddUserModal.jsx';
 import UsersSection from '../components/sections/UsersSection.jsx';
@@ -324,6 +325,7 @@ export default function AppShell({ vm }) {
 
 
 <Toast vm={vm} />
+<UploadTray vm={vm} />
 <CreateRecordModal vm={vm} />
 <UserDetailDrawer vm={vm} />
 

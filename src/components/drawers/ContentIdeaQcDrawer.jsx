@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentIdeaQcDrawer({ vm }) {
-  const { idAddCmt, idApprove, idCanAct, idCanConvert, idClose, idCmtVal, idComments, idConvert, idD, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasComments, idHasFb, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
+  const { idAddCmt, idApprove, idCanAct, idCanConvert, idCanDelete, idClose, idCmtVal, idComments, idConvert, idD, idDelete, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasComments, idHasFb, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
   return (
     <React.Fragment>
 {Boolean(idDrawerOpen) && (
@@ -39,13 +39,23 @@ export default function ContentIdeaQcDrawer({ vm }) {
 {idD.title}
 </h3>
 
-          
+
 </div>
 
-          
+
+<div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
+
+{Boolean(idCanDelete) && (
+<button onClick={idDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"15px","height":"15px"}} />
+Delete
+</button>
+)}
+
 <button onClick={idClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
+</div>
 
         
 </div>

@@ -11,6 +11,7 @@ export default function TicketDetailDrawer({ vm }) {
     tktToggleTrainingD, tktTrainingLabel, tktToTask, tktResolve,
     tktThread, tktReply, tktSetReply, tktSend,
     tktCanClose, tktConfirm, tktReopen,
+    tktCanDelete, tktDelete,
   } = vm;
   if (!tktD) return null;
   return (
@@ -32,9 +33,16 @@ export default function TicketDetailDrawer({ vm }) {
                     <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>{tktD.ageLabel}</span>
                   </div>
                 </div>
-                <button onClick={tktDClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name="x" style={{ width: 17, height: 17, color: 'var(--ink-700)' }} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  {Boolean(tktCanDelete) && (
+                    <button onClick={tktDelete} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1px solid var(--danger-300, #e5a3a3)', color: 'var(--danger-600)', borderRadius: 10, padding: '9px 13px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <Icon name="trash-2" style={{ width: 15, height: 15 }} />Delete
+                    </button>
+                  )}
+                  <button onClick={tktDClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="x" style={{ width: 17, height: 17, color: 'var(--ink-700)' }} />
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle } = vm;
+  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -47,13 +47,23 @@ Page code
 </span>
 </div>
 
-          
+
 </div>
 
-          
+
+<div style={{"display":"flex","alignItems":"center","gap":"8px"}}>
+
+{Boolean(npCanDelete) && (
+<button onClick={npDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"15px","height":"15px"}} />
+Delete
+</button>
+)}
+
 <button onClick={closeNewPage} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
+</div>
 
         
 </div>

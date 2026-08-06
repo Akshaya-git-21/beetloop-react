@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function EffortPlannerSection({ vm }) {
-  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
+  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epCanDeleteDiv, epDeleteDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
     epIsEdit, epEditTitle, epEditSub, epSaveLabel, epCampaignOptions, epCampaignVal, okrTitleOptions, epOkrVal,
     epGenModes, epGenPreview, epGenWarn } = vm;
   return (
@@ -369,7 +369,14 @@ Each division plans its own efforts — pre-seeded effort types per division, pl
 </option>
 </select>
 
-                
+
+{Boolean(epCanDeleteDiv) && (
+<button onClick={epDeleteDiv} style={{"flexShrink":"0","width":"38px","height":"38px","display":"flex","alignItems":"center","justifyContent":"center","background":"rgba(255,255,255,.14)","color":"#fff","border":"none","borderRadius":"11px","cursor":"pointer"}} title={"Delete custom role"}>
+<Icon name={"trash-2"} style={{"width":"15px","height":"15px"}} />
+</button>
+)}
+
+
 <button onClick={epNew} style={{"flexShrink":"0","display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--beet-700)","border":"none","borderRadius":"11px","padding":"10px 16px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"15px","height":"15px"}} />
 Create effort plan
@@ -536,7 +543,16 @@ Owner · {p.owner}
 Open
 </button>
 
-                  
+{Boolean(epCanEdit) && (
+<React.Fragment>
+<button onClick={p.delete} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"7px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"13px","height":"13px"}} />
+Delete
+</button>
+</React.Fragment>
+)}
+
+
 </div>
 
                 

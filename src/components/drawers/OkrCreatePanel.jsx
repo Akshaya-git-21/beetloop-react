@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function OkrCreatePanel({ vm }) {
-  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrDeptOptions, okrSetBrand, okrBrandOptions, okrSetBusinessUnit, okrBusinessUnitOptions, okrSetWebsiteDomain, okrWebsiteDomainOptions, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel,
+  const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrDeptOptions, okrSetBrand, okrBrandOptions, okrSetBusinessUnit, okrBusinessUnitOptions, okrSetWebsiteDomain, okrWebsiteDomainOptions, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel, okrCanDelete, okrDelete,
     okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions,
     okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal,
     okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions } = vm;
@@ -45,7 +45,15 @@ OKR Configuration
       
 </div>
 
-      
+
+{Boolean(okrCanDelete) && (
+<button onClick={okrDelete} style={{"flex":"none","display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"11px","padding":"9px 15px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"16px","height":"16px"}} />
+Delete
+</button>
+)}
+
+
 <button onClick={closeOkr} style={{"flex":"none","display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 15px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"x"} style={{"width":"16px","height":"16px"}} />
 Close

@@ -3,9 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function TaskDetailDrawer({ vm }) {
-  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
+  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkCanDelete, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDelete, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
     clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
-    clCanSubmit, clSubmit, clCanReopen, clReopen, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
+    clCanSubmit, clSubmit, clCanReopen, clReopen, clCanDelete, clDelete, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
     tkStatusCanSet, tkStatusOptions, tkStatusVal, tkSetStatusSel, tkStatusHint,
     tkQcDigestHas, tkQcVerdictLine, tkQcOverall, tkQcLines, tkQcHasLines, tkQcCoverage, tkQcW,
     tmCanTrack, tmElapsed, tmDotStyle, tmStatus, tmToggle, tmBtnStyle, tmIcon, tmLabel, tmProgressW, tmTotalLabel, tmHasSessions, tmSessions } = vm;
@@ -47,10 +47,17 @@ export default function TaskDetailDrawer({ vm }) {
           
 </div>
 
-          
-<button onClick={tkClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+
+<div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
+{Boolean(tkCanDelete) && (
+<button onClick={tkDelete} title="Delete task" style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<Icon name={"trash-2"} style={{"width":"15px","height":"15px","color":"var(--danger-600)"}} />
+</button>
+)}
+<button onClick={tkClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
+</div>
 
 
 </div>
@@ -552,6 +559,12 @@ Submit for QC
 <button onClick={clReopen} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"13px","height":"13px"}} />
 Return to assignee
+</button>
+)}
+{Boolean(clCanDelete) && (
+<button onClick={clDelete} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"13px","height":"13px"}} />
+Delete checklist
 </button>
 )}
 </div>

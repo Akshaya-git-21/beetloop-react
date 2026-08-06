@@ -191,17 +191,23 @@ Use template — create OKR
 Edit
 </button>
 
-                      
+
 <button onClick={t.duplicate} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Duplicate
 </button>
 
-                      
+
 <button onClick={t.toggleStatus} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
 </button>
 
-                    
+
+<button onClick={t.delete} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"8px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"12px","height":"12px"}} />
+Delete
+</button>
+
+
 </React.Fragment>
 )}
 
@@ -482,6 +488,11 @@ Duplicate
                             
 <button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
+</button>
+
+<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
+Delete
 </button>
 
                           
@@ -776,6 +787,11 @@ Duplicate
                           
 <button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
+</button>
+
+<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
+Delete
 </button>
 
                         

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContactDetailDrawer({ vm }) {
-  const { cnDrawerOpen, cnD, cnDClose, cnDStop, cnDSetStage, cnStageOptions2, cnMeta, cnLog, cnDCanWrite } = vm;
+  const { cnDrawerOpen, cnD, cnDClose, cnDStop, cnDSetStage, cnStageOptions2, cnMeta, cnLog, cnDCanWrite, cnDCanDelete, cnDDelete } = vm;
   const d = cnD || {};
   return (
     <React.Fragment>
@@ -17,9 +17,16 @@ export default function ContactDetailDrawer({ vm }) {
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>{d.name}</h3>
 <div style={{"fontSize":"12.5px","color":"var(--ink-500)","marginTop":"2px"}}>{d.company} · {d.country}</div>
 </div>
+<div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
+{Boolean(cnDCanDelete) && (
+<button onClick={cnDDelete} style={{"display":"flex","alignItems":"center","gap":"6px","height":"34px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","padding":"0 12px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />Delete
+</button>
+)}
 <button onClick={cnDClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
+</div>
 </div>
 <div style={{"display":"flex","alignItems":"center","gap":"9px","marginTop":"12px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>Conversion stage</span>
