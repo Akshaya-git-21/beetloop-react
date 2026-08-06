@@ -1966,7 +1966,12 @@ class AppRoot extends React.Component {
       senior:[K('My open tasks','7','-2','info','list-checks'),K('Due this week','3','0','warn','calendar-clock'),K('Approved','24','+5','ok','check-circle-2'),K('My KPI score','92%','+3%','ok','target')],
       junior:[K('My tasks','4','-1','info','list-checks'),K('Due today','1','0','warn','calendar-clock'),K('Completed','18','+3','ok','check-circle-2'),K('QC comments','2','','brand','message-square')],
       qc:[K('Awaiting review','5','+2','warn','clock'),K('Approved today','8','+3','ok','check-circle-2'),K('Rework raised','2','0','warn','rotate-ccw'),K('Rejection rate','7%','-2%','ok','x-circle')],
-      admin:[K('Total users','48','+3','info','users'),K('Active sessions','21','','brand','activity'),K('Masters','36','','info','boxes'),K('Integrations','6','+1','ok','plug')],
+      admin:(()=>{ const mastersTotal=Object.entries(this.MASTERS_REG()).filter(([k])=>k!=='_st').reduce((s,[,m])=>s+(m.rows?m.rows.length:0),0);
+        const openTickets=this.allTickets().filter(t=>!['Resolved','Closed'].includes(t.status)).length;
+        return [K('Total users',String(this.state.users.length),'','info','users'),
+          K('Active sessions',String(Object.keys(this.state.onlineUsers||{}).length),'','brand','activity'),
+          K('Masters',String(mastersTotal),'','info','boxes'),
+          K('Open tickets',String(openTickets),'','warn','life-buoy')]; })(),
       dm:(()=>{ const c=this.allContacts(); const today=this.todayStr();
         return [K('Campaigns tracked','9','+1','brand','megaphone'),
           K('Leads today',String(this.allLeads().filter(l=>l.date===today).reduce((s,l)=>s+(parseInt(l.count,10)||0),0)),'','info','users'),
@@ -1984,7 +1989,9 @@ class AppRoot extends React.Component {
       lead:[['Keyword research — Tech vertical','Sameer Iyer','In progress','info','search'],['Broken link fixes — Pubrica','Neha Verma','Awaiting QC','warn','link'],['On-page — Statswork','Sameer Iyer','In progress','info','file-text'],['Local SEO — Food Research Lab','Neha Verma','Planned','info','map-pin']],
       senior:[['Keyword research — Tech vertical','Client A · due Jan 20','In progress','info','search'],['SEO audit — E-commerce','Client C · due Jan 18','Review','warn','file-check'],['On-page — Statswork','Client B','In progress','info','file-text']],
       junior:[['Update meta descriptions — 12 pages','Due today','In progress','warn','file-text'],['Fix broken links — Pubrica','Due Jan 22','Assigned','info','link'],['Add alt text — blog images','Due Jan 24','Assigned','info','image']],
-      admin:[['New user: Neha Verma','Pending invitation','Action','warn','user-plus'],['Semrush integration','Connected','Active','ok','plug'],['Role Master updated','by Meera Krishnan','Logged','info','shield'],['Nightly backup','02:00 IST','Success','ok','database']],
+      admin:(()=>{ const recent=(this.state.notifications||[]).slice(0,4);
+        return recent.length ? recent.map(n=>[n.text, n.who?('by '+n.who):this._timeAgo(n.ts), n.read?'Read':'New', n.read?'info':'warn', 'bell'])
+          : [['No system activity yet','Real events will appear here as they happen','—','info','bell']]; })(),
       dm:[['Q3 SEO push — Pubrica','Live campaign','On track','ok','megaphone'],['Reel series — Statswork','Design team','In progress','info','clapperboard'],['Content calendar — Pepcreations','Karan Shah · due Mon','Review','warn','file-text']],
       sales:[['New enquiries today','Lead Pipeline','Action','warn','users'],['Follow up — SQL stage','Your pipeline','In progress','info','filter'],['Won this week','Your pipeline','Won','ok','check-circle-2']],
     };
