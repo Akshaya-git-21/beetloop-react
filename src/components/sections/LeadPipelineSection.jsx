@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function LeadPipelineSection({ vm }) {
-  const { okrTabsVisible, okrGoOkrs, okrSegOkrsStyle, okrGoLeads, okrSegLeadsStyle, okrGoPipe, okrSegPipeStyle,
+  const { okrTabsVisible, okrGoLeads, okrSegLeadsStyle, okrGoPipe, okrSegPipeStyle,
     okrModPipe, pipeStats, pipeFunnel, pipeFilterDefs, pipeReset, pipeCanWrite, pipeNew, pipeReadOnly, pipeMaskNote,
     pipeRows, pipeStageOptions, pipeEmpty, pipePg,
     okrModLeads, ldStats, ldTodayPct, ldTodayW, ldTodayColor, ldTodayNote, ldReadOnly, ldCanEnter, ldPendingToday,
@@ -11,15 +11,13 @@ export default function LeadPipelineSection({ vm }) {
     ldSetVisitors, ldSetCount, ldSetQualified, ldSetValue, ldSetCampaign, ldCampaignOptions, ldCampaignNote,
     ldSetBrand, ldBrandOptions, ldBrandVal, ldBrandLocked, ldBrandNote,
     ldSetNotes, ldSave, ldFilterDefs, ldReset, ldReportTitle, ldPeriodBtns, ldReportSummary, ldTrendLabel, ldTrendColor,
-    ldReportRows, ldSplit, ldSplitNote, ldSvcRows, ldRows, ldEmpty, ldPg } = vm;
+    ldReportRows, ldSplit, ldSplitNote, ldSvcRows, ldRows, ldEmpty, ldPg,
+    colPipeCountry, colPipeService, colPipeValue, colPipeOwner, colPipeStage,
+    colLdService, colLdSource, colLdVisitors, colLdLeads, colLdQualified, colLdValue, colLdLoggedBy, colLdNotes, colLdDetails } = vm;
   return (
     <React.Fragment>
 {Boolean(okrTabsVisible) && (
 <div style={{"display":"inline-flex","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"3px","marginBottom":"16px"}}>
-<button onClick={okrGoOkrs} style={cssTextToObject(okrSegOkrsStyle)}>
-<Icon name={"target"} style={{"width":"15px","height":"15px"}} />
-OKRs & KPIs
-</button>
 <button onClick={okrGoLeads} style={cssTextToObject(okrSegLeadsStyle)}>
 <Icon name={"user-plus"} style={{"width":"15px","height":"15px"}} />
 Daily leads
@@ -88,11 +86,11 @@ Add lead
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"940px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
 <th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Lead</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Country</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Service requested</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Value</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Owner</th>
-<th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Stage</th>
+{Boolean(colPipeCountry) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Country</th>)}
+{Boolean(colPipeService) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Service requested</th>)}
+{Boolean(colPipeValue) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Value</th>)}
+{Boolean(colPipeOwner) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Owner</th>)}
+{Boolean(colPipeStage) && (<th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Stage</th>)}
 </tr></thead>
 <tbody>
 {(pipeRows || []).map((c, $index) => (
@@ -101,15 +99,17 @@ Add lead
 <div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-900)"}}>{c.name}</div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"1px"}}>{c.company} · {c.id}</div>
 </td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.country}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.service}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{c.value}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-500)"}}>{c.owner}</td>
+{Boolean(colPipeCountry) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.country}</td>)}
+{Boolean(colPipeService) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{c.service}</td>)}
+{Boolean(colPipeValue) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{c.value}</td>)}
+{Boolean(colPipeOwner) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-500)"}}>{c.owner}</td>)}
+{Boolean(colPipeStage) && (
 <td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}>
 <select value={c.stage} onChange={c.setStage} style={cssTextToObject(`padding:5px 9px;border-radius:999px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:${c.stageBg};color:${c.stageColor}`)}>
 {(pipeStageOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </td>
+)}
 </tr>
 ))}
 </tbody>
@@ -337,20 +337,21 @@ Reset
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1120px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
 <th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Date</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Service</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Source</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Visitors</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Leads</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Qualified</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Est. value</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Logged by</th>
-<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Notes</th>
-<th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Lead details</th>
+{Boolean(colLdService) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Service</th>)}
+{Boolean(colLdSource) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Source</th>)}
+{Boolean(colLdVisitors) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Visitors</th>)}
+{Boolean(colLdLeads) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Leads</th>)}
+{Boolean(colLdQualified) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Qualified</th>)}
+{Boolean(colLdValue) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Est. value</th>)}
+{Boolean(colLdLoggedBy) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Logged by</th>)}
+{Boolean(colLdNotes) && (<th style={{"textAlign":"left","padding":"11px 16px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Notes</th>)}
+{Boolean(colLdDetails) && (<th style={{"textAlign":"left","padding":"11px 18px","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Lead details</th>)}
 </tr></thead>
 <tbody>
 {(ldRows || []).map((l, $index) => (
 <tr key={$index}>
 <td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}><span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${l.dateBg};color:${l.dateColor}`)}>{l.date}</span></td>
+{Boolean(colLdService) && (
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
 <div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{l.service}</div>
 {Boolean(l.hasPage) && (
@@ -360,13 +361,15 @@ Reset
 </button>
 )}
 </td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-500)"}}>{l.source}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","color":"var(--info-600)","fontWeight":"700"}}>{l.visitorsLabel}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Sora'","fontSize":"14px","fontWeight":"800","color":"var(--ink-900)"}}>{l.countLabel}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","fontWeight":"700","color":"var(--verify-600)"}}>{l.qualifiedLabel}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","color":"var(--ink-700)"}}>{l.value}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{l.who}</td>
-<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"11.5px","color":"var(--ink-500)"}}>{l.notes}</td>
+)}
+{Boolean(colLdSource) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-500)"}}>{l.source}</td>)}
+{Boolean(colLdVisitors) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","color":"var(--info-600)","fontWeight":"700"}}>{l.visitorsLabel}</td>)}
+{Boolean(colLdLeads) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Sora'","fontSize":"14px","fontWeight":"800","color":"var(--ink-900)"}}>{l.countLabel}</td>)}
+{Boolean(colLdQualified) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","fontWeight":"700","color":"var(--verify-600)"}}>{l.qualifiedLabel}</td>)}
+{Boolean(colLdValue) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12.5px","color":"var(--ink-700)"}}>{l.value}</td>)}
+{Boolean(colLdLoggedBy) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"12px","color":"var(--ink-700)"}}>{l.who}</td>)}
+{Boolean(colLdNotes) && (<td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)","fontSize":"11.5px","color":"var(--ink-500)"}}>{l.notes}</td>)}
+{Boolean(colLdDetails) && (
 <td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"7px","flexWrap":"wrap"}}>
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:${l.detailBg};color:${l.detailColor}`)}>{l.detailCount}</span>
@@ -383,6 +386,7 @@ Reset
 </div>
 )}
 </td>
+)}
 </tr>
 ))}
 </tbody>

@@ -7,7 +7,7 @@ export default function UserDetailDrawer({ vm }) {
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
     umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
     umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
-    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows } = vm;
+    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows, umLeadColumnRows } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -118,6 +118,17 @@ Remove
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Dashboard widgets — untick to hide a block for this person</label>
 <div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>
 {(umWidgetRows || []).map((w, $i) => (
+<button key={$i} onClick={w.toggle} style={cssTextToObject(w.style)}>
+{w.on && <Icon name={"check"} style={{"width":"11px","height":"11px"}} />}
+{w.label}
+</button>
+))}
+</div>
+</div>
+<div style={{"marginTop":"14px"}}>
+<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"7px"}}>Leads columns — untick to hide a column for this person</label>
+<div style={{"display":"flex","gap":"7px","flexWrap":"wrap"}}>
+{(umLeadColumnRows || []).map((w, $i) => (
 <button key={$i} onClick={w.toggle} style={cssTextToObject(w.style)}>
 {w.on && <Icon name={"check"} style={{"width":"11px","height":"11px"}} />}
 {w.label}

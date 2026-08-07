@@ -18,7 +18,7 @@ class AppRoot extends React.Component {
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
     clFill: {}, clQc: {}, clSubmitted: {},
-    okrModTab: 'okrs', leadAdded: [], contactAdded: [], contactUpd: {}, contactDeleted: [], cnOpen: null, cnNew: false, cnForm: {},
+    leadsTab: 'leads', leadAdded: [], contactAdded: [], contactUpd: {}, contactDeleted: [], cnOpen: null, cnNew: false, cnForm: {},
     ldFilters: {service:'All',source:'All',range:'This week'}, ldForm: {}, ldTarget: '10', ldPeriod: 'Weekly',
     pipeFilters: {stage:'All',service:'All',country:'All',owner:'All'},
     showUserModal: false,
@@ -105,6 +105,7 @@ class AppRoot extends React.Component {
     ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
     qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
     okr:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', qc:'View', admin:'Full', dm:'View own', sales:'Leads & pipeline' },
+    leads:{ ceo:'View', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', admin:'Full', dm:'View own', sales:'Leads & pipeline' },
     analytics:{ ceo:'Full', coo:'Operational', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'Full', dm:'Own' },
     repositories:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full', dm:'View', sales:'View' },
     content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'Assigned only' },
@@ -184,6 +185,7 @@ class AppRoot extends React.Component {
     support:{ label:'Help & Support', icon:'life-buoy' },
     qc:{ label:'QC Review', icon:'shield-check' },
     okr:{ label:'OKR & KPI', icon:'target' },
+    leads:{ label:'Leads', icon:'user-plus' },
     effort:{ label:'Effort Planner', icon:'gauge' },
     ideas:{ label:'Content Ideas', icon:'lightbulb' },
     analytics:{ label:'Analytics', icon:'bar-chart-3' },
@@ -1572,13 +1574,7 @@ class AppRoot extends React.Component {
       : this.ROLES[rk];
     const route = this.state.route;
     const acc = this.ACCESS;
-    const leadFull = ['admin','manager','sales'].includes(rk);
-    const leadView = ['ceo','coo','team_lead','senior','junior','dm'].includes(rk);
-    const leadAccess = leadFull || leadView;
-    const otabRaw = this.state.okrModTab||'okrs';
-    const otab2 = (leadAccess && route==='okr')?otabRaw:'okrs';
-    const onLeadTab = route==='okr' && leadAccess && otab2!=='okrs';
-    const showMyKpi = route==='okr' && !onLeadTab && ['team_lead','senior','junior'].includes(rk);
+    const showMyKpi = route==='okr' && ['team_lead','senior','junior'].includes(rk);
 
     // nav — hidden entirely if Admin has revoked View for this role/module in
     // the Permissions matrix; defaults to the existing ACCESS-derived
@@ -1596,7 +1592,7 @@ class AppRoot extends React.Component {
                  : 'background:transparent;color:rgba(255,255,255,.72);'),
       };
     });
-    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','analytics','content','repositories','files','messages','sop','support']);
+    const nav = buildNav(['dashboard','campaigns','effort','tasks','templates','qc','okr','leads','analytics','content','repositories','files','messages','sop','support']);
     const adminNav = buildNav(['masters','users','config']);
     const hasAdmin = adminNav.length>0;
 
@@ -1621,6 +1617,7 @@ class AppRoot extends React.Component {
       ideas:{ eyebrow:'Repositories', icon:'lightbulb', title:'Content Repository — Ideas', sub:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks and stay stored for reuse.', actionLabel:'Add Content Idea', actionIcon:'plus' },
       qc:{ eyebrow:'Quality', icon:'shield-check', title:'QC Review', sub:'Independent quality validation and approvals.' },
       okr:{ eyebrow:'Performance', icon:'target', title:'OKR & KPI', sub:'Objectives, key results and KPI definitions.', actionLabel:'New OKR', actionIcon:'plus' },
+      leads:{ eyebrow:'Growth', icon:'user-plus', title:'Leads', sub:'Daily lead entry and pipeline — from first enquiry to won.' },
       analytics:{ eyebrow:'Intelligence', icon:'bar-chart-3', title:'Analytics', sub:'Dashboards scoped to your level of access.' },
       repositories:{ eyebrow:'Assets', icon:'database', title:'Repositories', sub:'Shared content, SEO and asset repositories.', actionLabel:'New repository', actionIcon:'plus' },
       content:{ eyebrow:'Content', icon:'folder-tree', title:'Website Content Repository', sub:'Structured source of truth for every website page, its SEO and relationships.' },
@@ -1646,7 +1643,7 @@ class AppRoot extends React.Component {
       else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
-      else if(route==='okr') this.setState({ showOkrPanel:true, okrModTab:'okrs', okrEditId:null,
+      else if(route==='okr') this.setState({ showOkrPanel:true, okrEditId:null,
         okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' },
         okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
       else if(route==='campaigns') this.setState({ cmpNew:true, cmpEditId:null, cmpSection:'cmpA',
@@ -1666,7 +1663,8 @@ class AppRoot extends React.Component {
     const showAnalytics = route==='analytics';
     const showMastersHub = route==='masters' && !this.state.masterKey;
     const showMasterDetail = route==='masters' && !!this.state.masterKey;
-    const showOKR = route==='okr' && !showMyKpi && !onLeadTab;
+    const showOKR = route==='okr' && !showMyKpi;
+    const showLeads = route==='leads';
     const showContent = route==='content';
     const showTasks2 = route==='tasks';
     const showTemplates = route==='templates';
@@ -1741,7 +1739,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showLeads, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -1819,14 +1817,17 @@ class AppRoot extends React.Component {
     if(showMastersHub) out.masterGroups = this.mastersData();
     if(showMasterDetail) Object.assign(out, this.masterDetailData());
     if(showOKR) Object.assign(out, this.okrView());
-    if(route==='okr' && leadAccess){
+    if(showLeads){
+      const leadCanEdit=this.hasPerm('leads','edit');
+      const lt=this.state.leadsTab||'leads';
       const seg2=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
-      Object.assign(out, { okrLeadAccess:true, okrModOkrs:otab2==='okrs', okrModLeads:otab2==='leads', okrModPipe:otab2==='pipe',
-        okrSegOkrsStyle:seg2(otab2==='okrs'), okrSegLeadsStyle:seg2(otab2==='leads'), okrSegPipeStyle:seg2(otab2==='pipe'),
-        okrGoOkrs:()=>this.setState({ okrModTab:'okrs' }), okrGoLeads:()=>this.setState({ okrModTab:'leads' }), okrGoPipe:()=>this.setState({ okrModTab:'pipe' }),
-        leadFull, leadViewOnly:leadView, okrTabsVisible:true });
-      if(otab2==='leads') Object.assign(out, this.leadsView(leadFull));
-      if(otab2==='pipe') Object.assign(out, this.pipelineView(leadFull));
+      Object.assign(out, { okrModLeads:lt==='leads', okrModPipe:lt==='pipe',
+        okrSegLeadsStyle:seg2(lt==='leads'), okrSegPipeStyle:seg2(lt==='pipe'),
+        okrGoLeads:()=>this.setState({ leadsTab:'leads' }), okrGoPipe:()=>this.setState({ leadsTab:'pipe' }),
+        okrTabsVisible:true });
+      Object.assign(out, this._leadColVisibility());
+      if(lt==='leads') Object.assign(out, this.leadsView(leadCanEdit));
+      if(lt==='pipe') Object.assign(out, this.pipelineView(leadCanEdit));
     }
     if(route==='okr') Object.assign(out, this.okrDetailData());
     if(showMyKpi) Object.assign(out, this.checkinView());
@@ -2183,8 +2184,8 @@ class AppRoot extends React.Component {
         dashLeadValue:'₹'+Math.round(pipeValue/1000)+'K',
         dashLeadValueNote:'open pipeline · SQL + Opportunity',
         dashLeadTopSvc:topSvc.map(x=>({ label:x[0], n:x[1]+' lead'+(x[1]===1?'':'s') })),
-        dashLeadOpen:()=>this.setState({ route:'okr', okrModTab:'pipe' }),
-        dashLeadOpenDaily:()=>this.setState({ route:'okr', okrModTab:'leads' }),
+        dashLeadOpen:()=>this.setState({ route:'leads', leadsTab:'pipe' }),
+        dashLeadOpenDaily:()=>this.setState({ route:'leads', leadsTab:'leads' }),
       };
     }
     // Per-user widget visibility — Admin picks which Dashboard blocks a
@@ -4341,6 +4342,28 @@ class AppRoot extends React.Component {
     if(u && u.brands && u.brands.length) return u.brands;
     return this.state.roleKey==='sales' ? [this.ROLES.sales.brand] : [];
   }
+  // Whether the signed-in person should be fenced to their assigned
+  // brand(s) for Leads/Contacts — always true for Sales (unchanged, strict
+  // "no brand = nothing" behaviour), and now also true for ANY other role
+  // once Admin has actually assigned them one or more brands via the same
+  // brand checklist used for Sales. Nobody else is newly restricted —
+  // a role with no brands assigned keeps today's unrestricted view.
+  _leadBrandRestricted(){
+    const u=this.userOf(this.currentPerson());
+    return this.state.roleKey==='sales' || !!(u && u.brands && u.brands.length);
+  }
+  // Per-user column visibility for the Leads module's two tables — mirrors
+  // the per-user Dashboard widget visibility pattern (dashboard_widgets):
+  // Admin picks which columns THIS person sees (User Management -> edit
+  // user), stored as the list of HIDDEN keys so everything starts shown.
+  _leadColVisibility(){
+    const hidden=new Set((this.state.authProfile&&this.state.authProfile.hidden_lead_columns)||[]);
+    const show=(k)=>!hidden.has(k);
+    return {
+      colPipeCountry:show('pipeCountry'), colPipeService:show('pipeService'), colPipeValue:show('pipeValue'), colPipeOwner:show('pipeOwner'), colPipeStage:show('pipeStage'),
+      colLdService:show('ldService'), colLdSource:show('ldSource'), colLdVisitors:show('ldVisitors'), colLdLeads:show('ldLeads'), colLdQualified:show('ldQualified'), colLdValue:show('ldValue'), colLdLoggedBy:show('ldLoggedBy'), colLdNotes:show('ldNotes'), colLdDetails:show('ldDetails'),
+    };
+  }
   dailyCapacity(name){
     const u=this.userOf(name); if(!u) return 8;
     const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
@@ -4394,7 +4417,7 @@ class AppRoot extends React.Component {
       umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
         breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice(),
         mobile:u.mobile||'', designation:u.designation||'', team:u.team||'', reportingManager:u.reportingManager||'', teamLead:u.teamLead||'', officeLocation:u.officeLocation||'',
-        hiddenWidgets:(u.hiddenWidgets||[]).slice() } }),
+        hiddenWidgets:(u.hiddenWidgets||[]).slice(), hiddenLeadColumns:(u.hiddenLeadColumns||[]).slice() } }),
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
@@ -4424,6 +4447,16 @@ class AppRoot extends React.Component {
         return { key, label, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.hiddenWidgets||[]; this.setState({ umDraft:{...d, hiddenWidgets: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
+      // Leads column visibility — same hidden-key-list pattern as Dashboard
+      // widgets above, but for the two Leads-module tables (Pipeline +
+      // Daily Leads log). The identity column of each table (Lead / Date)
+      // isn't listed here — it's never hideable.
+      umLeadColumnRows:[['pipeCountry','Pipeline: Country'],['pipeService','Pipeline: Service'],['pipeValue','Pipeline: Value'],['pipeOwner','Pipeline: Owner'],['pipeStage','Pipeline: Stage'],
+        ['ldService','Daily: Service'],['ldSource','Daily: Source'],['ldVisitors','Daily: Visitors'],['ldLeads','Daily: Leads'],['ldQualified','Daily: Qualified'],['ldValue','Daily: Est. value'],['ldLoggedBy','Daily: Logged by'],['ldNotes','Daily: Notes'],['ldDetails','Daily: Lead details']].map(([key,label])=>{
+        const hidden=(d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[])).includes(key); const on=!hidden;
+        return { key, label, on,
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          toggle:()=>{ const cur=d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[]); this.setState({ umDraft:{...d, hiddenLeadColumns: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
@@ -4435,12 +4468,13 @@ class AppRoot extends React.Component {
         const newTeamLead=d.teamLead!==undefined?d.teamLead:u.teamLead;
         const newOfficeLocation=d.officeLocation!==undefined?d.officeLocation:u.officeLocation;
         const newHiddenWidgets=d.hiddenWidgets!==undefined?d.hiddenWidgets:(u.hiddenWidgets||[]);
+        const newHiddenLeadColumns=d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[]);
         const users=(this.state.users||[]).map(x=>x.name===name?{...x,
           shiftStart:d.shiftStart||x.shiftStart, shiftEnd:d.shiftEnd||x.shiftEnd,
           breakMin:parseInt(d.breakMin,10)||x.breakMin, days:parseFloat(d.days)||x.days,
           role:newRole, dept:newDept, status:newStatus, brands:newBrands,
           mobile:newMobile, designation:newDesignation, sub:newDesignation+' · '+newDept, team:newTeam, reportingManager:newReportingManager,
-          teamLead:newTeamLead, officeLocation:newOfficeLocation, hiddenWidgets:newHiddenWidgets,
+          teamLead:newTeamLead, officeLocation:newOfficeLocation, hiddenWidgets:newHiddenWidgets, hiddenLeadColumns:newHiddenLeadColumns,
           statusTone:newStatus==='Active'?'ok':'warn' }:x);
         this.setState({ users, umEdit:false, umDraft:{} });
         const hm=(s)=>{const p=String(s).split(':');return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60);};
@@ -4452,13 +4486,15 @@ class AppRoot extends React.Component {
             role_key: roleEntry?roleEntry[0]:u.roleKey, department:newDept, status:newStatus, brands:newBrands,
             mobile:newMobile, designation:newDesignation, team:newTeam, reporting_manager:newReportingManager,
             team_lead:newTeamLead, office_location:newOfficeLocation, dashboard_widgets:newHiddenWidgets,
+            hidden_lead_columns:newHiddenLeadColumns,
           }).eq('id', u.id).then(({error})=>{
             if(error) console.warn('[supabase] profile update failed:', error.message);
           });
-          // if the Admin is editing their OWN widgets, refresh authProfile
-          // immediately so the change is visible without a full reload.
+          // if the Admin is editing their OWN widgets/columns, refresh
+          // authProfile immediately so the change is visible without a
+          // full reload.
           if(this.state.authProfile && this.state.authProfile.id===u.id){
-            this.setState({ authProfile:{...this.state.authProfile, dashboard_widgets:newHiddenWidgets} });
+            this.setState({ authProfile:{...this.state.authProfile, dashboard_widgets:newHiddenWidgets, hidden_lead_columns:newHiddenLeadColumns} });
           }
         } },
       // Photo: reuses the same upload/remove path My Profile uses, just
@@ -4724,7 +4760,7 @@ class AppRoot extends React.Component {
               : A('View','eye',openIt,false,'');
           case 'Approved':
             return isLead?A('Close & log KPI','check-circle-2',set('Closed','Closed — KPI logged','Task closed. The KPI contribution is locked in.'),true,'QC passed — final closure')
-              : mine?A('Log KPI actual','target',(e)=>{ if(e)e.stopPropagation(); this.setState({ route:'okr', okrModTab:'okrs' }); },true,'Record the outcome against your KPI')
+              : mine?A('Log KPI actual','target',(e)=>{ if(e)e.stopPropagation(); this.setState({ route:'okr' }); },true,'Record the outcome against your KPI')
               : A('View','eye',openIt,false,'QC approved');
           case 'Closed':
             return A('View record','archive',openIt,false,'Complete — no action');
@@ -6178,7 +6214,7 @@ class AppRoot extends React.Component {
       sopKpiRowsD:(s.kpis||[]).map(k=>{ const t=kpiTone(k.status);
         return { name:k.name, owner:k.owner, status:k.status, bg:t.bg, color:t.c,
           contributing:(()=>{ const n=this.sopsForKpi(k.name).length; return n+' SOP'+(n===1?' contributes':'s contribute'); })(),
-          open:()=>this.setState({ sopOpen:null, route:'okr', okrModTab:'okrs' }) }; }),
+          open:()=>this.setState({ sopOpen:null, route:'okr' }) }; }),
       sopHasKpisD:(s.kpis||[]).length>0,
       sopRelRowsD:(s.sops||[]).map(r=>{ const t=relTone(r.rel); const o=byId(r.id);
         return { rel:r.rel, id:r.id, title:o?o.title:'(not found)', status:o?o.status:'—',
@@ -6907,6 +6943,7 @@ class AppRoot extends React.Component {
       mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
       brands:p.brands||[], avatar_url:p.avatar_url||'', hiddenWidgets:p.dashboard_widgets||[],
+      hiddenLeadColumns:p.hidden_lead_columns||[],
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -7722,10 +7759,12 @@ class AppRoot extends React.Component {
     return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
   }
   allLeads(){ const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED());
-    // Strict brand fencing: a Sales account only ever sees leads tagged to a
-    // brand it's assigned to. No brand assigned = nothing, not "everything
-    // untagged" — an untagged lead is a data-entry gap, not a green light.
-    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
+    // Strict brand fencing: once a person is brand-restricted (always true
+    // for Sales; true for anyone else Admin has assigned specific brands
+    // to), they only ever see leads tagged to a brand they're assigned to.
+    // No brand assigned = nothing, not "everything untagged" — an untagged
+    // lead is a data-entry gap, not a green light.
+    if(this._leadBrandRestricted()){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
   // Brand Master (Master Data) is the single source of truth for every
@@ -7752,7 +7791,7 @@ class AppRoot extends React.Component {
     let list=added.concat(this.CONTACT_SEED().filter(c=>!addedIds.has(c.id)))
       .filter(c=>!del.includes(c.id))
       .map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
-    if(this.state.roleKey==='sales'){ const bs=this.mySalesBrands(); list=bs.length?list.filter(c=>bs.includes(c.brand)):[]; }
+    if(this._leadBrandRestricted()){ const bs=this.mySalesBrands(); list=bs.length?list.filter(c=>bs.includes(c.brand)):[]; }
     return list; }
   _deleteContact(id){
     const c=this.allContacts().find(x=>x.id===id); if(!c) return;
@@ -7836,10 +7875,10 @@ class AppRoot extends React.Component {
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
       cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
-      cnBrandOptions: this.state.roleKey==='sales' ? this.mySalesBrands() : this.BRAND_LIST(),
-      cnBrandVal: this.state.roleKey==='sales' ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
-      cnBrandLocked: this.state.roleKey==='sales' && this.mySalesBrands().length<=1,
-      cnBrandNote: this.state.roleKey==='sales' ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
+      cnBrandOptions: this._leadBrandRestricted() ? this.mySalesBrands() : this.BRAND_LIST(),
+      cnBrandVal: this._leadBrandRestricted() ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
+      cnBrandLocked: this._leadBrandRestricted() && this.mySalesBrands().length<=1,
+      cnBrandNote: this._leadBrandRestricted() ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
       cnSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
         const me=this.currentPerson();
@@ -7847,7 +7886,7 @@ class AppRoot extends React.Component {
         const rec={ id, leadId:f.leadId||'', name:f.name.trim(), country:f.country||'India',
           company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
           stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
-          brand: this.state.roleKey==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||''),
+          brand: this._leadBrandRestricted()?(f.brand||this.mySalesBrands()[0]||''):(f.brand||''),
           log:[['Lead created',me,this.todayStr()]] };
         this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
         this.flash(rec.id+' — '+rec.name+' added to the lead pipeline as '+rec.stage+'.');
@@ -7913,9 +7952,9 @@ class AppRoot extends React.Component {
           detailLabel:complete?'View details':('Add '+(need-n)+' detail'+((need-n)===1?'':'s')),
           contactNames:kids.map(c=>({ name:c.name, stage:c.stage,
             bg:this.stageTone(c.stage).bg, color:this.stageTone(c.stage).c,
-            open:()=>this.setState({ okrModTab:'pipe', cnOpen:c.id }) })),
+            open:()=>this.setState({ leadsTab:'pipe', cnOpen:c.id }) })),
           hasContacts:n>0,
-          addDetail:()=>this.setState({ cnNew:true, okrModTab:'pipe',
+          addDetail:()=>this.setState({ cnNew:true, leadsTab:'pipe',
             cnForm:{ stage:'New', country:'India', service:l.service, source:l.source, date:this.isoDate(l.date), leadId:l.id } }) }; })(),
       pageUrl:(this.servicePageOf(l.service)||{}).url||'', hasPage:!!(this.servicePageOf(l.service)||{}).url,
       openPage:()=>{ const s=this.servicePageOf(l.service); const p=s&&this.allContentPages().find(x=>x.url===s.url);
@@ -8023,10 +8062,10 @@ class AppRoot extends React.Component {
           : (f.service?'No campaign targets this service page yet — pick one manually.':'Select a service to auto-fill the campaign.'); })(),
       ldSetDate:set('date'), ldSetSource:set('source'), ldSetCount:set('count'), ldSetQualified:set('qualified'), ldSetValue:set('value'), ldSetNotes:set('notes'), ldSetVisitors:set('visitors'),
       ldSetCampaign:set('campaign'), ldCampaignOptions:['— None —'].concat(this.campaignNames(false)),
-      ldSetBrand:set('brand'), ldBrandOptions: rk==='sales' ? this.mySalesBrands() : this.BRAND_LIST(),
-      ldBrandVal: rk==='sales' ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
-      ldBrandLocked: rk==='sales' && this.mySalesBrands().length<=1,
-      ldBrandNote: rk==='sales' ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
+      ldSetBrand:set('brand'), ldBrandOptions: this._leadBrandRestricted() ? this.mySalesBrands() : this.BRAND_LIST(),
+      ldBrandVal: this._leadBrandRestricted() ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
+      ldBrandLocked: this._leadBrandRestricted() && this.mySalesBrands().length<=1,
+      ldBrandNote: this._leadBrandRestricted() ? ('Assigned brand'+(this.mySalesBrands().length===1?'':'s')+': '+(this.mySalesBrands().join(', ')||'none — contact Admin')) : '',
       ldSave:()=>{
         const n=parseInt(f.count,10)||0;
         if(!f.service){ this.flash('Select the service these leads came in for.'); return; }
@@ -8035,7 +8074,7 @@ class AppRoot extends React.Component {
         const sp=this.servicePageOf(f.service);
         const rec={ id, date:this.fmtDate(f.date)||today, service:f.service, servicePage:(sp&&sp.url)||'', source:f.source||'Organic Search',
           visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'',
-          brand: rk==='sales'?(f.brand||this.mySalesBrands()[0]||''):(f.brand||'') };
+          brand: this._leadBrandRestricted()?(f.brand||this.mySalesBrands()[0]||''):(f.brand||'') };
         this.setState({ leadAdded:[rec,...(this.state.leadAdded||[])], ldForm:{} });
         this.flash(n+' lead'+(n===1?'':'s')+' logged for '+f.service+' — counted toward today’s KPI.');
         supabase.from('leads').insert({ id:rec.id, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
