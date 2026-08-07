@@ -4,7 +4,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
   const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
-    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows } = vm;
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -175,12 +175,14 @@ Designation
 Reporting manager
 </label>
 <select value={uf.manager} onChange={ufManager} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
-<option>
-Priya Nair (Manager)
+<option value="">
+— None —
 </option>
-<option>
-Rahul Menon (COO)
+{(ufManagerOptions||[]).map((m,i)=>(
+<option key={i} value={m}>
+{m}
 </option>
+))}
 </select>
 </div>
 
@@ -190,12 +192,14 @@ Rahul Menon (COO)
 Team lead
 </label>
 <select value={uf.lead} onChange={ufLead} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
-<option>
-Aditi Rao (SEO Lead)
+<option value="">
+— None —
 </option>
-<option>
-Karan Shah (Content Lead)
+{(ufLeadOptions||[]).map((m,i)=>(
+<option key={i} value={m}>
+{m}
 </option>
+))}
 </select>
 </div>
 

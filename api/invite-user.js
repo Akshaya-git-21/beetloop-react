@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { email, fullName, roleKey, department, designation, brands } = req.body || {};
+  const { email, fullName, roleKey, department, designation, brands, reportingManager, teamLead } = req.body || {};
   if (!email || !fullName) {
     res.status(400).json({ error: 'email and fullName are required.' });
     return;
@@ -63,7 +63,8 @@ export default async function handler(req, res) {
       options: {
         redirectTo,
         data: { full_name: fullName, role_key: role, department: department || null, designation: designation || null,
-          brands: Array.isArray(brands) ? brands : [] },
+          brands: Array.isArray(brands) ? brands : [],
+          reporting_manager: reportingManager || null, team_lead: teamLead || null },
       },
     }));
     if (!error || !/unrecognized JWT kid/i.test(error.message || '')) break;
