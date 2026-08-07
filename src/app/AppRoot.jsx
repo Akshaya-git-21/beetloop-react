@@ -1972,14 +1972,39 @@ class AppRoot extends React.Component {
       iconColor:{ok:'var(--verify-600)',warn:'var(--warn-600)',info:'var(--info-600)',brand:'var(--orchid-600)'}[tone],
       deltaColor: delta.startsWith('-')?'var(--danger-600)':'var(--verify-600)',
       deltaIcon: delta.startsWith('-')?'trending-down':'trending-up' });
+    // Real, DB-derived counts shared by every role tile below — replaces
+    // what used to be literal string constants that never changed no
+    // matter what was actually in the database (same class of bug fixed
+    // on the Admin dashboard).
+    const allT=this.allTasks(), allC=this.allCampaigns(), allO=this.OKR_DATA();
+    const notDone=t=>!['Approved','Closed'].includes(t.status);
+    const isOverdue=t=>{ const d=this.dayDiff(t); return d!==null && d<0 && notDone(t); };
+    const activeCampaigns=allC.filter(c=>!['Completed','Archived','Cancelled'].includes(c.status)).length;
+    const overdueTasks=allT.filter(isOverdue).length;
+    const approvedTasks=allT.filter(t=>t.status==='Approved').length;
+    const onTimePct=allT.length?Math.round((allT.length-overdueTasks)/allT.length*100):100;
+    const avgOkrProgress=allO.length?Math.round(allO.reduce((s,o)=>s+this.okrProgress(o),0)/allO.length):0;
+    const reworkOpen=allT.filter(t=>t.status==='Rework').length;
+    const person=this.currentPerson();
+    const myTasks=allT.filter(t=>t.assignee===person);
+    const myOpen=myTasks.filter(notDone);
+    const myDueToday=myOpen.filter(t=>this.dayDiff(t)===0).length;
+    const myDueWeek=myOpen.filter(t=>{ const d=this.dayDiff(t); return d!==null&&d>=0&&d<=7; }).length;
+    const myApproved=myTasks.filter(t=>t.status==='Approved').length;
+    const teamTasks=allT.filter(t=>t.reviewer===person);
+    const teamAwaitingQc=teamTasks.filter(t=>t.status==='Submitted').length;
+    const teamOnTimePct=teamTasks.length?Math.round((teamTasks.length-teamTasks.filter(isOverdue).length)/teamTasks.length*100):100;
+    const submitted=allT.filter(t=>t.status==='Submitted').length;
+    const reworked=allT.filter(t=>(t.reworkCount||0)>0).length;
+    const rejectionPct=(approvedTasks+reworked)?Math.round(reworked/(approvedTasks+reworked)*100):0;
     const KPI = {
-      exec:[K('Revenue (QTD)','₹4.8Cr','+12.4%','ok','indian-rupee'),K('Active projects','38','+5','info','folder-kanban'),K('On-time delivery','91%','+3%','ok','check-circle-2'),K('NPS','62','+8','brand','heart')],
-      ops:[K('Capacity utilization','84%','+2%','info','gauge'),K('Active campaigns','27','+4','brand','megaphone'),K('SLA breaches','3','-2','ok','alarm-clock'),K('Team allocation','96%','+1%','ok','users')],
-      manager:[K('Dept projects','14','+2','info','folder-kanban'),K('Campaigns live','9','+1','brand','megaphone'),K('KPI attainment','88%','+4%','ok','target'),K('Team members','12','0','info','users')],
-      lead:[K('Team tasks','32','+6','info','list-checks'),K('Awaiting QC','5','-1','warn','shield-check'),K('Team on-time','93%','+2%','ok','check-circle-2'),K('Workload balance','Healthy','','ok','gauge')],
-      senior:[K('My open tasks','7','-2','info','list-checks'),K('Due this week','3','0','warn','calendar-clock'),K('Approved','24','+5','ok','check-circle-2'),K('My KPI score','92%','+3%','ok','target')],
-      junior:[K('My tasks','4','-1','info','list-checks'),K('Due today','1','0','warn','calendar-clock'),K('Completed','18','+3','ok','check-circle-2'),K('QC comments','2','','brand','message-square')],
-      qc:[K('Awaiting review','5','+2','warn','clock'),K('Approved today','8','+3','ok','check-circle-2'),K('Rework raised','2','0','warn','rotate-ccw'),K('Rejection rate','7%','-2%','ok','x-circle')],
+      exec:[K('Active campaigns',String(activeCampaigns),'','ok','megaphone'),K('OKR progress (avg)',avgOkrProgress+'%','','info','target'),K('On-time delivery',onTimePct+'%','','ok','check-circle-2'),K('Open tickets',String(this.allTickets().filter(t=>!['Resolved','Closed'].includes(t.status)).length),'','brand','life-buoy')],
+      ops:[K('Overdue tasks',String(overdueTasks),'',overdueTasks?'warn':'ok','alarm-clock'),K('Active campaigns',String(activeCampaigns),'','brand','megaphone'),K('Rework queue',String(reworkOpen),'',reworkOpen?'warn':'ok','rotate-ccw'),K('On-time delivery',onTimePct+'%','','ok','gauge')],
+      manager:[K('Active campaigns',String(activeCampaigns),'','info','folder-kanban'),K('Campaigns live',String(allC.filter(c=>c.status==='Live'||c.status==='Active').length),'','brand','megaphone'),K('OKR progress (avg)',avgOkrProgress+'%','','ok','target'),K('Team members',String(this.state.users.length),'','info','users')],
+      lead:[K('Team tasks',String(teamTasks.length),'','info','list-checks'),K('Awaiting QC',String(teamAwaitingQc),'',teamAwaitingQc?'warn':'ok','shield-check'),K('Team on-time',teamOnTimePct+'%','','ok','check-circle-2'),K('Rework queue',String(reworkOpen),'',reworkOpen?'warn':'ok','gauge')],
+      senior:[K('My open tasks',String(myOpen.length),'','info','list-checks'),K('Due this week',String(myDueWeek),'',myDueWeek?'warn':'ok','calendar-clock'),K('Approved',String(myApproved),'','ok','check-circle-2'),K('My tasks (total)',String(myTasks.length),'','info','target')],
+      junior:[K('My tasks',String(myOpen.length),'','info','list-checks'),K('Due today',String(myDueToday),'',myDueToday?'warn':'ok','calendar-clock'),K('Completed',String(myApproved),'','ok','check-circle-2'),K('My tasks (total)',String(myTasks.length),'','brand','list-checks')],
+      qc:[K('Awaiting review',String(submitted),'',submitted?'warn':'ok','clock'),K('Approved (total)',String(approvedTasks),'','ok','check-circle-2'),K('Rework raised',String(reworked),'',reworked?'warn':'ok','rotate-ccw'),K('Rejection rate',rejectionPct+'%','','ok','x-circle')],
       admin:(()=>{ const mastersTotal=Object.entries(this.MASTERS_REG()).filter(([k])=>k!=='_st').reduce((s,[,m])=>s+(m.rows?m.rows.length:0),0);
         const openTickets=this.allTickets().filter(t=>!['Resolved','Closed'].includes(t.status)).length;
         return [K('Total users',String(this.state.users.length),'','info','users'),
