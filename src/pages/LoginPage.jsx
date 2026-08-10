@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../components/Icon.jsx';
 
 export default function LoginPage({ vm }) {
-  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginLogoUrl, loginBackgroundUrl } = vm;
+  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginTagline, loginLogoUrl, loginBackgroundUrl } = vm;
   return (
     <React.Fragment>
 
@@ -36,7 +36,7 @@ export default function LoginPage({ vm }) {
 
       
 <div style={{"fontFamily":"'Manrope'","fontWeight":"700","fontSize":"12px","letterSpacing":".14em","textTransform":"uppercase","color":"var(--orchid-300)"}}>
-Marketing operations platform
+{loginTagline}
 </div>
 
       

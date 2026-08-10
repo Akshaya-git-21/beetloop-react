@@ -4,13 +4,13 @@ import { supabase } from '../../utils/supabaseClient.js';
 import { applyTheme, applyFavicon } from '../../utils/theme.js';
 
 const DEFAULT_GENERAL = {
-  companyName: 'Beetloop', companyEmail: '', companyPhone: '', companyAddress: '', website: '',
+  companyName: 'Beetloop', tagline: 'Marketing Platform', companyEmail: '', companyPhone: '', companyAddress: '', website: '',
   timezone: 'Asia/Kolkata', dateFormat: 'DD/MM/YYYY', currency: 'INR', language: 'en',
 };
 const DEFAULT_BRANDING = { companyLogo: '', darkLogo: '', loginLogo: '', favicon: '', loginBackground: '' };
 const DEFAULT_THEME = {
   mode: 'light', primaryColor: '#380F23', secondaryColor: '#4E1631', sidebarColor: '', navbarColor: '',
-  buttonColor: '#B45A8C', cardColor: '#FCFAFB', fontFamily: '', borderRadius: 12, customCss: '',
+  buttonColor: '#B45A8C', cardColor: '#FCFAFB', textColor: '', fontFamily: '', borderRadius: 12, customCss: '',
 };
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
@@ -178,6 +178,7 @@ function GeneralTab({ canEdit }) {
         <h3 style={sectionTitle}>Company</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <Field match={shows('company name')}><label style={label}>Company Name</label><input style={input} value={s.form.companyName} onChange={set('companyName')} disabled={dis} /></Field>
+          <Field match={shows('tagline', 'subtitle')}><label style={label}>Tagline / Subtitle</label><input style={input} value={s.form.tagline} onChange={set('tagline')} disabled={dis} placeholder="Marketing Platform" /></Field>
           <Field match={shows('company email')}><label style={label}>Company Email</label><input type="email" style={input} value={s.form.companyEmail} onChange={set('companyEmail')} disabled={dis} /></Field>
           <Field match={shows('company phone')}><label style={label}>Company Phone</label><input style={input} value={s.form.companyPhone} onChange={set('companyPhone')} disabled={dis} /></Field>
           <Field match={shows('company address')}><label style={label}>Company Address</label><input style={input} value={s.form.companyAddress} onChange={set('companyAddress')} disabled={dis} /></Field>
@@ -292,7 +293,7 @@ function ThemeTab({ canEdit }) {
     <div>
       <SearchBox query={query} setQuery={setQuery} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--info-100)', border: '1px solid #CBE3EC', color: 'var(--info-600)', padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
-        <Icon name="wand-2" style={{ width: 14, height: 14, flexShrink: 0 }} />Live preview — every change here applies instantly across the app (Primary/Secondary/Sidebar/Navbar/Button/Card colors, Font, and Dark mode's text/borders/page canvas), even before you Save. Individual card panels and Border Radius stay on their current look for now — rolling those out everywhere is a larger follow-up.
+        <Icon name="wand-2" style={{ width: 14, height: 14, flexShrink: 0 }} />Live preview — every change here applies instantly across the app (Primary/Secondary/Sidebar/Navbar/Button/Card/Text colors, Font, and Dark mode's text/borders/page canvas), even before you Save. Individual card panels and Border Radius stay on their current look for now — rolling those out everywhere is a larger follow-up.
       </div>
       <Toolbar canEdit={canEdit} s={s} resetLabel="Reset theme" saveLabel="Save theme" />
       <div style={card}>
@@ -312,6 +313,7 @@ function ThemeTab({ canEdit }) {
         {colorField('navbarColor', 'Navbar Color')}
         {colorField('buttonColor', 'Button Color')}
         {colorField('cardColor', 'Card Color')}
+        {colorField('textColor', 'Text Color')}
       </div>
       <div style={{ ...card, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <h3 style={{ ...sectionTitle, gridColumn: '1 / -1' }}>Typography & Shape</h3>

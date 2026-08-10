@@ -1706,7 +1706,8 @@ class AppRoot extends React.Component {
       isApp: this.state.screen==='app',
       // login
       loginPlatformName:((this.state.platformSettings||{}).general||{}).companyName||'BEETLOOP',
-      loginLogoUrl:((this.state.platformSettings||{}).branding||{}).loginLogo||'',
+      loginTagline:((this.state.platformSettings||{}).general||{}).tagline||'Marketing operations platform',
+      loginLogoUrl:(()=>{ const b=(this.state.platformSettings||{}).branding||{}; return b.loginLogo||b.companyLogo||''; })(),
       loginBackgroundUrl:((this.state.platformSettings||{}).branding||{}).loginBackground||'',
       email:this.state.email, password:this.state.password, loginError:this.state.loginError,
       onEmail:e=>this.setState({email:e.target.value}), onPassword:e=>this.setState({password:e.target.value}),
@@ -1728,7 +1729,7 @@ class AppRoot extends React.Component {
       // shell
       role, roleKey:rk, nav, adminNav, hasAdmin,
       platformName:((this.state.platformSettings||{}).general||{}).companyName||'BEETLOOP',
-      platformSub:'Marketing Platform',
+      platformSub:((this.state.platformSettings||{}).general||{}).tagline||'Marketing Platform',
       platformLogoUrl:(()=>{ const b=(this.state.platformSettings||{}).branding||{}; const dark=((this.state.platformSettings||{}).theme||{}).mode==='dark';
         return (dark&&b.darkLogo)||b.companyLogo||''; })(),
       campaignOptions:this.campaignOptionsFor((this.state.tkForm||{}).campaign,true),
