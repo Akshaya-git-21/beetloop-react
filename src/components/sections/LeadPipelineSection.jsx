@@ -350,7 +350,16 @@ Reset
 <tbody>
 {(ldRows || []).map((l, $index) => (
 <tr key={$index}>
-<td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}><span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${l.dateBg};color:${l.dateColor}`)}>{l.date}</span></td>
+<td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
+<span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${l.dateBg};color:${l.dateColor}`)}>{l.date}</span>
+{Boolean(l.canDeleteLead) && (
+<button onClick={l.deleteLead} title="Delete lead" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"22px","height":"22px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"7px","cursor":"pointer","flexShrink":"0"}}>
+<Icon name={"trash-2"} style={{"width":"11px","height":"11px","color":"var(--danger-600)"}} />
+</button>
+)}
+</div>
+</td>
 {Boolean(colLdService) && (
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
 <div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{l.service}</div>

@@ -4543,7 +4543,22 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] suspend/reactivate failed:', error.message);
         }); },
       umSuspendLabel:u.status==='Suspended'?'Reactivate account':'Suspend account',
-      umResend:()=>this.flash('Activation link re-sent to '+String(u.name).toLowerCase().replace(/\s+/g,'.')+'@beetloop.com.'),
+      umResend:async()=>{
+        if(!u.email){ this.flash('No email on file for '+name+' — add one before resending.'); return; }
+        this.flash('Resending invite to '+u.email+'…');
+        try{
+          const resp=await fetch('/api/invite-user', {
+            method:'POST', headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ email:u.email, fullName:u.name, roleKey:u.roleKey, department:u.dept, designation:u.designation,
+              brands:u.brands||[], reportingManager:u.reportingManager||'', teamLead:u.teamLead||'' }),
+          });
+          const body=await resp.json();
+          if(!resp.ok) throw new Error(body.error||'Resend failed');
+          if(body.emailSent) this.flash('Activation link re-sent to '+u.email+'.');
+          else this.flash('Link regenerated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
+        }catch(err){
+          this.flash('Could not resend invite: '+err.message);
+        } },
       umShowResend:u.status==='Pending Invitation',
     };
   }
@@ -7138,7 +7153,11 @@ class AppRoot extends React.Component {
   async _loadLeads(){
     const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] leads load failed:', error.message); return; }
-    this.setState({ leadAdded:(data||[]).map(r=>({ ...r.payload, id:r.id })) });
+    const rows=data||[];
+    this.setState({
+      leadAdded:rows.filter(r=>!r.deleted).map(r=>({ ...r.payload, id:r.id })),
+      leadDeleted:rows.filter(r=>r.deleted).map(r=>r.id),
+    });
   }
   async _loadContacts(){
     const { data, error } = await supabase.from('contacts').select('*').order('created_at', { ascending:true });
@@ -7927,7 +7946,9 @@ class AppRoot extends React.Component {
     const worked=this.allTasks().some(x=>String(x.name||'').toLowerCase().indexOf(String(name).toLowerCase())>=0);
     return { targeted:worked, url:url||'', kpis:[], campaigns:[], expected:0, viaEffort:worked };
   }
-  allLeads(){ const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED());
+  _allLeadIdsEver(){ return this.LEAD_SEED().map(l=>l.id).concat((this.state.leadAdded||[]).map(l=>l.id)).concat(this.state.leadDeleted||[]); }
+  allLeads(){ const del=this.state.leadDeleted||[];
+    const all=(this.state.leadAdded||[]).concat(this.LEAD_SEED()).filter(l=>!del.includes(l.id));
     // Strict brand fencing: once a person is brand-restricted (always true
     // for Sales; true for anyone else Admin has assigned specific brands
     // to), they only ever see leads tagged to a brand they're assigned to.
@@ -7935,6 +7956,16 @@ class AppRoot extends React.Component {
     // lead is a data-entry gap, not a green light.
     if(this._leadBrandRestricted()){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
+  _deleteLead(id){
+    const l=this.allLeads().find(x=>x.id===id); if(!l) return;
+    this.setState({ leadDeleted:[...(this.state.leadDeleted||[]), id] });
+    this.flash('Deleted lead entry: '+id+'.');
+    // upsert (not update) — a lead still only in LEAD_SEED() has no row yet,
+    // so this is what makes the deletion stick past reload.
+    supabase.from('leads').upsert({ id, payload:l||{}, deleted:true, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] lead delete failed:', error.message);
+    });
+  }
   LEAD_STAGES(){ return ['New','UQL','MQL','SQL','Opportunity','Won','Lost']; }
   // Brand Master (Master Data) is the single source of truth for every
   // brand dropdown across the app — Sales/User brand assignment, SOP/Lead
@@ -7953,6 +7984,7 @@ class AppRoot extends React.Component {
     { id:'CN-005', leadId:'LD-005', name:'Priya Deshmukh', phone:'+91 90040 55231', email:'priya@wellcorenutra.com', country:'India', company:'WellCore', service:'New Product Development', source:'Guest Post / External', stage:'Opportunity', value:'₹2,40,000', date:d(2), owner:'Neha Verma', desc:'Read the Medium article; wants a gummy supplement line.', brand:'Food Research Lab', log:[['Enquiry received','Guest Post',d(2)],['Qualified as SQL','Neha Verma',d(2)],['Proposal in review','Neha Verma',d(1)]] },
     { id:'CN-006', leadId:'LD-006', name:'Dr. Kenji Tanaka', phone:'+81 90 1234 5678', email:'k.tanaka@bioclin.jp', country:'Japan', company:'BioClin', service:'Clinical Trial Support', source:'Organic Search', stage:'Lost', value:'₹80,000', date:d(3), owner:'Aditi Rao', desc:'Timeline mismatch — needed delivery in 3 weeks.', brand:'Food Research Lab', log:[['Enquiry received','Organic Search',d(3)],['Lost — timeline mismatch','Aditi Rao',d(2)]] },
   ]; }
+  _allContactIdsEver(){ return this.CONTACT_SEED().map(c=>c.id).concat((this.state.contactAdded||[]).map(c=>c.id)).concat(this.state.contactDeleted||[]); }
   allContacts(){ const upd=this.state.contactUpd||{};
     const added=this.state.contactAdded||[];
     const del=this.state.contactDeleted||[];
@@ -8042,6 +8074,7 @@ class AppRoot extends React.Component {
       cnSetName:set('name'), cnSetCountry:set('country'),
       cnSetCompany:set('company'), cnSetService:set('service'), cnSetSource:set('source'), cnSetStage:set('stage'),
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
+      cnSetEmail:set('email'), cnSetPhone:set('phone'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
       cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
       cnBrandOptions: this._leadBrandRestricted() ? this.mySalesBrands() : this.BRAND_LIST(),
@@ -8051,10 +8084,12 @@ class AppRoot extends React.Component {
       cnSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Enter the contact name.'); return; }
         const me=this.currentPerson();
-        const id='CN-'+String(this.allContacts().length+1).padStart(3,'0');
+        const nums=this._allContactIdsEver().map(id=>{ const m=String(id).match(/^CN-(\d+)$/); return m?parseInt(m[1],10):0; });
+        const id='CN-'+String(Math.max(0,...nums)+1).padStart(3,'0');
         const rec={ id, leadId:f.leadId||'', name:f.name.trim(), country:f.country||'India',
           company:f.company||'—', service:f.service||this.SERVICE_LIST()[0], source:f.source||'Organic Search',
           stage:f.stage||'New', value:f.value||'—', date:this.fmtDate(f.date)||this.todayStr(), owner:me, desc:f.desc||'',
+          email:f.email||'', phone:f.phone||'',
           brand: this._leadBrandRestricted()?(f.brand||this.mySalesBrands()[0]||''):(f.brand||''),
           log:[['Lead created',me,this.todayStr()]] };
         this.setState({ contactAdded:[rec,...(this.state.contactAdded||[])], cnNew:false, cnForm:{} });
@@ -8074,7 +8109,7 @@ class AppRoot extends React.Component {
       cnD:{ ...c, stageBg:t.bg, stageColor:t.c },
       cnDClose:()=>this.setState({ cnOpen:null }),
       cnDStop:(e)=>e.stopPropagation(),
-      cnMeta:[['Lead ID',c.id],['Company',c.company],['Country',c.country],
+      cnMeta:[['Lead ID',c.id],['Company',c.company],['Email',c.email],['Phone',c.phone],['Country',c.country],
         ['Service requested',c.service],['Source',c.source],['Campaign',c.campaign],['Est. value',c.value],['Captured',c.date],['Owner',c.owner]].map(x=>({k:x[0],v:x[1]||'—'})),
       cnLog:(c.log||[]).slice().reverse().map(l=>({ what:l[0], who:l[1], when:l[2] })),
       cnStageOptions2:this.LEAD_STAGES(),
@@ -8124,10 +8159,11 @@ class AppRoot extends React.Component {
             open:()=>this.setState({ leadsTab:'pipe', cnOpen:c.id }) })),
           hasContacts:n>0,
           addDetail:()=>this.setState({ cnNew:true, leadsTab:'pipe',
-            cnForm:{ stage:'New', country:'India', service:l.service, source:l.source, date:this.isoDate(l.date), leadId:l.id } }) }; })(),
+            cnForm:{ stage:'New', country:'India', service:l.service, source:l.source, date:this.isoDate(l.date), leadId:l.id, brand:l.brand||'' } }) }; })(),
       pageUrl:(this.servicePageOf(l.service)||{}).url||'', hasPage:!!(this.servicePageOf(l.service)||{}).url,
       openPage:()=>{ const s=this.servicePageOf(l.service); const p=s&&this.allContentPages().find(x=>x.url===s.url);
         if(p) this.setState({ route:'content', cOpen:p.id, cTab:0 }); else this.flash('No repository page mapped to "'+l.service+'" yet.'); },
+      canDeleteLead:!!canWrite, deleteLead:()=>canWrite?this._deleteLead(l.id):this.flash('View only — deleting leads is restricted to Admin and Manager.'),
       isToday:l.date===today, dateBg:l.date===today?'var(--verify-100)':'var(--surface-50)', dateColor:l.date===today?'var(--verify-600)':'var(--ink-500)' })),10);
     const f=this.state.ldForm||{};
     const set=(k)=>(e)=>this.setState({ ldForm:{...f,[k]:e.target.value} });
@@ -8239,7 +8275,8 @@ class AppRoot extends React.Component {
         const n=parseInt(f.count,10)||0;
         if(!f.service){ this.flash('Select the service these leads came in for.'); return; }
         if(!n){ this.flash('Enter how many leads came in.'); return; }
-        const id='LD-'+String(all.length+1).padStart(3,'0');
+        const nums=this._allLeadIdsEver().map(id=>{ const m=String(id).match(/^LD-(\d+)$/); return m?parseInt(m[1],10):0; });
+        const id='LD-'+String(Math.max(0,...nums)+1).padStart(3,'0');
         const sp=this.servicePageOf(f.service);
         const rec={ id, date:this.fmtDate(f.date)||today, service:f.service, servicePage:(sp&&sp.url)||'', source:f.source||'Organic Search',
           visitors:parseInt(f.visitors,10)||0, count:n, qualified:parseInt(f.qualified,10)||0, value:f.value||'—', who:me, campaign:f.campaign||'', notes:f.notes||'',
@@ -9178,9 +9215,10 @@ class AppRoot extends React.Component {
   async _createUser(roleKey){
     const f=this.state.uf;
     const name=(f.first+' '+f.last).trim();
-    const u={ name, sub:(f.designation||f.role)+' · '+f.dept, role:f.role, dept:f.dept, status:'Pending Invitation', statusTone:'warn',
+    const u={ name, email:f.email.trim(), sub:(f.designation||f.role)+' · '+f.dept, role:f.role, roleKey, dept:f.dept, designation:f.designation||'',
+      status:'Pending Invitation', statusTone:'warn',
       shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5,
-      brands:f.brands||[] };
+      reportingManager:f.manager||'', teamLead:f.lead||'', brands:f.brands||[] };
     this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
     try{
       const resp=await fetch('/api/invite-user', {

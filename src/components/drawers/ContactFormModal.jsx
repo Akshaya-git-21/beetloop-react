@@ -4,7 +4,7 @@ import Icon from '../../components/Icon.jsx';
 export default function ContactFormModal({ vm }) {
   const { cnFormOpen, cnClose, cnStop, cnFromDaily, cnFromDailyNote, cnf, cnSetName, cnSetCompany,
     cnSetCountry, cnCountryOptions, cnSetService, cnServiceOptions, cnSetSource, cnSourceOptions, cnSetStage, cnStageOptions,
-    cnSetValue, cnSetDate, cnSetDesc, cnSetBrand, cnBrandOptions, cnBrandVal, cnBrandLocked, cnBrandNote, cnSave } = vm;
+    cnSetValue, cnSetDate, cnSetDesc, cnSetBrand, cnBrandOptions, cnBrandVal, cnBrandLocked, cnBrandNote, cnSetEmail, cnSetPhone, cnSave } = vm;
   const f = cnf || {};
   return (
     <React.Fragment>
@@ -32,6 +32,10 @@ export default function ContactFormModal({ vm }) {
 <input value={f.name||''} onInput={cnSetName} placeholder="Dr. Ananya Krishnan" style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Company</label>
 <input value={f.company||''} onInput={cnSetCompany} placeholder="VitalFoods Pvt Ltd" style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Email</label>
+<input type="email" value={f.email||''} onInput={cnSetEmail} placeholder="ananya.k@vitalfoods.in" style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} /></div>
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Phone</label>
+<input value={f.phone||''} onInput={cnSetPhone} placeholder="+91 98400 22114" style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Country</label>
 <select value={f.country||''} onChange={cnSetCountry} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
 {(cnCountryOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
