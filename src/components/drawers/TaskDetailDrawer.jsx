@@ -777,18 +777,37 @@ Comments & feedback — assignee ↔ QC
 <span style={{"fontSize":"11px","color":"var(--ink-400)"}}>
 {c.when}
 </span>
+{Boolean(c.editedLabel) && (
+<span style={{"fontSize":"11px","color":"var(--ink-400)","fontStyle":"italic"}}>
+{c.editedLabel}
+</span>
+)}
 </div>
 
-                    
+
+{c.editing ? (
+<div style={{"marginTop":"6px"}}>
+<textarea value={c.editVal} onChange={c.setEditVal} rows={3} style={{"width":"100%","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","fontFamily":"inherit","resize":"vertical"}} />
+<div style={{"display":"flex","gap":"8px","marginTop":"6px"}}>
+<button onClick={c.saveEdit} style={{"padding":"6px 14px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+Save
+</button>
+<button onClick={c.cancelEdit} style={{"padding":"6px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+Cancel
+</button>
+</div>
+</div>
+) : (
 <div style={{"fontSize":"13px","color":"var(--ink-800)","lineHeight":"1.55","marginTop":"5px"}}>
 {c.text}
 </div>
+)}
 
-                    
+
 {Boolean(c.hasFiles) && (
 <React.Fragment>
 
-                      
+
 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
 {(c.files || []).map((f, $index) => (
 <React.Fragment key={$index}>
@@ -800,11 +819,27 @@ Comments & feedback — assignee ↔ QC
 ))}
 </div>
 
-                    
+
 </React.Fragment>
 )}
 
-                  
+
+{Boolean(c.hasActions) && !c.editing && (
+<div style={{"display":"flex","gap":"12px","marginTop":"8px"}}>
+{Boolean(c.canEdit) && (
+<button onClick={c.startEdit} style={{"padding":"0","border":"none","background":"none","fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+Edit
+</button>
+)}
+{Boolean(c.canDelete) && (
+<button onClick={c.delete} style={{"padding":"0","border":"none","background":"none","fontSize":"11.5px","fontWeight":"700","color":"var(--danger-600)","cursor":"pointer"}}>
+Delete
+</button>
+)}
+</div>
+)}
+
+
 </div>
 
                 

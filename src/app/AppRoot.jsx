@@ -4618,6 +4618,40 @@ class AppRoot extends React.Component {
     this.setState({ tkUpd:upd });
     this._persistTaskPatch(id, fullPatch);
   }
+  // QC comments live inside task.comments (there is no separate QC comment
+  // store — QC Review is a mirror of Tasks) with no id on legacy entries, so
+  // both helpers address a comment by id when present and fall back to its
+  // array index otherwise. Both route through the existing hasPerm('qc', ...)
+  // actions per the requirement to reuse the ERP's existing permissions
+  // rather than inventing a separate one for comments.
+  _findCommentIndex(list, commentId){
+    const byId=list.findIndex(c=>c.id && c.id===commentId);
+    if(byId>=0) return byId;
+    const i=parseInt(commentId,10);
+    return (Number.isInteger(i) && i>=0 && i<list.length) ? i : -1;
+  }
+  editComment(taskId, commentId, newText){
+    if(!this.hasPerm('qc','edit')){ this.flash('You do not have permission to edit comments.'); return; }
+    const text=(newText||'').trim();
+    if(!text){ this.flash('Comment cannot be empty.'); return; }
+    const t=this.allTasks().find(x=>x.id===taskId); if(!t) return;
+    const list=(this.tkOv(t).comments||[]).slice();
+    const idx=this._findCommentIndex(list, commentId); if(idx<0) return;
+    list[idx]={ ...list[idx], text, editedAt:this.todayStr() };
+    this.tkPatch(taskId, { comments:list }, 'Comment edited');
+    this.flash('Comment updated.');
+  }
+  deleteComment(taskId, commentId){
+    if(!this.hasPerm('qc','delete')){ this.flash('You do not have permission to delete comments.'); return; }
+    const t=this.allTasks().find(x=>x.id===taskId); if(!t) return;
+    const list=(this.tkOv(t).comments||[]).slice();
+    const idx=this._findCommentIndex(list, commentId); if(idx<0) return;
+    this.confirmDelete('Delete Comment?', 'Are you sure you want to delete this comment? This action cannot be undone.', ()=>{
+      const next=list.slice(); next.splice(idx,1);
+      this.tkPatch(taskId, { comments:next }, 'Comment deleted');
+      this.flash('Comment deleted.');
+    });
+  }
   reworkCycles(t){
     const fromActivity=(t.activity||[]).filter(a=>/rework/i.test(String(a[1]))).length;
     const fromState=((this.state.tkUpd||{})[t.id]||{}).reworkCount||0;
@@ -6689,7 +6723,7 @@ class AppRoot extends React.Component {
       const fbText=(status==='Approved'?'QC approved':'Rework')+(note?' — '+note:'')+(refs.length?(' · Ref: '+refs.join(', ')):'');
       const me=this.ROLES[rk];
       const cur=this.tkOv(t).comments||[];
-      const comment={ who:this.currentPerson(), role:(rk==='qc'?'QC Reviewer':me.label+' (QC)'), text:(status==='Approved'?'Approved. ':'Rework requested. ')+(note||''), when:this.todayStr(), files:refs };
+      const comment={ id:'cmt-'+Date.now()+'-'+Math.random().toString(36).slice(2), who:this.currentPerson(), roleKey:rk, role:(rk==='qc'?'QC Reviewer':me.label+' (QC)'), text:(status==='Approved'?'Approved. ':'Rework requested. ')+(note||''), when:this.todayStr(), files:refs };
       this.tkPatch(t.id,{ status, qcFeedback:fbText, comments:[...cur,comment] }, label+(note?' — '+note:''));
       this.setState({ qcFb:{...(this.state.qcFb||{}),[t.id]:''}, qcRef:{...(this.state.qcRef||{}),[t.id]:{files:[],url:''}} });
       const unlocked=status==='Approved'?this.tkChain(t).next.filter(n=>(n.depMode||'Parallel')==='Sequential'):[];
@@ -6754,12 +6788,23 @@ class AppRoot extends React.Component {
       tkHasFb:!!t.qcFeedback, tkFb:t.qcFeedback||'',
       ...(()=>{
         const canComment = isAssignee || ['manager','team_lead','admin','qc','coo','ceo','secretary'].includes(rk);
-        const comments=(this.tkOv(t).comments||[]).map(c=>{ const cc=this._commentColor(c.roleKey, c.role);
+        const canEditComment=this.hasPerm('qc','edit'), canDeleteComment=this.hasPerm('qc','delete');
+        const comments=(this.tkOv(t).comments||[]).map((c,ci)=>{ const cc=this._commentColor(c.roleKey, c.role);
+          const cid=c.id||String(ci);
+          const editing=this.state.tkCommentEditId===cid;
           return { who:c.who, role:c.role, text:c.text, when:c.when,
           initials:c.who.split(' ').map(x=>x[0]).join(''),
           isQC:/QC|Manager|Lead|Admin/i.test(c.role),
           bubbleBg:cc.bg, bubbleBorder:cc.border,
-          files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 }; });
+          files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0,
+          editedLabel:c.editedAt?'edited':'',
+          canEdit:canEditComment, canDelete:canDeleteComment, hasActions:canEditComment||canDeleteComment,
+          editing, editVal:editing?(this.state.tkCommentEditVal||''):'',
+          setEditVal:(e)=>this.setState({ tkCommentEditVal:e.target.value }),
+          startEdit:()=>this.setState({ tkCommentEditId:cid, tkCommentEditVal:c.text }),
+          cancelEdit:()=>this.setState({ tkCommentEditId:null, tkCommentEditVal:'' }),
+          saveEdit:()=>{ this.editComment(t.id, cid, this.state.tkCommentEditVal); this.setState({ tkCommentEditId:null, tkCommentEditVal:'' }); },
+          delete:()=>this.deleteComment(t.id, cid) }; });
         const cfl=(this.state.tkCommentFiles||[]).map((f,i)=>({ name:f, remove:()=>{ const a=(this.state.tkCommentFiles||[]).slice(); a.splice(i,1); this.setState({tkCommentFiles:a}); } }));
         return {
           tkComments:comments, tkHasComments:comments.length>0, tkCanComment:canComment,
@@ -6771,7 +6816,7 @@ class AppRoot extends React.Component {
             const me=this.ROLES[rk];
             const roleLabel = isAssignee ? me.tag : (rk==='qc'?'QC Reviewer':me.label);
             const cur=this.tkOv(t).comments||[];
-            this.tkPatch(t.id,{ comments:[...cur,{ who:this.currentPerson(), role:roleLabel, roleKey:rk, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
+            this.tkPatch(t.id,{ comments:[...cur,{ id:'cmt-'+Date.now()+'-'+Math.random().toString(36).slice(2), who:this.currentPerson(), role:roleLabel, roleKey:rk, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
             this.setState({ tkComment:'', tkCommentFiles:[] });
             this.flash('Comment posted — visible to assignee and QC.'); },
         };
