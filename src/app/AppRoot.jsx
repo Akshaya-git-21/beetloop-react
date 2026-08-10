@@ -696,6 +696,12 @@ class AppRoot extends React.Component {
       .filter(c=>!del.includes(c.id))
       .map(c=>upd[c.id]?{...c,...upd[c.id]}:c);
   }
+  _nextCampaignId(){
+    const del=this.state.cmpDeleted||[];
+    const ids=this.CAMPAIGNS_SEED().map(c=>c.id).concat((this.state.cmpAdded||[]).map(c=>c.id)).concat(del);
+    const nums=ids.map(id=>{ const m=String(id).match(/^CMP-(\d+)$/); return m?parseInt(m[1],10):0; });
+    return 'CMP-'+String(Math.max(100,...nums)+1).padStart(3,'0');
+  }
   cmpNum(v){ if(v==null||v==='') return 0; const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
   cmpProgress(c){
     const ks=c.kpis||[]; if(!ks.length) return 0;
@@ -941,7 +947,7 @@ class AppRoot extends React.Component {
       cmpFormOpen:this.state.cmpNew,
       cmpf:f,
       cmpFormTitle:this.state.cmpEditId?'Edit campaign':'Create new campaign',
-      cmpFormCode:this.state.cmpEditId||('CMP-'+String(100+this.allCampaigns().length+1).slice(-3)),
+      cmpFormCode:this.state.cmpEditId||this._nextCampaignId(),
       cmpFormSaveLabel:this.state.cmpEditId?'Save changes':'Create campaign',
       cmpFormClose:()=>this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} }),
       cmpCanDelete:!!this.state.cmpEditId,
@@ -1037,7 +1043,7 @@ class AppRoot extends React.Component {
         if(error) console.warn('[supabase] campaign upsert failed:', error.message);
       });
     } else {
-      const nid='CMP-'+String(100+this.allCampaigns().length+1).slice(-3);
+      const nid=this._nextCampaignId();
       const rec={id:nid,...base};
       this.setState({ cmpAdded:[...(this.state.cmpAdded||[]),rec], cmpNew:false, cmpForm:{} });
       this.flash(nid+' created — '+kp.length+' KPI'+(kp.length===1?'':'s')+' and '+ef.length+' effort line'+(ef.length===1?'':'s')+' linked. Generate tasks from Effort Planner.');
@@ -3834,7 +3840,9 @@ class AppRoot extends React.Component {
         statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
         priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[t.priority]||'var(--ink-400)',
         edit:()=>this.setState({ ttNew:true, ttEditId:t.id, ttForm:{...t, checklist:t.checklist.slice()} }),
-        duplicate:()=>{ const nid='TPL-'+String(100+all.length+1).slice(-3);
+        duplicate:()=>{ const dupIds=this.TASK_TEMPLATES().map(x=>x.id).concat((this.state.ttAdded||[]).map(x=>x.id)).concat(this.state.ttDeleted||[]);
+          const dupNums=dupIds.map(id=>{ const m=String(id).match(/^TPL-(\d+)$/); return m?parseInt(m[1],10):0; });
+          const nid='TPL-'+String(Math.max(100,...dupNums)+1).padStart(3,'0');
           const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
           this.setState({ ttAdded:[...(this.state.ttAdded||[]),copy] }); this.flash('Template duplicated as '+nid+' (Draft).');
           supabase.from('templates').insert({ id:nid, kind:'task', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
@@ -3866,7 +3874,9 @@ class AppRoot extends React.Component {
       used:String(ktUsage(t)),
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       edit:()=>this.setState({ ktNew:true, ktEditId:t.id, ktForm:{...t} }),
-      duplicate:()=>{ const nid='kt'+(allK.length+1)+'c';
+      duplicate:()=>{ const dupIds=this.KPI_TEMPLATES().map(x=>x.id).concat((this.state.ktAdded||[]).map(x=>x.id)).concat(this.state.ktDeleted||[]);
+        const dupNums=dupIds.map(id=>{ const m=String(id).match(/^kt(\d+)c$/); return m?parseInt(m[1],10):0; });
+        const nid='kt'+(Math.max(0,...dupNums)+1)+'c';
         const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
         this.setState({ ktAdded:[...(this.state.ktAdded||[]),copy] }); this.flash('KPI template duplicated (Draft).');
         supabase.from('templates').insert({ id:nid, kind:'kpi', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
@@ -3892,7 +3902,9 @@ class AppRoot extends React.Component {
       statusBg:t.status==='Active'?'var(--verify-100)':'var(--surface-50)', statusColor:t.status==='Active'?'var(--verify-600)':'var(--ink-500)',
       use:()=>{ this.setState({ route:'okr', showOkrPanel:true, okrSection:'okrA', okrTpl:t.id, okrDraftKRs:t.krs.map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:'0', target:k.target, current:'0', weight:k.weight })), okrKRSeq:t.krs.length+1 }); this.flash('Create OKR opened from "'+t.name+'" — objective & KRs pre-filled.'); },
       edit:()=>this.setState({ otNew:true, otEditId:t.id, otForm:{...t, krs:t.krs.map(k=>({...k}))} }),
-      duplicate:()=>{ const nid='ot'+(allO.length+1)+'c';
+      duplicate:()=>{ const dupIds=this.OKR_TEMPLATES().map(x=>x.id).concat((this.state.otAdded||[]).map(x=>x.id)).concat(this.state.otDeleted||[]);
+        const dupNums=dupIds.map(id=>{ const m=String(id).match(/^ot(\d+)c$/); return m?parseInt(m[1],10):0; });
+        const nid='ot'+(Math.max(0,...dupNums)+1)+'c';
         const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
         this.setState({ otAdded:[...(this.state.otAdded||[]),copy] }); this.flash('OKR template duplicated (Draft).');
         supabase.from('templates').insert({ id:nid, kind:'okr', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
@@ -3939,7 +3951,9 @@ class AppRoot extends React.Component {
             if(error) console.warn('[supabase] okr template upsert failed:', error.message);
           });
         } else {
-          const nid='ot'+(this.allOkrTemplates().length+1); const okrec={id:nid,...rec};
+          const otIds=this.OKR_TEMPLATES().map(t=>t.id).concat((this.state.otAdded||[]).map(t=>t.id)).concat(this.state.otDeleted||[]);
+          const otNums=otIds.map(id=>{ const m=String(id).match(/^ot(\d+)$/); return m?parseInt(m[1],10):0; });
+          const nid='ot'+(Math.max(0,...otNums)+1); const okrec={id:nid,...rec};
           this.setState({ otAdded:[...(this.state.otAdded||[]),okrec], otNew:false, otForm:{} }); this.flash('OKR template created — pull it from Create New OKR.');
           supabase.from('templates').insert({ id:nid, kind:'okr', payload:okrec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
             if(error) console.warn('[supabase] okr template insert failed:', error.message);
@@ -3969,7 +3983,9 @@ class AppRoot extends React.Component {
             if(error) console.warn('[supabase] kpi template upsert failed:', error.message);
           });
         } else {
-          const nid='kt'+(this.allKpiTemplates().length+1); const ktrec={id:nid,...rec};
+          const ktIds=this.KPI_TEMPLATES().map(t=>t.id).concat((this.state.ktAdded||[]).map(t=>t.id)).concat(this.state.ktDeleted||[]);
+          const ktNums=ktIds.map(id=>{ const m=String(id).match(/^kt(\d+)$/); return m?parseInt(m[1],10):0; });
+          const nid='kt'+(Math.max(0,...ktNums)+1); const ktrec={id:nid,...rec};
           this.setState({ ktAdded:[...(this.state.ktAdded||[]),ktrec], ktNew:false, ktForm:{} }); this.flash('KPI template created — now available in Create Task, OKR key results and Effort plans.');
           supabase.from('templates').insert({ id:nid, kind:'kpi', payload:ktrec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
             if(error) console.warn('[supabase] kpi template insert failed:', error.message);
@@ -4006,7 +4022,9 @@ class AppRoot extends React.Component {
             if(error) console.warn('[supabase] task template upsert failed:', error.message);
           });
         } else {
-          const nid='TPL-'+String(100+this.allTaskTemplates().length+1).slice(-3);
+          const ttIds=this.TASK_TEMPLATES().map(t=>t.id).concat((this.state.ttAdded||[]).map(t=>t.id)).concat(this.state.ttDeleted||[]);
+          const ttNums=ttIds.map(id=>{ const m=String(id).match(/^TPL-(\d+)$/); return m?parseInt(m[1],10):0; });
+          const nid='TPL-'+String(Math.max(100,...ttNums)+1).padStart(3,'0');
           const ttrec={id:nid,...rec};
           this.setState({ ttAdded:[...(this.state.ttAdded||[]),ttrec], ttNew:false, ttForm:{} });
           this.flash('Template '+nid+' created — available in Create Task.');
