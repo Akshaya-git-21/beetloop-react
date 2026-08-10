@@ -2903,7 +2903,7 @@ class AppRoot extends React.Component {
   }
 
   MY_KPIS(){
-    return {
+    const seed = {
       team_lead:[
         { id:'tl1', kpi:'Team Keywords in Top 10', unit:'keywords', baseline:'22', target:'80', current:'54', freq:'Weekly', okr:'Increase Organic Traffic by 50%', manual:true },
         { id:'tl2', kpi:'Team On-time Delivery', unit:'%', baseline:'82', target:'95', current:'93', freq:'Weekly', okr:'SEO delivery SLA', manual:true },
@@ -2922,6 +2922,25 @@ class AppRoot extends React.Component {
         { id:'jr5', kpi:'SEO certification modules', unit:'modules', baseline:'0', target:'4', current:'1', freq:'Quarterly', okr:'Team capability building', manual:true },
       ],
     };
+    // Layer in key results from REAL OKRs (including ones created after
+    // this seed catalog was written) that name the current person as
+    // owner — otherwise a newly created OKR's KRs have no check-in path at
+    // all and can never show progress moving, no matter how many check-ins
+    // get logged against it.
+    const person=this.currentPerson();
+    const rk=this.state.roleKey;
+    const seedTitles=new Set(Object.values(seed).flat().map(k=>k.okr));
+    const mine=[];
+    (this.allOkrs()||[]).forEach(o=>{
+      if(seedTitles.has(o.title)) return;
+      (o.krs||[]).forEach((k,i)=>{
+        if(k.who!==person) return;
+        mine.push({ id:(o.code||o.id)+'-kr'+i, kpi:k.kpi, unit:k.unit||'units', baseline:k.baseline||'0',
+          target:k.target||'100', current:k.current||'0', freq:k.freq||'Monthly', okr:o.title, manual:true });
+      });
+    });
+    if(mine.length) seed[rk]=(seed[rk]||[]).concat(mine);
+    return seed;
   }
 
   CHECKINS(){
@@ -4638,6 +4657,20 @@ class AppRoot extends React.Component {
     });
   }
   tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'},Closed:{bg:'#EAE4E8',c:'var(--beet-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  // Distinct comment-bubble color per commenting role — CEO and COO each get
+  // their own color so a task's comment thread visually distinguishes who's
+  // weighing in at a glance. Falls back to the old text-label regex for
+  // legacy comments that predate the `roleKey` field (no role key stored).
+  _commentColor(roleKey, roleLabelText){
+    const byKey={
+      ceo:{bg:'var(--warn-100)', border:'#F0DBA0'},
+      coo:{bg:'var(--info-100)', border:'#CBE3EC'},
+      secretary:{bg:'var(--verify-100)', border:'#BFE3D0'},
+    };
+    if(roleKey && byKey[roleKey]) return byKey[roleKey];
+    const isMgmt=/QC|Manager|Lead|Admin/i.test(roleLabelText||'');
+    return isMgmt ? {bg:'var(--orchid-100)', border:'var(--orchid-200)'} : {bg:'var(--surface-50)', border:'var(--line-200)'};
+  }
   relDate(n){ const d=new Date(Date.now()+n*86400000); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; return m+' '+d.getDate()+', '+d.getFullYear(); }
   dayDiff(t){ const s=String(t.end||''); if(!s||s==='—') return null; const d=Date.parse(/\d{4}/.test(s)?s:(s+', 2026')); if(isNaN(d)) return null; const a=new Date(); a.setHours(0,0,0,0); const b=new Date(d); b.setHours(0,0,0,0); return Math.round((b-a)/86400000); }
   dayTag(t){ const df=this.dayDiff(t); if(df===null) return {label:'—',bg:'var(--surface-50)',color:'var(--ink-400)'};
@@ -6649,13 +6682,13 @@ class AppRoot extends React.Component {
       ...timerData,
       tkHasFb:!!t.qcFeedback, tkFb:t.qcFeedback||'',
       ...(()=>{
-        const canComment = isAssignee || ['manager','team_lead','admin','qc'].includes(rk);
-        const comments=(this.tkOv(t).comments||[]).map(c=>({ who:c.who, role:c.role, text:c.text, when:c.when,
+        const canComment = isAssignee || ['manager','team_lead','admin','qc','coo','ceo'].includes(rk);
+        const comments=(this.tkOv(t).comments||[]).map(c=>{ const cc=this._commentColor(c.roleKey, c.role);
+          return { who:c.who, role:c.role, text:c.text, when:c.when,
           initials:c.who.split(' ').map(x=>x[0]).join(''),
           isQC:/QC|Manager|Lead|Admin/i.test(c.role),
-          bubbleBg:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-100)':'var(--surface-50)',
-          bubbleBorder:/QC|Manager|Lead|Admin/i.test(c.role)?'var(--orchid-200)':'var(--line-200)',
-          files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 }));
+          bubbleBg:cc.bg, bubbleBorder:cc.border,
+          files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 }; });
         const cfl=(this.state.tkCommentFiles||[]).map((f,i)=>({ name:f, remove:()=>{ const a=(this.state.tkCommentFiles||[]).slice(); a.splice(i,1); this.setState({tkCommentFiles:a}); } }));
         return {
           tkComments:comments, tkHasComments:comments.length>0, tkCanComment:canComment,
@@ -6665,9 +6698,9 @@ class AppRoot extends React.Component {
           tkPostComment:()=>{ const txt=(this.state.tkComment||'').trim(); const fls=this.state.tkCommentFiles||[];
             if(!txt && !fls.length){ this.flash('Write a comment or attach a document.'); return; }
             const me=this.ROLES[rk];
-            const roleLabel = rk==='qc'?'QC Reviewer':(isAssignee?me.tag:me.label+' (QC)');
+            const roleLabel = isAssignee ? me.tag : (rk==='qc'?'QC Reviewer':me.label);
             const cur=this.tkOv(t).comments||[];
-            this.tkPatch(t.id,{ comments:[...cur,{ who:this.currentPerson(), role:roleLabel, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
+            this.tkPatch(t.id,{ comments:[...cur,{ who:this.currentPerson(), role:roleLabel, roleKey:rk, text:txt, when:this.todayStr(), files:fls }] }, 'Commented'+(fls.length?' with '+fls.length+' attachment'+(fls.length>1?'s':''):''));
             this.setState({ tkComment:'', tkCommentFiles:[] });
             this.flash('Comment posted — visible to assignee and QC.'); },
         };
@@ -6824,7 +6857,10 @@ class AppRoot extends React.Component {
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
 
-  OKR_REVIEWERS(){ return ['John Smith (Admin)','Priya Nair (Manager)','Rahul Menon (COO)','Aditi Rao (Team Lead)','Farhan Ali (QC)']; }
+  OKR_REVIEWERS(){
+    const list=(this.state.users||[]).filter(u=>['manager','team_lead','coo','ceo','admin','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')');
+    return list.length?list:[this.currentPerson()+' ('+this.ROLES[this.state.roleKey].label+')'];
+  }
   okrReviewerOpt(name){ if(!name) return this.OKR_REVIEWERS()[0];
     const hit=this.OKR_REVIEWERS().find(o=>o===name||o.split(' (')[0]===String(name).split(' (')[0]);
     return hit||name; }
@@ -6844,7 +6880,7 @@ class AppRoot extends React.Component {
       okrKRSeq:(o.krs||[]).length+1,
     });
   }
-  _saveOkr(activate, wOk, wTotal, existingCount, rk){
+  _saveOkr(activate, wOk, wTotal, rk){
     const f=this.state.okrForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter an objective title.'); return; }
     if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
@@ -6875,7 +6911,14 @@ class AppRoot extends React.Component {
       });
       return;
     }
-    const code='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(existingCount+1).padStart(3,'0');
+    // Derived from the highest previously-issued number for this prefix
+    // (seed + added + deleted), not a visible/filtered count — a filtered
+    // OKR list can undercount the true total and mint a code that collides
+    // with (and silently shadows) an existing OKR.
+    const prefix='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-';
+    const allCodes=this.OKR_DATA().map(o=>o.code).concat((this.state.okrAdded||[]).map(o=>o.code)).concat(this.state.okrDeleted||[]);
+    const nums=allCodes.filter(c=>c&&c.indexOf(prefix)===0).map(c=>parseInt(c.slice(prefix.length),10)||0);
+    const code=prefix+String(Math.max(0,...nums)+1).padStart(3,'0');
     const okr={
       id:'okr-local-'+Date.now(), code, v:'v1.0', team:'', campaign:'', daysLeft:90, cycleElapsed:0,
       weight:100, approver:this.currentPerson(), ...shared,
@@ -8598,8 +8641,8 @@ class AppRoot extends React.Component {
       okrSetStatus:e=>this.setState({ okrForm:{...this.state.okrForm, status:e.target.value} }),
       okrSetRisks:e=>this.setState({ okrForm:{...this.state.okrForm, risks:e.target.value} }),
       okrReviewerOptions:this.OKR_REVIEWERS(),
-      saveOkr:()=>this._saveOkr(true, wOk, wTotal, list.length, rk),
-      saveOkrDraft:()=>this._saveOkr(false, wOk, wTotal, list.length, rk),
+      saveOkr:()=>this._saveOkr(true, wOk, wTotal, rk),
+      saveOkrDraft:()=>this._saveOkr(false, wOk, wTotal, rk),
       okrSteps, kpiOptions, okrDraftKRs,
       okrTplOptions, okrTplPick, okrTplVal:this.state.okrTpl||'',
       okrUnitOptions:this.UNIT_MASTER(),
