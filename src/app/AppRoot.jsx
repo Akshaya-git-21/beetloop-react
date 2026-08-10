@@ -62,12 +62,6 @@ class AppRoot extends React.Component {
       { name:'Social Media', sub:'SMM & community', subs:'4 sub-services', status:'Active' },
       { name:'CRO', sub:'Conversion optimization', subs:'2 sub-services', status:'Draft' },
     ],
-    qcQueue: [
-      { id:1, title:'Blog: "Beetroot bioavailability" — 1,800 words', meta:'Content · Food Research Lab · Submitted by Sameer Iyer', icon:'file-text', status:'Awaiting QC', statusTone:'warn', done:false },
-      { id:2, title:'Technical SEO audit — Pubrica', meta:'SEO · Pubrica · Submitted by Neha Verma', icon:'search', status:'Awaiting QC', statusTone:'warn', done:false },
-      { id:3, title:'Instagram reel — nutraceutical launch', meta:'Design · PepCreations · Submitted by Design team', icon:'clapperboard', status:'Awaiting QC', statusTone:'warn', done:false },
-      { id:4, title:'Landing page build — Statswork', meta:'Web Dev · Statswork · Submitted by Web team', icon:'code', status:'Approved', statusTone:'ok', done:true },
-    ],
   };
 
   ROLES = {
@@ -406,13 +400,7 @@ class AppRoot extends React.Component {
         desc:'Functional departments and their heads.',
         cols:[ {k:'Dept_Code',l:'Code',mono:1}, {k:'Department',l:'Department'}, {k:'Head',l:'Head'}, {k:'Members',l:'Members'}, {k:'Status',l:'Status',tag:1} ],
         fields:['Dept_Code','Department','Head','Members','Cost_Center','Status'],
-        rows:[
-          {Dept_Code:'DPT-SEO',Department:'SEO',Head:'Priya Nair',Members:12,Cost_Center:'CC-101',Status:'Active'},
-          {Dept_Code:'DPT-CNT',Department:'Content',Head:'Karan Shah',Members:9,Cost_Center:'CC-102',Status:'Active'},
-          {Dept_Code:'DPT-SMM',Department:'SMM',Head:'Priya Nair',Members:6,Cost_Center:'CC-103',Status:'Active'},
-          {Dept_Code:'DPT-WEB',Department:'Web Development',Head:'Rahul Menon',Members:7,Cost_Center:'CC-104',Status:'Active'},
-          {Dept_Code:'DPT-DSN',Department:'Design',Head:'Priya Nair',Members:5,Cost_Center:'CC-105',Status:'Active'},
-        ],
+        rows:[],
       },
       businessUnit: {
         label:'Business Unit Master', icon:'briefcase', group:'Organization & Security',
@@ -642,50 +630,7 @@ class AppRoot extends React.Component {
   // volume, and the Effort Planner generates the assignable tasks.
   CAMPAIGNS_SEED(){
     if(this._campaigns) return this._campaigns;
-    this._campaigns = [
-      { id:'CMP-101', name:'Q3 SEO push — Pubrica', type:'SEO Campaign', status:'Live', brand:'Pubrica', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026',
-        start:'Jul 1, 2026', end:'Sep 30, 2026', owner:'Aditi Rao', budget:'₹6,00,000', spend:'₹3,40,000',
-        goal:'Grow organic, non-branded traffic to service pages and convert visits into qualified demo requests.',
-        countries:'India, USA, UK', industries:'Healthcare, Life Sciences', audience:'Research heads, publication managers', persona:'Director of Research Operations', companySize:'50–500 employees',
-        kpis:[
-          { kpi:'Organic Sessions', target:'100000', current:'68000', unit:'visitors', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[{kind:'Internal',url:'/services/cloud-migration',title:'Cloud Migration Services',contrib:'+18,000 sessions'}] },
-          { kpi:'Keywords in Top 10', target:'50', current:'34', unit:'keywords', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[] },
-        ],
-        efforts:[
-          { name:'On-page SEO — Content Writer', qty:'12', unit:'pages', cadence:'12 /month', division:'Content Writer', owner:'Karan Shah', kpi:'Organic Sessions', tasks:'12', tasksDone:'8', mode:'direct', driverKpi:'Organic Sessions', perUnit:'450', conv:'6' },
-          { name:'Backlink outreach — SEO', qty:'20', unit:'links', cadence:'20 /month', division:'SEO', owner:'Aditi Rao', kpi:'Keywords in Top 10', tasks:'20', tasksDone:'11', mode:'enabler', driverKpi:'Domain Authority', gate:'65', gateCurrent:'62', gateMet:false },
-        ],
-        team:[{who:'Aditi Rao',role:'Campaign Owner'},{who:'Sameer Iyer',role:'SEO Executive'},{who:'Karan Shah',role:'Content Lead'}],
-        taskCount:32, taskDone:19, outcomeKpi:'Organic Sessions', outcomeUnit:'visitors', outcomeTarget:100000, outcomeCurrent:68000,
-      },
-      { id:'CMP-102', name:'Reel series — Statswork', type:'SMM Campaign', status:'Live', brand:'Statswork', dept:'SMM', objective:'Brand Awareness', cycle:'Q3 2026',
-        start:'Jul 15, 2026', end:'Sep 15, 2026', owner:'Priya Nair', budget:'₹2,50,000', spend:'₹1,10,000',
-        goal:'Build short-form video presence across Instagram and LinkedIn to lift brand recall among academic researchers.',
-        countries:'India, UK, Australia', industries:'Education, Research', audience:'PhD scholars, research students', persona:'Research Scholar', companySize:'N/A — individual researchers',
-        kpis:[ { kpi:'Social Impressions', target:'500000', current:'180000', unit:'impressions', okrCode:'OKR-SMM-Q1-004', okrTitle:'Grow Social Engagement 3×', pages:[] } ],
-        efforts:[ { name:'Reel production — Graphics', qty:'16', unit:'reels', cadence:'16 /month', division:'Graphics', owner:'Neha Verma', kpi:'Social Impressions', tasks:'16', tasksDone:'9', mode:'direct', driverKpi:'Social Impressions', perUnit:'8500', conv:'100' } ],
-        team:[{who:'Priya Nair',role:'Campaign Owner'},{who:'Neha Verma',role:'Design Executive'}],
-        taskCount:16, taskDone:9, outcomeKpi:'Social Impressions', outcomeUnit:'impressions', outcomeTarget:500000, outcomeCurrent:180000,
-      },
-      { id:'CMP-103', name:'Whitepaper funnel — FRL', type:'Content Campaign', status:'Draft', brand:'Food Research Lab', dept:'Content', objective:'Lead Generation', cycle:'Q4 2026',
-        start:'Oct 1, 2026', end:'Dec 31, 2026', owner:'Karan Shah', budget:'₹3,20,000', spend:'₹0',
-        goal:'Publish a gated whitepaper on food-safety compliance and drive qualified downloads via organic and email.',
-        countries:'UK, EU', industries:'Food & Beverage', audience:'Compliance managers, QA heads', persona:'Head of Quality Assurance', companySize:'200–2000 employees',
-        kpis:[ { kpi:'Content Published', target:'30', current:'13', unit:'articles', okrCode:'OKR-CNT-Q1-002', okrTitle:'Launch 30 High-Quality Content Pieces', pages:[] } ],
-        efforts:[ { name:'Whitepaper drafting — Content Writer', qty:'1', unit:'whitepaper', cadence:'1 /quarter', division:'Content Writer', owner:'Karan Shah', kpi:'Content Published', tasks:'6', tasksDone:'2', mode:'direct', driverKpi:'Content Published', perUnit:'1', conv:'100' } ],
-        team:[{who:'Karan Shah',role:'Campaign Owner'}],
-        taskCount:6, taskDone:2, outcomeKpi:'Content Published', outcomeUnit:'articles', outcomeTarget:30, outcomeCurrent:13,
-      },
-      { id:'CMP-104', name:'Backlink outreach — Tutors', type:'SEO Campaign', status:'Planning', brand:'Tutors India', dept:'SEO', objective:'Domain Authority', cycle:'Q4 2026',
-        start:'Oct 15, 2026', end:'Nov 30, 2026', owner:'Sameer Iyer', budget:'₹1,80,000', spend:'₹0',
-        goal:'Secure high-authority editorial backlinks to lift domain rating ahead of the Q1 local-SEO push.',
-        countries:'India', industries:'Education', audience:'Local students, parents', persona:'Parent researching tutoring services', companySize:'N/A',
-        kpis:[ { kpi:'Referring Domains', target:'200', current:'135', unit:'backlinks', okrCode:'OKR-SEO-Q1-001', okrTitle:'Increase Organic Traffic by 50%', pages:[] } ],
-        efforts:[ { name:'Outreach — SEO', qty:'15', unit:'links', cadence:'15 /month', division:'SEO', owner:'Sameer Iyer', kpi:'Referring Domains', tasks:'15', tasksDone:'0', mode:'direct', driverKpi:'Referring Domains', perUnit:'1', conv:'100' } ],
-        team:[{who:'Sameer Iyer',role:'Campaign Owner'}],
-        taskCount:15, taskDone:0, outcomeKpi:'Referring Domains', outcomeUnit:'backlinks', outcomeTarget:200, outcomeCurrent:135,
-      },
-    ];
+    this._campaigns = [];
     return this._campaigns;
   }
   allCampaigns(){
@@ -2331,11 +2276,6 @@ class AppRoot extends React.Component {
       qcStatusF:sf, qcOnStatusF:(e)=>this.setState({ qcStatusF:e.target.value, pg:{...(this.state.pg||{}),qc:0} }),
       qcStatusOptions:['All','Awaiting QC','Approved','Rework'] };
   }
-  qcAct(id,status,tone,msg){
-    this.setState({ qcQueue:this.state.qcQueue.map(q=>q.id===id?{...q,status,statusTone:tone,done:true}:q) });
-    this.flash(msg);
-  }
-
   hrsOf(t){
     const base=parseFloat(t.actH)||0;
     const tm=this.timerOf(t.id);

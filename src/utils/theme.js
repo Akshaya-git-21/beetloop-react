@@ -59,6 +59,11 @@ export function applyCustomCss(css) {
 
 export function applyFavicon(branding) {
   if (!branding || !branding.favicon) return;
-  const link = document.querySelector("link[rel~='icon']");
-  if (link) link.href = branding.favicon;
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  if (link.href !== branding.favicon) link.href = branding.favicon;
 }
