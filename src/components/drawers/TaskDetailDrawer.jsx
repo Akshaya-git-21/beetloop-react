@@ -625,6 +625,11 @@ Details
 </React.Fragment>
 ))}
 </select>
+) : m.isDateTime ? (
+<div style={{"display":"flex","gap":"6px"}}>
+<input type="date" value={m.dateVal} onChange={m.onChangeDate} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"#fff"}} />
+<input type="time" value={m.timeVal} onChange={m.onChangeTime} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"#fff","width":"90px"}} />
+</div>
 ) : (
 <span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right"}}>
 {m.v}

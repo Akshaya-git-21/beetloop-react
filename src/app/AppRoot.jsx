@@ -4719,6 +4719,30 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] task upsert failed:', error.message);
     });
   }
+  // Start/end date+time on an existing task — previously set once at
+  // creation with no way to change it afterward. Writes start_date/end_date/
+  // start_time/end_time directly rather than going through tkPatch(), since
+  // _persistTaskPatch()'s upsert never included those columns at all (a
+  // pre-existing gap, not something this introduces).
+  editTaskDates(id, patch){
+    if(!this.hasPerm('tasks','edit')){ this.flash('You do not have permission to edit tasks.'); return; }
+    const t=this.allTasks().find(x=>x.id===id); if(!t) return;
+    const cur=this.tkOv(t);
+    const startDate=patch.startDate!==undefined?patch.startDate:(cur.startDate||'');
+    const endDate=patch.endDate!==undefined?patch.endDate:(cur.endDate||'');
+    const startTime=patch.startTime!==undefined?patch.startTime:(cur.startTime||'');
+    const endTime=patch.endTime!==undefined?patch.endTime:(cur.endTime||'');
+    const upd={...(this.state.tkUpd||{})};
+    upd[id]={ ...(upd[id]||{}), startDate, endDate, startTime, endTime,
+      start:this.fmtDate(startDate)||cur.start, end:this.fmtDate(endDate)||cur.end };
+    this.setState({ tkUpd:upd });
+    this.flash('Task schedule updated.');
+    supabase.from('tasks').update({
+      start_date:startDate||null, end_date:endDate||null, start_time:startTime||null, end_time:endTime||null,
+    }).eq('code', id).then(({error})=>{
+      if(error) console.warn('[supabase] task date update failed:', error.message);
+    });
+  }
   _deleteTask(id){
     if(!this.hasPerm('tasks','delete')){ this.flash('You do not have permission to delete tasks.'); return; }
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
@@ -4733,15 +4757,23 @@ class AppRoot extends React.Component {
   // their own color so a task's comment thread visually distinguishes who's
   // weighing in at a glance. Falls back to the old text-label regex for
   // legacy comments that predate the `roleKey` field (no role key stored).
-  _commentColor(roleKey, roleLabelText){
-    const byKey={
-      ceo:{bg:'var(--warn-100)', border:'#F0DBA0'},
-      coo:{bg:'var(--info-100)', border:'#CBE3EC'},
-      secretary:{bg:'var(--verify-100)', border:'#BFE3D0'},
-    };
-    if(roleKey && byKey[roleKey]) return byKey[roleKey];
-    const isMgmt=/QC|Manager|Lead|Admin/i.test(roleLabelText||'');
-    return isMgmt ? {bg:'var(--orchid-100)', border:'var(--orchid-200)'} : {bg:'var(--surface-50)', border:'var(--line-200)'};
+  // Differentiates comment bubbles by the individual person who wrote them,
+  // not their role — two people who happen to share a role (e.g. two Admin
+  // accounts) must still look visually distinct from each other. Hashing the
+  // name into a small, distinguishable palette keeps each person's color
+  // stable across reloads without needing to persist a color assignment.
+  _commentColor(who){
+    const palette=[
+      {bg:'var(--orchid-100)', border:'var(--orchid-200)'},
+      {bg:'var(--info-100)', border:'#CBE3EC'},
+      {bg:'var(--verify-100)', border:'#BFE3D0'},
+      {bg:'var(--warn-100)', border:'#F0DBA0'},
+      {bg:'var(--danger-100, #F7E3E6)', border:'#F1C9CF'},
+      {bg:'#EAE4E8', border:'var(--line-300)'},
+    ];
+    const s=String(who||'');
+    let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+    return palette[h%palette.length];
   }
   relDate(n){ const d=new Date(Date.now()+n*86400000); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; return m+' '+d.getDate()+', '+d.getFullYear(); }
   dayDiff(t){ const s=String(t.end||''); if(!s||s==='—') return null; const d=Date.parse(/\d{4}/.test(s)?s:(s+', 2026')); if(isNaN(d)) return null; const a=new Date(); a.setHours(0,0,0,0); const b=new Date(d); b.setHours(0,0,0,0); return Math.round((b-a)/86400000); }
@@ -6686,8 +6718,9 @@ class AppRoot extends React.Component {
     // approve/reassign their own submitted work, regardless of role.
     const isApprover=['qc','manager','team_lead','admin'].includes(rk) && !isAssignee;
     const canReassign=['manager','team_lead','admin','ceo'].includes(rk) && !isAssignee;
+    const canEditDates=this.hasPerm('tasks','edit');
     const tn=this.tkTone(t.status);
-    const meta=[['Campaign',t.campaign],['Start date',t.start],['End date',t.end],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
+    const meta=[['Campaign',t.campaign],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
@@ -6789,7 +6822,7 @@ class AppRoot extends React.Component {
       ...(()=>{
         const canComment = isAssignee || ['manager','team_lead','admin','qc','coo','ceo','secretary'].includes(rk);
         const canEditComment=this.hasPerm('qc','edit'), canDeleteComment=this.hasPerm('qc','delete');
-        const comments=(this.tkOv(t).comments||[]).map((c,ci)=>{ const cc=this._commentColor(c.roleKey, c.role);
+        const comments=(this.tkOv(t).comments||[]).map((c,ci)=>{ const cc=this._commentColor(c.who);
           const cid=c.id||String(ci);
           const editing=this.state.tkCommentEditId===cid;
           return { who:c.who, role:c.role, text:c.text, when:c.when,
@@ -6822,10 +6855,22 @@ class AppRoot extends React.Component {
         };
       })(),
       tkFbBg: t.status==='Rework'?'var(--danger-100)':'var(--verify-100)', tkFbBorder: t.status==='Rework'?'#F1C9CF':'#BFE3D0', tkFbColor: t.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
-      tkMeta:meta.map(m=>m[0]==='Assignee'&&canReassign?{
-        k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
-        onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
-      }:{k:m[0],v:m[1]}), tkChecklist:checklist, tkEvidence:evidence, tkHasEvidence:evidence.length>0,
+      tkMeta:meta.map(m=>{
+        if(m[0]==='Assignee'&&canReassign) return {
+          k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
+          onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
+        };
+        if((m[0]==='Start date'||m[0]==='End date')&&canEditDates){
+          const isStart=m[0]==='Start date';
+          return { k:m[0], v:m[1], isDateTime:true,
+            dateVal:isStart?(t.startDate||''):(t.endDate||''),
+            timeVal:isStart?(t.startTime||''):(t.endTime||''),
+            onChangeDate:e=>this.editTaskDates(t.id, isStart?{startDate:e.target.value}:{endDate:e.target.value}),
+            onChangeTime:e=>this.editTaskDates(t.id, isStart?{startTime:e.target.value}:{endTime:e.target.value}),
+          };
+        }
+        return {k:m[0],v:m[1]};
+      }), tkChecklist:checklist, tkEvidence:evidence, tkHasEvidence:evidence.length>0,
       tkActions:actions, tkHasActions:actions.length>0, tkCanAttach:canAttach,
       tkAttach:()=>this.openFilePicker('evidence:'+t.id,'Attach task evidence'),
       tkActivity:(this.tkOv(t).activity||[]).slice().reverse().map(a=>({who:a[0],what:a[1],when:a[2]})),
@@ -6883,7 +6928,7 @@ class AppRoot extends React.Component {
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
-      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
+      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
       tkDivisionOptions:['Content','Graphics','Web Developers','SMM','SEO'],
       tkReviewerOptions:(this.state.users||[])
         .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
@@ -6915,12 +6960,12 @@ class AppRoot extends React.Component {
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
     this.flash('Task '+id+' created and assigned to '+task.assignee+(fromMsg?' — linked back to the message.':'.'));
-    this._persistNewTask(task, f.start||null, f.end||null);
+    this._persistNewTask(task, f.start||null, f.end||null, f.startTime||null, f.endTime||null);
   }
   // Shared by every task-creation path (single-task form, Convert Idea to
   // Tasks, Generate from Effort Plan) so a task only has to be built once
@@ -6930,12 +6975,13 @@ class AppRoot extends React.Component {
   // display string — Postgres's date column would reject or misparse
   // "Jul 1, 2026", so null (shown as "today" on next load) is safer than
   // a value that looks right but silently corrupts.
-  _persistNewTask(task, rawStart, rawEnd){
+  _persistNewTask(task, rawStart, rawEnd, rawStartTime, rawEndTime){
     supabase.from('tasks').insert({
       code:task.id, name:task.name, description:task.desc, priority:task.priority, status:task.status,
       division:task.division, project:task.project, campaign:task.campaign,
       assignee_name:task.assignee, reviewer_name:task.reviewer,
       start_date:rawStart||null, end_date:rawEnd||null,
+      start_time:rawStartTime||null, end_time:rawEndTime||null,
       effort_estimate:task.estH, effort_actual:task.actH, recurrence:task.recurrence, checklist:task.checklist,
       linked_kpi:task.kpi, kpi_id:task.kpiId, units:task.units, unit:task.unit,
       dependency:task.dep, effort_plan:task.effortPlan, effort_row:task.effortType, dep_mode:task.depMode,
@@ -6961,6 +7007,7 @@ class AppRoot extends React.Component {
       id:r.code, name:r.name, desc:r.description||'—', template:'Custom task',
       project:r.project||'—', campaign:r.campaign||'—',
       start:this.fmtDate(r.start_date)||this.todayStr(), end:this.fmtDate(r.end_date)||'—',
+      startDate:r.start_date||'', endDate:r.end_date||'', startTime:r.start_time||'', endTime:r.end_time||'',
       priority:r.priority||'Medium', assignee:r.assignee_name||'Unassigned',
       kpiId:r.kpi_id||'', kpi:r.linked_kpi||'Not linked', units:r.units||0, unit:r.unit||'',
       estH:r.effort_estimate||0, actH:r.effort_actual||0, recurrence:r.recurrence||'None',
