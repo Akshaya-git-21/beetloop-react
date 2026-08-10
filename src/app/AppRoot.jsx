@@ -6369,18 +6369,21 @@ class AppRoot extends React.Component {
   }
 
   // ---- Help & Support — tickets for software, technical, training and access issues ----
-  TICKET_CATS(){ return [
-    { key:'software', label:'Software / platform issue', icon:'monitor-cog', queue:'Platform Admin', owner:'Karan Shah', sla:8,
+  TICKET_CATS(){
+    const owner=(roleKey)=>{ const u=(this.state.users||[]).find(x=>x.roleKey===roleKey&&x.status==='Active'); return u?u.name:this.currentPerson(); };
+    const admin=owner('admin'), lead=owner('team_lead'), manager=owner('manager');
+    return [
+    { key:'software', label:'Software / platform issue', icon:'monitor-cog', queue:'Platform Admin', owner:admin, sla:8,
       hint:'Login, permissions, module errors, data not saving.' },
-    { key:'technical', label:'Technical query', icon:'wrench', queue:'Function Lead', owner:'Aditi Rao', sla:24,
+    { key:'technical', label:'Technical query', icon:'wrench', queue:'Function Lead', owner:lead, sla:24,
       hint:'How to do the work — SEO, code, design, analytics questions.' },
-    { key:'training', label:'Training request', icon:'graduation-cap', queue:'Manager / L&D', owner:'Priya Nair', sla:72,
+    { key:'training', label:'Training request', icon:'graduation-cap', queue:'Manager / L&D', owner:manager, sla:72,
       hint:'Need a walkthrough, upskilling or refresher session.' },
-    { key:'access', label:'Access / tool request', icon:'key-round', queue:'Platform Admin', owner:'Karan Shah', sla:12,
+    { key:'access', label:'Access / tool request', icon:'key-round', queue:'Platform Admin', owner:admin, sla:12,
       hint:'New tool licence, repository access, role change.' },
-    { key:'data', label:'Data correction', icon:'database-backup', queue:'Platform Admin', owner:'Karan Shah', sla:24,
+    { key:'data', label:'Data correction', icon:'database-backup', queue:'Platform Admin', owner:admin, sla:24,
       hint:'Wrong KPI value, duplicate record, incorrect master entry.' },
-    { key:'process', label:'Process / clarification', icon:'help-circle', queue:'Function Lead', owner:'Aditi Rao', sla:24,
+    { key:'process', label:'Process / clarification', icon:'help-circle', queue:'Function Lead', owner:lead, sla:24,
       hint:'Which workflow applies, who approves, what the standard is.' },
   ]; }
   ticketCat(key){ return this.TICKET_CATS().find(c=>c.key===key)||this.TICKET_CATS()[0]; }
@@ -6468,8 +6471,9 @@ class AppRoot extends React.Component {
       tktSave:()=>{
         if(!(f.subject&&f.subject.trim())){ this.flash('Describe the issue in one line.'); return; }
         if(!(f.desc&&f.desc.trim())){ this.flash('Add details so it can be actioned without a follow-up.'); return; }
-        const n=this.allTickets().length+1;
-        const rec={ id:'TKT-'+String(1040+n), cat:f.cat||'software', subject:f.subject.trim(), desc:f.desc.trim(),
+        const tktIds=this.TICKET_SEED().map(x=>x.id).concat((this.state.tktAdded||[]).map(x=>x.id)).concat(this.state.tktDeleted||[]);
+        const tktNums=tktIds.map(id=>{ const m=String(id).match(/^TKT-(\d+)$/); return m?parseInt(m[1],10):0; });
+        const rec={ id:'TKT-'+(Math.max(1040,...tktNums)+1), cat:f.cat||'software', subject:f.subject.trim(), desc:f.desc.trim(),
           by:me, role:this.ROLES[this.state.roleKey].label, created:this.todayStr(), createdAt:Date.now(),
           priority:f.priority||'Medium', status:'Open', assignee:'', task:(f.task&&f.task!=='— None —')?String(f.task).split(' — ')[0]:'',
           trainingNeeded:!!f.training, files:f.files||[],
@@ -6552,7 +6556,7 @@ class AppRoot extends React.Component {
     const isRequester=t.by===me;
     const age=this.ticketAge(t);
     const bad=!['Resolved','Closed'].includes(t.status)&&age>c.sla;
-    const people=['Karan Shah','Aditi Rao','Priya Nair','Rohit Sharma','Arjun Pillai','Farhan Ali','Sameer Iyer'];
+    const people=(this.state.users||[]).filter(u=>u.status==='Active').map(u=>u.name);
     return { tktDrawerOpen:true,
       tktD:{ id:t.id, subject:t.subject, desc:t.desc, cat:c.label, catIcon:c.icon, queue:c.queue,
         status:t.status, statusBg:tn.bg, statusColor:tn.c, priority:t.priority,
