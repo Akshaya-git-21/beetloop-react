@@ -10,7 +10,7 @@ export default function LoginPage({ vm }) {
 <div style={{"minHeight":"100vh","display":"grid","gridTemplateColumns":"1.05fr 1fr"}}>
 
   
-<div style={{"position":"relative","background":loginBackgroundUrl?`url(${loginBackgroundUrl}) center/cover no-repeat`:"linear-gradient(155deg,#1F0814 0%,#4E1631 55%,#7A1C46 100%)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
+<div style={{"position":"relative","background":loginBackgroundUrl?`url(${loginBackgroundUrl}) center/cover no-repeat`:"linear-gradient(155deg,var(--beet-900,#1F0814) 0%,var(--beet-600,#4E1631) 55%,var(--beet-700,#7A1C46) 100%)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
 
     {!loginBackgroundUrl && (
 <div style={{"position":"absolute","right":"-120px","top":"-80px","width":"460px","height":"460px","borderRadius":"50%","background":"radial-gradient(circle,rgba(180,90,140,.35),transparent 70%)","filter":"blur(10px)"}} />
@@ -167,7 +167,7 @@ Forgot password?
 
 
       
-<button onClick={doLogin} style={{"width":"100%","padding":"13px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 20px -8px rgba(122,28,70,.6)"}}>
+<button onClick={doLogin} style={{"width":"100%","padding":"13px","background":"var(--orchid-500,#7A1C46)","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 20px -8px rgba(122,28,70,.6)"}}>
 Sign in
 </button>
 

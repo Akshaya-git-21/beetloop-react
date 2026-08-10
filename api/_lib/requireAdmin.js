@@ -23,12 +23,37 @@ export function clientIp(req) {
   return req.socket && req.socket.remoteAddress || '';
 }
 
+// IP allow/deny is enforced here, at the admin API surface — not
+// app-wide. A client-side SPA has no way to reliably block its own
+// requests before they leave the browser, so true whole-app IP gating
+// would need an edge/reverse-proxy layer in front of everything (e.g.
+// Vercel Edge Middleware), which is a separate, larger change. This is
+// the honest, achievable version: every /api/admin/* call checks the
+// caller's IP against security_settings before doing anything else.
+async function checkIpAllowed(req, supabaseAdmin) {
+  const { data } = await supabaseAdmin.from('security_settings').select('value').eq('key', 'default').maybeSingle();
+  const rules = (data && data.value && data.value.ipRules) || {};
+  const list = Array.isArray(rules.list) ? rules.list.filter(Boolean) : [];
+  if (!rules.mode || rules.mode === 'off' || !list.length) return true;
+  const ip = clientIp(req);
+  const listed = list.some((entry) => ip === entry || (entry.includes('/') ? false : ip.startsWith(entry)));
+  if (rules.mode === 'whitelist') return listed;
+  if (rules.mode === 'blacklist') return !listed;
+  return true;
+}
+
 // Returns { user, profile, supabaseAdmin } on success, or null after
 // already writing the error response.
 export async function requireAdmin(req, res) {
   const supabaseAdmin = getSupabaseAdmin();
   if (!supabaseAdmin) {
     res.status(500).json({ error: 'Server is missing SUPABASE_URL / SUPABASE_SECRET_KEY env vars.' });
+    return null;
+  }
+
+  const ipOk = await checkIpAllowed(req, supabaseAdmin);
+  if (!ipOk) {
+    res.status(403).json({ error: 'Access blocked by IP policy.' });
     return null;
   }
 
