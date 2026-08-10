@@ -90,36 +90,37 @@ class AppRoot extends React.Component {
     qc:{ label:'QC Reviewer', short:'QC', tag:'Quality Reviewer', person:'Farhan Ali', color:'#D69327', bucket:'qc' },
     dm:{ label:'Digital Marketing Executive', short:'DM', tag:'Digital Marketing', person:'Ritu Malhotra', color:'#3C6FBD', bucket:'dm' },
     sales:{ label:'Sales Executive', short:'SL', tag:'Sales Executive', person:'Vikram Singh', color:'#C77B3E', bucket:'sales', brand:'Food Research Lab' },
+    secretary:{ label:'Secretary', short:'SEC', tag:'Company Secretary', person:'', color:'#5B8C5A', bucket:'exec' },
   };
 
   ACCESS = {
-    dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All', dm:'Own', sales:'Own' },
-    campaigns:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Assign & monitor', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'View' },
-    tasks:{ ceo:'Full', coo:'View', manager:'All', team_lead:'Assign / edit', senior:'Update own', junior:'Update own', qc:'QC tasks', admin:'Full', dm:'Update own', sales:'Update own' },
-    templates:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
-    files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full', dm:'Own files', sales:'Own files' },
-    messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full', dm:'Own', sales:'Own' },
-    sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full', dm:'View', sales:'View' },
-    support:{ ceo:'Full', coo:'View', manager:'Team tickets', team_lead:'Team tickets', senior:'Own tickets', junior:'Own tickets', qc:'Own tickets', admin:'Full', dm:'Own tickets', sales:'Own tickets' },
-    effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full' },
-    ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full' },
-    qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full' },
-    okr:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', qc:'View', admin:'Full', dm:'View own', sales:'Leads & pipeline' },
-    leads:{ ceo:'View', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', admin:'Full', dm:'View own', sales:'Leads & pipeline' },
-    analytics:{ ceo:'Full', coo:'Operational', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'Full', dm:'Own' },
-    repositories:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full', dm:'View', sales:'View' },
-    content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'Assigned only' },
-    masters:{ admin:'Full', ceo:'Full' },
-    users:{ admin:'Full', coo:'Full', ceo:'Full' },
-    config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full' },
-    profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View', dm:'View', sales:'View' },
+    dashboard:{ ceo:'All', coo:'All', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'All', dm:'Own', sales:'Own', secretary:'All' },
+    campaigns:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Assign & monitor', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'View', secretary:'Full' },
+    tasks:{ ceo:'Full', coo:'View', manager:'All', team_lead:'Assign / edit', senior:'Update own', junior:'Update own', qc:'QC tasks', admin:'Full', dm:'Update own', sales:'Update own', secretary:'Full' },
+    templates:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full', secretary:'Full' },
+    files:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Own files', junior:'Own files', qc:'View', admin:'Full', dm:'Own files', sales:'Own files', secretary:'Full' },
+    messages:{ ceo:'Full', coo:'Full', manager:'Full', team_lead:'Full', senior:'Own', junior:'Own', qc:'Own', admin:'Full', dm:'Own', sales:'Own', secretary:'Full' },
+    sop:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'View', junior:'View', qc:'View', admin:'Full', dm:'View', sales:'View', secretary:'Full' },
+    support:{ ceo:'Full', coo:'View', manager:'Team tickets', team_lead:'Team tickets', senior:'Own tickets', junior:'Own tickets', qc:'Own tickets', admin:'Full', dm:'Own tickets', sales:'Own tickets', secretary:'Full' },
+    effort:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', admin:'Full', secretary:'Full' },
+    ideas:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Create / Edit', senior:'Create / Edit', junior:'Create / Edit', qc:'View', admin:'Full', secretary:'Full' },
+    qc:{ ceo:'Full', manager:'Review', team_lead:'Team QC', qc:'Full', admin:'Full', secretary:'Full' },
+    okr:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', qc:'View', admin:'Full', dm:'View own', sales:'Leads & pipeline', secretary:'Full' },
+    leads:{ ceo:'View', coo:'View', manager:'Create / Edit', team_lead:'View', senior:'View own', junior:'View own', admin:'Full', dm:'View own', sales:'Leads & pipeline', secretary:'View' },
+    analytics:{ ceo:'Full', coo:'Operational', manager:'Department', team_lead:'Team', senior:'Own', junior:'Own', qc:'QC', admin:'Full', dm:'Own', secretary:'Full' },
+    repositories:{ ceo:'Full', coo:'View', manager:'View', team_lead:'View', senior:'Use assigned', junior:'Use assigned', qc:'View', admin:'Full', dm:'View', sales:'View', secretary:'Full' },
+    content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'Assigned only', secretary:'Full' },
+    masters:{ admin:'Full', ceo:'Full', secretary:'View' },
+    users:{ admin:'Full', coo:'Full', ceo:'Full', secretary:'View' },
+    config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full', secretary:'View' },
+    profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View', dm:'View', sales:'View', secretary:'View' },
   };
 
   // CEO/COO/Admin get broad, near-identical access across every module — so
   // assigning one of these roles is a high-impact action that needs an
   // explicit confirmation step before it's applied. Every other role only
   // ever gets its own scoped access per ACCESS above, so no gate is needed.
-  HIGH_PRIVILEGE_ROLES = ['ceo','coo','admin'];
+  HIGH_PRIVILEGE_ROLES = ['ceo','coo','admin','secretary'];
   roleAccessSummary(roleKey){
     return Object.keys(this.ACCESS).filter(m=>this.ACCESS[m][roleKey]).map(m=>({
       module:(this.MODMETA[m]&&this.MODMETA[m].label)||m, level:this.ACCESS[m][roleKey],
@@ -1714,7 +1715,7 @@ class AppRoot extends React.Component {
       epCampaignVal:this.campaignOpt((this.state.epForm||{}).campaign),
       epOkrVal:this.okrTitleOpt((this.state.epForm||{}).okr),
       okrParentVal:(this.state.okrForm||{}).parent||'None (top level)',
-      roleOptions:['admin','ceo','coo'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
+      roleOptions:['admin','ceo','coo','secretary'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
       onRoleChange:e=>{ const k=e.target.value; const allowed = this.ACCESS[route]&&this.ACCESS[route][k]; this.setState({ roleKey:k, route: allowed?route:'dashboard' }); },
       notifications:(this.state.notifications||[]).map(n=>({ ...n,
         timeAgo:this._timeAgo(n.ts),
@@ -1760,6 +1761,7 @@ class AppRoot extends React.Component {
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
       ufManagerOptions:(this.state.users||[]).filter(u=>['manager','coo','ceo','admin'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       ufLeadOptions:(this.state.users||[]).filter(u=>u.roleKey==='team_lead').map(u=>u.name+' ('+(u.designation||u.role)+')'),
+      ufRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
       ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
         return { label:b, on,
@@ -4314,19 +4316,19 @@ class AppRoot extends React.Component {
   myScopeDivision(){ const u=this.userOf(this.currentPerson()); return u?u.dept:''; }
   scopedTasks(rk){
     const all=this.allTasks();
-    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(['admin','ceo','coo','qc','manager','secretary'].includes(rk)) return all;
     if(rk==='team_lead'){ const d=this.myScopeDivision(); return d?all.filter(t=>this.tkDivision(t)===d):all; }
     const me=this.currentPerson(); return all.filter(t=>t.assignee===me);
   }
   scopedOkrs(rk){
     const all=this.allOkrs();
-    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(['admin','ceo','coo','qc','manager','secretary'].includes(rk)) return all;
     if(rk==='team_lead'){ const d=this.myScopeDivision(); return d?all.filter(o=>o.dept===d):all; }
     const me=this.currentPerson(); return all.filter(o=>o.owner===me);
   }
   scopedSops(rk){
     const all=this.allSops();
-    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(['admin','ceo','coo','qc','manager','secretary'].includes(rk)) return all;
     // Sales doesn't work division-based SOPs (SEO/Content/etc. procedures
     // aren't relevant to them) — they only ever see SOPs explicitly tagged
     // to a brand they're assigned. No brand assigned = nothing to show.
@@ -4340,7 +4342,7 @@ class AppRoot extends React.Component {
   }
   scopedTickets(rk){
     const all=this.allTickets();
-    if(['admin','ceo','coo','qc','manager'].includes(rk)) return all;
+    if(['admin','ceo','coo','qc','manager','secretary'].includes(rk)) return all;
     if(rk==='team_lead'){
       const d=this.myScopeDivision(); if(!d) return all;
       const inDept=(name)=>{ const u=this.userOf(name); return !!(u && u.dept===d); };
@@ -4437,7 +4439,7 @@ class AppRoot extends React.Component {
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
       umSetMobile:setD('mobile'), umSetDesignation:setD('designation'), umSetTeam:setD('team'),
       umSetReportingManager:setD('reportingManager'), umSetTeamLead:setD('teamLead'), umSetOfficeLocation:setD('officeLocation'),
-      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive'],
+      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
       umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
@@ -6083,10 +6085,10 @@ class AppRoot extends React.Component {
   }
   sopView(rk){
     const me=this.currentPerson();
-    const canAuthor=['manager','team_lead','admin'].includes(rk);
+    const canAuthor=['manager','team_lead','admin','secretary'].includes(rk);
     // role-based visibility: leadership/QC see every SOP; everyone else only
     // sees SOPs for their own division (plus any explicitly marked 'All')
-    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc'];
+    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc','secretary'];
     const myDept=(this.state.users||[]).find(u=>u.name===me);
     const myDivision=myDept?myDept.dept:'';
     const visibleToMe=(s)=>leadershipRoles.includes(rk) || !s.division || s.division==='All' || s.division===myDivision;
@@ -6167,7 +6169,7 @@ class AppRoot extends React.Component {
     const id=this.state.sopOpen; if(!id) return { sopDrawerOpen:false };
     const s=this.allSops().find(x=>x.id===id); if(!s) return { sopDrawerOpen:false };
     const me=this.currentPerson();
-    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc'];
+    const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc','secretary'];
     const myUser=(this.state.users||[]).find(u=>u.name===me);
     const myDivision=myUser?myUser.dept:'';
     if(!leadershipRoles.includes(rk) && s.division && s.division!=='All' && s.division!==myDivision){
@@ -6175,7 +6177,7 @@ class AppRoot extends React.Component {
     }
     const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
     const acked=(s.ack||[]).includes(me);
-    const canAuthor=['manager','team_lead','admin'].includes(rk)&&(s.owner===me||rk==='admin');
+    const canAuthor=['manager','team_lead','admin','secretary'].includes(rk)&&(s.owner===me||rk==='admin'||rk==='secretary');
     const rv=this.sopReviewState(s);
     const patch=(p,msg,auditRow)=>{ const u={...(this.state.sopUpd||{})};
       const cur={...(u[s.id]||{})};
@@ -6682,7 +6684,7 @@ class AppRoot extends React.Component {
       ...timerData,
       tkHasFb:!!t.qcFeedback, tkFb:t.qcFeedback||'',
       ...(()=>{
-        const canComment = isAssignee || ['manager','team_lead','admin','qc','coo','ceo'].includes(rk);
+        const canComment = isAssignee || ['manager','team_lead','admin','qc','coo','ceo','secretary'].includes(rk);
         const comments=(this.tkOv(t).comments||[]).map(c=>{ const cc=this._commentColor(c.roleKey, c.role);
           return { who:c.who, role:c.role, text:c.text, when:c.when,
           initials:c.who.split(' ').map(x=>x[0]).join(''),
@@ -6858,7 +6860,7 @@ class AppRoot extends React.Component {
   }
 
   OKR_REVIEWERS(){
-    const list=(this.state.users||[]).filter(u=>['manager','team_lead','coo','ceo','admin','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')');
+    const list=(this.state.users||[]).filter(u=>['manager','team_lead','coo','ceo','admin','qc','secretary'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')');
     return list.length?list:[this.currentPerson()+' ('+this.ROLES[this.state.roleKey].label+')'];
   }
   okrReviewerOpt(name){ if(!name) return this.OKR_REVIEWERS()[0];

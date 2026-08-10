@@ -4,7 +4,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
   const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
-    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions } = vm;
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions, ufRoleOptions } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -220,36 +220,7 @@ Security & role
 Role
 </label>
 <select value={uf.role} onChange={ufRole} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
-<option>
-CEO
-</option>
-<option>
-COO
-</option>
-<option>
-Manager
-</option>
-<option>
-Team Lead
-</option>
-<option>
-Senior Executive
-</option>
-<option>
-Junior Executive
-</option>
-<option>
-QC Reviewer
-</option>
-<option>
-Admin
-</option>
-<option>
-Digital Marketing Executive
-</option>
-<option>
-Sales Executive
-</option>
+{(ufRoleOptions||[]).map(r=><option key={r}>{r}</option>)}
 </select>
 </div>
 
