@@ -543,7 +543,7 @@ Owner · {p.owner}
 Open
 </button>
 
-{Boolean(epCanEdit) && (
+{Boolean(epCanDelete) && (
 <React.Fragment>
 <button onClick={p.delete} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"7px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"13px","height":"13px"}} />

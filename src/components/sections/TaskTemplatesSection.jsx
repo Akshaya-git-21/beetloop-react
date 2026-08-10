@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function TaskTemplatesSection({ vm }) {
-  const { ktPg, ktRows, ktStats, otPg, otRows, otStats, showTemplates, ttCanEdit, ttFilterDefs, ttPg, ttRows, ttSegKpiStyle, ttSegOkrStyle, ttSegTaskStyle, ttShowKpi, ttShowOkr, ttShowTask, ttStats, ttTabKpi, ttTabOkr, ttTabTask } = vm;
+  const { ktPg, ktRows, ktStats, otPg, otRows, otStats, showTemplates, ttCanEdit, ttCanDelete, ttFilterDefs, ttPg, ttRows, ttSegKpiStyle, ttSegOkrStyle, ttSegTaskStyle, ttShowKpi, ttShowOkr, ttShowTask, ttStats, ttTabKpi, ttTabOkr, ttTabTask } = vm;
   return (
     <React.Fragment>
 {Boolean(showTemplates) && (
@@ -202,13 +202,13 @@ Duplicate
 </button>
 
 
+</React.Fragment>
+)}
+{Boolean(ttCanDelete) && (
 <button onClick={t.delete} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"8px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px"}} />
 Delete
 </button>
-
-
-</React.Fragment>
 )}
 
                   
@@ -469,38 +469,38 @@ Actions
 <td style={{"padding":"13px 16px","borderBottom":"1px solid var(--line-200)","textAlign":"right"}}>
 
                         
+<div style={{"display":"inline-flex","gap":"6px"}}>
+
 {Boolean(ttCanEdit) && (
 <React.Fragment>
 
-                          
-<div style={{"display":"inline-flex","gap":"6px"}}>
 
-                            
 <button onClick={t.edit} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Edit
 </button>
 
-                            
+
 <button onClick={t.duplicate} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Duplicate
 </button>
 
-                            
+
 <button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
 </button>
 
+
+</React.Fragment>
+)}
+{Boolean(ttCanDelete) && (
 <button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
 Delete
 </button>
-
-                          
-</div>
-
-                        
-</React.Fragment>
 )}
+
+
+</div>
 
                       
 </td>
@@ -789,10 +789,12 @@ Duplicate
 {t.statusAction}
 </button>
 
+{Boolean(ttCanDelete) && (
 <button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
 Delete
 </button>
+)}
 
                         
 </div>

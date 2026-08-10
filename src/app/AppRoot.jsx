@@ -130,9 +130,14 @@ class AppRoot extends React.Component {
     // module's normal access level, including for Admin. See myThreads().
     if(!level || level==='No access') return { view:false, create:false, edit:false, delete:false, approve:false, export:false, auditAll:false };
     const l=String(level).toLowerCase();
-    const rw=/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
-    const del=/full/.test(l);
-    const approve=/full|review|qc|approv/.test(l);
+    // 'all' is used as a standalone top-tier label in a couple of modules
+    // (e.g. ACCESS.tasks.manager='All') meaning the same thing 'Full' means
+    // everywhere else — treated as an exact match, not a substring, so it
+    // can't accidentally match some other label that merely contains "all".
+    const isAll=l==='all';
+    const rw=isAll||/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
+    const del=isAll||/full/.test(l);
+    const approve=isAll||/full|review|qc|approv/.test(l);
     return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del, auditAll:false };
   }
   getPerm(moduleKey, roleKey){
@@ -725,7 +730,7 @@ class AppRoot extends React.Component {
   cmpStatusTone(s){ return {Live:{bg:'var(--verify-100)',c:'var(--verify-600)'},Planning:{bg:'var(--info-100)',c:'var(--info-600)'},Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},Paused:{bg:'var(--warn-100)',c:'var(--warn-600)'},Completed:{bg:'var(--orchid-100)',c:'var(--orchid-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   campaignsView(){
     const rk=this.state.roleKey;
-    const canEdit=['manager','admin'].includes(rk);
+    const canEdit=this.hasPerm('campaigns','edit');
     const me=this.currentPerson();
     const own=['senior','junior'].includes(rk);
     const F=this.state.cmpFilters||{status:'All',type:'All',dept:'All'};
@@ -741,7 +746,7 @@ class AppRoot extends React.Component {
         teamNames:(c.team||[]).map(x=>x.who).join(', '), teamSize:String((c.team||[]).length),
         dates:c.start+' → '+c.end,
         open:()=>this.setState({ cmpOpen:c.id, cmpTab:'overview' }),
-        edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('Only Managers and Admin can edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
+        edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('You do not have permission to edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
       }; }),6);
     const K=(label,value,color)=>({label,value,color});
     const stats=[K('Campaigns',String(all.length),'var(--beet-700)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>c.status==='Planning').length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
@@ -896,7 +901,7 @@ class AppRoot extends React.Component {
       cmpFormCode:this.state.cmpEditId||this._nextCampaignId(),
       cmpFormSaveLabel:this.state.cmpEditId?'Save changes':'Create campaign',
       cmpFormClose:()=>this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} }),
-      cmpCanDelete:!!this.state.cmpEditId,
+      cmpCanDelete:!!this.state.cmpEditId&&this.hasPerm('campaigns','delete'),
       cmpFormDelete:()=>this._deleteCampaign(),
       cmpFormSave:()=>this._saveCampaign(),
       cmpSections:sections.map(([id,letter,name])=>({ letter, name, active:sec===id,
@@ -959,6 +964,8 @@ class AppRoot extends React.Component {
     };
   }
   _saveCampaign(){
+    const isEdit=!!this.state.cmpEditId;
+    if(!this.hasPerm('campaigns', isEdit?'edit':'create')){ this.flash('You do not have permission to '+(isEdit?'edit':'create')+' campaigns.'); return; }
     const f=this.state.cmpForm||{};
     if(!(f.name&&f.name.trim())){ this.flash('Enter a campaign name.'); return; }
     const kp=(f.kpis||[]).filter(k=>k.kpi&&k.kpi.trim());
@@ -999,6 +1006,7 @@ class AppRoot extends React.Component {
     }
   }
   _deleteCampaign(){
+    if(!this.hasPerm('campaigns','delete')){ this.flash('You do not have permission to delete campaigns.'); return; }
     const id=this.state.cmpEditId; if(!id) return;
     const c=this.allCampaigns().find(x=>x.id===id);
     this.setState({ cmpDeleted:[...(this.state.cmpDeleted||[]), id], cmpNew:false, cmpEditId:null, cmpForm:{} });
@@ -1743,7 +1751,7 @@ class AppRoot extends React.Component {
       showMasterRecordEdit:this.state.showMasterRecordEdit,
       mrCancel:()=>this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} }),
       mrSave:()=>this.submitMasterRecord(),
-      mrCanDelete:this.state.mrIndex!=null,
+      mrCanDelete:this.state.mrIndex!=null&&this.hasPerm('masters','delete'),
       mrDelete:()=>this.deleteMasterRecord(),
       ...(()=>{
         const mk = this.state.mrKey;
@@ -2478,6 +2486,7 @@ class AppRoot extends React.Component {
   }
   submitMasterRecord(){
     const { mrKey, mrIndex, mrForm } = this.state;
+    if(!this.hasPerm('masters', mrIndex!=null?'edit':'create')){ this.flash('You do not have permission to '+(mrIndex!=null?'edit':'create')+' master records.'); return; }
     if(mrKey==='user'){ this._submitUserMasterRow(mrIndex, mrForm); return; }
     const m = this.MASTERS_REG()[mrKey];
     if(!m) return;
@@ -2540,6 +2549,7 @@ class AppRoot extends React.Component {
     }
   }
   deleteMasterRecord(){
+    if(!this.hasPerm('masters','delete')){ this.flash('You do not have permission to delete master records.'); return; }
     const { mrKey, mrIndex } = this.state;
     if(mrKey==='user'){ this._deleteUserMasterRow(mrIndex); return; }
     const m = this.MASTERS_REG()[mrKey];
@@ -2764,9 +2774,10 @@ class AppRoot extends React.Component {
       bd_addService:()=>{ const v=(this.state.blNewService||'').trim(); if(!v) return; this.setState({ blForm:{...f, services:[...(f.services||[]),v]}, blNewService:'' }); },
       bd_linkStats:[['Submitted URLs',String(d.submittedUrls)],['Live Backlinks',String(d.liveBacklinks)],['Last Live Check',d.lastLiveCheck],['Success Rate',d.successRate]].map(x=>({k:x[0],v:x[1]})),
       bd_activity:d.activity.map(a=>({action:a[0],who:a[1],when:a[2]})),
-      bd_canDelete:!isNew,
+      bd_canDelete:!isNew&&this.hasPerm('masters','delete'),
       bd_back:()=>this.setState({ blRecord:null, blView:'repo', blForm:null }),
       bd_save:()=>{
+        if(!this.hasPerm('masters', isNew?'create':'edit')){ this.flash('You do not have permission to '+(isNew?'create':'edit')+' backlink domains.'); return; }
         const form=this.state.blForm||d;
         if(!String(form.name||'').trim()){ this.flash('Enter a domain name to save.'); return; }
         const createdBy=this.state.authUser?this.state.authUser.id:null;
@@ -2792,6 +2803,7 @@ class AppRoot extends React.Component {
       },
       bd_delete:()=>{
         if(isNew) return;
+        if(!this.hasPerm('masters','delete')){ this.flash('You do not have permission to delete backlink domains.'); return; }
         const id=d.id, name=f.name, createdBy=this.state.authUser?this.state.authUser.id:null;
         this.setState({ blDeleted:[...(this.state.blDeleted||[]), id], blRecord:null, blView:'repo', blForm:null });
         this.flash('Deleted domain "'+name+'".');
@@ -3047,6 +3059,7 @@ class AppRoot extends React.Component {
     });
   }
   _deleteEpPlan(id){
+    if(!this.hasPerm('effort','delete')){ this.flash('You do not have permission to delete effort plans.'); return; }
     const p=this.allEpPlans().find(x=>x.id===id); if(!p) return;
     this.setState({ epDeleted:[...(this.state.epDeleted||[]), id], epView:'list', epPlanId:null });
     this.flash('Deleted effort plan: '+(p.name||id)+'.');
@@ -3123,7 +3136,8 @@ class AppRoot extends React.Component {
   }
   effortView(){
     const rk=this.state.roleKey;
-    const canEdit=['manager','team_lead','admin'].includes(rk);
+    const canEdit=this.hasPerm('effort','edit');
+    const canDelete=this.hasPerm('effort','delete');
     const division=this.state.epDivision||'SEO';
     const f=this.state.epForm||this.EP_FORM();
     const rows=this.state.epRows||this.EP_DIV_ROWS(division);
@@ -3149,7 +3163,7 @@ class AppRoot extends React.Component {
         openOkr:(e)=>{ if(e)e.stopPropagation(); const o=this.allOkrs().find(x=>x.title===p.okr);
           if(o) this.setState({ route:'okr', okrOpen:o.id }); else this.flash('No OKR matches "'+p.okr+'" yet.'); },
         edit:()=>this.setState({ epView:'create', epPlanId:p.id, epDivision:p.division, epForm:{ name:p.name, quarter:p.period, campaign:p.campaign, dept:p.dept, owner:p.owner, okr:p.okr, start:p.start, end:p.end, type:p.type }, epRows:p.rows.map(r=>({...r})) }),
-        delete:(e)=>{ if(e)e.stopPropagation(); this._deleteEpPlan(p.id); },
+        delete:(e)=>{ if(e)e.stopPropagation(); if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; } this._deleteEpPlan(p.id); },
       };
     });
     const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' — '+k.who })));
@@ -3256,8 +3270,9 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] custom division insert failed:', error.message);
         }); },
       epCancelDiv:()=>this.setState({ epAddingDiv:false, epNewDiv:'' }),
-      epCanDeleteDiv:(this.state.epCustomDivs||[]).includes(division),
+      epCanDeleteDiv:canDelete&&(this.state.epCustomDivs||[]).includes(division),
       epDeleteDiv:()=>{
+        if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; }
         const remaining=(this.state.epCustomDivs||[]).filter(d=>d!==division);
         this.setState({ epCustomDivs:remaining, epDivision:'Content Writer' });
         this.flash('Custom role "'+division+'" deleted.');
@@ -3267,7 +3282,8 @@ class AppRoot extends React.Component {
       epNew:()=>{ const d=this.state.epDivision||'Content Writer'; const deptMap={'Content Writer':'Content','Graphics':'Design','Web Developers':'Web Development','SMM':'SMM','SEO':'SEO'}; this.setState({ epView:'create', epPlanId:null, epForm:{ ...this.EP_FORM(), name:'Jul '+d+' Effort Plan', dept:deptMap[d]||d }, epRows:this.EP_DIV_ROWS(d).map(r=>({...r})) }); },
       epBack:()=>this.setState({ epView:'list' }),
       epAddRow:()=>this.setState({ epRows:[...rows,{ type:'Custom effort — name it', icon:'plus', monthly:0, days:25, unit:'units', priority:'Medium', weight:0, kpiId:'', custom:true }] }),
-      epSave:()=>{ const totalW=rows.reduce((s,r)=>s+(r.weight||0),0); if(!f.name.trim()){ this.flash('Name the plan.'); return; }
+      epSave:()=>{ if(!canEdit){ this.flash('You do not have permission to create or edit effort plans.'); return; }
+        const totalW=rows.reduce((s,r)=>s+(r.weight||0),0); if(!f.name.trim()){ this.flash('Name the plan.'); return; }
         // Check against every plan (seed + added), not just epAdded — editing
         // a seed plan (EP-001 etc.) must replace it, not create a duplicate
         // id when it later gets upserted into epAdded.
@@ -3285,7 +3301,7 @@ class AppRoot extends React.Component {
         this.setState({ epAdded:added, epRowAdds:rowAdds, epView:'list', epPlanId:plan.id });
         this.flash('Effort plan “'+f.name+'” saved for '+division+(totalW===100?'.':' — weightages incomplete, saved as Draft.'));
         this._persistEpPlan(plan); },
-      epForm:f, epRows2:epRows, epAlloc:alloc, epCanEdit:canEdit,
+      epForm:f, epRows2:epRows, epAlloc:alloc, epCanEdit:canEdit, epCanDelete:canDelete,
       epIsEdit:!!this.state.epPlanId,
       epEditTitle:this.state.epPlanId?('Edit effort plan · '+this.state.epPlanId):'Create effort plan',
       epEditSub:this.state.epPlanId?'Saved plan — every effort shows its linked KPI and the tasks generated from it.':'Define effort targets, convert them to KPIs and auto-generate tasks for the period.',
@@ -3395,6 +3411,7 @@ class AppRoot extends React.Component {
     });
   }
   _deleteIdea(id){
+    if(!this.hasPerm('ideas','delete')){ this.flash('You do not have permission to delete ideas.'); return; }
     const i=this.allIdeas().find(x=>x.id===id); if(!i) return;
     this.setState({ ideaDeleted:[...(this.state.ideaDeleted||[]), id], ideaOpen:null });
     this.flash('Deleted idea '+id+'.');
@@ -3646,7 +3663,7 @@ class AppRoot extends React.Component {
         this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''} }); this.flash('Comment posted on '+i.id+'.'); },
       idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
       idConvert:()=>this.ideaToTask(i),
-      idCanDelete: canAct,
+      idCanDelete: this.hasPerm('ideas','delete'),
       idDelete:()=>this._deleteIdea(i.id),
       idClose:()=>this.setState({ ideaOpen:null }),
     };
@@ -3682,6 +3699,7 @@ class AppRoot extends React.Component {
     };
   }
   idfSave(toQC){
+    if(!this.hasPerm('ideas','create')){ this.flash('You do not have permission to create content ideas.'); return; }
     const f=this.state.ideaForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter a content title.'); return; }
     const id='CI-'+String(this.allIdeas().length+1).padStart(3,'0');
@@ -3707,6 +3725,7 @@ class AppRoot extends React.Component {
     const del=this.state.ttDeleted||[];
     return this.TASK_TEMPLATES().filter(t=>!addedIds.has(t.id)).concat(added).filter(t=>!del.includes(t.id)).map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   _deleteTemplate(id, kind){
+    if(!this.hasPerm('templates','delete')){ this.flash('You do not have permission to delete templates.'); return; }
     const getAll={ task:()=>this.allTaskTemplates(), okr:()=>this.allOkrTemplates(), kpi:()=>this.allKpiTemplates() }[kind];
     const delKey={ task:'ttDeleted', okr:'otDeleted', kpi:'ktDeleted' }[kind];
     const t=getAll().find(x=>x.id===id); if(!t) return;
@@ -3776,7 +3795,8 @@ class AppRoot extends React.Component {
   MEASURE_FREQ(){ return ['Real-time','Daily','Weekly','Fortnightly','Monthly','Quarterly','On completion']; }
   templatesView(){
     const rk=this.state.roleKey;
-    const canEdit=['manager','team_lead','admin'].includes(rk);
+    const canEdit=this.hasPerm('templates','edit');
+    const canDeleteTemplate=this.hasPerm('templates','delete');
     const F=this.state.ttFilters||{division:'All',status:'All'};
     const setF=(k)=>(e)=>this.setState({ ttFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),tt:0} });
     const all=this.allTaskTemplates();
@@ -3890,6 +3910,7 @@ class AppRoot extends React.Component {
         canRemove:okrs2.length>1 })),
       otAddKr:()=>this.setState({ otForm:{...of2,krs:[...okrs2,{t:'',kpi:'',unit:'',target:'',weight:'0',freq:'Monthly'}]} }),
       otSave:()=>{
+        if(!this.hasPerm('templates', this.state.otEditId?'edit':'create')){ this.flash('You do not have permission to '+(this.state.otEditId?'edit':'create')+' templates.'); return; }
         if(!(of2.name&&of2.name.trim())){ this.flash('Enter a template name.'); return; }
         const krs=(of2.krs||[]).filter(k=>k.t&&k.t.trim());
         if(!krs.length){ this.flash('Add at least one key result.'); return; }
@@ -3924,6 +3945,7 @@ class AppRoot extends React.Component {
       ktSetMethod:setKf('method'), ktSetMfreq:setKf('mfreq'), ktSetEvidence:setKf('evidence'),
       ktSetName:setKf('name'), ktSetCategory:setKf('category'), ktSetDivision:setKf('division'), ktSetUnit:setKf('unit'), ktSetDirection:setKf('direction'), ktSetDefTarget:setKf('defTarget'), ktSetFreq:setKf('freq'), ktSetSource:setKf('source'), ktSetDesc:setKf('desc'), ktSetStatus:setKf('status'),
       ktSave:()=>{
+        if(!this.hasPerm('templates', this.state.ktEditId?'edit':'create')){ this.flash('You do not have permission to '+(this.state.ktEditId?'edit':'create')+' templates.'); return; }
         if(!(kf.name&&kf.name.trim())){ this.flash('Enter a KPI name.'); return; }
         const rec={ tool:kf.tool||'', method:kf.method||'', mfreq:kf.mfreq||'', evidence:kf.evidence||'', name:kf.name.trim(), category:kf.category||'Traffic', division:kf.division||'SEO', unit:kf.unit||'count', direction:kf.direction||'Increase', defTarget:kf.defTarget||'—', freq:kf.freq||'Monthly', source:kf.source||'Manual', desc:kf.desc||'', status:kf.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
         if(this.state.ktEditId){
@@ -3943,7 +3965,7 @@ class AppRoot extends React.Component {
           });
         }
       },
-      ttStats, ttRows:pg.rows, ttPg:pg, ttCanEdit:canEdit,
+      ttStats, ttRows:pg.rows, ttPg:pg, ttCanEdit:canEdit, ttCanDelete:canDeleteTemplate,
       ttFilterDefs:[
         {label:'Division',value:F.division,onChange:setF('division'),options:['All','SEO','Content','Graphics','Web Developers','SMM']},
         {label:'Status',value:F.status,onChange:setF('status'),options:['All','Active','Draft','Archived']},
@@ -3960,6 +3982,7 @@ class AppRoot extends React.Component {
         canRemove:cl.length>1 })),
       ttAddStep:()=>this.setState({ ttForm:{...f,checklist:[...cl,'']} }),
       ttSave:()=>{
+        if(!this.hasPerm('templates', this.state.ttEditId?'edit':'create')){ this.flash('You do not have permission to '+(this.state.ttEditId?'edit':'create')+' templates.'); return; }
         if(!(f.name&&f.name.trim())){ this.flash('Enter a template name.'); return; }
         const steps=(f.checklist||[]).map(s=>s.trim()).filter(Boolean);
         if(!steps.length){ this.flash('Add at least one checklist step.'); return; }
@@ -4163,7 +4186,8 @@ class AppRoot extends React.Component {
     const qc=((this.state.clQc||{})[id])||{};
     const submitted=this.complianceSubmitted(t);
     const isAssignee=t.assignee===this.currentPerson();
-    const isQC=rk==='qc'||['manager','team_lead','admin'].includes(rk);
+    const isQC=this.hasPerm('qc','approve');
+    const canDeleteChecklist=this.hasPerm('qc','delete');
     const writerEditable=isAssignee&&!submitted;
     const qcEditable=isQC&&submitted;
     const V={ Compliant:{bg:'var(--verify-100)',c:'var(--verify-600)'}, 'Accept conditional':{bg:'var(--warn-100)',c:'var(--warn-600)'},
@@ -4223,8 +4247,9 @@ class AppRoot extends React.Component {
         this.flash('Checklist returned to the assignee for correction.');
         this._persistCompliance(id, fill, qc, false); },
       clCanReopen:qcEditable,
-      clCanDelete:qcEditable,
+      clCanDelete:canDeleteChecklist&&submitted,
       clDelete:()=>{
+        if(!canDeleteChecklist){ this.flash('You do not have permission to delete compliance checklists.'); return; }
         const cf={...(this.state.clFill||{})}; delete cf[id];
         const cq={...(this.state.clQc||{})}; delete cq[id];
         const cs={...(this.state.clSubmitted||{})}; delete cs[id];
@@ -4369,7 +4394,7 @@ class AppRoot extends React.Component {
   userDetailData(rk){
     const name=this.state.umOpen; if(!name) return { umDrawerOpen:false };
     const u=this.userOf(name); if(!u) return { umDrawerOpen:false };
-    const isAdmin=rk==='admin';
+    const isAdmin=this.hasPerm('users','edit');
     const editing=isAdmin&&!!this.state.umEdit;
     const d=this.state.umDraft||{};
     const setD=(k)=>(e)=>this.setState({ umDraft:{...d,[k]:e.target.value} });
@@ -4452,6 +4477,7 @@ class AppRoot extends React.Component {
           toggle:()=>{ const cur=d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[]); this.setState({ umDraft:{...d, hiddenLeadColumns: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
+        if(!this.hasPerm('users','edit')){ this.flash('You do not have permission to edit users.'); return; }
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
         const newBrands=d.brands!==undefined?d.brands:(u.brands||[]);
         const newMobile=d.mobile!==undefined?d.mobile:u.mobile;
@@ -4643,6 +4669,7 @@ class AppRoot extends React.Component {
     });
   }
   _deleteTask(id){
+    if(!this.hasPerm('tasks','delete')){ this.flash('You do not have permission to delete tasks.'); return; }
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
     this.setState({ tkAdded:(this.state.tkAdded||[]).filter(x=>x.id!==id), tkOpen:null });
     this.flash('Deleted task '+id+'.');
@@ -5921,18 +5948,12 @@ class AppRoot extends React.Component {
     return added.concat(this.SOP_SEED().filter(s=>!addedIds.has(s.id))).map(s=>upd[s.id]?{...s,...upd[s.id]}:s).filter(s=>!s.deleted); }
   sopTone(s){ return { Published:{bg:'var(--verify-100)',c:'var(--verify-600)'}, Draft:{bg:'var(--surface-50)',c:'var(--ink-500)'},
     'In review':{bg:'var(--warn-100)',c:'var(--warn-600)'}, Retired:{bg:'#EAE4E8',c:'var(--beet-700)'} }[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
-  // SOP permissions resolved from the existing role model — no separate permission module
-  sopPerms(rk, s){
-    const P=(v,d,e,u,del,m)=>({ view:v, download:d, edit:e, update:u, del:del, manage:m });
-    const map={ admin:P(1,1,1,1,1,1), manager:P(1,1,1,1,0,1), team_lead:P(1,1,1,1,0,0),
-      ceo:P(1,1,0,0,0,0), coo:P(1,1,0,0,0,0), senior:P(1,1,0,0,0,0), junior:P(1,1,0,0,0,0), qc:P(1,1,0,0,0,0) };
-    const p={...(map[rk]||map.junior)};
-    if(s && s.owner===this.currentPerson() && ['manager','team_lead','admin'].includes(rk)){ p.edit=1; p.update=1; }
-    return p;
-  }
+  // SOP permissions resolved from the existing RBAC model (hasPerm/getPerm
+  // against ACCESS.sop + any Admin rolePerms override) — no separate
+  // permission module for SOP.
   sopPermLabel(rk){
-    const p=this.sopPerms(rk);
-    return ['View','Download','Edit','Update','Delete','Manage'].filter((_,i)=>[p.view,p.download,p.edit,p.update,p.del,p.manage][i]).join(' · ');
+    const p=this.getPerm('sop', rk);
+    return ['View','Create','Edit','Delete'].filter((_,i)=>[p.view,p.create,p.edit,p.delete][i]).join(' · ');
   }
   sopReviewState(s){
     const iso=this.isoDate(s.review); if(!iso) return { label:'no review set', color:'var(--ink-400)', overdue:false, soon:false };
@@ -6040,6 +6061,7 @@ class AppRoot extends React.Component {
           steps:(src.steps||[]).map(st=>({ t:st.t, d:st.d, outcome:st.outcome, dur:st.dur, ev:(st.ev||[]).slice(), subs:(st.subs||[]).slice(), notes:st.notes })) } });
         this.flash('Duplicated '+src.id+' — edit and save as a new SOP.'); },
       sopSave:()=>{
+        if(!this.hasPerm('sop','create')){ this.flash('You do not have permission to create SOPs.'); return; }
         if(!(f.title&&f.title.trim())){ this.flash('Give the SOP a title.'); return; }
         if(!(f.purpose&&f.purpose.trim())){ this.flash('State the purpose — what outcome this procedure guarantees.'); return; }
         const real=steps.filter(s=>(s.t||'').trim());
@@ -6077,7 +6099,7 @@ class AppRoot extends React.Component {
   }
   sopView(rk){
     const me=this.currentPerson();
-    const canAuthor=['manager','team_lead','admin','secretary'].includes(rk);
+    const canAuthor=this.hasPerm('sop','create');
     // role-based visibility: leadership/QC see every SOP; everyone else only
     // sees SOPs for their own division (plus any explicitly marked 'All')
     const leadershipRoles=['admin','ceo','coo','manager','team_lead','qc','secretary'];
@@ -6169,7 +6191,12 @@ class AppRoot extends React.Component {
     }
     const tn=this.sopTone(s.status), pt=this.sopPriTone(s.priority);
     const acked=(s.ack||[]).includes(me);
-    const canAuthor=['manager','team_lead','admin','secretary'].includes(rk)&&(s.owner===me||rk==='admin'||rk==='secretary');
+    // "Full"-level roles (Admin/Secretary/CEO — anyone whose ACCESS.sop level
+    // grants delete) may author any SOP; everyone else with edit rights may
+    // only author the SOPs they own. Uses hasPerm('sop','delete') as the
+    // non-hardcoded signal for "elevated/manage-any", since that's exactly
+    // what separates a 'Full' level from 'Create / Edit' in defaultPermsFromLevel.
+    const canAuthor=this.hasPerm('sop','edit')&&(s.owner===me||this.hasPerm('sop','delete'));
     const rv=this.sopReviewState(s);
     const patch=(p,msg,auditRow)=>{ const u={...(this.state.sopUpd||{})};
       const cur={...(u[s.id]||{})};
@@ -6278,11 +6305,13 @@ class AppRoot extends React.Component {
       sopAck:()=>patch({ ack:[...(s.ack||[]), me] }, 'You acknowledged '+s.id+' '+s.version+'.'),
       sopAckList:(s.ack||[]).map(n=>({ name:n, initials:n.split(' ').map(x=>x[0]).join('').slice(0,2) })),
       sopCanAuthorD:canAuthor,
-      sopPublish:()=>patch({ status:'Published', updated:this.todayStr(), updatedBy:me, ack:[] },
+      sopPublish:()=>{ if(!this.hasPerm('sop','edit')){ this.flash('You do not have permission to edit SOPs.'); return; }
+        patch({ status:'Published', updated:this.todayStr(), updatedBy:me, ack:[] },
         s.id+' published as '+s.version+' — acknowledgements reset, everyone must read it again.',
-        ['Published',me,this.todayStr()]),
+        ['Published',me,this.todayStr()]); },
       sopPublishLabel:s.status==='Published'?'Re-publish current version':'Publish',
-      sopBump:()=>{ const p=String(s.version||'v1.0').replace('v','').split('.');
+      sopBump:()=>{ if(!this.hasPerm('sop','edit')){ this.flash('You do not have permission to edit SOPs.'); return; }
+        const p=String(s.version||'v1.0').replace('v','').split('.');
         const nv='v'+p[0]+'.'+((parseInt(p[1],10)||0)+1);
         const entry={ v:nv, by:me, date:this.todayStr(),
           summary:'Revision — change summary pending.', reason:'Recorded on version bump.',
@@ -6291,11 +6320,13 @@ class AppRoot extends React.Component {
           versions:[entry].concat(s.versions||[]) },
           s.id+' → '+nv+' · previous versions kept in history, acknowledgements reset.',
           ['Version updated',me,this.todayStr()]); },
-      sopMarkReviewed:()=>patch({ lastReviewed:this.todayStr(), review:this.relDate(90) },
-        s.id+' marked reviewed — next review in 90 days.', ['Reviewed',me,this.todayStr()]),
-      sopRetire:()=>patch({ status:s.status==='Retired'?'Published':'Retired' },
+      sopMarkReviewed:()=>{ if(!this.hasPerm('sop','edit')){ this.flash('You do not have permission to edit SOPs.'); return; }
+        patch({ lastReviewed:this.todayStr(), review:this.relDate(90) },
+        s.id+' marked reviewed — next review in 90 days.', ['Reviewed',me,this.todayStr()]); },
+      sopRetire:()=>{ if(!this.hasPerm('sop','edit')){ this.flash('You do not have permission to edit SOPs.'); return; }
+        patch({ status:s.status==='Retired'?'Published':'Retired' },
         s.status==='Retired'?(s.id+' reinstated.'):(s.id+' retired — kept for audit, no longer in force.'),
-        [s.status==='Retired'?'Published':'Retired',me,this.todayStr()]),
+        [s.status==='Retired'?'Published':'Retired',me,this.todayStr()]); },
       sopRetireLabel:s.status==='Retired'?'Reinstate':'Retire',
       sopDuplicate:()=>{ this.setState({ sopOpen:null, sopNew:true,
         sopForm:{ title:s.title+' (copy)', purpose:s.purpose, scope:s.scope, division:s.division, category:s.category,
@@ -6307,13 +6338,13 @@ class AppRoot extends React.Component {
           steps:(s.steps||[]).map(st=>({ t:st.t, d:st.d, outcome:st.outcome, dur:st.dur, ev:(st.ev||[]).slice(), subs:(st.subs||[]).slice(), notes:st.notes })) } });
         this.flash('Duplicated '+s.id+' — saved as a new draft when you submit.'); },
       sopSaveAsTemplate:()=>this.flash('“'+s.title+'” saved as a reusable SOP template — available in the New SOP duplicate list.'),
-      ...(()=>{ const p=this.sopPerms(rk,s);
-        return { sopCanDownload:!!p.download, sopCanEditD:!!p.edit, sopCanUpdateD:!!p.update,
-          sopCanDeleteD:!!p.del, sopCanManageD:!!p.manage,
-          sopPermLine:'Your permissions on this SOP — '+['View','Download','Edit','Update','Delete','Manage']
-            .filter((_,i)=>[p.view,p.download,p.edit,p.update,p.del,p.manage][i]).join(' · '),
+      ...(()=>{ const canView=this.hasPerm('sop','view'), canEdit=canAuthor, canDel=this.hasPerm('sop','delete');
+        return { sopCanDownload:canView, sopCanEditD:canEdit, sopCanUpdateD:canEdit,
+          sopCanDeleteD:canDel, sopCanManageD:canEdit,
+          sopPermLine:'Your permissions on this SOP — '+['View','Download','Edit','Update','Delete']
+            .filter((_,i)=>[canView,canView,canEdit,canEdit,canDel][i]).join(' · '),
           sopDownload:()=>this.flash('Downloading '+s.id+' '+s.version+' — '+s.title+'.pdf'),
-          sopDelete:()=>{ if(!p.del){ this.flash('Delete is restricted to Admin.'); return; }
+          sopDelete:()=>{ if(!this.hasPerm('sop','delete')){ this.flash('You do not have permission to delete SOPs.'); return; }
             patch({ deleted:true }, s.id+' deleted — retained in the audit log for compliance.', ['Deleted',me,this.todayStr()]);
             this.setState({ sopOpen:null }); } }; })(),
     };
@@ -6372,6 +6403,7 @@ class AppRoot extends React.Component {
       .filter(t=>!del.includes(t.id))
       .map(t=>upd[t.id]?{...t,...upd[t.id]}:t); }
   _deleteTicket(id){
+    if(!this.hasPerm('support','delete')){ this.flash('You do not have permission to delete tickets.'); return; }
     const t=this.allTickets().find(x=>x.id===id); if(!t) return;
     this.setState({ tktDeleted:[...(this.state.tktDeleted||[]), id], tktOpen:null });
     this.flash('Deleted ticket: '+(t.subject||id)+'.');
@@ -6459,7 +6491,7 @@ class AppRoot extends React.Component {
   supportView(rk){
     const me=this.currentPerson();
     const isAdmin=rk==='admin';
-    const isTriage=['admin','manager','team_lead'].includes(rk);
+    const isTriage=this.hasPerm('support','edit');
     let all=this.allTickets();
     const mine=all.filter(t=>t.by===me||t.assignee===me);
     const scope=isTriage?(this.state.tktScope||'All tickets'):'My tickets';
@@ -6522,7 +6554,8 @@ class AppRoot extends React.Component {
     const t=this.allTickets().find(x=>x.id===id); if(!t) return { tktDrawerOpen:false };
     const c=this.ticketCat(t.cat), tn=this.ticketTone(t.status);
     const me=this.currentPerson();
-    const isTriage=['admin','manager','team_lead'].includes(rk);
+    const isTriage=this.hasPerm('support','edit');
+    const canDeleteTicket=this.hasPerm('support','delete');
     const isOwner=t.assignee===me;
     const isRequester=t.by===me;
     const age=this.ticketAge(t);
@@ -6549,8 +6582,8 @@ class AppRoot extends React.Component {
         this.tktPatch(t.id,{},v); this.setState({ tktReply:'' }); },
       tktCanTriage:isTriage,
       tktCanWork:isTriage||isOwner,
-      tktCanDelete:isTriage,
-      tktDelete:()=>this._deleteTicket(t.id),
+      tktCanDelete:canDeleteTicket,
+      tktDelete:()=>{ if(!canDeleteTicket){ this.flash('You do not have permission to delete tickets.'); return; } this._deleteTicket(t.id); },
       tktCanClose:isRequester&&t.status==='Resolved',
       tktAssignOptions:['Unassigned'].concat(people),
       tktAssignVal:t.assignee||'Unassigned',
@@ -6741,7 +6774,7 @@ class AppRoot extends React.Component {
       tkQcApprove:()=>qcFinish('Approved','QC approved — counted toward KPI'),
       tkQcRework:()=>qcFinish('Rework','Rework requested'),
       tkClose:()=>this.setState({ tkOpen:null }),
-      tkCanDelete:['manager','team_lead','admin'].includes(rk),
+      tkCanDelete:this.hasPerm('tasks','delete'),
       tkDelete:()=>this._deleteTask(t.id),
       tkKpiNote: t.status==='Approved' ? 'Counted toward KPI on approval.' : 'Counts toward the KPI once QC approves.',
       ...this.complianceData(t, rk),
@@ -7005,9 +7038,10 @@ class AppRoot extends React.Component {
   }
 
   _saveRecord(){
+    const editKey=this.state.recordEditKey;
+    if(!this.hasPerm('repositories', editKey!=null?'edit':'create')){ this.flash('You do not have permission to '+(editKey!=null?'edit':'create')+' repository records.'); return; }
     const f=this.state.recordForm||{};
     const kind=this.state.recordKind;
-    const editKey=this.state.recordEditKey;
     if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
     const label=this._recordLabel(kind);
 
@@ -7052,6 +7086,7 @@ class AppRoot extends React.Component {
   }
 
   _deleteRecord(){
+    if(!this.hasPerm('repositories','delete')){ this.flash('You do not have permission to delete repository records.'); return; }
     const kind=this.state.recordKind;
     const editKey=this.state.recordEditKey;
     if(editKey==null) return;
@@ -7833,7 +7868,7 @@ class AppRoot extends React.Component {
       npNotLast:(this.state.npTab||0)<9, npNotFirst:(this.state.npTab||0)>0,
       npSlug:baseSlug, npUrl:url,
       closeNewPage:()=>this.setState({ showNewPage:false, npEditId:null }),
-      npCanDelete: !!editId && ['manager','admin','team_lead'].includes(this.state.roleKey),
+      npCanDelete: !!editId && this.hasPerm('content','delete'),
       npDelete:()=>this._deleteContentPage(),
       npAI:()=>this.flash('AI drafted meta title & description (demo).'),
       submitNewPageDraft:()=>this.submitNewPage(false),
@@ -7841,9 +7876,10 @@ class AppRoot extends React.Component {
     };
   }
   submitNewPage(activate){
+    const editId=this.state.npEditId;
+    if(!this.hasPerm('content', editId?'edit':'create')){ this.flash('You do not have permission to '+(editId?'edit':'create')+' content pages.'); return; }
     const f=this.state.npForm||{};
     if(!f.name || !f.name.trim()){ this.flash('Enter a page name.'); return; }
-    const editId=this.state.npEditId;
     const existing=editId?this.allContentPages().find(x=>x.id===editId):null;
     const repo=f.repo||'service';
     const code=editId||this._nextSeqCode('PG-', this._allContentPageIdsEver(), 1000);
@@ -7902,6 +7938,7 @@ class AppRoot extends React.Component {
     });
   }
   _deleteContentPage(){
+    if(!this.hasPerm('content','delete')){ this.flash('You do not have permission to delete content pages.'); return; }
     const id=this.state.npEditId; if(!id) return;
     const p=this.allContentPages().find(x=>x.id===id);
     this.setState({ cDeleted:[...(this.state.cDeleted||[]), id], showNewPage:false, npForm:{}, npEditId:null, cOpen:null });
@@ -7970,6 +8007,7 @@ class AppRoot extends React.Component {
     if(this._leadBrandRestricted()){ const bs=this.mySalesBrands(); return bs.length?all.filter(l=>bs.includes(l.brand)):[]; }
     return all; }
   _deleteLead(id){
+    if(!this.hasPerm('leads','delete')){ this.flash('You do not have permission to delete leads.'); return; }
     const l=this.allLeads().find(x=>x.id===id); if(!l) return;
     this.setState({ leadDeleted:[...(this.state.leadDeleted||[]), id] });
     this.flash('Deleted lead entry: '+id+'.');
@@ -8008,6 +8046,7 @@ class AppRoot extends React.Component {
     if(this._leadBrandRestricted()){ const bs=this.mySalesBrands(); list=bs.length?list.filter(c=>bs.includes(c.brand)):[]; }
     return list; }
   _deleteContact(id){
+    if(!this.hasPerm('leads','delete')){ this.flash('You do not have permission to delete contacts.'); return; }
     const c=this.allContacts().find(x=>x.id===id); if(!c) return;
     this.setState({ contactDeleted:[...(this.state.contactDeleted||[]), id], cnOpen:null });
     this.flash('Deleted contact: '+(c?c.name:id)+'.');
@@ -8116,8 +8155,8 @@ class AppRoot extends React.Component {
     const id=this.state.cnOpen; if(!id) return { cnDrawerOpen:false };
     const c=this.allContacts().find(x=>x.id===id); if(!c) return { cnDrawerOpen:false };
     const t=this.stageTone(c.stage); const me=this.currentPerson();
-    const rk=this.state.roleKey;
-    const canWrite=['admin','manager','sales'].includes(rk);
+    const canWrite=this.hasPerm('leads','edit');
+    const canDelete=this.hasPerm('leads','delete');
     return { cnDrawerOpen:true,
       cnD:{ ...c, stageBg:t.bg, stageColor:t.c },
       cnDClose:()=>this.setState({ cnOpen:null }),
@@ -8127,9 +8166,9 @@ class AppRoot extends React.Component {
       cnLog:(c.log||[]).slice().reverse().map(l=>({ what:l[0], who:l[1], when:l[2] })),
       cnStageOptions2:this.LEAD_STAGES(),
       cnDCanWrite:canWrite,
-      cnDCanDelete:canWrite,
-      cnDDelete:()=>this._deleteContact(c.id),
-      cnDSetStage:(e)=>{ if(!canWrite){ this.flash('View only — stage changes are restricted to Admin, Manager and Sales.'); return; }
+      cnDCanDelete:canDelete,
+      cnDDelete:()=>{ if(!canDelete){ this.flash('You do not have permission to delete contacts.'); return; } this._deleteContact(c.id); },
+      cnDSetStage:(e)=>{ if(!canWrite){ this.flash('You do not have permission to edit leads.'); return; }
         const v=e.target.value; const u={...(this.state.contactUpd||{})};
         const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
         u[c.id]={...(u[c.id]||{}), stage:v, log};
@@ -8176,7 +8215,7 @@ class AppRoot extends React.Component {
       pageUrl:(this.servicePageOf(l.service)||{}).url||'', hasPage:!!(this.servicePageOf(l.service)||{}).url,
       openPage:()=>{ const s=this.servicePageOf(l.service); const p=s&&this.allContentPages().find(x=>x.url===s.url);
         if(p) this.setState({ route:'content', cOpen:p.id, cTab:0 }); else this.flash('No repository page mapped to "'+l.service+'" yet.'); },
-      canDeleteLead:!!canWrite, deleteLead:()=>canWrite?this._deleteLead(l.id):this.flash('View only — deleting leads is restricted to Admin and Manager.'),
+      canDeleteLead:this.hasPerm('leads','delete'), deleteLead:()=>this.hasPerm('leads','delete')?this._deleteLead(l.id):this.flash('You do not have permission to delete leads.'),
       isToday:l.date===today, dateBg:l.date===today?'var(--verify-100)':'var(--surface-50)', dateColor:l.date===today?'var(--verify-600)':'var(--ink-500)' })),10);
     const f=this.state.ldForm||{};
     const set=(k)=>(e)=>this.setState({ ldForm:{...f,[k]:e.target.value} });
@@ -8829,21 +8868,23 @@ class AppRoot extends React.Component {
             status:u.status,
             statusBg:u.statusTone==='ok'?'var(--verify-100)':'var(--warn-100)',
             statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)',
-            actionLabel:rk==='admin'?'Manage':'View',
-            actionStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(rk==='admin'
+            actionLabel:this.hasPerm('users','edit')?'Manage':'View',
+            actionStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(this.hasPerm('users','edit')
               ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
             open:()=>this.setState({ umOpen:u.name, umEdit:false }),
             suspendLabel:u.status==='Suspended'?'Reactivate':'Suspend',
             suspend:(e)=>{ if(e)e.stopPropagation();
+              if(!this.hasPerm('users','edit')){ this.flash('You do not have permission to suspend or reactivate users.'); return; }
               const newStatus=u.status==='Suspended'?'Active':'Suspended';
               const users=(this.state.users||[]).map(x=>x.name===u.name?{...x,status:newStatus,statusTone:newStatus==='Suspended'?'warn':'ok'}:x);
               this.setState({ users }); this.flash(u.name+(u.status==='Suspended'?' reactivated.':' suspended — login blocked, records retained.'));
               if(u.id) supabase.from('profiles').update({ status:newStatus }).eq('id', u.id).then(({error})=>{
                 if(error) console.warn('[supabase] suspend/reactivate failed:', error.message);
               }); },
-            canSuspend:rk==='admin',
-            canDelete:rk==='admin',
+            canSuspend:this.hasPerm('users','edit'),
+            canDelete:this.hasPerm('users','delete'),
             delete:(e)=>{ if(e)e.stopPropagation();
+              if(!this.hasPerm('users','delete')){ this.flash('You do not have permission to delete users.'); return; }
               this.setState({ users:(this.state.users||[]).filter(x=>x.name!==u.name) });
               this.flash(u.name+' removed from the platform.');
               if(u.id) supabase.from('profiles').delete().eq('id', u.id).then(({error})=>{
@@ -9156,6 +9197,7 @@ class AppRoot extends React.Component {
     return custom.concat(built).map(r=>({ ...r, items:count(r.n)+' '+r.unit }));
   }
   repoDeleteCustom(key){
+    if(!this.hasPerm('repositories','delete')){ this.flash('You do not have permission to delete repositories.'); return; }
     const repo=(this.state.repoAdded||[]).find(r=>r.key===key);
     if(!repo) return;
     this.setState({ repoAdded:(this.state.repoAdded||[]).filter(r=>r.key!==key),
@@ -9175,7 +9217,8 @@ class AppRoot extends React.Component {
     return repo ? repo.name.replace(/s$/,'') : 'Record';
   }
   repositoriesView(rk, canEdit){
-    const isAdmin=rk==='admin';
+    const canCreate=this.hasPerm('repositories','create');
+    const canDelete=this.hasPerm('repositories','delete');
     const list=this.REPO_REGISTRY();
     const tag=(t)=>({tag:t,tagBg:'var(--info-100)',tagColor:'var(--info-600)'});
     const f=this.state.repoForm||{};
@@ -9188,10 +9231,10 @@ class AppRoot extends React.Component {
         action:r.go,
         actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit
           ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
-        canDelete: r.custom && isAdmin,
+        canDelete: r.custom && canDelete,
         delete: r.custom ? ()=>this.repoDeleteCustom(r.key) : null,
       })),
-      repoCanCreate:isAdmin,
+      repoCanCreate:canCreate,
       repoFormOpen:!!this.state.repoNew,
       repoClose:()=>this.setState({ repoNew:false, repoForm:{} }),
       repoStop:(e)=>e.stopPropagation(),
@@ -9199,6 +9242,7 @@ class AppRoot extends React.Component {
       repoCatOptions:['Content','SEO','Assets','Promotions','Performance','Quality','Research'],
       repoOwnerOptions:(this.state.users||[]).map(u=>u.name),
       repoSave:()=>{
+        if(!canCreate){ this.flash('You do not have permission to create repositories.'); return; }
         if(!(f.name&&f.name.trim())){ this.flash('Name the repository.'); return; }
         const rec={ key:'r'+Date.now(), name:f.name.trim(), desc:f.desc||'Custom repository.',
           cat:f.cat||'Content', icon:'database', owner:f.owner||this.currentPerson() };
