@@ -53,17 +53,7 @@ class AppRoot extends React.Component {
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [], cUpd: {}, npEditId: null, cDeleted: [],
     umTab: 'list', rolePerms: {}, permRole: 'manager',
     uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] },
-    users: [
-      { name:'Aarav Kapoor', sub:'CEO · Leadership', role:'CEO', dept:'Leadership', status:'Active', statusTone:'ok' },
-      { name:'Rahul Menon', sub:'COO · Operations', role:'COO', dept:'Operations', status:'Active', statusTone:'ok' },
-      { name:'Priya Nair', sub:'Marketing Manager', role:'Manager', dept:'Marketing', status:'Active', statusTone:'ok' },
-      { name:'Aditi Rao', sub:'SEO Team Lead', role:'Team Lead', dept:'SEO', status:'Active', statusTone:'ok' },
-      { name:'Sameer Iyer', sub:'Senior SEO Executive', role:'Senior Executive', dept:'SEO', status:'Active', statusTone:'ok' },
-      { name:'Neha Verma', sub:'Junior SEO Executive', role:'Junior Executive', dept:'SEO', status:'Pending Invitation', statusTone:'warn' },
-      { name:'Farhan Ali', sub:'QC Reviewer', role:'QC Reviewer', dept:'Quality', status:'Active', statusTone:'ok' },
-      { name:'Ritu Malhotra', sub:'Digital Marketing Executive', role:'Digital Marketing Executive', dept:'Marketing', status:'Active', statusTone:'ok' },
-      { name:'Vikram Singh', sub:'Sales Executive', role:'Sales Executive', dept:'Marketing', status:'Active', statusTone:'ok', brands:['Food Research Lab'] },
-    ],
+    users: [],
     services: [
       { name:'SEO', sub:'Search engine optimization', subs:'4 sub-services', status:'Active' },
       { name:'Content Writing', sub:'Editorial & long-form', subs:'6 sub-services', status:'Active' },
@@ -81,16 +71,16 @@ class AppRoot extends React.Component {
   };
 
   ROLES = {
-    admin:{ label:'Admin', short:'AD', tag:'Platform Admin', person:'Meera Krishnan', color:'#7A1C46', bucket:'admin' },
-    ceo:{ label:'CEO', short:'CEO', tag:'Chief Executive', person:'Aarav Kapoor', color:'#2B0B1B', bucket:'exec' },
-    coo:{ label:'COO', short:'COO', tag:'Chief Operating Officer', person:'Rahul Menon', color:'#4E1631', bucket:'ops' },
-    manager:{ label:'Manager', short:'MG', tag:'Marketing Manager', person:'Priya Nair', color:'#8E3F6C', bucket:'manager' },
-    team_lead:{ label:'Team Lead', short:'TL', tag:'SEO Team Lead', person:'Aditi Rao', color:'#A24E7E', bucket:'lead' },
-    senior:{ label:'Senior Executive', short:'SR', tag:'Senior SEO Executive', person:'Sameer Iyer', color:'#3C8BB0', bucket:'senior' },
-    junior:{ label:'Junior Executive', short:'JR', tag:'Junior SEO Executive', person:'Neha Verma', color:'#2E9A6C', bucket:'junior' },
-    qc:{ label:'QC Reviewer', short:'QC', tag:'Quality Reviewer', person:'Farhan Ali', color:'#D69327', bucket:'qc' },
-    dm:{ label:'Digital Marketing Executive', short:'DM', tag:'Digital Marketing', person:'Ritu Malhotra', color:'#3C6FBD', bucket:'dm' },
-    sales:{ label:'Sales Executive', short:'SL', tag:'Sales Executive', person:'Vikram Singh', color:'#C77B3E', bucket:'sales', brand:'Food Research Lab' },
+    admin:{ label:'Admin', short:'AD', tag:'Platform Admin', person:'', color:'#7A1C46', bucket:'admin' },
+    ceo:{ label:'CEO', short:'CEO', tag:'Chief Executive', person:'', color:'#2B0B1B', bucket:'exec' },
+    coo:{ label:'COO', short:'COO', tag:'Chief Operating Officer', person:'', color:'#4E1631', bucket:'ops' },
+    manager:{ label:'Manager', short:'MG', tag:'Marketing Manager', person:'', color:'#8E3F6C', bucket:'manager' },
+    team_lead:{ label:'Team Lead', short:'TL', tag:'SEO Team Lead', person:'', color:'#A24E7E', bucket:'lead' },
+    senior:{ label:'Senior Executive', short:'SR', tag:'Senior SEO Executive', person:'', color:'#3C8BB0', bucket:'senior' },
+    junior:{ label:'Junior Executive', short:'JR', tag:'Junior SEO Executive', person:'', color:'#2E9A6C', bucket:'junior' },
+    qc:{ label:'QC Reviewer', short:'QC', tag:'Quality Reviewer', person:'', color:'#D69327', bucket:'qc' },
+    dm:{ label:'Digital Marketing Executive', short:'DM', tag:'Digital Marketing', person:'', color:'#3C6FBD', bucket:'dm' },
+    sales:{ label:'Sales Executive', short:'SL', tag:'Sales Executive', person:'', color:'#C77B3E', bucket:'sales', brand:'Food Research Lab' },
     secretary:{ label:'Secretary', short:'SEC', tag:'Company Secretary', person:'', color:'#5B8C5A', bucket:'exec' },
   };
 

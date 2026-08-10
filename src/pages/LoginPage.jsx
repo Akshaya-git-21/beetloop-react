@@ -10,11 +10,7 @@ export default function LoginPage({ vm }) {
 <div style={{"minHeight":"100vh","display":"grid","gridTemplateColumns":"1.05fr 1fr"}}>
 
   
-<div style={{"position":"relative","background":loginBackgroundUrl?`url(${loginBackgroundUrl}) center/cover no-repeat`:"linear-gradient(155deg,var(--beet-900,#1F0814) 0%,var(--beet-600,#4E1631) 55%,var(--beet-700,#7A1C46) 100%)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
-
-    {!loginBackgroundUrl && (
-<div style={{"position":"absolute","right":"-120px","top":"-80px","width":"460px","height":"460px","borderRadius":"50%","background":"radial-gradient(circle,rgba(180,90,140,.35),transparent 70%)","filter":"blur(10px)"}} />
-    )}
+<div style={{"position":"relative","background":loginBackgroundUrl?`url(${loginBackgroundUrl}) center/cover no-repeat`:"var(--beet-700,#7A1C46)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
 
 <div style={{"position":"relative","display":"flex","alignItems":"center","gap":"12px"}}>
 
