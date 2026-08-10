@@ -3,26 +3,30 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function Sidebar({ vm }) {
-  const { adminNav, hasAdmin, logout, nav, openProfile, role } = vm;
+  const { adminNav, hasAdmin, logout, nav, openProfile, role, platformName, platformSub, platformLogoUrl } = vm;
   return (
     <React.Fragment>
-<aside style={{"width":"256px","flexShrink":"0","background":"linear-gradient(180deg,#1F0814 0%,#3d1024 60%,#4E1631 100%)","color":"#fff","display":"flex","flexDirection":"column","position":"sticky","top":"0","height":"100vh"}}>
+<aside style={{"width":"256px","flexShrink":"0","background":"var(--sidebar-bg, linear-gradient(180deg,#1F0814 0%,#3d1024 60%,#4E1631 100%))","color":"#fff","display":"flex","flexDirection":"column","position":"sticky","top":"0","height":"100vh"}}>
 
     
 <div style={{"padding":"20px 20px 16px","display":"flex","alignItems":"center","gap":"11px","borderBottom":"1px solid rgba(255,255,255,.08)"}}>
 
-      
-<div style={{"width":"36px","height":"36px","borderRadius":"11px","background":"rgba(255,255,255,.1)","border":"1px solid rgba(255,255,255,.16)","display":"flex","alignItems":"center","justifyContent":"center"}}>
+
+<div style={{"width":"36px","height":"36px","borderRadius":"11px","background":"rgba(255,255,255,.1)","border":"1px solid rgba(255,255,255,.16)","display":"flex","alignItems":"center","justifyContent":"center","overflow":"hidden","flexShrink":"0"}}>
+{platformLogoUrl ? (
+<img src={platformLogoUrl} alt={platformName} style={{"width":"100%","height":"100%","objectFit":"cover"}} />
+) : (
 <Icon name={"infinity"} style={{"width":"20px","height":"20px"}} />
+)}
 </div>
 
-      
-<div>
-<div style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".13em","fontSize":"14px"}}>
-BEETLOOP
+
+<div style={{"minWidth":"0"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".13em","fontSize":"14px","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
+{platformName}
 </div>
 <div style={{"fontSize":"10.5px","color":"rgba(255,255,255,.5)","letterSpacing":".04em"}}>
-Marketing Platform
+{platformSub}
 </div>
 </div>
 

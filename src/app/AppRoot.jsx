@@ -1,5 +1,6 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
+import { applyTheme, applyFavicon } from '../utils/theme.js';
 
 const LoginPage = React.lazy(() => import('../pages/LoginPage.jsx'));
 const ActivatePage = React.lazy(() => import('../pages/ActivatePage.jsx'));
@@ -112,7 +113,13 @@ class AppRoot extends React.Component {
     content:{ ceo:'Full', coo:'View', manager:'Create / Edit', team_lead:'Manage team', senior:'Assigned only', junior:'Assigned only', qc:'View', admin:'Full', dm:'Assigned only', secretary:'Full' },
     masters:{ admin:'Full', ceo:'Full', secretary:'View' },
     users:{ admin:'Full', coo:'Full', ceo:'Full', secretary:'View' },
-    config:{ ceo:'Full', coo:'View', manager:'View', admin:'Full', secretary:'View' },
+    // Admin Settings (Platform/Security/Integrations) is Super Admin only —
+    // deliberately narrower than every other module here, which is why this
+    // is the one ACCESS entry with a single role. CEO/COO/Manager/Secretary
+    // used to have View/Full here before the module existed for real; now
+    // that it holds real security policy and integration config, only the
+    // 'admin' role key (this app's actual top tier) may see or touch it.
+    config:{ admin:'Full' },
     profile:{ ceo:'View', coo:'View', manager:'View', team_lead:'View', senior:'View', junior:'View', qc:'View', admin:'View', dm:'View', sales:'View', secretary:'View' },
   };
 
@@ -202,6 +209,10 @@ class AppRoot extends React.Component {
   componentDidMount(){
     this._syncStateFromLocation();
     this._syncLocationFromState();
+    // Branding/theme must render on the login screen too (login logo,
+    // login background, colors) — loaded unconditionally, before any
+    // auth check, not just post-login inside _loadProfile().
+    this._loadPlatformSettings();
 
     supabase.auth.getSession().then(({ data:{ session } })=>{
       this.setState({ authReady:true });
@@ -1684,6 +1695,7 @@ class AppRoot extends React.Component {
     const showMessages = route==='messages';
     const showSop = route==='sop';
     const showSupport = route==='support';
+    const showConfig = route==='config';
     const showTable = route==='repositories';
     const showUsersTable = route==='users';
     const showPageHead = !showMasterDetail;
@@ -1693,6 +1705,9 @@ class AppRoot extends React.Component {
       isActivate: this.state.screen==='activate',
       isApp: this.state.screen==='app',
       // login
+      loginPlatformName:((this.state.platformSettings||{}).general||{}).companyName||'BEETLOOP',
+      loginLogoUrl:((this.state.platformSettings||{}).branding||{}).loginLogo||'',
+      loginBackgroundUrl:((this.state.platformSettings||{}).branding||{}).loginBackground||'',
       email:this.state.email, password:this.state.password, loginError:this.state.loginError,
       onEmail:e=>this.setState({email:e.target.value}), onPassword:e=>this.setState({password:e.target.value}),
       doLogin:()=>this.doLogin(), goActivate:e=>{e&&e.preventDefault();this.setState({screen:'activate'});},
@@ -1712,6 +1727,10 @@ class AppRoot extends React.Component {
       ...this.pwStrength(),
       // shell
       role, roleKey:rk, nav, adminNav, hasAdmin,
+      platformName:((this.state.platformSettings||{}).general||{}).companyName||'BEETLOOP',
+      platformSub:'Marketing Platform',
+      platformLogoUrl:(()=>{ const b=(this.state.platformSettings||{}).branding||{}; const dark=((this.state.platformSettings||{}).theme||{}).mode==='dark';
+        return (dark&&b.darkLogo)||b.companyLogo||''; })(),
       campaignOptions:this.campaignOptionsFor((this.state.tkForm||{}).campaign,true),
       campaignOptionsNone:this.campaignOptionsFor((this.state.okrForm||{}).campaign,true),
       epCampaignOptions:this.campaignOptionsFor((this.state.epForm||{}).campaign,true),
@@ -1747,7 +1766,7 @@ class AppRoot extends React.Component {
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
-      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showLeads, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showPageHead, readOnly, readOnlyMsg,
+      showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showLeads, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showConfig, showPageHead, readOnly, readOnlyMsg,
       toast:this.state.toast,
       // modals
       showUserModal:this.state.showUserModal,
@@ -1821,6 +1840,7 @@ class AppRoot extends React.Component {
       page.canEdit = tab==='sops' && ['manager','team_lead','admin'].includes(rk);
     }
     if(showSupport) Object.assign(out, this.supportView(rk));
+    if(showConfig) Object.assign(out, this.configView(rk));
     if(showDash) Object.assign(out, this.dashData(rk, role));
     if(showQC){ Object.assign(out, this.qcData(rk)); Object.assign(out, this.tkDetailData()); Object.assign(out, this.ideaDetailData()); }
     if(showIdeas) Object.assign(out, this.ideaDetailData());
@@ -6485,6 +6505,26 @@ class AppRoot extends React.Component {
         });
       } };
   }
+  // Admin Settings (Platform/Security/Integrations) is deliberately thin
+  // here — unlike every other module, this one's data doesn't come from
+  // this.state via renderVals(); ConfigurationSection.jsx calls the
+  // /api/admin/* routes itself (with its own loading/error state) because
+  // security policy and integration secrets must never round-trip through
+  // a plain supabase.from() call reachable by the anon key. This method
+  // only gates access and hands the component what it needs to make those
+  // authenticated calls itself.
+  configView(rk){
+    const canView=this.hasPerm('config','view');
+    if(!canView) return { configAccessDenied:true, configCanEdit:false };
+    return {
+      configAccessDenied:false,
+      configCanEdit:rk==='admin',
+      configTab:this.state.configTab||'platform',
+      configGoPlatform:()=>this.setState({ configTab:'platform' }),
+      configGoSecurity:()=>this.setState({ configTab:'security' }),
+      configGoIntegrations:()=>this.setState({ configTab:'integrations' }),
+    };
+  }
   supportView(rk){
     const me=this.currentPerson();
     const isAdmin=rk==='admin';
@@ -7276,6 +7316,18 @@ class AppRoot extends React.Component {
       epDeleted:rows.filter(r=>r.deleted).map(r=>r.id),
       epRowAdds:{},
     });
+  }
+  // Read-only, direct-Supabase load — platform_settings is the one Admin
+  // Settings table with a select policy for every authenticated role (it
+  // holds no secrets), because branding/theme must apply for everyone, not
+  // just Admin. Writes still only ever happen through /api/admin/settings.
+  async _loadPlatformSettings(){
+    const { data, error } = await supabase.from('platform_settings').select('value').eq('key','default').maybeSingle();
+    if(error){ console.warn('[supabase] platform settings load failed:', error.message); return; }
+    const value=(data&&data.value)||{};
+    this.setState({ platformSettings:value });
+    applyTheme(value.theme);
+    applyFavicon(value.branding);
   }
   async _loadCustomDivisions(){
     const { data, error } = await supabase.from('custom_divisions').select('*').order('created_at', { ascending:true });

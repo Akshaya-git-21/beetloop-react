@@ -61,6 +61,7 @@ import ContentImportModal from '../components/drawers/ContentImportModal.jsx';
 import FilePickerModal from '../components/drawers/FilePickerModal.jsx';
 import TaskFilePreviewModal from '../components/drawers/TaskFilePreviewModal.jsx';
 import FloatingChatWidget from '../components/drawers/FloatingChatWidget.jsx';
+import ConfigurationSection from '../components/sections/ConfigurationSection.jsx';
 
 export default function AppShell({ vm }) {
   const { route } = vm;
@@ -236,6 +237,12 @@ export default function AppShell({ vm }) {
 
 <LeadPipelineSection vm={vm} />
 <OkrSection vm={vm} />
+
+
+{/* ADMIN SETTINGS (CONFIGURATION) */}
+
+
+<ConfigurationSection vm={vm} />
 
 
       

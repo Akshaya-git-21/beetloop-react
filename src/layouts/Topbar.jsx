@@ -6,7 +6,7 @@ export default function Topbar({ vm }) {
   const { role, notifications, unreadCount, showNotifications, toggleNotifications, markAllNotificationsRead, openProfile } = vm;
   return (
     <React.Fragment>
-<header style={{"height":"64px","flexShrink":"0","background":"rgba(252,250,251,.85)","backdropFilter":"blur(12px)","borderBottom":"1px solid var(--line-300)","display":"flex","alignItems":"center","gap":"16px","padding":"0 24px","position":"sticky","top":"0","zIndex":"30"}}>
+<header style={{"height":"64px","flexShrink":"0","background":"var(--navbar-bg, rgba(252,250,251,.85))","backdropFilter":"blur(12px)","borderBottom":"1px solid var(--line-300)","display":"flex","alignItems":"center","gap":"16px","padding":"0 24px","position":"sticky","top":"0","zIndex":"30"}}>
 
       
 <div style={{"position":"relative","flex":"1","maxWidth":"380px"}}>

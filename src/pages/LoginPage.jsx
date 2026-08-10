@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../components/Icon.jsx';
 
 export default function LoginPage({ vm }) {
-  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword } = vm;
+  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginLogoUrl, loginBackgroundUrl } = vm;
   return (
     <React.Fragment>
 
@@ -10,25 +10,25 @@ export default function LoginPage({ vm }) {
 <div style={{"minHeight":"100vh","display":"grid","gridTemplateColumns":"1.05fr 1fr"}}>
 
   
-<div style={{"position":"relative","background":"linear-gradient(155deg,#1F0814 0%,#4E1631 55%,#7A1C46 100%)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
+<div style={{"position":"relative","background":loginBackgroundUrl?`url(${loginBackgroundUrl}) center/cover no-repeat`:"linear-gradient(155deg,#1F0814 0%,#4E1631 55%,#7A1C46 100%)","color":"#fff","padding":"56px 60px","display":"flex","flexDirection":"column","justifyContent":"space-between","overflow":"hidden"}}>
 
-    
+    {!loginBackgroundUrl && (
 <div style={{"position":"absolute","right":"-120px","top":"-80px","width":"460px","height":"460px","borderRadius":"50%","background":"radial-gradient(circle,rgba(180,90,140,.35),transparent 70%)","filter":"blur(10px)"}} />
+    )}
 
-    
 <div style={{"position":"relative","display":"flex","alignItems":"center","gap":"12px"}}>
 
-      
-<div style={{"width":"40px","height":"40px","borderRadius":"12px","background":"rgba(255,255,255,.12)","display":"flex","alignItems":"center","justifyContent":"center","border":"1px solid rgba(255,255,255,.18)"}}>
-<Icon name={"infinity"} style={{"width":"22px","height":"22px"}} />
+
+<div style={{"width":"40px","height":"40px","borderRadius":"12px","background":"rgba(255,255,255,.12)","display":"flex","alignItems":"center","justifyContent":"center","border":"1px solid rgba(255,255,255,.18)","overflow":"hidden","flexShrink":"0"}}>
+{loginLogoUrl ? (<img src={loginLogoUrl} alt={loginPlatformName} style={{"width":"100%","height":"100%","objectFit":"cover"}} />) : (<Icon name={"infinity"} style={{"width":"22px","height":"22px"}} />)}
 </div>
 
-      
+
 <span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".16em","fontSize":"19px"}}>
-BEETLOOP
+{loginPlatformName}
 </span>
 
-    
+
 </div>
 
     
