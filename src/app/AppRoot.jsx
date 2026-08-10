@@ -39,6 +39,7 @@ class AppRoot extends React.Component {
     fileBlobs: {}, fpvFile: null,
     tkTab: 'list', trFilters: {group:'assignee',assignee:'All',campaign:'All',period:'All'}, calF: null, calOff: 0,
     showRoleConfirm: false, roleConfirmKey: null, roleConfirmAction: null,
+    showDeleteConfirm: false, deleteConfirmTitle: '', deleteConfirmBody: '', deleteConfirmLabel: 'Delete', deleteConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
@@ -902,7 +903,7 @@ class AppRoot extends React.Component {
       cmpFormSaveLabel:this.state.cmpEditId?'Save changes':'Create campaign',
       cmpFormClose:()=>this.setState({ cmpNew:false, cmpEditId:null, cmpForm:{} }),
       cmpCanDelete:!!this.state.cmpEditId&&this.hasPerm('campaigns','delete'),
-      cmpFormDelete:()=>this._deleteCampaign(),
+      cmpFormDelete:()=>this.confirmDelete('Delete Campaign?', 'Are you sure you want to delete "'+(f.name||this.state.cmpEditId)+'"? This action cannot be undone.', ()=>this._deleteCampaign()),
       cmpFormSave:()=>this._saveCampaign(),
       cmpSections:sections.map(([id,letter,name])=>({ letter, name, active:sec===id,
         go:(e)=>{ if(e)e.preventDefault(); this.setState({ cmpSection:id });
@@ -1201,7 +1202,10 @@ class AppRoot extends React.Component {
           pinned, archived,
           togglePin:()=>this._patchThread(t.id, { pinnedBy: pinned?(t.pinnedBy||[]).filter(x=>x!==me):[...(t.pinnedBy||[]),me] }),
           toggleArchive:()=>this._patchThread(t.id, { archivedBy: archived?(t.archivedBy||[]).filter(x=>x!==me):[...(t.archivedBy||[]),me] }),
-          deleteThread:(e)=>{ if(e)e.stopPropagation(); this._deleteThread(t.id); if(active) this.setState({ thOpen:null }); },
+          deleteThread:(e)=>{ if(e)e.stopPropagation();
+            this.confirmDelete('Delete Conversation?', 'Are you sure you want to delete this conversation? This action cannot be undone.', ()=>{
+              this._deleteThread(t.id); if(active) this.setState({ thOpen:null });
+            }); },
           style:'display:flex;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;border:1px solid '+(active?'var(--orchid-300)':'transparent')+';background:'+(active?'var(--orchid-100)':'transparent'),
           open:()=>{ this.setState({ thOpen:t.id }); this._markThreadRead(t.id); } }; }),
       msgCurName:cur.name, msgCurIcon:cur.kind==='channel'?'hash':'user',
@@ -1264,7 +1268,7 @@ class AppRoot extends React.Component {
           canEdit: mine && !m.deleted,
           startEdit:()=>this.setState({ msgEditingId:m.id, msgDraft:String(m.text||''), msgReplyTo:null }),
           canDelete: canDelete && !m.deleted,
-          remove:()=>this._patchMessage(cur.id, m, { deleted:true, text:'' }),
+          remove:()=>this.confirmDelete('Delete Message?', 'Are you sure you want to delete this message? This action cannot be undone.', ()=>this._patchMessage(cur.id, m, { deleted:true, text:'' })),
           hasTask:!!linked,
           taskLabel:linked?(linked.id+' · '+linked.name):'',
           taskStatus:linked?linked.status:'',
@@ -1415,7 +1419,7 @@ class AppRoot extends React.Component {
             canEdit:mine && !m.deleted,
             startEdit:()=>this.setState({ chatWidgetEditingId:m.id, chatWidgetDraft:String(m.text||''), chatWidgetReplyTo:null }),
             canDelete:canDelete && !m.deleted,
-            remove:()=>this._patchMessage(cur.id, m, { deleted:true, text:'' }) }; }),
+            remove:()=>this.confirmDelete('Delete Message?', 'Are you sure you want to delete this message? This action cannot be undone.', ()=>this._patchMessage(cur.id, m, { deleted:true, text:'' })) }; }),
         cwEmojiOpen:!!this.state.chatWidgetEmojiOpen,
         cwToggleEmoji:()=>this.setState({ chatWidgetEmojiOpen:!this.state.chatWidgetEmojiOpen }),
         cwEmojiList:['😀','😂','😊','😍','👍','🙏','🎉','🔥','❤️','😢','😮','👏','✅','⚠️','🚀','💡'],
@@ -1725,7 +1729,7 @@ class AppRoot extends React.Component {
       recordOwnerOptions:(this.state.users||[]).map(u=>u.name),
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
       saveRecord:()=>this._saveRecord(),
-      recordEditKey:this.state.recordEditKey, deleteRecord:()=>this._deleteRecord(),
+      recordEditKey:this.state.recordEditKey, deleteRecord:()=>this.confirmDelete('Delete Record?', 'Are you sure you want to delete this record? This action cannot be undone.', ()=>this._deleteRecord()),
       uf:this.state.uf,
       ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
@@ -1748,11 +1752,17 @@ class AppRoot extends React.Component {
       roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
       roleConfirmCancel:()=>this.cancelRoleAssignment(),
       roleConfirmOk:()=>this.confirmRoleAssignment(),
+      showDeleteConfirm:this.state.showDeleteConfirm,
+      deleteConfirmTitle:this.state.deleteConfirmTitle||'',
+      deleteConfirmBody:this.state.deleteConfirmBody||'',
+      deleteConfirmLabel:this.state.deleteConfirmLabel||'Delete',
+      deleteConfirmCancel:()=>this.cancelDeleteConfirm(),
+      deleteConfirmOk:()=>this.runDeleteConfirm(),
       showMasterRecordEdit:this.state.showMasterRecordEdit,
       mrCancel:()=>this.setState({ showMasterRecordEdit:false, mrKey:null, mrIndex:null, mrForm:{} }),
       mrSave:()=>this.submitMasterRecord(),
       mrCanDelete:this.state.mrIndex!=null&&this.hasPerm('masters','delete'),
-      mrDelete:()=>this.deleteMasterRecord(),
+      mrDelete:()=>this.confirmDelete('Delete Master Record?', 'Are you sure you want to delete this record? This action cannot be undone.', ()=>this.deleteMasterRecord()),
       ...(()=>{
         const mk = this.state.mrKey;
         const m = mk && this.MASTERS_REG()[mk];
@@ -2805,10 +2815,12 @@ class AppRoot extends React.Component {
         if(isNew) return;
         if(!this.hasPerm('masters','delete')){ this.flash('You do not have permission to delete backlink domains.'); return; }
         const id=d.id, name=f.name, createdBy=this.state.authUser?this.state.authUser.id:null;
-        this.setState({ blDeleted:[...(this.state.blDeleted||[]), id], blRecord:null, blView:'repo', blForm:null });
-        this.flash('Deleted domain "'+name+'".');
-        supabase.from('backlink_domains').upsert({ id, payload:d, deleted:true, created_by:createdBy }).then(({error})=>{
-          if(error) console.warn('[supabase] backlink domain delete failed:', error.message);
+        this.confirmDelete('Delete Backlink Domain?', 'Are you sure you want to delete "'+name+'"? This action cannot be undone.', ()=>{
+          this.setState({ blDeleted:[...(this.state.blDeleted||[]), id], blRecord:null, blView:'repo', blForm:null });
+          this.flash('Deleted domain "'+name+'".');
+          supabase.from('backlink_domains').upsert({ id, payload:d, deleted:true, created_by:createdBy }).then(({error})=>{
+            if(error) console.warn('[supabase] backlink domain delete failed:', error.message);
+          });
         });
       },
     };
@@ -3163,7 +3175,8 @@ class AppRoot extends React.Component {
         openOkr:(e)=>{ if(e)e.stopPropagation(); const o=this.allOkrs().find(x=>x.title===p.okr);
           if(o) this.setState({ route:'okr', okrOpen:o.id }); else this.flash('No OKR matches "'+p.okr+'" yet.'); },
         edit:()=>this.setState({ epView:'create', epPlanId:p.id, epDivision:p.division, epForm:{ name:p.name, quarter:p.period, campaign:p.campaign, dept:p.dept, owner:p.owner, okr:p.okr, start:p.start, end:p.end, type:p.type }, epRows:p.rows.map(r=>({...r})) }),
-        delete:(e)=>{ if(e)e.stopPropagation(); if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; } this._deleteEpPlan(p.id); },
+        delete:(e)=>{ if(e)e.stopPropagation(); if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; }
+          this.confirmDelete('Delete Effort Plan?', 'Are you sure you want to delete "'+(p.name||p.id)+'"? This action cannot be undone.', ()=>this._deleteEpPlan(p.id)); },
       };
     });
     const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' — '+k.who })));
@@ -3273,11 +3286,13 @@ class AppRoot extends React.Component {
       epCanDeleteDiv:canDelete&&(this.state.epCustomDivs||[]).includes(division),
       epDeleteDiv:()=>{
         if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; }
-        const remaining=(this.state.epCustomDivs||[]).filter(d=>d!==division);
-        this.setState({ epCustomDivs:remaining, epDivision:'Content Writer' });
-        this.flash('Custom role "'+division+'" deleted.');
-        supabase.from('custom_divisions').delete().eq('name', division).then(({error})=>{
-          if(error) console.warn('[supabase] custom division delete failed:', error.message);
+        this.confirmDelete('Delete Role / Division?', 'Are you sure you want to delete "'+division+'"? This action cannot be undone.', ()=>{
+          const remaining=(this.state.epCustomDivs||[]).filter(d=>d!==division);
+          this.setState({ epCustomDivs:remaining, epDivision:'Content Writer' });
+          this.flash('Custom role "'+division+'" deleted.');
+          supabase.from('custom_divisions').delete().eq('name', division).then(({error})=>{
+            if(error) console.warn('[supabase] custom division delete failed:', error.message);
+          });
         }); },
       epNew:()=>{ const d=this.state.epDivision||'Content Writer'; const deptMap={'Content Writer':'Content','Graphics':'Design','Web Developers':'Web Development','SMM':'SMM','SEO':'SEO'}; this.setState({ epView:'create', epPlanId:null, epForm:{ ...this.EP_FORM(), name:'Jul '+d+' Effort Plan', dept:deptMap[d]||d }, epRows:this.EP_DIV_ROWS(d).map(r=>({...r})) }); },
       epBack:()=>this.setState({ epView:'list' }),
@@ -3664,7 +3679,7 @@ class AppRoot extends React.Component {
       idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
       idConvert:()=>this.ideaToTask(i),
       idCanDelete: this.hasPerm('ideas','delete'),
-      idDelete:()=>this._deleteIdea(i.id),
+      idDelete:()=>this.confirmDelete('Delete Idea?', 'Are you sure you want to delete "'+(i.title||i.id)+'"? This action cannot be undone.', ()=>this._deleteIdea(i.id)),
       idClose:()=>this.setState({ ideaOpen:null }),
     };
   }
@@ -3825,7 +3840,7 @@ class AppRoot extends React.Component {
             if(error) console.warn('[supabase] task template upsert failed:', error.message);
           }); },
         statusAction:t.status==='Active'?'Archive':'Activate',
-        delete:()=>this._deleteTemplate(t.id,'task'),
+        delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'task')),
       };
     }),8);
     // form
@@ -3859,7 +3874,7 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] kpi template upsert failed:', error.message);
         }); },
       statusAction:t.status==='Active'?'Archive':'Activate',
-      delete:()=>this._deleteTemplate(t.id,'kpi'),
+      delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'kpi')),
     })),8);
     const ktStats=[K('KPI templates',String(allK.length),'var(--beet-700)'),K('Active',String(allK.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('Auto-tracked (API source)',String(allK.filter(t=>t.source!=='KPI Log'&&t.source!=='Manual').length),'var(--info-600)'),K('Pulled into tasks / KRs',String(allK.reduce((s,t)=>s+ktUsage(t),0)),'var(--orchid-600)')];
     // OKR templates tab
@@ -3887,7 +3902,7 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] okr template upsert failed:', error.message);
         }); },
       statusAction:t.status==='Active'?'Archive':'Activate',
-      delete:()=>this._deleteTemplate(t.id,'okr'),
+      delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'okr')),
     })),8);
     const otStats=[K('OKR templates',String(allO.length),'var(--beet-700)'),K('Active',String(allO.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked key results',String(allO.reduce((s,t)=>s+t.krs.length,0)),'var(--orchid-600)'),K('Departments covered',String([...new Set(allO.map(t=>t.division))].length),'var(--info-600)')];
     const otKpiNames=this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>t.name);
@@ -4250,13 +4265,15 @@ class AppRoot extends React.Component {
       clCanDelete:canDeleteChecklist&&submitted,
       clDelete:()=>{
         if(!canDeleteChecklist){ this.flash('You do not have permission to delete compliance checklists.'); return; }
-        const cf={...(this.state.clFill||{})}; delete cf[id];
-        const cq={...(this.state.clQc||{})}; delete cq[id];
-        const cs={...(this.state.clSubmitted||{})}; delete cs[id];
-        this.setState({ clFill:cf, clQc:cq, clSubmitted:cs });
-        this.flash('Compliance checklist deleted for '+id+'.');
-        supabase.from('compliance_checklists').update({ deleted:true }).eq('task_id', id).then(({error})=>{
-          if(error) console.warn('[supabase] compliance checklist delete failed:', error.message);
+        this.confirmDelete('Delete Compliance Checklist?', 'Are you sure you want to delete the compliance checklist for '+id+'? This action cannot be undone.', ()=>{
+          const cf={...(this.state.clFill||{})}; delete cf[id];
+          const cq={...(this.state.clQc||{})}; delete cq[id];
+          const cs={...(this.state.clSubmitted||{})}; delete cs[id];
+          this.setState({ clFill:cf, clQc:cq, clSubmitted:cs });
+          this.flash('Compliance checklist deleted for '+id+'.');
+          supabase.from('compliance_checklists').update({ deleted:true }).eq('task_id', id).then(({error})=>{
+            if(error) console.warn('[supabase] compliance checklist delete failed:', error.message);
+          });
         }); },
       clQcShowBulk:qcEditable,
       clQcCoverage:(()=>{ let v=0,n=0; secsFor.forEach((s,si)=>s.rows.forEach((r,ri)=>{ n++; if((qc[si+'-'+ri]||{}).verdict) v++; }));
@@ -6345,8 +6362,10 @@ class AppRoot extends React.Component {
             .filter((_,i)=>[canView,canView,canEdit,canEdit,canDel][i]).join(' · '),
           sopDownload:()=>this.flash('Downloading '+s.id+' '+s.version+' — '+s.title+'.pdf'),
           sopDelete:()=>{ if(!this.hasPerm('sop','delete')){ this.flash('You do not have permission to delete SOPs.'); return; }
-            patch({ deleted:true }, s.id+' deleted — retained in the audit log for compliance.', ['Deleted',me,this.todayStr()]);
-            this.setState({ sopOpen:null }); } }; })(),
+            this.confirmDelete('Delete SOP?', 'Are you sure you want to delete "'+s.title+'"? This action cannot be undone.', ()=>{
+              patch({ deleted:true }, s.id+' deleted — retained in the audit log for compliance.', ['Deleted',me,this.todayStr()]);
+              this.setState({ sopOpen:null });
+            }); } }; })(),
     };
   }
 
@@ -6583,7 +6602,8 @@ class AppRoot extends React.Component {
       tktCanTriage:isTriage,
       tktCanWork:isTriage||isOwner,
       tktCanDelete:canDeleteTicket,
-      tktDelete:()=>{ if(!canDeleteTicket){ this.flash('You do not have permission to delete tickets.'); return; } this._deleteTicket(t.id); },
+      tktDelete:()=>{ if(!canDeleteTicket){ this.flash('You do not have permission to delete tickets.'); return; }
+        this.confirmDelete('Delete Ticket?', 'Are you sure you want to delete "'+(t.subject||t.id)+'"? This action cannot be undone.', ()=>this._deleteTicket(t.id)); },
       tktCanClose:isRequester&&t.status==='Resolved',
       tktAssignOptions:['Unassigned'].concat(people),
       tktAssignVal:t.assignee||'Unassigned',
@@ -6775,7 +6795,7 @@ class AppRoot extends React.Component {
       tkQcRework:()=>qcFinish('Rework','Rework requested'),
       tkClose:()=>this.setState({ tkOpen:null }),
       tkCanDelete:this.hasPerm('tasks','delete'),
-      tkDelete:()=>this._deleteTask(t.id),
+      tkDelete:()=>this.confirmDelete('Delete Task?', 'Are you sure you want to delete "'+(t.name||t.id)+'"? This action cannot be undone.', ()=>this._deleteTask(t.id)),
       tkKpiNote: t.status==='Approved' ? 'Counted toward KPI on approval.' : 'Counts toward the KPI once QC approves.',
       ...this.complianceData(t, rk),
     };
@@ -6986,6 +7006,7 @@ class AppRoot extends React.Component {
     });
   }
   _deleteOkr(){
+    if(!this.hasPerm('okr','delete')){ this.flash('You do not have permission to delete OKRs.'); return; }
     const id=this.state.okrEditId; if(!id) return;
     const o=this.OKR_DATA().find(x=>x.id===id); if(!o) return;
     this.setState({ okrDeleted:[...(this.state.okrDeleted||[]), o.code], showOkrPanel:false, okrEditId:null,
@@ -7869,7 +7890,7 @@ class AppRoot extends React.Component {
       npSlug:baseSlug, npUrl:url,
       closeNewPage:()=>this.setState({ showNewPage:false, npEditId:null }),
       npCanDelete: !!editId && this.hasPerm('content','delete'),
-      npDelete:()=>this._deleteContentPage(),
+      npDelete:()=>this.confirmDelete('Delete Page?', 'Are you sure you want to delete "'+(f.name||'this page')+'"? This action cannot be undone.', ()=>this._deleteContentPage()),
       npAI:()=>this.flash('AI drafted meta title & description (demo).'),
       submitNewPageDraft:()=>this.submitNewPage(false),
       submitNewPageCreate:()=>this.submitNewPage(true),
@@ -8167,7 +8188,8 @@ class AppRoot extends React.Component {
       cnStageOptions2:this.LEAD_STAGES(),
       cnDCanWrite:canWrite,
       cnDCanDelete:canDelete,
-      cnDDelete:()=>{ if(!canDelete){ this.flash('You do not have permission to delete contacts.'); return; } this._deleteContact(c.id); },
+      cnDDelete:()=>{ if(!canDelete){ this.flash('You do not have permission to delete contacts.'); return; }
+        this.confirmDelete('Delete Contact?', 'Are you sure you want to delete "'+(c.name||c.id)+'"? This action cannot be undone.', ()=>this._deleteContact(c.id)); },
       cnDSetStage:(e)=>{ if(!canWrite){ this.flash('You do not have permission to edit leads.'); return; }
         const v=e.target.value; const u={...(this.state.contactUpd||{})};
         const log=[...(c.log||[]),['Stage → '+v,me,this.todayStr()]];
@@ -8215,7 +8237,8 @@ class AppRoot extends React.Component {
       pageUrl:(this.servicePageOf(l.service)||{}).url||'', hasPage:!!(this.servicePageOf(l.service)||{}).url,
       openPage:()=>{ const s=this.servicePageOf(l.service); const p=s&&this.allContentPages().find(x=>x.url===s.url);
         if(p) this.setState({ route:'content', cOpen:p.id, cTab:0 }); else this.flash('No repository page mapped to "'+l.service+'" yet.'); },
-      canDeleteLead:this.hasPerm('leads','delete'), deleteLead:()=>this.hasPerm('leads','delete')?this._deleteLead(l.id):this.flash('You do not have permission to delete leads.'),
+      canDeleteLead:this.hasPerm('leads','delete'), deleteLead:()=>{ if(!this.hasPerm('leads','delete')){ this.flash('You do not have permission to delete leads.'); return; }
+        this.confirmDelete('Delete Lead?', 'Are you sure you want to delete this lead entry ('+l.id+')? This action cannot be undone.', ()=>this._deleteLead(l.id)); },
       isToday:l.date===today, dateBg:l.date===today?'var(--verify-100)':'var(--surface-50)', dateColor:l.date===today?'var(--verify-600)':'var(--ink-500)' })),10);
     const f=this.state.ldForm||{};
     const set=(k)=>(e)=>this.setState({ ldForm:{...f,[k]:e.target.value} });
@@ -8507,7 +8530,8 @@ class AppRoot extends React.Component {
 
   okrView(){
     const rk = this.state.roleKey;
-    const canEdit = ['manager','admin'].includes(rk);
+    const canEdit = this.hasPerm('okr','edit');
+    const canDeleteOkr = this.hasPerm('okr','delete');
     const all = this.OKR_DATA();
     const F = this.state.okrFilters;
     const fq=F.kpiFreq||'All', dueF=F.due||'All';
@@ -8699,7 +8723,10 @@ class AppRoot extends React.Component {
       okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:this.BRAND_LIST()[0]||'Beetloop', businessUnit:'', websiteDomain:'', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false, okrEditId:null }),
       okrIsEdit:!!this.state.okrEditId, okrPanelTitle:this.state.okrEditId?'Edit OKR':'Create new OKR', okrSaveLabel:this.state.okrEditId?'Save changes':'Save & activate',
-      okrCanDelete:canEdit && !!this.state.okrEditId, okrDelete:()=>this._deleteOkr(),
+      okrCanDelete:canDeleteOkr && !!this.state.okrEditId,
+      okrDelete:()=>{ if(!canDeleteOkr){ this.flash('You do not have permission to delete OKRs.'); return; }
+        const oe=this.state.okrEditId&&all.find(x=>x.id===this.state.okrEditId);
+        this.confirmDelete('Delete OKR?', 'Are you sure you want to delete "'+(oe?oe.title:'this OKR')+'"? This action cannot be undone.', ()=>this._deleteOkr()); },
       ...(()=>{ const er=this.state.okrEditId?all.find(x=>x.id===this.state.okrEditId):null;
         return { okrPanelCode:er?er.code:('OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(list.length+1).padStart(3,'0')), okrPanelVerBadge:er?(er.status+' · '+(er.v||'v1.0')):'Draft · v1.0' }; })(),
       okrForm:this.state.okrForm,
@@ -8816,13 +8843,15 @@ class AppRoot extends React.Component {
           toggleAuditAll:toggle(m,'auditAll') };
       }),
       permReset:()=>{ if(!permCanManage) return;
-        const cur={...(this.state.rolePerms||{})};
-        mods.forEach(m=>{ if(cur[m]) cur[m]={...cur[m]}; if(cur[m]) delete cur[m][permRole]; });
-        this.setState({ rolePerms:cur });
-        this.flash('Permissions for '+this.ROLES[permRole].label+' reset to defaults.');
-        supabase.from('role_permissions').delete().eq('role_key', permRole).then(({error})=>{
-          if(error) console.warn('[supabase] role permission reset failed:', error.message);
-        }); },
+        this.confirmDelete('Reset Permissions?', 'You are about to permanently reset every custom permission override for '+this.ROLES[permRole].label+' across all modules back to their defaults. This action cannot be undone.', ()=>{
+          const cur={...(this.state.rolePerms||{})};
+          mods.forEach(m=>{ if(cur[m]) cur[m]={...cur[m]}; if(cur[m]) delete cur[m][permRole]; });
+          this.setState({ rolePerms:cur });
+          this.flash('Permissions for '+this.ROLES[permRole].label+' reset to defaults.');
+          supabase.from('role_permissions').delete().eq('role_key', permRole).then(({error})=>{
+            if(error) console.warn('[supabase] role permission reset failed:', error.message);
+          });
+        }, 'Reset'); },
     };
   }
   tableData(route, rk, lvl, readOnly){
@@ -8885,10 +8914,12 @@ class AppRoot extends React.Component {
             canDelete:this.hasPerm('users','delete'),
             delete:(e)=>{ if(e)e.stopPropagation();
               if(!this.hasPerm('users','delete')){ this.flash('You do not have permission to delete users.'); return; }
-              this.setState({ users:(this.state.users||[]).filter(x=>x.name!==u.name) });
-              this.flash(u.name+' removed from the platform.');
-              if(u.id) supabase.from('profiles').delete().eq('id', u.id).then(({error})=>{
-                if(error) console.warn('[supabase] user delete failed:', error.message);
+              this.confirmDelete('Delete User?', 'Are you sure you want to delete "'+u.name+'"? This action cannot be undone.', ()=>{
+                this.setState({ users:(this.state.users||[]).filter(x=>x.name!==u.name) });
+                this.flash(u.name+' removed from the platform.');
+                if(u.id) supabase.from('profiles').delete().eq('id', u.id).then(({error})=>{
+                  if(error) console.warn('[supabase] user delete failed:', error.message);
+                });
               }); } };
         }),
         umStats:(()=>{ const rows=this.state.users.map(u=>{
@@ -9232,7 +9263,7 @@ class AppRoot extends React.Component {
         actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit
           ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
         canDelete: r.custom && canDelete,
-        delete: r.custom ? ()=>this.repoDeleteCustom(r.key) : null,
+        delete: r.custom ? ()=>this.confirmDelete('Delete Repository?', 'Are you sure you want to delete "'+r.name+'"? This action cannot be undone.', ()=>this.repoDeleteCustom(r.key)) : null,
       })),
       repoCanCreate:canCreate,
       repoFormOpen:!!this.state.repoNew,
@@ -9298,6 +9329,21 @@ class AppRoot extends React.Component {
     if(roleConfirmAction==='add') this._createUser(roleConfirmKey);
   }
   cancelRoleAssignment(){ this.setState({ showRoleConfirm:false, roleConfirmKey:null, roleConfirmAction:null }); }
+  // Global delete confirmation — every delete call site in the app routes
+  // through this instead of deleting on the first click. The permission
+  // check (hasPerm) still happens at the call site and again inside the
+  // actual delete handler; this is a separate, additional UX safeguard,
+  // not a substitute for it.
+  confirmDelete(title, body, onConfirm, confirmLabel){
+    this.setState({ showDeleteConfirm:true, deleteConfirmTitle:title, deleteConfirmBody:body,
+      deleteConfirmLabel:confirmLabel||'Delete', deleteConfirmAction:onConfirm });
+  }
+  runDeleteConfirm(){
+    const fn=this.state.deleteConfirmAction;
+    this.setState({ showDeleteConfirm:false, deleteConfirmTitle:'', deleteConfirmBody:'', deleteConfirmAction:null });
+    if(fn) fn();
+  }
+  cancelDeleteConfirm(){ this.setState({ showDeleteConfirm:false, deleteConfirmTitle:'', deleteConfirmBody:'', deleteConfirmAction:null }); }
 
   pwStrength(){
     const p=this.state.newPass; let s=0;

@@ -41,6 +41,7 @@ import UsersSection from '../components/sections/UsersSection.jsx';
 import UserDetailDrawer from '../components/drawers/UserDetailDrawer.jsx';
 import EditMasterRecordModal from '../components/drawers/EditMasterRecordModal.jsx';
 import ConfirmRoleModal from '../components/drawers/ConfirmRoleModal.jsx';
+import ConfirmDeleteModal from '../components/drawers/ConfirmDeleteModal.jsx';
 import MasterRecordSlideOver from '../components/drawers/MasterRecordSlideOver.jsx';
 import NewPageForm from '../components/drawers/NewPageForm.jsx';
 import ContentPageDetailDrawer from '../components/drawers/ContentPageDetailDrawer.jsx';
@@ -357,6 +358,11 @@ export default function AppShell({ vm }) {
 
 
 <ConfirmRoleModal vm={vm} />
+
+{/* GLOBAL DELETE CONFIRMATION */}
+
+
+<ConfirmDeleteModal vm={vm} />
 
 
 
