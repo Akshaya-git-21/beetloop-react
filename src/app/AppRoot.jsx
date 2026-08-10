@@ -990,7 +990,8 @@ class AppRoot extends React.Component {
               this.setState({ epRowAdds:{...(this.state.epRowAdds||{}), [plan.id]:[...((this.state.epRowAdds||{})[plan.id]||[]), row]} });
               this._persistEpPlan({ ...plan, rows:[...(plan.rows||[]), row] });
             } else {
-              planId='EP-'+String(100+plans.length+1).slice(-3);
+              const epNums=this._allEpIdsEver().map(id=>{ const m=String(id).match(/^EP-(\d+)$/); return m?parseInt(m[1],10):0; });
+              planId='EP-'+String(Math.max(0,...epNums)+1).padStart(3,'0');
               const newPlan={ id:planId, name:(f.name||'Campaign')+' — '+ne.division+' effort', division:ne.division, period:f.cycle||'Q3 2026', owner:f.owner||this.currentPerson(), dept:f.dept||'SEO', campaign:f.name||'—', okr:(f.kpis&&f.kpis[0]&&f.kpis[0].okrTitle)||'—', start:f.start||this.todayStr(), end:f.end||'—', type:'Monthly', status:'Draft', rows:[row] };
               this.setState({ epAdded:[...(this.state.epAdded||[]),newPlan] });
               this._persistEpPlan(newPlan);
@@ -3057,7 +3058,7 @@ class AppRoot extends React.Component {
     }); }
   juniorRollup(kpiId){ const tasks=this.allTasks().filter(t=>t.kpiId===kpiId); const done=tasks.filter(t=>t.status==='Approved'); return { val:done.reduce((s,t)=>s+t.units,0), done:done.length, total:tasks.length }; }
 
-  EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'Q3 SEO push', dept:'SEO', owner:'Neha Verma', okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
+  EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'Q3 SEO push', dept:'SEO', owner:this.currentPerson(), okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
   EP_DIVISIONS(){ return ['Content Writer','Graphics','Web Developers','SMM','SEO'].concat(this.state.epCustomDivs||[]); }
   EP_DIV_ROWS(d){
     const R=(type,icon,monthly,days,unit,priority,weight,kpiId)=>({type,icon,monthly,days,unit,priority,weight,kpiId});
@@ -3082,6 +3083,7 @@ class AppRoot extends React.Component {
     const base=this.EP_PLANS().filter(p=>!addedIds.has(p.id)).concat(added).filter(p=>!del.includes(p.id));
     return base.map(p=>adds[p.id]?{...p, rows:(p.rows||[]).concat(adds[p.id])}:p);
   }
+  _allEpIdsEver(){ return this.EP_PLANS().map(p=>p.id).concat((this.state.epAdded||[]).map(p=>p.id)).concat(this.state.epDeleted||[]); }
   _persistEpPlan(plan){
     supabase.from('effort_plans').upsert({ id:plan.id, payload:plan, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
       if(error) console.warn('[supabase] effort plan upsert failed:', error.message);
@@ -3313,7 +3315,9 @@ class AppRoot extends React.Component {
         // a seed plan (EP-001 etc.) must replace it, not create a duplicate
         // id when it later gets upserted into epAdded.
         const existing=this.allEpPlans().find(p=>p.id===this.state.epPlanId);
-        const plan={ id:this.state.epPlanId||('EP-'+String(this.allEpPlans().length+1).padStart(3,'0')), name:f.name, division, period:this.fmtMonth(f.quarter), owner:f.owner, dept:f.dept, campaign:f.campaign, okr:f.okr, start:this.fmtDate(f.start), end:this.fmtDate(f.end), type:f.type, status: totalW===100?'Active':'Draft', rows:rows.map(r=>({...r})) };
+        const epNums=this._allEpIdsEver().map(id=>{ const m=String(id).match(/^EP-(\d+)$/); return m?parseInt(m[1],10):0; });
+        const epId=this.state.epPlanId||('EP-'+String(Math.max(0,...epNums)+1).padStart(3,'0'));
+        const plan={ id:epId, name:f.name, division, period:this.fmtMonth(f.quarter), owner:f.owner, dept:f.dept, campaign:f.campaign, okr:f.okr, start:this.fmtDate(f.start), end:this.fmtDate(f.end), type:f.type, status: totalW===100?'Active':'Draft', rows:rows.map(r=>({...r})) };
         const already=(this.state.epAdded||[]).some(p=>p.id===plan.id);
         const added= already ? (this.state.epAdded||[]).map(p=>p.id===plan.id?plan:p) : [...(this.state.epAdded||[]),plan];
         // epRows already includes any epRowAdds-appended rows (see the edit()
@@ -3358,11 +3362,13 @@ class AppRoot extends React.Component {
     const division=this.state.epDivision||'SEO';
     const added=[...(this.state.tkAdded||[])];
     const baseLen=added.length;
+    const existingIds=this.allTasks().map(t=>t.id);
     const startFmt=this.fmtDate(f.start)||'Jul 1, 2026';
     const monthWord=startFmt.split(' ')[0];
     const year=startFmt.split(', ')[1]||'2026';
     const mk=(name,desc,units,end,checklist,r,k)=>{
-      const id='TSK-'+(2060+added.length+1);
+      const id=this._nextSeqCode('TSK-', existingIds, 3200);
+      existingIds.push(id);
       added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, priority:r.priority, assignee:f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
     };
     // generation mode is explicit — default is ONE task per effort line, so a
@@ -3445,7 +3451,8 @@ class AppRoot extends React.Component {
   ideaToTask(i){
     // open the convert step — effort line decides how many tasks are generated
     const plan=this.allEpPlans().find(p=>p.name===i.effortPlan)||this.allEpPlans()[0];
-    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', count:'1', assignee:i.owner||'Sameer Iyer', start:'', end:'', reviewer:'Priya Nair (Manager)' } });
+    const qcUser=(this.state.users||[]).find(u=>u.roleKey==='qc');
+    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', count:'1', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
   }
   convertData(){
     const iid=this.state.cvIdea; if(!iid) return { cvOpen:false };
@@ -3478,7 +3485,7 @@ class AppRoot extends React.Component {
       cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
       cvSetCount:set('count'), cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
       cvAssignees:(this.state.users||[]).map(u=>u.name),
-      cvReviewers:['Priya Nair (Manager)','Aditi Rao (Team Lead)','Farhan Ali (QC)'],
+      cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       cvCountNote:(()=>{ const n=parseInt(f.count,10)||0; return n+' task'+(n===1?'':'s')+' will be created'+(row?(' — from the effort target of '+row.monthly+' '+row.unit):'')+'.'; })(),
       cvSave:()=>{
         if(!f.rowType){ this.flash('Select the effort line — it decides how many tasks are created.'); return; }
@@ -3489,16 +3496,17 @@ class AppRoot extends React.Component {
         const k=kpiPool.find(x=>x.id===f.kpiId);
         const kpiName=f.kpiMode==='new'?f.newKpiName.trim():(k?k.kpi:'Not linked');
         const kpiUnit=f.kpiMode==='new'?(f.newKpiUnit||'units'):(k?k.unit:'');
-        const base=(this.state.tkAdded||[]).length;
+        const existingIds=this.allTasks().map(t=>t.id);
         const added=[];
         for(let n2=0;n2<n;n2++){
-          const id='TSK-'+(2060+base+n2+1);
+          const id=this._nextSeqCode('TSK-', existingIds, 3200);
+          existingIds.push(id);
           added.push({ id, name:i.title+(n>1?(' — '+(n2+1)+'/'+n):''), desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
             template:'Write Article', project:i.service||'Content', campaign:plan?plan.campaign:'—',
             start:this.fmtDate(f.start)||this.relDate(0), end:this.fmtDate(f.end)||this.relDate(14),
-            priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||'Sameer Iyer',
+            priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||who,
             kpiId:f.kpiMode==='new'?'':(f.kpiId||''), kpi:kpiName, units:1, unit:kpiUnit||(row&&row.unit)||'articles',
-            estH:10, actH:0, recurrence:'None', reviewer:f.reviewer||'Priya Nair (Manager)',
+            estH:10, actH:0, recurrence:'None', reviewer:f.reviewer||who,
             effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id,
             checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
             dep:'—', evidence:[], status:'Assigned', division:plan?plan.division:'Content',
