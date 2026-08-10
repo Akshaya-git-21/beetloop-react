@@ -524,6 +524,27 @@
   --shadow-lg: 0 18px 40px -12px rgba(31,8,20,.18), 0 6px 14px -6px rgba(31,8,20,.10);
   --shadow-xl: 0 36px 70px -20px rgba(31,8,20,.28);
 
+}
+
+/* ---------- DARK MODE ---------- */
+/* Applied via [data-theme="dark"] on <html>, set by src/utils/theme.js
+   whenever Theme Mode is Dark (or System + the OS prefers dark). This
+   re-themes text, borders, status colors, and the page canvas — every
+   one of those is already a CSS var referenced broadly across the app.
+   It deliberately does NOT flip individual card/panel backgrounds to
+   dark: those are hardcoded #fff literals in most components' inline
+   styles rather than a var, so they stay light for now. Retrofitting
+   every one of those call sites to reference a var is a larger, separate
+   follow-up — noted here rather than silently pretended away. */
+:root[data-theme="dark"] {
+  --ink-900: #F3EEF1; --ink-700: #D8CDD4; --ink-500: #B6A8B0; --ink-400: #8B7C84;
+  --line-300: #3A2E35; --line-200: #2C2229;
+  --surface-100: #17111A; --surface-50: #1F1720; --paper: #211922; --cream: #221A1E;
+  --verify-100: #123324; --warn-100: #2E2410; --danger-100: #33161B; --info-100: #10222B;
+}
+:root[data-theme="dark"] body { background: var(--surface-100); }
+
+:root {
   --dur-fast: 120ms;
   --dur: 200ms;
   --dur-slow: 360ms;

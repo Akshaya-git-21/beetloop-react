@@ -10,7 +10,7 @@ const DEFAULT_GENERAL = {
 const DEFAULT_BRANDING = { companyLogo: '', darkLogo: '', loginLogo: '', favicon: '', loginBackground: '' };
 const DEFAULT_THEME = {
   mode: 'light', primaryColor: '#380F23', secondaryColor: '#4E1631', sidebarColor: '', navbarColor: '',
-  buttonColor: '#B45A8C', cardColor: '#FCFAFB', fontFamily: '', borderRadius: 12,
+  buttonColor: '#B45A8C', cardColor: '#FCFAFB', fontFamily: '', borderRadius: 12, customCss: '',
 };
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
@@ -292,7 +292,7 @@ function ThemeTab({ canEdit }) {
     <div>
       <SearchBox query={query} setQuery={setQuery} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--info-100)', border: '1px solid #CBE3EC', color: 'var(--info-600)', padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
-        <Icon name="wand-2" style={{ width: 14, height: 14, flexShrink: 0 }} />Live preview — every change here applies instantly across the app (Primary/Secondary/Sidebar/Navbar/Button/Card colors and Font), even before you Save. Border radius previews on this settings page; a full site-wide rollout to every screen is a larger follow-up.
+        <Icon name="wand-2" style={{ width: 14, height: 14, flexShrink: 0 }} />Live preview — every change here applies instantly across the app (Primary/Secondary/Sidebar/Navbar/Button/Card colors, Font, and Dark mode's text/borders/page canvas), even before you Save. Individual card panels and Border Radius stay on their current look for now — rolling those out everywhere is a larger follow-up.
       </div>
       <Toolbar canEdit={canEdit} s={s} resetLabel="Reset theme" saveLabel="Save theme" />
       <div style={card}>
@@ -324,6 +324,16 @@ function ThemeTab({ canEdit }) {
         <Field match={shows('border radius')}>
           <label style={label}>Border Radius (px)</label>
           <input type="number" min="0" max="30" style={input} value={s.form.borderRadius} onChange={setNum('borderRadius')} disabled={dis} />
+        </Field>
+      </div>
+      <div style={card}>
+        <h3 style={sectionTitle}>Custom CSS</h3>
+        <Field match={shows('custom css')}>
+          <label style={label}>Custom CSS — applies instantly, site-wide</label>
+          <textarea rows={8} style={{ ...input, fontFamily: "'Space Mono', monospace", fontSize: 12.5, resize: 'vertical' }}
+            placeholder={'.blscroll { scrollbar-width: thin; }\n[data-theme="dark"] .some-card { background: #1a1420; }'}
+            value={s.form.customCss} onChange={set('customCss')} disabled={dis} />
+          <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 4 }}>Raw CSS, injected into a single &lt;style&gt; tag. This is the escape hatch for anything the color/font/radius fields above don't reach yet — e.g. an individual card's background. Only Super Admin can write it.</div>
         </Field>
       </div>
       <Toolbar canEdit={canEdit} s={s} resetLabel="Reset theme" saveLabel="Save theme" />

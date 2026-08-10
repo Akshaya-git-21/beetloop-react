@@ -21,6 +21,10 @@
 export function applyTheme(theme) {
   if (!theme) return;
   const root = document.documentElement;
+  if (theme.mode) {
+    const wantsDark = theme.mode === 'dark' || (theme.mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.setAttribute('data-theme', wantsDark ? 'dark' : 'light');
+  }
   if (theme.primaryColor) root.style.setProperty('--beet-700', theme.primaryColor);
   if (theme.secondaryColor) root.style.setProperty('--beet-600', theme.secondaryColor);
   if (theme.sidebarColor) root.style.setProperty('--sidebar-bg', theme.sidebarColor);
@@ -29,6 +33,25 @@ export function applyTheme(theme) {
   if (theme.cardColor) root.style.setProperty('--surface-50', theme.cardColor);
   if (theme.fontFamily) document.body.style.fontFamily = theme.fontFamily;
   if (theme.borderRadius != null && theme.borderRadius !== '') root.style.setProperty('--radius', theme.borderRadius + 'px');
+  applyCustomCss(theme.customCss);
+}
+
+// Escape hatch for everything the var system above doesn't reach yet
+// (card panel backgrounds, border-radius on individual components, etc.)
+// — Admin writes raw CSS, injected into a single <style> tag that's
+// created once and just has its content swapped on every change, so
+// there's never more than one copy fighting for specificity. Only ever
+// reachable by a verified role_key==='admin' account (enforced server-
+// side in api/admin/settings.js), so this is a deliberate self-service
+// override, not untrusted input.
+export function applyCustomCss(css) {
+  let tag = document.getElementById('bl-custom-css');
+  if (!tag) {
+    tag = document.createElement('style');
+    tag.id = 'bl-custom-css';
+    document.head.appendChild(tag);
+  }
+  tag.textContent = css || '';
 }
 
 export function applyFavicon(branding) {
