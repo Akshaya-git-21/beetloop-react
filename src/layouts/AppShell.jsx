@@ -56,6 +56,8 @@ import SupportSection from '../components/sections/SupportSection.jsx';
 import TicketDetailDrawer from '../components/drawers/TicketDetailDrawer.jsx';
 import RaiseTicketModal from '../components/drawers/RaiseTicketModal.jsx';
 import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
+import ContentBulkUpdateModal from '../components/drawers/ContentBulkUpdateModal.jsx';
+import ContentImportModal from '../components/drawers/ContentImportModal.jsx';
 import FilePickerModal from '../components/drawers/FilePickerModal.jsx';
 import TaskFilePreviewModal from '../components/drawers/TaskFilePreviewModal.jsx';
 import FloatingChatWidget from '../components/drawers/FloatingChatWidget.jsx';
@@ -399,6 +401,8 @@ export default function AppShell({ vm }) {
 <TicketDetailDrawer vm={vm} />
 <RaiseTicketModal vm={vm} />
 <CreateRepositoryModal vm={vm} />
+<ContentBulkUpdateModal vm={vm} />
+<ContentImportModal vm={vm} />
 <FilePickerModal vm={vm} />
 <TaskFilePreviewModal vm={vm} />
 <ContactFormModal vm={vm} />

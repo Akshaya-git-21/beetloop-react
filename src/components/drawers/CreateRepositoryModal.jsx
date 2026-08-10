@@ -47,7 +47,7 @@ export default function CreateRepositoryModal({ vm }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-50)', border: '1px solid var(--line-200)', color: 'var(--ink-500)', padding: '10px 13px', borderRadius: 12, fontSize: 11.5 }}>
                 <Icon name="info" style={{ width: 13, height: 13, flexShrink: 0, color: 'var(--orchid-600)' }} />
-                Records are added from the source module — the repository starts empty and its count updates automatically.
+Starts empty — open it from the list afterwards to add, edit or remove records.
               </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>

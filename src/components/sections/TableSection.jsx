@@ -3,17 +3,18 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function TableSection({ vm }) {
-  const { readOnly, readOnlyMsg, showTable, tableCols, tableRows, tblOnQuery, tblPg, tblQuery } = vm;
+  const { readOnly, readOnlyMsg, showTable, tableCols, tableRows, tblOnQuery, tblPg, tblQuery,
+    tableBackLabel, tableBackAction, tableAddLabel, tableAddAction } = vm;
   return (
     <React.Fragment>
 {Boolean(showTable) && (
 <React.Fragment>
 
-          
+
 {Boolean(readOnly) && (
 <React.Fragment>
 
-            
+
 <div style={{"display":"flex","gap":"10px","alignItems":"center","background":"var(--info-100)","border":"1px solid #CBE3EC","color":"var(--info-600)","padding":"11px 15px","borderRadius":"14px","fontSize":"13px","fontWeight":"600","marginBottom":"16px"}}>
 <Icon name={"eye"} style={{"width":"16px","height":"16px","flexShrink":"0"}} />
 <span>
@@ -21,29 +22,49 @@ export default function TableSection({ vm }) {
 </span>
 </div>
 
-          
+
 </React.Fragment>
 )}
 
-          
+
+{Boolean(tableBackLabel) && (
+<React.Fragment>
+<button onClick={tableBackAction} style={{"display":"flex","alignItems":"center","gap":"6px","background":"none","border":"none","color":"var(--orchid-600)","fontWeight":"700","cursor":"pointer","fontSize":"13px","padding":"0","marginBottom":"14px"}}>
+<Icon name={"arrow-left"} style={{"width":"14px","height":"14px"}} />
+{tableBackLabel}
+</button>
+</React.Fragment>
+)}
+
+
 <div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
-            
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"14px 18px","borderBottom":"1px solid var(--line-200)"}}>
 
-              
+
 <div style={{"position":"relative","flex":"1","maxWidth":"280px"}}>
 <Icon name={"search"} style={{"width":"15px","height":"15px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"9px"}} />
 <input value={tblQuery} onInput={tblOnQuery} placeholder="Filter…" style={{"width":"100%","padding":"8px 12px 8px 34px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} />
 </div>
 
-              
+
 <button style={{"display":"flex","alignItems":"center","gap":"6px","padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"sliders-horizontal"} style={{"width":"14px","height":"14px"}} />
 Filters
 </button>
 
-            
+
+{Boolean(tableAddLabel) && (
+<React.Fragment>
+<button onClick={tableAddAction} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"8px 12px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"plus"} style={{"width":"14px","height":"14px"}} />
+{tableAddLabel}
+</button>
+</React.Fragment>
+)}
+
+
 </div>
 
             
@@ -119,12 +140,19 @@ Filters
                       
 <td style={{"padding":"14px 18px","borderBottom":"1px solid var(--line-200)","textAlign":"right"}}>
 
-                        
+
+<div style={{"display":"flex","gap":"8px","justifyContent":"flex-end"}}>
 <button onClick={row.action} style={cssTextToObject(row.actionStyle)}>
 {row.actionLabel}
 </button>
+{Boolean(row.canDelete) && (
+<button onClick={row.delete} title="Delete" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"30px","height":"30px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","cursor":"pointer"}}>
+<Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />
+</button>
+)}
+</div>
 
-                      
+
 </td>
 
                     

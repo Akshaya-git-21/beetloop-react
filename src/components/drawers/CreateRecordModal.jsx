@@ -5,8 +5,8 @@ const STATUS_OPTIONS = ['On track', 'In progress', 'At risk', 'Planned', 'Live',
 
 export default function CreateRecordModal({ vm }) {
   const { showRecordModal, recordKind, recordForm, recordSetName, recordSetType, recordSetOwner, recordSetStatus,
-    closeRecordModal, saveRecord, deleteRecord, recordEditKey, recordOwnerOptions, stop } = vm;
-  const title = recordKind === 'campaigns' ? 'Campaign' : 'Project';
+    closeRecordModal, saveRecord, deleteRecord, recordEditKey, recordOwnerOptions, recordLabel, stop } = vm;
+  const title = recordLabel || (recordKind === 'campaigns' ? 'Campaign' : 'Project');
   const ownerLabel = recordKind === 'campaigns' ? 'Phase / owner' : 'Owner';
   const isProjectOwner = recordKind !== 'campaigns';
   const isEdit = recordEditKey != null;
@@ -18,7 +18,7 @@ export default function CreateRecordModal({ vm }) {
             <div onClick={stop} className="blscroll" style={{ width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto', background: '#fff', borderRadius: 22, boxShadow: 'var(--shadow-xl)', animation: 'blrise .3s var(--ease-out)' }}>
               <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#fff', borderRadius: '22px 22px 0 0' }}>
                 <div>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>{title === 'Campaign' ? 'Campaigns' : 'Projects'}</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>{title}s</div>
                   <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--beet-700)', margin: '4px 0 0' }}>{isEdit ? `Edit ${title.toLowerCase()}` : `New ${title.toLowerCase()}`}</h3>
                 </div>
                 <button onClick={closeRecordModal} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

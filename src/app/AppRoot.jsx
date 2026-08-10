@@ -1650,7 +1650,7 @@ class AppRoot extends React.Component {
         cmpForm:{ type:'SEO Campaign', status:'Draft', brand:'Beetloop', dept:'SEO', objective:'Lead Generation', cycle:'Q3 2026', team:[] } });
       else if(route==='sop') this.setState({ sopNew:true, sopForm:{ division:'Content', status:'Draft', priority:'Medium', frequency:'Per project', category:'Content production' } });
       else if(route==='support') this.setState({ tktNew:true, tktForm:{ cat:'software', priority:'Medium' } });
-      else if(route==='repositories') this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:'Priya Nair' } });
+      else if(route==='repositories') this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:this.currentPerson() } });
       else this.flash('Draft created — opening editor…');
     };
 
@@ -1746,6 +1746,7 @@ class AppRoot extends React.Component {
       closeUserModal:()=>this.setState({showUserModal:false}), stop:e=>e.stopPropagation(),
       submitUser:()=>this.submitUser(),
       showRecordModal:this.state.showRecordModal, recordKind:this.state.recordKind, recordForm:this.state.recordForm,
+      recordLabel:this._recordLabel(this.state.recordKind),
       closeRecordModal:()=>this.setState({ showRecordModal:false }),
       recordSetName:e=>this.setState({ recordForm:{...this.state.recordForm, name:e.target.value} }),
       recordSetType:e=>this.setState({ recordForm:{...this.state.recordForm, type:e.target.value} }),
@@ -3105,32 +3106,24 @@ class AppRoot extends React.Component {
     const me=this.currentPerson();
     const own=['senior','junior'].includes(rk);
     const fileType=(n)=>this.fileKind(n);
-    let files=[];
-    // message attachments — collected from every thread the viewer can
-    // actually see (myThreads() — same DM/channel/Admin rules as Messages
-    // itself), not every thread in the system.
-    this.myThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>{
-      if(own && m.who!==me) return;
-      files.push({ name:n, source:'Message attachment', by:m.who,
-        task:{ id:th.name, name:'“'+String(m.text).slice(0,48)+'”', status:'Shared', start:String(m.when).split(' · ')[0], end:'—', assignee:m.who } });
-    })));
-    this.allTasks().forEach(t=>{
-      if(own && t.assignee!==me) return;
-      const ov=this.tkOv?this.tkOv(t):t;
-      (ov.evidence||t.evidence||[]).forEach(n=>files.push({ name:n, source:'Task evidence', by:t.assignee, task:t }));
-      (ov.comments||t.comments||[]).forEach(c=>(c.files||[]).forEach(n=>{ if(String(n).indexOf('http')===0) return; files.push({ name:n, source:(c.role||'').indexOf('QC')>=0?'QC reference':'Comment attachment', by:c.who, task:t }); }));
-    });
+    // repoFileList() is the single source of truth (threads/tasks/tickets/
+    // compliance evidence) shared with the "Attach files" picker, so a file
+    // always shows up here too — not just when re-attaching it elsewhere.
+    const files=this.repoFileList().filter(f=> !own || f.by===me || (f.task&&f.task.assignee===me) );
     const F=this.state.flFilters||{type:'All',status:'All',source:'All'};
     const setF=(k)=>(e)=>this.setState({ flFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),fl:0} });
     const q=(this.state.flQuery||'').toLowerCase();
-    const enriched=files.map(f=>{ const ft=fileType(f.name); const tn=this.tkTone(f.task.status); const due=this.tkDueAlert?this.tkDueAlert(f.task):null;
+    const enriched=files.map(f=>{ const ft=fileType(f.name); const task=f.task||{ id:f.where, name:f.where, status:'—', start:'—', end:'—' };
+      const tn=this.tkTone(task.status); const due=(this.tkDueAlert&&f.task)?this.tkDueAlert(task):null;
       return { ...f, type:ft.t, ftIcon:ft.icon, ftColor:ft.color, ftBg:ft.bg,
-        taskId:f.task.id, taskName:f.task.name, status:f.task.status, statusBg:tn.bg, statusColor:tn.c,
-        dates:f.task.start+' → '+f.task.end, dueLabel:due&&due.label?due.label:'', dueColor:due&&due.color?due.color:'var(--ink-400)',
+        taskId:task.id, taskName:task.name, status:task.status, statusBg:tn.bg, statusColor:tn.c,
+        dates:task.start+' → '+task.end, dueLabel:due&&due.label?due.label:'', dueColor:due&&due.color?due.color:'var(--ink-400)',
         preview:()=>this.openFilePreview(f.name),
         download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(f.name); },
-        open:(e)=>{ if(e)e.stopPropagation(); if(f.source==='Message attachment') this.setState({ route:'messages' });
-          else this.setState({ route:'tasks', tkOpen:f.task.id, tkFilter:'All' }); } }; });
+        open:(e)=>{ if(e)e.stopPropagation();
+          if(f.source==='Message attachment') this.setState({ route:'messages' });
+          else if(f.source==='Support ticket') this.setState({ route:'support', tktOpen:task.id });
+          else this.setState({ route:'tasks', tkOpen:task.id, tkFilter:'All' }); } }; });
     const filtered=enriched.filter(f=> (F.type==='All'||f.type===F.type) && (F.status==='All'||f.status===F.status) && (F.source==='All'||f.source===F.source) && (!q || (f.name+' '+f.taskName+' '+f.by).toLowerCase().includes(q)) );
     const pg=this.pgData('fl',filtered,10);
     const K=(label,value,color)=>({label,value,color});
@@ -3140,7 +3133,7 @@ class AppRoot extends React.Component {
       flOwnNote:own,
       flFilterDefs:[
         {label:'Type',value:F.type,onChange:setF('type'),options:['All','Image','Video','PDF','Spreadsheet','Document']},
-        {label:'Source',value:F.source,onChange:setF('source'),options:['All','Task evidence','QC reference','Comment attachment','Message attachment']},
+        {label:'Source',value:F.source,onChange:setF('source'),options:['All','Task evidence','QC reference','Comment attachment','Message attachment','Support ticket','Compliance evidence']},
         {label:'Task status',value:F.status,onChange:setF('status'),options:['All','Assigned','In Progress','Submitted','Rework','Approved','Closed']},
       ],
       flQuery:this.state.flQuery||'',
@@ -6955,7 +6948,7 @@ class AppRoot extends React.Component {
     const kind=this.state.recordKind;
     const editKey=this.state.recordEditKey;
     if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
-    const label=kind==='campaigns'?'Campaign':'Project';
+    const label=this._recordLabel(kind);
 
     if(editKey==null){
       // create
@@ -7016,7 +7009,7 @@ class AppRoot extends React.Component {
         if(error) console.warn('[supabase] record seed-delete upsert failed:', error.message);
       });
     }
-    this.flash((kind==='campaigns'?'Campaign':'Project')+' deleted.');
+    this.flash(this._recordLabel(kind)+' deleted.');
   }
 
   async _loadRecords(){
@@ -7511,6 +7504,22 @@ class AppRoot extends React.Component {
     return this._cpages;
   }
 
+  // Every content-page id ever issued, including soft-deleted ones — a new
+  // page's id must never reuse a deleted page's id, since the row still
+  // exists (deleted:true) and a same-id insert would hit the primary key.
+  _allContentPageIdsEver(){
+    return this.CONTENT_PAGES().map(p=>p.id)
+      .concat((this.state.cAdded||[]).map(p=>p.id))
+      .concat(this.state.cDeleted||[]);
+  }
+  // Next sequential code for a prefix, based on the highest numeric suffix
+  // among every id currently carrying it (seed + added), not the visible
+  // array's length — length shrinks on delete, so a length-derived id can
+  // collide with (and silently overwrite) an existing record.
+  _nextSeqCode(prefix, ids, floor){
+    const nums=ids.map(id=>{ const m=String(id).match(new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\d+)$')); return m?parseInt(m[1],10):0; });
+    return prefix+(Math.max(floor||0, ...nums)+1);
+  }
   allContentPages(){ const upd=this.state.cUpd||{};
     const added=(this.state.cAdded||[]).slice().reverse();
     const addedIds=new Set(added.map(p=>p.id));
@@ -7571,17 +7580,130 @@ class AppRoot extends React.Component {
       contentExport:()=>this.exportCsv('content-repository-'+this._todayIso()+'.csv',
         ['ID','Name','Repository','Type','Topic','Keyword','Status','SEO score','Owner','Reviewer','Updated'],
         rows.map(r=>[r.id, r.name, r.repo, r.type, r.topic, r.keyword, r.status, r.seo, r.owner, r.reviewer, r.updated])),
+      contentImport:()=>canEdit?this.setState({ contentImportOpen:true, contentImportFile:null }):this.flash('View only for your role.'),
+      contentBulk:()=>canEdit?this.setState({ contentBulkOpen:true, contentBulkStatus:'Published' }):this.flash('View only for your role.'),
+      contentBulkMatchCount: list.length,
       ...this.contentDetail(),
       ...this.newPageData(),
+      ...this.contentBulkData(),
+      ...this.contentImportData(),
     };
+  }
+  contentBulkData(){
+    const open=!!this.state.contentBulkOpen;
+    return {
+      contentBulkOpen:open,
+      contentBulkStatus:this.state.contentBulkStatus||'Published',
+      contentBulkSetStatus:e=>this.setState({ contentBulkStatus:e.target.value }),
+      contentBulkClose:()=>this.setState({ contentBulkOpen:false }),
+      contentBulkStop:e=>e.stopPropagation(),
+      contentBulkApply:()=>this.contentBulkApply(),
+    };
+  }
+  contentBulkApply(){
+    const rk=this.state.roleKey;
+    if(!['manager','admin','team_lead'].includes(rk)){ this.flash('View only for your role.'); return; }
+    const status=this.state.contentBulkStatus||'Published';
+    const cRepo=this.state.cRepo||'all', q=(this.state.cQuery||'').toLowerCase(), cStatus=this.state.cStatus||'All';
+    const all=this.allContentPages();
+    const list=all.filter(p=> (cRepo==='all'||p.repo===cRepo) && (cStatus==='All'||p.status===cStatus) && (!q || (p.name+' '+p.keyword+' '+p.topic).toLowerCase().includes(q)) );
+    if(!list.length){ this.flash('No pages match the current filters.'); return; }
+    const today=this.todayStr(), me=this.currentPerson();
+    const upd={...(this.state.cUpd||{})};
+    list.forEach(p=>{
+      const patched={...p, status, updated:today, activity:[[me,'Bulk status update to '+status,today], ...(p.activity||[])]};
+      upd[p.id]=patched;
+      supabase.from('content_pages').upsert({ id:p.id, payload:patched, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error) console.warn('[supabase] content page bulk update failed:', error.message);
+      });
+    });
+    this.setState({ cUpd:upd, contentBulkOpen:false });
+    this.flash('Status set to "'+status+'" for '+list.length+' page'+(list.length===1?'':'s')+'.');
+  }
+  contentImportData(){
+    const file=this.state.contentImportFile;
+    return {
+      contentImportOpen:!!this.state.contentImportOpen,
+      contentImportFileName:file?file.name:'',
+      contentImportPick:e=>this.setState({ contentImportFile:(e.target.files||[])[0]||null }),
+      contentImportClose:()=>this.setState({ contentImportOpen:false, contentImportFile:null }),
+      contentImportStop:e=>e.stopPropagation(),
+      contentImportRun:()=>this.contentImportRun(),
+    };
+  }
+  // Small in-house CSV parser (quoted-comma aware) — no new dependency needed
+  // for a one-off bulk import.
+  _parseCsv(text){
+    const rows=[]; let row=[]; let field=''; let inQuotes=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(inQuotes){
+        if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQuotes=false; }
+        else field+=c;
+      } else if(c==='"'){ inQuotes=true; }
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(field); rows.push(row); row=[]; field=''; }
+      else field+=c;
+    }
+    if(field.length||row.length){ row.push(field); rows.push(row); }
+    return rows.filter(r=>!(r.length===1&&r[0]===''));
+  }
+  contentImportRun(){
+    const file=this.state.contentImportFile;
+    if(!file){ this.flash('Choose a CSV file first.'); return; }
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const rows=this._parseCsv(String(reader.result||''));
+      if(rows.length<2){ this.flash('That CSV has no data rows.'); return; }
+      const header=rows[0].map(h=>String(h||'').trim().toLowerCase());
+      const idx=(name)=>header.indexOf(name);
+      const iTitle=idx('title')>=0?idx('title'):idx('name');
+      const iTopic=idx('topic'), iType=idx('type'), iStatus=idx('status'), iKeyword=idx('keyword');
+      if(iTitle<0){ this.flash('CSV needs a "Title" column.'); return; }
+      const existingIds=this._allContentPageIdsEver();
+      const today=this.todayStr(), me=this.currentPerson();
+      const created=[];
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r]; const name=(row[iTitle]||'').trim();
+        if(!name) continue;
+        const code=this._nextSeqCode('PG-', existingIds, 1000);
+        existingIds.push(code);
+        const slug=name.toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
+        const keyword=iKeyword>=0?(row[iKeyword]||'—'):'—';
+        const status=(iStatus>=0&&row[iStatus])?row[iStatus].trim():'Draft';
+        created.push({ id:code, name, repo:'service', type:iType>=0?(row[iType]||'Service Page'):'Service Page',
+          topic:iTopic>=0?(row[iTopic]||keyword):keyword, industry:'—', keyword,
+          status, seo:28, updated:today, owner:me, reviewer:'—',
+          pid:null, linkedIds:[], slug, url:'/services/'+slug, parent:'Website Content', menuCat:'Website Content', menuOrder:0,
+          breadcrumb:'Home > Website Content > '+name, description:'—',
+          cls:[['Service Category','General'],['Sub-Service','To be assigned'],['Primary Keyword',keyword],['Industry','—'],['Sector','—'],['Application Category','—'],['Target Countries','—']],
+          seoMeta:[['Meta Title',name],['Meta Description','—'],['Primary Keywords',keyword],['Secondary Keywords','—'],['Keyword Intent','—'],['Canonical URL','/services/'+slug],['Schema Type','Service'],['Robots','Index, Follow'],['Index Status','Not indexed'],['Hreflang','en-US'],['OG Title',name],['OG Description','—'],['OG Image','—'],['Twitter Card','summary_large_image']],
+          blocks:[['Heading','H1',name],['Paragraph','','Imported via CSV — add content.']],
+          rel:{Services:['Link a related service'],Insights:['Link a related article']},
+          internal:[[keyword, '/services/'+slug, 'Internal', '—']],
+          aiLinks:[['Run AI internal-link suggestions','—','—']],
+          media:[['Image','hero-placeholder.jpg','Add a hero image · alt text','—','0']],
+          workflow:'Draft', publishDate:'—', expiry:'—', version:'v0.1',
+          analytics:{traffic:'—',ctr:'—',pos:'—',bounce:'—',time:'—',conv:'—',backlinks:'0',speed:'—'},
+          activity:[[me,'Imported from CSV',today]] });
+      }
+      if(!created.length){ this.flash('No valid rows found — check the Title column.'); return; }
+      this.setState({ cAdded:[...(this.state.cAdded||[]), ...created], contentImportOpen:false, contentImportFile:null });
+      this.flash(created.length+' page'+(created.length===1?'':'s')+' imported.');
+      created.forEach(page=>{
+        supabase.from('content_pages').insert({ id:page.id, payload:page, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error) console.warn('[supabase] content page import insert failed:', error.message);
+        });
+      });
+    };
+    reader.readAsText(file);
   }
 
   newPageData(){
     const f=this.state.npForm||{};
     const repos=this.CONTENT_REPOS().filter(r=>r.key!=='all');
     const editId=this.state.npEditId;
-    const nextNum = 1000 + this.allContentPages().length + 1;
-    const code = editId||('PG-'+nextNum);
+    const code = editId||this._nextSeqCode('PG-', this._allContentPageIdsEver(), 1000);
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
     const baseSlug = f.slug || slugify(f.name);
     const repoPath = { service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' }[f.repo||'service'] || '/';
@@ -7647,7 +7769,7 @@ class AppRoot extends React.Component {
     const editId=this.state.npEditId;
     const existing=editId?this.allContentPages().find(x=>x.id===editId):null;
     const repo=f.repo||'service';
-    const code=editId||('PG-'+(1000+this.allContentPages().length+1));
+    const code=editId||this._nextSeqCode('PG-', this._allContentPageIdsEver(), 1000);
     const repoName=(this.CONTENT_REPOS().find(r=>r.key===repo)||{}).name;
     const name=f.name.trim();
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
@@ -8136,14 +8258,16 @@ class AppRoot extends React.Component {
       cwGenerate:()=>{
         if(!approved){ this.flash('Approve the brief before generating production tasks.'); return; }
         if(linked.length){ this.flash('Tasks already generated for '+p.id+' — open them in Tasks.'); return; }
-        const base=this.allTasks().length;
+        const existingIds=this.allTasks().map(t=>t.id);
+        const taskIds=stages.map(()=>{ const id=this._nextSeqCode('TSK-', existingIds, 3200); existingIds.push(id); return id; });
+        const reviewer=(this.state.users.find(u=>u.roleKey==='qc')||{}).name || this.currentPerson();
         const added=stages.map((s,i)=>({
-          id:'TSK-'+(3200+base+i), name:s.stage+' — '+p.name, desc:mode+' production for '+p.url+'.',
+          id:taskIds[i], name:s.stage+' — '+p.name, desc:mode+' production for '+p.url+'.',
           template:s.tpl, project:'—', campaign:(kpiTargets&&kpiTargets.campaigns[0])||'—',
           start:this.relDate(i*2), end:this.relDate(i*2+2), priority:'High', assignee:s.who,
           kpiId:'', kpi:s.kpi, units:1, unit:'pages', estH:s.hrs, actH:0, recurrence:'None',
-          reviewer:'Farhan Ali', effortPlan:'Auto — from '+p.id, effortType:s.effort,
-          depMode:'Sequential', dep:i===0?'—':(s.stage?('TSK-'+(3200+base+i-1)):'—'),
+          reviewer, effortPlan:'Auto — from '+p.id, effortType:s.effort,
+          depMode:'Sequential', dep:i===0?'—':taskIds[i-1],
           division:s.division, stage:s.stage, sourcePage:p.id, sourcePageUrl:p.url,
           checklist:[{t:'Work complete',done:false},{t:'Evidence attached',done:false},{t:'Compliance checklist filled',done:false}],
           evidence:[], status:i===0?'Assigned':'Assigned',
@@ -8646,58 +8770,50 @@ class AppRoot extends React.Component {
     }
     const scoped = (rows)=> (rk==='junior') ? rows.slice(0,2) : (rk==='senior'? rows.slice(0,3) : rows);
     const viewer = ()=>this.flash('View only — your role can’t change this.');
-    const editor = (m)=>()=>this.flash(m);
 
     const statusTone=(s)=>({'On track':'ok','Live':'ok','In progress':'info','Scheduled':'info','Planned':'info','At risk':'warn','Draft':'draft'}[s]||'info');
     const editAction=(kind,row)=>()=>this.setState({ showRecordModal:true, recordKind:kind, recordEditKey:row.key, recordIsReal:row.isReal,
       recordForm:{ name:row.name, type:row.type==='—'?'':row.type, owner:row.owner==='—'?'':row.owner, status:row.status } });
-    const linkedTasks=(name)=>this.allTasks().filter(t=>t.project===name||t.campaign===name).length;
-    const linkedSub=(name)=>{ const n=linkedTasks(name); return n+' linked task'+(n===1?'':'s'); };
-    if(route==='projects'){
-      const rows = scoped(this.recordsFor('projects'));
-      return { tableCols:['Project','Type','Status','Owner','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:linkedSub(row.name),c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
-        ...act(canEdit?'Edit':'View', canEdit?editAction('projects',row):viewer, canEdit)})) };
-    }
-    if(route==='campaigns'){
-      const rows = scoped(this.recordsFor('campaigns'));
-      return { tableCols:['Campaign','Type','Phase','Status','Actions'], tableRows:rows.map(row=>({c0:row.name,c0sub:linkedSub(row.name),c1:row.type,...tag(row.status,statusTone(row.status)),c3:row.owner,
-        ...act(canEdit?'Edit':'View', canEdit?editAction('campaigns',row):viewer, canEdit)})) };
-    }
-    if(route==='tasks'){
-      const own = ['junior','senior'].includes(rk);
-      const rows = scoped([
-        ['Keyword research — Tech vertical','Sameer Iyer · due Jan 20',tag('In progress','info')],
-        ['Fix broken links — Pubrica','Neha Verma · due Jan 22',tag('Assigned','info')],
-        ['SEO audit — E-commerce','Sameer Iyer · due Jan 18',tag('Review','warn')],
-        ['Update meta — 12 pages','Neha Verma · due today',tag('In progress','warn')],
-        ['Local SEO — FRL','Neha Verma · due Jan 24',tag('Assigned','info')],
-      ]);
-      const label = own?'Update':(canEdit?'Reassign':'View');
-      return { tableCols:['Task','Assignee & due','Status','Owner','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[1],...r[2],c3:'',...act(label, own?editor('Task status updated.'):(canEdit?editor('Reassigning task…'):viewer), own||canEdit)})) };
-    }
-    if(route==='okr'){
-      const rows=[
-        ['Grow organic traffic 30% QoQ','Company objective','Q3',tag('On track','ok')],
-        ['Publish 40 pillar articles','Content KR','Q3',tag('62%','info')],
-        ['Improve avg. keyword rank to top 10','SEO KR','Q3',tag('At risk','warn')],
-        ['Lift landing-page CVR to 4.5%','Web KR','Q3',tag('On track','ok')],
-      ];
-      return { tableCols:['Objective / KR','Type','Cycle','Progress','Actions'], tableRows:rows.map(r=>({c0:r[0],c0sub:'',c1:r[1],...r[3],c3:r[2],...act(canEdit?'Edit':'View',canEdit?editor('Editing OKR…'):viewer,canEdit)})) };
+    // A custom repository has been opened from the Repositories list — show
+    // its records (reuses the same Supabase-backed records CRUD originally
+    // built for Projects/Campaigns, generalized to any repository key).
+    if(this.state.repoDetailKey){
+      const key = this.state.repoDetailKey;
+      const rows = scoped(this.recordsFor(key));
+      return {
+        tableCols:['Name','Type','Owner','Status','Actions'],
+        tableRows: rows.map(row=>({c0:row.name, c0sub:'', c1:row.type, ...tag(row.status,statusTone(row.status)), c3:row.owner,
+          ...act(canEdit?'Edit':'View', canEdit?editAction(key,row):viewer, canEdit)})),
+        tableBackLabel:'Back to Repositories',
+        tableBackAction:()=>this.setState({ repoDetailKey:null }),
+        tableAddLabel: canEdit ? ('+ Add '+this._recordLabel(key).toLowerCase()) : '',
+        tableAddAction:()=>this.setState({ showRecordModal:true, recordKind:key, recordEditKey:null, recordIsReal:true,
+          recordForm:{ name:'', type:'', owner:'', status:'Draft' } }),
+      };
     }
     // repositories are real records with live counts, and Admin can create new ones
     return this.repositoriesView(rk, canEdit);
   }
+  // Single source of truth for every file uploaded anywhere in the app —
+  // threads, tasks, tickets and compliance evidence. Used both by the
+  // Document Repository page itself (filesView()) and by the "Attach files"
+  // picker (filePickerData()), so a file always shows up in both places or
+  // neither — never one but not the other.
   repoFileList(){
     const out=[]; const seen={};
-    const add=(name,source,by,where)=>{ const k=name+'|'+source+'|'+where; if(seen[k]) return; seen[k]=1;
-      out.push({ name, source, by, where }); };
-    this.myThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>add(n,'Message attachment',m.who,th.name))));
+    const add=(name,source,by,where,task)=>{ const k=name+'|'+source+'|'+where; if(seen[k]) return; seen[k]=1;
+      out.push({ name, source, by, where, task }); };
+    this.myThreads().forEach(th=>th.msgs.forEach(m=>(m.files||[]).forEach(n=>add(n,'Message attachment',m.who,th.name,
+      { id:th.name, name:'“'+String(m.text).slice(0,48)+'”', status:'Shared', start:String(m.when).split(' · ')[0], end:'—', assignee:m.who }))));
     this.allTasks().forEach(t=>{ const ov=this.tkOv?this.tkOv(t):t;
-      (ov.evidence||t.evidence||[]).forEach(n=>add(n,'Task evidence',t.assignee,t.id));
+      (ov.evidence||t.evidence||[]).forEach(n=>add(n,'Task evidence',t.assignee,t.id,t));
       (ov.comments||t.comments||[]).forEach(c=>(c.files||[]).forEach(n=>{ if(String(n).indexOf('http')===0) return;
-        add(n,(c.role||'').indexOf('QC')>=0?'QC reference':'Comment attachment',c.who,t.id); })); });
-    this.allTickets().forEach(t=>(t.files||[]).forEach(n=>add(n,'Support ticket',t.by,t.id)));
-    Object.entries(this.state.clFill||{}).forEach(([tid,rows])=>Object.values(rows||{}).forEach(r=>(r.files||[]).forEach(n=>add(n,'Compliance evidence','—',tid))));
+        add(n,(c.role||'').indexOf('QC')>=0?'QC reference':'Comment attachment',c.who,t.id,t); })); });
+    this.allTickets().forEach(t=>(t.files||[]).forEach(n=>add(n,'Support ticket',t.by,t.id,
+      { id:t.id, name:t.subject||t.id, status:t.status||'Open', start:t.created||'—', end:'—', assignee:t.assignee||'—', isTicket:true })));
+    Object.entries(this.state.clFill||{}).forEach(([tid,rows])=>{ const t=this.allTasks().find(x=>x.id===tid);
+      Object.values(rows||{}).forEach(r=>(r.files||[]).forEach(n=>add(n,'Compliance evidence','—',tid,
+        t||{ id:tid, name:'Compliance — '+tid, status:'—', start:'—', end:'—', assignee:'—' }))); });
     return out;
   }
   // One real file picker used by every "Attach" point in the app: Browse lists
@@ -8924,25 +9040,44 @@ class AppRoot extends React.Component {
     const count=(n)=>n.toLocaleString('en-IN');
     const built=[
       { key:'ideas', name:'Content Ideas', desc:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks.',
-        cat:'Content', icon:'lightbulb', owner:'Priya Nair',
+        cat:'Content', icon:'lightbulb', owner:'Platform',
         n:this.allIdeas().length, unit:'ideas', go:()=>this.setState({ route:'ideas' }) },
       { key:'content', name:'Website Content', desc:'Every service page, insight and article with its SEO, links and media.',
-        cat:'Content', icon:'folder-tree', owner:'Priya Nair',
+        cat:'Content', icon:'folder-tree', owner:'Platform',
         n:this.allContentPages().length, unit:'pages', go:()=>this.setState({ route:'content' }) },
       { key:'backlink', name:'Backlink Domains', desc:'Approved backlink sources with authority, spam score and platform rules.',
-        cat:'SEO', icon:'link', owner:'Aditi Rao',
+        cat:'SEO', icon:'link', owner:'Platform',
         n:this.BACKLINK_DOMAINS().length, unit:'domains', go:()=>this.setState({ route:'masters', masterKey:'backlink' }) },
       { key:'files', name:'Documents & Assets', desc:'Every file uploaded across tasks, QC, messages and compliance evidence.',
-        cat:'Assets', icon:'folder-open', owner:'Karan Shah',
+        cat:'Assets', icon:'folder-open', owner:'Platform',
         n:this.repoFileList().length, unit:'files', go:()=>this.setState({ route:'files' }) },
       { key:'templates', name:'Templates', desc:'Reusable task, KPI and OKR templates that seed new work.',
-        cat:'Performance', icon:'layout-template', owner:'Priya Nair',
+        cat:'Performance', icon:'layout-template', owner:'Platform',
         n:(this.TASK_TEMPLATES?this.TASK_TEMPLATES().length:0)+(this.KPI_TEMPLATES?this.KPI_TEMPLATES().length:0),
         unit:'templates', go:()=>this.setState({ route:'templates' }) },
     ];
-    const custom=(this.state.repoAdded||[]).map(r=>({ ...r, n:0, unit:'items', custom:true,
-      go:()=>this.flash('“'+r.name+'” is empty — add the first record from its source module.') }));
+    const custom=(this.state.repoAdded||[]).map(r=>({ ...r, n:this.recordsFor(r.key).length, unit:'items', custom:true,
+      go:()=>this.setState({ repoDetailKey:r.key }) }));
     return custom.concat(built).map(r=>({ ...r, items:count(r.n)+' '+r.unit }));
+  }
+  repoDeleteCustom(key){
+    const repo=(this.state.repoAdded||[]).find(r=>r.key===key);
+    if(!repo) return;
+    this.setState({ repoAdded:(this.state.repoAdded||[]).filter(r=>r.key!==key),
+      repoDetailKey: this.state.repoDetailKey===key ? null : this.state.repoDetailKey });
+    this.flash('"'+repo.name+'" repository deleted.');
+    supabase.from('document_repo').delete().eq('id', key).then(({error})=>{
+      if(error) console.warn('[supabase] document repo delete failed:', error.message);
+    });
+  }
+  // Generic label for the create/edit-record modal — 'Project'/'Campaign' for
+  // the two original demo kinds, the repository's own name for a custom
+  // repository, 'Record' as a safe fallback for anything else.
+  _recordLabel(kind){
+    if(kind==='campaigns') return 'Campaign';
+    if(kind==='projects') return 'Project';
+    const repo=(this.state.repoAdded||[]).find(r=>r.key===kind);
+    return repo ? repo.name.replace(/s$/,'') : 'Record';
   }
   repositoriesView(rk, canEdit){
     const isAdmin=rk==='admin';
@@ -8954,14 +9089,15 @@ class AppRoot extends React.Component {
       tableCols:['Repository','Owner','Category','Items','Actions'],
       tableRows:list.map(r=>({
         c0:r.name, c0sub:r.desc, c1:r.owner, ...tag(r.cat), c3:r.items,
-        actionLabel:r.custom?'Empty':(['junior','senior'].includes(rk)?'Open':(canEdit?'Manage':'View')),
+        actionLabel:['junior','senior'].includes(rk)?'Open':(canEdit?'Manage':'View'),
         action:r.go,
-        actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit&&!r.custom
+        actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit
           ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
+        canDelete: r.custom && isAdmin,
+        delete: r.custom ? ()=>this.repoDeleteCustom(r.key) : null,
       })),
       repoCanCreate:isAdmin,
       repoFormOpen:!!this.state.repoNew,
-      repoNew:()=>this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:'Priya Nair' } }),
       repoClose:()=>this.setState({ repoNew:false, repoForm:{} }),
       repoStop:(e)=>e.stopPropagation(),
       rf:f, repoSetName:setR('name'), repoSetDesc:setR('desc'), repoSetCat:setR('cat'), repoSetOwner:setR('owner'),
@@ -8970,7 +9106,7 @@ class AppRoot extends React.Component {
       repoSave:()=>{
         if(!(f.name&&f.name.trim())){ this.flash('Name the repository.'); return; }
         const rec={ key:'r'+Date.now(), name:f.name.trim(), desc:f.desc||'Custom repository.',
-          cat:f.cat||'Content', icon:'database', owner:f.owner||'Karan Shah' };
+          cat:f.cat||'Content', icon:'database', owner:f.owner||this.currentPerson() };
         this.setState({ repoAdded:[rec,...(this.state.repoAdded||[])], repoNew:false, repoForm:{} });
         this.flash('“'+rec.name+'” created under '+rec.cat+' — owned by '+rec.owner+'.');
         supabase.from('document_repo').insert({ id:rec.key, payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
