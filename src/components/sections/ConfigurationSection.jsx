@@ -66,12 +66,15 @@ function Field({ children, match }) {
   return <div style={{ marginBottom: 14 }}>{children}</div>;
 }
 
-// Shared load/save/cancel/reset for one section key inside the single
-// platform_settings row (value = { general, branding, theme }). Save always
+// Shared load/save/cancel/reset for one section key inside a settings row
+// (value = { general, branding, theme } for platform_settings). Save always
 // re-fetches the full row first and merges in just this section before
 // PUTting the whole thing back — so editing General in one tab can't clobber
 // an in-flight edit to Theme in another tab that hasn't saved yet.
-function useSettingsSection(sectionKey, defaults, onLiveApply) {
+// sectionKey=null treats the entire `value` object as the form — used for
+// security_settings, which is its own table/row with no further nesting.
+function useSettingsSection(sectionKey, defaults, onLiveApply, endpoint) {
+  const url = endpoint || '/api/admin/settings';
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(defaults);
   const [form, setForm] = useState(defaults);
@@ -84,8 +87,8 @@ function useSettingsSection(sectionKey, defaults, onLiveApply) {
     let alive = true;
     (async () => {
       try {
-        const body = await authedFetch('/api/admin/settings', { method: 'GET' });
-        const section = { ...defaults, ...((body.value || {})[sectionKey] || {}) };
+        const body = await authedFetch(url, { method: 'GET' });
+        const section = sectionKey ? { ...defaults, ...((body.value || {})[sectionKey] || {}) } : { ...defaults, ...(body.value || {}) };
         if (!alive) return;
         setSaved(section); setForm(section); setLoaded(true);
         if (onLiveApply) onLiveApply(section);
@@ -107,10 +110,13 @@ function useSettingsSection(sectionKey, defaults, onLiveApply) {
   const save = async () => {
     setBusy(true); setErr(''); setOk('');
     try {
-      const current = await authedFetch('/api/admin/settings', { method: 'GET' });
-      const merged = { ...(current.value || {}), [sectionKey]: form };
-      const body = await authedFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ value: merged }) });
-      const nextSection = (body.value || {})[sectionKey] || form;
+      let toSave = form;
+      if (sectionKey) {
+        const current = await authedFetch(url, { method: 'GET' });
+        toSave = { ...(current.value || {}), [sectionKey]: form };
+      }
+      const body = await authedFetch(url, { method: 'PUT', body: JSON.stringify({ value: toSave }) });
+      const nextSection = sectionKey ? ((body.value || {})[sectionKey] || form) : (body.value || form);
       setSaved(nextSection); setForm(nextSection);
       setOk('Saved.');
       clearTimeout(okTimer.current); okTimer.current = setTimeout(() => setOk(''), 4000);
@@ -343,10 +349,210 @@ function ThemeTab({ canEdit }) {
   );
 }
 
+const DEFAULT_IP_RULES = { mode: 'off', list: [] };
+
+function fmtWhen(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleString();
+}
+
+const DEFAULT_SECURITY = { ipRules: DEFAULT_IP_RULES };
+
+function SecurityTab({ canEdit }) {
+  const s = useSettingsSection(null, DEFAULT_SECURITY, null, '/api/admin/security');
+  const dis = !canEdit;
+  const ipRules = s.form.ipRules || DEFAULT_IP_RULES;
+  const setIpRules = (patch) => s.setForm((f) => ({ ...f, ipRules: { ...(f.ipRules || DEFAULT_IP_RULES), ...patch } }));
+  const set = (k) => (e) => setIpRules({ [k]: e.target.value });
+  const setList = (e) => setIpRules({ list: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) });
+
+  const [sessions, setSessions] = useState(null);
+  const [sessErr, setSessErr] = useState('');
+  const [revoking, setRevoking] = useState('');
+
+  const loadSessions = () => {
+    authedFetch('/api/admin/sessions', { method: 'GET' })
+      .then((body) => setSessions(body.rows || []))
+      .catch((e) => setSessErr(e.message));
+  };
+  useEffect(() => { loadSessions(); }, []);
+
+  const revoke = async (userId, name) => {
+    if (!window.confirm(`Revoke every active session for ${name}? They will be signed out everywhere immediately.`)) return;
+    setRevoking(userId);
+    try {
+      await authedFetch('/api/admin/sessions', { method: 'POST', body: JSON.stringify({ userId }) });
+      loadSessions();
+    } catch (e) { setSessErr(e.message); }
+    setRevoking('');
+  };
+
+  if (!s.loaded) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-500)' }}>Loading security settings…</div>;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--info-100)', border: '1px solid #CBE3EC', color: 'var(--info-600)', padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
+        <Icon name="shield" style={{ width: 14, height: 14, flexShrink: 0 }} />IP rules apply to the Admin Settings API surface (this screen and its data) — every request is checked before it runs. They do not gate the rest of the app, which has no server layer to enforce them at.
+      </div>
+      <Toolbar canEdit={canEdit} s={s} resetLabel="Reset rules" saveLabel="Save rules" />
+      <div style={card}>
+        <h3 style={sectionTitle}>IP Access Rules</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+          <Field><label style={label}>Mode</label>
+            <select style={{ ...input, maxWidth: 260 }} value={ipRules.mode} onChange={set('mode')} disabled={dis}>
+              <option value="off">Off — allow every IP</option>
+              <option value="whitelist">Whitelist — only listed IPs allowed</option>
+              <option value="blacklist">Blacklist — listed IPs blocked</option>
+            </select>
+          </Field>
+          <Field match={ipRules.mode !== 'off'}>
+            <label style={label}>IP addresses / prefixes (one per line)</label>
+            <textarea rows={5} style={{ ...input, fontFamily: "'Space Mono', monospace", fontSize: 12.5, resize: 'vertical' }}
+              placeholder={'203.0.113.10\n198.51.100.'} value={(ipRules.list || []).join('\n')} onChange={setList} disabled={dis} />
+            <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 4 }}>Exact IP, or a prefix (e.g. "198.51.100.") to match a range.</div>
+          </Field>
+        </div>
+      </div>
+      <Toolbar canEdit={canEdit} s={s} resetLabel="Reset rules" saveLabel="Save rules" />
+
+      <div style={card}>
+        <h3 style={sectionTitle}>Active Sessions</h3>
+        {Boolean(sessErr) && <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--danger-100, #F7E3E6)', border: '1px solid #E7B9C1', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: 12, fontSize: 12.5, fontWeight: 600, marginBottom: 14 }}><Icon name="alert-triangle" style={{ width: 14, height: 14 }} />{sessErr}</div>}
+        {sessions === null ? <div style={{ color: 'var(--ink-500)', fontSize: 13 }}>Loading sessions…</div> : sessions.length === 0 ? (
+          <div style={{ color: 'var(--ink-500)', fontSize: 13 }}>No active sessions recorded yet — they're logged the next time someone signs in.</div>
+        ) : (
+          <div style={{ border: '1px solid var(--line-200)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr 80px', gap: 10, padding: '9px 14px', background: 'var(--surface-50)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-400)' }}>
+              <span>User</span><span>IP</span><span>Signed in</span><span>Last seen</span><span />
+            </div>
+            {sessions.map((row) => {
+              const p = row.profiles || {};
+              return (
+                <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr 80px', gap: 10, padding: '10px 14px', borderTop: '1px solid var(--line-200)', alignItems: 'center', fontSize: 12.5 }}>
+                  <span style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{p.full_name || p.email || row.user_id}</span>
+                  <span style={{ fontFamily: "'Space Mono'", color: 'var(--ink-500)' }}>{row.ip_address || '—'}</span>
+                  <span style={{ color: 'var(--ink-500)' }}>{fmtWhen(row.created_at)}</span>
+                  <span style={{ color: 'var(--ink-500)' }}>{fmtWhen(row.last_seen_at)}</span>
+                  {canEdit ? (
+                    <button onClick={() => revoke(row.user_id, p.full_name || p.email)} disabled={revoking === row.user_id} style={{ border: '1px solid var(--danger-300, #e5a3a3)', background: 'var(--paper)', color: 'var(--danger-600)', borderRadius: 8, padding: '5px 10px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+                      {revoking === row.user_id ? '…' : 'Revoke'}
+                    </button>
+                  ) : <span />}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const AUDIT_MODULES = ['platform_settings', 'security_settings', 'login_sessions'];
+
+function AuditLogTab() {
+  const [rows, setRows] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [actor, setActor] = useState('');
+  const [moduleFilter, setModuleFilter] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [err, setErr] = useState('');
+  const [expanded, setExpanded] = useState(null);
+  const pageSize = 25;
+
+  const load = () => {
+    setRows(null);
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (actor.trim()) params.set('actor', actor.trim());
+    if (moduleFilter) params.set('module', moduleFilter);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    authedFetch(`/api/admin/audit-logs?${params.toString()}`, { method: 'GET' })
+      .then((body) => { setRows(body.rows || []); setTotal(body.total || 0); })
+      .catch((e) => setErr(e.message));
+  };
+  useEffect(() => { load(); }, [page]);
+
+  const applyFilters = () => { setPage(0); load(); };
+
+  return (
+    <div>
+      <div style={card}>
+        <h3 style={sectionTitle}>Filters</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, alignItems: 'end' }}>
+          <Field><label style={label}>Actor</label><input style={input} value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Name contains…" /></Field>
+          <Field><label style={label}>Module</label>
+            <select style={input} value={moduleFilter} onChange={(e) => setModuleFilter(e.target.value)}>
+              <option value="">All modules</option>
+              {AUDIT_MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </Field>
+          <Field><label style={label}>From</label><input type="date" style={input} value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
+          <Field><label style={label}>To</label><input type="date" style={input} value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+        </div>
+        <button onClick={applyFilters} style={{ padding: '9px 16px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Apply filters</button>
+      </div>
+
+      {Boolean(err) && <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--danger-100, #F7E3E6)', border: '1px solid #E7B9C1', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: 12, fontSize: 12.5, fontWeight: 600, marginBottom: 14 }}><Icon name="alert-triangle" style={{ width: 14, height: 14 }} />{err}</div>}
+
+      <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1.4fr 1fr 40px', gap: 10, padding: '10px 16px', background: 'var(--surface-50)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-400)' }}>
+          <span>When</span><span>Actor</span><span>Module</span><span>Setting</span><span>IP</span><span />
+        </div>
+        {rows === null ? (
+          <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-500)' }}>Loading…</div>
+        ) : rows.length === 0 ? (
+          <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-500)' }}>No audit entries match these filters.</div>
+        ) : rows.map((r) => {
+          const isOpen = expanded === r.id;
+          return (
+            <div key={r.id}>
+              <div onClick={() => setExpanded(isOpen ? null : r.id)} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1.4fr 1fr 40px', gap: 10, padding: '11px 16px', borderTop: '1px solid var(--line-200)', alignItems: 'center', fontSize: 12.5, cursor: 'pointer' }}>
+                <span style={{ color: 'var(--ink-500)' }}>{fmtWhen(r.created_at)}</span>
+                <span style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{r.actor_name || '—'}</span>
+                <span style={{ fontFamily: "'Space Mono'", fontSize: 11.5 }}>{r.module}</span>
+                <span style={{ color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.setting_key || '—'}</span>
+                <span style={{ fontFamily: "'Space Mono'", fontSize: 11.5, color: 'var(--ink-500)' }}>{r.ip_address || '—'}</span>
+                <Icon name={isOpen ? 'chevron-down' : 'chevron-right'} style={{ width: 15, height: 15, color: 'var(--ink-400)' }} />
+              </div>
+              {isOpen && (
+                <div style={{ padding: '12px 16px 16px', background: 'var(--surface-50)', borderTop: '1px solid var(--line-200)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 4 }}>Previous value</div>
+                    <pre style={{ fontSize: 11, fontFamily: "'Space Mono'", background: 'var(--paper)', border: '1px solid var(--line-200)', borderRadius: 8, padding: 10, overflowX: 'auto', margin: 0 }}>{JSON.stringify(r.previous_value, null, 2) || 'null'}</pre>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 4 }}>New value</div>
+                    <pre style={{ fontSize: 11, fontFamily: "'Space Mono'", background: 'var(--paper)', border: '1px solid var(--line-200)', borderRadius: 8, padding: 10, overflowX: 'auto', margin: 0 }}>{JSON.stringify(r.new_value, null, 2) || 'null'}</pre>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', fontSize: 11, color: 'var(--ink-500)' }}>User agent: {r.user_agent || '—'}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {rows !== null && rows.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--surface-50)', borderTop: '1px solid var(--line-200)' }}>
+            <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: 'var(--ink-500)' }}>{total} total · page {page + 1} of {Math.max(1, Math.ceil(total / pageSize))}</span>
+            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 9, fontSize: 12.5, fontWeight: 700, color: page === 0 ? 'var(--ink-400)' : 'var(--ink-700)', cursor: page === 0 ? 'not-allowed' : 'pointer' }}><Icon name="chevron-left" style={{ width: 13, height: 13 }} />Prev</button>
+            <button onClick={() => setPage((p) => p + 1)} disabled={(page + 1) * pageSize >= total} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 9, fontSize: 12.5, fontWeight: 700, color: (page + 1) * pageSize >= total ? 'var(--ink-400)' : 'var(--ink-700)', cursor: (page + 1) * pageSize >= total ? 'not-allowed' : 'pointer' }}>Next<Icon name="chevron-right" style={{ width: 13, height: 13 }} /></button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const TABS = [
   { key: 'general', label: 'General', icon: 'sliders-horizontal', Cmp: GeneralTab },
   { key: 'branding', label: 'Branding', icon: 'image', Cmp: BrandingTab },
   { key: 'theme', label: 'Theme', icon: 'palette', Cmp: ThemeTab },
+  { key: 'security', label: 'Security', icon: 'shield', Cmp: SecurityTab },
+  { key: 'audit', label: 'Audit Log', icon: 'file-clock', Cmp: AuditLogTab },
 ];
 
 export default function ConfigurationSection({ vm }) {
