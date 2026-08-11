@@ -846,7 +846,12 @@ Unit
 Priority
 </th>
 
-                  
+
+<th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)"}}>
+Assignee
+</th>
+
+
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)"}}>
 Linked KPI (outcome)
 </th>
@@ -924,6 +929,19 @@ Low
 </option>
 </select>
 </span>
+</td>
+
+
+<td style={{"padding":"11px 14px","borderBottom":"1px solid var(--line-200)"}}>
+<select value={r.assignee} onChange={r.setAssignee} style={{"width":"100%","minWidth":"130px","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","background":"var(--paper)","color":"var(--ink-700)","outline":"none","cursor":"pointer"}}>
+{(r.assigneeOpts || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.v}>
+{o.label}
+</option>
+</React.Fragment>
+))}
+</select>
 </td>
 
 

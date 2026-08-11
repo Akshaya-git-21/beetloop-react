@@ -3038,11 +3038,44 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] task-done upsert failed:', error.message);
     }); }
   juniorRollup(kpiId){ const tasks=this.allTasks().filter(t=>t.kpiId===kpiId); const done=tasks.filter(t=>t.status==='Approved'); return { val:done.reduce((s,t)=>s+t.units,0), done:done.length, total:tasks.length }; }
+  // Closes Task → KPI → OKR: whenever a task linked to a KPI changes status,
+  // recompute the Approved-task rollup for that KPI and write the total back
+  // onto the matching Key Result's `current` value — the same field the
+  // manual check-in path (submitCi's patchOkrKr) already writes to — so OKR
+  // and Dashboard progress move from task completion for every role, not
+  // just as a live-only display override on the Junior's personal KPI page.
+  // Deliberately does NOT resolve the KPI via epKpiPool() — that pool only
+  // exposes the CURRENT VIEWER's own junior/senior/team_lead KPIs, so an
+  // Admin approving someone else's task would never find their KR. A real
+  // per-person Key Result's id is always synthesized as `<okrCode>-kr<N>`
+  // (see MY_KPIS()'s "mine" block), which is a stable, role-independent
+  // pointer straight at the OKR + KR index — parse that directly instead.
+  // Legacy demo personal-KPI catalog ids (jr1, sr2, kt3…) don't match this
+  // shape and correctly no-op — they were never wired to a real KR.
+  _syncKrFromTasks(kpiId){
+    if(!kpiId) return;
+    const m=/^(.+)-kr(\d+)$/.exec(kpiId);
+    if(!m) return;
+    const [, ref, idxStr]=m, idx=parseInt(idxStr,10);
+    const o=this.allOkrs().find(x=>x.code===ref||x.id===ref);
+    if(!o || !(o.krs||[])[idx]) return;
+    const rollup=this.juniorRollup(kpiId);
+    if(rollup.total===0) return;
+    const kr=o.krs[idx];
+    const current=String(this.cmpNum(kr.baseline)+rollup.val);
+    if(String(kr.current)===current) return;
+    const krs=o.krs.map((k,i)=>i===idx?{...k, current, lastReportedBy:'Auto (task completion)'}:k);
+    this.setState({ okrUpd:{...(this.state.okrUpd||{}), [o.id]:{...(this.state.okrUpd[o.id]||{}), krs} } });
+    if(o.code) this._persistOkr(o.code, { title:o.title, description:o.desc, category:o.category, scope:o.scope, division:o.dept, status:o.status, key_results:krs });
+  }
 
   EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'Q3 SEO push', dept:'SEO', owner:this.currentPerson(), okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
   EP_DIVISIONS(){ return ['Content Writer','Graphics','Web Developers','SMM','SEO'].concat(this.state.epCustomDivs||[]); }
   EP_DIV_ROWS(d){
-    const R=(type,icon,monthly,days,unit,priority,weight,kpiId)=>({type,icon,monthly,days,unit,priority,weight,kpiId});
+    // assignee defaults to '' (falls back to the plan's overall owner in
+    // epGenerate) — seed rows have no individual assignee, only plans
+    // created/edited through the real UI set one per effort.
+    const R=(type,icon,monthly,days,unit,priority,weight,kpiId,assignee)=>({type,icon,monthly,days,unit,priority,weight,kpiId,assignee:assignee||''});
     return {
       'Content Writer':[ R('Long-form content','file-text',25000,25,'words','High',40,'sr3'), R('Blog posts','newspaper',12,25,'articles','High',30,'sr3'), R('Case studies','file-check',4,20,'case studies','Medium',20,''), R('Proofreading passes','spell-check',20,25,'documents','Low',10,'') ],
       'Graphics':[ R('Social creatives','image',30,25,'designs','High',40,'jr3'), R('Reels / video edits','clapperboard',12,25,'reels','High',30,''), R('Infographics','bar-chart-3',6,20,'infographics','Medium',20,''), R('Thumbnails & banners','panels-top-left',20,25,'assets','Low',10,'') ],
@@ -3180,6 +3213,7 @@ class AppRoot extends React.Component {
       };
     });
     const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' — '+k.who })));
+    const assigneeOpts=[{v:'',label:'(plan owner)'}].concat((this.state.users||[]).filter(u=>u.status==='Active').map(u=>({v:u.name,label:u.name})));
     const totalW=rows.reduce((s,r)=>s+(r.weight||0),0);
     const epRows=rows.map((r,i)=>{
       const weekly=Math.ceil((r.monthly||0)/4), daily=Math.ceil((r.monthly||0)/(r.days||25));
@@ -3209,6 +3243,7 @@ class AppRoot extends React.Component {
         priDot:{Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[r.priority]||'var(--ink-400)',
         setMonthly:setRow(i,'monthly'), setWeight:setRow(i,'weight'), setPriority:setRow(i,'priority'), setKpi:setRow(i,'kpiId'), kpiOpts,
         setType:setRow(i,'type'), setUnit:setRow(i,'unit'),
+        assignee:r.assignee||'', setAssignee:setRow(i,'assignee'), assigneeOpts,
         remove:()=>{ const arr=rows.slice(); arr.splice(i,1); this.setState({ epRows:arr }); }, canRemove:rows.length>1 };
     });
     const alloc=epRows.map(r=>({ type:r.type, icon:r.icon, label:Number(r.monthly).toLocaleString('en-US')+' '+r.unit+' / month', w:Math.min(100,r.weight*3)+'%', weight:r.weight+'%' }));
@@ -3216,7 +3251,7 @@ class AppRoot extends React.Component {
     const view=this.state.epView||'list';
     const num=(v)=>parseFloat(String(v).replace(/,/g,''))||0;
     const pc2=(p)=> p>=70?'var(--verify-500)': p>=40?'var(--warn-500)':'var(--danger-500)';
-    const kpiCur=(k)=>{ const r=this.juniorRollup(k.id); if(r.total>0) return r.val; const rep=(this.state.kpiActuals||{})[k.id]; return num(rep?rep.val:k.current); };
+    const kpiCur=(k)=>{ const r=this.juniorRollup(k.id); if(r.total>0) return num(k.baseline)+r.val; const rep=(this.state.kpiActuals||{})[k.id]; return num(rep?rep.val:k.current); };
     const RF=this.state.epRepFilters||{year:'All',month:'All',role:'All'};
     const setRF=(k)=>(e)=>this.setState({ epRepFilters:{...RF,[k]:e.target.value} });
     const rYear=(p)=>{ const m=String(p.period||'').match(/20\d\d/); return m?('FY '+m[0]):'FY 2026'; };
@@ -3357,7 +3392,7 @@ class AppRoot extends React.Component {
     const mk=(name,desc,units,end,checklist,r,k)=>{
       const id=this._nextSeqCode('TSK-', existingIds, 3200);
       existingIds.push(id);
-      added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, startDate:f.start||'', endDate:end||'', priority:r.priority, assignee:f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
+      added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, startDate:f.start||'', endDate:end||'', priority:r.priority, assignee:r.assignee||f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
     };
     // generation mode is explicit — default is ONE task per effort line, so a
     // 60-unit target no longer explodes into 60 tasks unless deliberately chosen.
@@ -3399,7 +3434,9 @@ class AppRoot extends React.Component {
       }
     });
     this.setState({ tkAdded:added, epGenerated:true, route:'tasks', tkFilter:f.name });
-    this.flash(n+' task'+(n===1?'':'s')+' generated from '+rows.filter(r=>r.monthly).length+' effort line'+(rows.filter(r=>r.monthly).length===1?'':'s')+' · mode “'+mode+'” · assigned to '+f.owner+'.');
+    const perEffortAssignees=new Set(rows.filter(r=>r.monthly&&r.assignee).map(r=>r.assignee));
+    const assigneeNote = perEffortAssignees.size ? ('assigned per effort ('+[...perEffortAssignees].join(', ')+(rows.some(r=>r.monthly&&!r.assignee)?(', rest → '+f.owner):'')+')') : ('assigned to '+f.owner);
+    this.flash(n+' task'+(n===1?'':'s')+' generated from '+rows.filter(r=>r.monthly).length+' effort line'+(rows.filter(r=>r.monthly).length===1?'':'s')+' · mode “'+mode+'” · '+assigneeNote+'.');
     added.slice(baseLen).forEach(t=>this._persistNewTask(t, f.start||null, null));
   }
 
@@ -4616,7 +4653,11 @@ class AppRoot extends React.Component {
     const fullPatch={...patch, activity};
     const upd={...(this.state.tkUpd||{})};
     upd[id]={ ...(upd[id]||{}), ...fullPatch };
-    this.setState({ tkUpd:upd });
+    const kpiId=fullPatch.kpiId!==undefined?fullPatch.kpiId:t.kpiId;
+    // setState's callback (not a call right after setState) — the sync reads
+    // this.state via allTasks()/juniorRollup(), which must see the merged
+    // status, not the pre-patch one still sitting in state at this point.
+    this.setState({ tkUpd:upd }, ()=>{ if(patch && patch.status!==undefined) this._syncKrFromTasks(kpiId); });
     this._persistTaskPatch(id, fullPatch);
   }
   // QC comments live inside task.comments (there is no separate QC comment
@@ -4742,7 +4783,7 @@ class AppRoot extends React.Component {
   _deleteTask(id){
     if(!this.hasPerm('tasks','delete')){ this.flash('You do not have permission to delete tasks.'); return; }
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
-    this.setState({ tkAdded:(this.state.tkAdded||[]).filter(x=>x.id!==id), tkOpen:null });
+    this.setState({ tkAdded:(this.state.tkAdded||[]).filter(x=>x.id!==id), tkOpen:null }, ()=>{ if(t.kpiId) this._syncKrFromTasks(t.kpiId); });
     this.flash('Deleted task '+id+'.');
     supabase.from('tasks').update({ deleted:true }).eq('code', id).then(({error})=>{
       if(error) console.warn('[supabase] task delete failed:', error.message);
@@ -7446,8 +7487,8 @@ class AppRoot extends React.Component {
     const num = (v)=>parseFloat(String(v).replace(/,/g,''))||0;
     const rows = base.map(k=>{
       let currentVal, source, updated, updatedColor;
-      if(rk==='junior' && this.juniorRollup(k.id).total>0){
-        const r=this.juniorRollup(k.id); currentVal=r.val;
+      if(this.juniorRollup(k.id).total>0){
+        const r=this.juniorRollup(k.id); currentVal=num(k.baseline)+r.val;
         source='Auto · rolls up from tasks';
         updated=r.done+' of '+r.total+' tasks done'; updatedColor= r.done>0?'var(--verify-600)':'var(--ink-400)';
       } else {
