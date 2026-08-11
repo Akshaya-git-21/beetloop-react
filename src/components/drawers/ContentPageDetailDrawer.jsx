@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentPageDetailDrawer({ vm }) {
-  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_ai, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentAINote, contentOpen, stop, cdCanEdit, cdEdit,
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentOpen, stop, cdCanEdit, cdEdit,
     cwLinkedCount, cwModeBtns, cwCanRun, cwApprove, cwApproveLabel, cwGenerate, cwHasTasks, cwOpenTasks, cwProgressW, cwStages, cwOpenKpi, cwKpiNote,
     cd_liveHas, cd_liveNote, cd_live, cd_liveWarn, cd_liveWarnMsg } = vm;
   return (
@@ -193,16 +193,7 @@ SEO score
           
 </div>
 
-          
-<div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--info-100)","border":"1px solid #CBE3EC","color":"var(--info-600)","padding":"10px 14px","borderRadius":"12px","fontSize":"12.5px","fontWeight":"600","marginTop":"16px"}}>
-<Icon name={"sparkles"} style={{"width":"15px","height":"15px"}} />
-AI SEO suggestions available — 
-<button onClick={contentAINote} style={{"background":"none","border":"none","color":"var(--info-600)","fontWeight":"700","textDecoration":"underline","cursor":"pointer","padding":"0"}}>
-generate
-</button>
-</div>
 
-        
 </React.Fragment>
 )}
 
@@ -476,44 +467,6 @@ Relationships link content instead of duplicating it — one source of truth per
         
 {Boolean(cd_tab5) && (
 <React.Fragment>
-
-          
-<div style={{"background":"linear-gradient(150deg,#3d1024,#7A1C46)","color":"#fff","borderRadius":"14px","padding":"16px 18px","marginBottom":"16px"}}>
-<div style={{"display":"flex","alignItems":"center","gap":"8px","fontSize":"12px","fontWeight":"700"}}>
-<Icon name={"sparkles"} style={{"width":"15px","height":"15px","color":"var(--orchid-300)"}} />
-AI SUGGESTED INTERNAL LINKS
-</div>
-
-            
-<div style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"12px"}}>
-
-              
-{(cd_ai || []).map((l, $index) => (
-<React.Fragment key={$index}>
-<div style={{"display":"flex","alignItems":"center","gap":"12px","background":"rgba(255,255,255,.1)","borderRadius":"10px","padding":"10px 12px"}}>
-<div style={{"flex":"1"}}>
-<div style={{"fontSize":"13px","fontWeight":"600"}}>
-{l.anchor}
-</div>
-<div style={{"fontFamily":"'Space Mono'","fontSize":"11px","color":"rgba(255,255,255,.7)"}}>
-{l.target}
-</div>
-</div>
-<span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-300)"}}>
-Score {l.score}
-</span>
-<button onClick={contentAINote} style={{"background":"var(--paper)","color":"var(--ink-900)","border":"none","borderRadius":"8px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-Accept
-</button>
-</div>
-</React.Fragment>
-))}
-
-            
-</div>
-
-          
-</div>
 
           
 <div style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"8px"}}>
