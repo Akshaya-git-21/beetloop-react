@@ -3357,7 +3357,7 @@ class AppRoot extends React.Component {
     const mk=(name,desc,units,end,checklist,r,k)=>{
       const id=this._nextSeqCode('TSK-', existingIds, 3200);
       existingIds.push(id);
-      added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, priority:r.priority, assignee:f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
+      added.push({ id, name, desc, template:'Effort plan', project:f.campaign, campaign:f.campaign, start:f.start, end, startDate:f.start||'', endDate:end||'', priority:r.priority, assignee:f.owner, kpiId:r.kpiId||'', kpi:k?k.kpi:'Not linked', units, unit:r.unit, estH:0, actH:0, recurrence:'None', reviewer:who, effortPlan:f.name, effortType:r.type, division, checklist, dep:'—', evidence:[], status:'Assigned', activity:[[who,'Generated from effort plan “'+f.name+'”',this.todayStr()]] });
     };
     // generation mode is explicit — default is ONE task per effort line, so a
     // 60-unit target no longer explodes into 60 tasks unless deliberately chosen.
@@ -3493,6 +3493,7 @@ class AppRoot extends React.Component {
           added.push({ id, name:i.title+(n>1?(' — '+(n2+1)+'/'+n):''), desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
             template:'Write Article', project:i.service||'Content', campaign:plan?plan.campaign:'—',
             start:this.fmtDate(f.start)||this.relDate(0), end:this.fmtDate(f.end)||this.relDate(14),
+            startDate:f.start||'', endDate:f.end||'',
             priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||who,
             kpiId:f.kpiMode==='new'?'':(f.kpiId||''), kpi:kpiName, units:1, unit:kpiUnit||(row&&row.unit)||'articles',
             estH:10, actH:0, recurrence:'None', reviewer:f.reviewer||who,
@@ -4708,6 +4709,8 @@ class AppRoot extends React.Component {
       code, name:full.name, description:full.desc, priority:full.priority, status:full.status,
       division:full.division, project:full.project, campaign:full.campaign,
       assignee_name:full.assignee, reviewer_name:full.reviewer,
+      start_date:full.startDate||null, end_date:full.endDate||null,
+      start_time:full.startTime||null, end_time:full.endTime||null,
       effort_estimate:full.estH, effort_actual:full.actH, recurrence:full.recurrence,
       checklist:full.checklist||[], linked_kpi:full.kpi, kpi_id:full.kpiId,
       units:full.units, unit:full.unit, dependency:full.dep,
@@ -4720,28 +4723,21 @@ class AppRoot extends React.Component {
     });
   }
   // Start/end date+time on an existing task — previously set once at
-  // creation with no way to change it afterward. Writes start_date/end_date/
-  // start_time/end_time directly rather than going through tkPatch(), since
-  // _persistTaskPatch()'s upsert never included those columns at all (a
-  // pre-existing gap, not something this introduces).
+  // creation with no way to change it afterward. Routed through tkPatch()/
+  // _persistTaskPatch() (a full upsert keyed on code) rather than a direct
+  // targeted update, because a task that's still only in the hardcoded seed
+  // array has no real Supabase row yet — a plain .update() would silently
+  // match zero rows and appear to work while writing nothing.
   editTaskDates(id, patch){
     if(!this.hasPerm('tasks','edit')){ this.flash('You do not have permission to edit tasks.'); return; }
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
-    const cur=this.tkOv(t);
-    const startDate=patch.startDate!==undefined?patch.startDate:(cur.startDate||'');
-    const endDate=patch.endDate!==undefined?patch.endDate:(cur.endDate||'');
-    const startTime=patch.startTime!==undefined?patch.startTime:(cur.startTime||'');
-    const endTime=patch.endTime!==undefined?patch.endTime:(cur.endTime||'');
-    const upd={...(this.state.tkUpd||{})};
-    upd[id]={ ...(upd[id]||{}), startDate, endDate, startTime, endTime,
-      start:this.fmtDate(startDate)||cur.start, end:this.fmtDate(endDate)||cur.end };
-    this.setState({ tkUpd:upd });
+    const startDate=patch.startDate!==undefined?patch.startDate:(t.startDate||'');
+    const endDate=patch.endDate!==undefined?patch.endDate:(t.endDate||'');
+    const startTime=patch.startTime!==undefined?patch.startTime:(t.startTime||'');
+    const endTime=patch.endTime!==undefined?patch.endTime:(t.endTime||'');
+    this.tkPatch(id, { startDate, endDate, startTime, endTime,
+      start:this.fmtDate(startDate)||t.start, end:this.fmtDate(endDate)||t.end }, 'Schedule updated');
     this.flash('Task schedule updated.');
-    supabase.from('tasks').update({
-      start_date:startDate||null, end_date:endDate||null, start_time:startTime||null, end_time:endTime||null,
-    }).eq('code', id).then(({error})=>{
-      if(error) console.warn('[supabase] task date update failed:', error.message);
-    });
   }
   _deleteTask(id){
     if(!this.hasPerm('tasks','delete')){ this.flash('You do not have permission to delete tasks.'); return; }
@@ -6960,7 +6956,7 @@ class AppRoot extends React.Component {
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
