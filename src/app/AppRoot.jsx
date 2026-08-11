@@ -608,7 +608,7 @@ class AppRoot extends React.Component {
       Reporting_Manager:{ toUsers:true }, Team_Lead:{ toUsers:true },
       Role:{ toMaster:'role', valueField:'Role', labelField:'Role' },
     },
-    department: { Head:{ toUsers:true } },
+    department: { Head:{ toUsers:true }, Members:{ toUsers:true, multi:true } },
     client: { Industry:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' } },
     competitor: { Industry:{ toMaster:'industry', valueField:'Industry', labelField:'Industry' } },
     contentType: {
@@ -1769,9 +1769,21 @@ class AppRoot extends React.Component {
         const form = this.state.mrForm||{};
         return {
           mrTitle: (this.state.mrIndex!=null?'Edit ':'Add ')+m.label+' entry',
-          mrFieldRows: m.fields.map(f=>{
+          mrFieldRows: m.fields.map((f,i)=>{
+            const rel = this.MASTER_FIELD_RELATIONS[mk] && this.MASTER_FIELD_RELATIONS[mk][f];
             const options = this.masterFieldOptions(mk, f);
+            const isCode = i===0;
+            if(rel && rel.multi){
+              const selected=String(form[f]||'').split(',').map(s=>s.trim()).filter(Boolean);
+              return { key:f, label:this.humanize(f), isMulti:true,
+                multiChips:selected.map(name=>({ name,
+                  remove:()=>this.setState({ mrForm:{...this.state.mrForm, [f]:selected.filter(x=>x!==name).join(', ')} }) })),
+                multiAddVal:'',
+                multiOptions:[{value:'',label:'+ Add '+this.humanize(f).toLowerCase().replace(/s$/,'')+'…'}].concat((options||[]).filter(o=>!selected.includes(o.value))),
+                onMultiAdd:e=>{ const v=e.target.value; if(!v) return; this.setState({ mrForm:{...this.state.mrForm, [f]:[...selected,v].join(', ')} }); } };
+            }
             return { key:f, label:this.humanize(f), value:form[f]!=null?form[f]:'', isSelect:!!options, options:options||[],
+              readOnly:isCode, placeholder:isCode?'Assigned automatically on save':undefined,
               onChange:e=>this.setState({ mrForm:{...this.state.mrForm, [f]:e.target.value} }) };
           }),
         };
@@ -2504,7 +2516,14 @@ class AppRoot extends React.Component {
     if(!String(mrForm[labelField]||'').trim()){ this.flash('Enter a value for '+this.humanize(labelField)+' to save.'); return; }
     const row = { ...mrForm };
     if(!String(row[idField]||'').trim()){
-      row[idField] = m.label.replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'X')+String(m.rows.length+1).padStart(3,'0');
+      // Derived from the highest number ever issued for this prefix — not
+      // just the current row count — so deleting a record can never free up
+      // a number that collides with one still in use (same pattern as OKR/
+      // task/effort-plan code generation elsewhere in this file).
+      const prefix=m.label.replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'X');
+      const everIssued=m.rows.map(r=>String(r[idField]||'')).concat((this.state.masterDeleted||{})[mrKey]||[]);
+      const nums=everIssued.filter(id=>id.indexOf(prefix)===0).map(id=>parseInt(id.slice(prefix.length),10)||0);
+      row[idField] = prefix+String(Math.max(0,...nums)+1).padStart(3,'0');
     }
     const rowId=String(row[idField]);
     const added={...(this.state.masterAdded||{})};

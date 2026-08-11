@@ -20,7 +20,27 @@ export default function EditMasterRecordModal({ vm }) {
                 {(mrFieldRows || []).map(f => (
                   <div key={f.key}>
                     <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 6 }}>{f.label}</label>
-                    {f.isSelect ? (
+                    {f.isMulti ? (
+                      <div>
+                        {Boolean(f.multiChips && f.multiChips.length) && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            {f.multiChips.map((c, ci) => (
+                              <span key={ci} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 999, background: 'var(--orchid-100)', color: 'var(--orchid-700)', fontSize: 12, fontWeight: 700 }}>
+                                {c.name}
+                                <button onClick={c.remove} style={{ border: 'none', background: 'none', cursor: 'pointer', display: 'flex', padding: 0, color: 'var(--orchid-700)' }}>
+                                  <Icon name="x" style={{ width: 10, height: 10 }} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <select value={f.multiAddVal} onChange={f.onMultiAdd} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, background: 'var(--paper)', color: 'var(--ink-500)' }}>
+                          {f.multiOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                    ) : f.readOnly ? (
+                      <input value={f.value} readOnly placeholder={f.placeholder} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, outline: 'none', background: 'var(--surface-50)', color: 'var(--ink-500)', cursor: 'not-allowed' }} />
+                    ) : f.isSelect ? (
                       <select value={f.value} onChange={f.onChange} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13.5, background: 'var(--paper)' }}>
                         <option value="">— Select —</option>
                         {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
