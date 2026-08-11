@@ -660,7 +660,8 @@ class AppRoot extends React.Component {
     return Math.round(ks.reduce((s,k)=>s+Math.max(0,Math.min(100,this.cmpNum(k.current)/(this.cmpNum(k.target)||1)*100)),0)/ks.length);
   }
   cmpKpiPool(){
-    const okrs = this.OKR_DATA();
+    const seedTitles=new Set(this.OKR_SEED().map(o=>o.title));
+    const okrs = this.OKR_DATA().filter(o=>!seedTitles.has(o.title));
     const out=[];
     okrs.forEach(o=>(o.krs||[]).forEach(k=>{
       out.push({ key:o.code+'::'+k.kpi, kpi:k.kpi, unit:k.unit, target:k.target, current:k.current, okrId:o.id, okrCode:o.code, okrTitle:o.title, freq:k.freq });
@@ -3114,7 +3115,25 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] effort plan delete failed:', error.message);
     });
   }
-  epKpiPool(){ return [].concat((this.MY_KPIS().junior||[]).map(k=>({...k,who:'Junior'})),(this.MY_KPIS().senior||[]).map(k=>({...k,who:'Senior'})),(this.MY_KPIS().team_lead||[]).map(k=>({...k,who:'Team Lead'})),this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ id:t.id, kpi:t.name, unit:t.unit, baseline:'0', target:t.defTarget, current:'0', freq:t.freq, who:'Template' }))); }
+  // Every KPI a user can actually link an effort/task to — real Key
+  // Results from real OKRs (any owner, not just the current viewer's own —
+  // an effort can be assigned to anyone) plus real KPI Templates. The old
+  // version surfaced MY_KPIS()'s hardcoded junior/senior/team_lead demo
+  // catalog here too, so "Link KPI" showed a dozen KPIs nobody in the org
+  // had ever created or touched. That catalog stays in MY_KPIS() for the
+  // personal check-in page's own display, but never belongs in a picker
+  // that's supposed to represent real, curated KPIs.
+  epKpiPool(){
+    const seedTitles=new Set(this.OKR_SEED().map(o=>o.title));
+    const real=[];
+    (this.allOkrs()||[]).forEach(o=>{
+      if(seedTitles.has(o.title)) return;
+      (o.krs||[]).forEach((k,i)=>{
+        real.push({ id:(o.code||o.id)+'-kr'+i, kpi:k.kpi||k.t||('KR '+(i+1)), unit:k.unit||'units', baseline:k.baseline||'0', target:k.target||'100', current:k.current||'0', freq:k.freq||'Monthly', okr:o.title, who:k.who||'—' });
+      });
+    });
+    return real.concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ id:t.id, kpi:t.name, unit:t.unit, baseline:'0', target:t.defTarget, current:'0', freq:t.freq, who:'Template' })));
+  }
   KPI_TEMPLATES(){ return [
     { id:'kt1', name:'Organic Sessions', category:'Traffic', division:'SEO', unit:'sessions', direction:'Increase', defTarget:'100,000', freq:'Monthly', source:'GA4', desc:'Total organic search sessions on tracked domains.', status:'Active', owner:'Priya Nair', updated:'Jun 10, 2026' },
     { id:'kt2', name:'Keywords in Top 10', category:'SEO', division:'SEO', unit:'keywords', direction:'Increase', defTarget:'250', freq:'Weekly', source:'Semrush', desc:'Tracked keywords ranking in positions 1–10.', status:'Active', owner:'Priya Nair', updated:'Jun 10, 2026' },
@@ -3212,7 +3231,7 @@ class AppRoot extends React.Component {
           this.confirmDelete('Delete Effort Plan?', 'Are you sure you want to delete "'+(p.name||p.id)+'"? This action cannot be undone.', ()=>this._deleteEpPlan(p.id)); },
       };
     });
-    const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' — '+k.who })));
+    const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.kpi+' — '+k.who })));
     const assigneeOpts=[{v:'',label:'(plan owner)'}].concat((this.state.users||[]).filter(u=>u.status==='Active').map(u=>({v:u.name,label:u.name})));
     const totalW=rows.reduce((s,r)=>s+(r.weight||0),0);
     const epRows=rows.map((r,i)=>{
@@ -4028,7 +4047,7 @@ class AppRoot extends React.Component {
       ttClose:()=>this.setState({ ttNew:false, ttEditId:null, ttForm:{} }),
       ttStop:(e)=>e.stopPropagation(),
       ttSetName:setTf('name'), ttSetDivision:setTf('division'), ttSetDesc:setTf('desc'), ttSetUnit:setTf('unit'), ttSetEstH:setTf('estH'), ttSetPriority:setTf('priority'), ttSetRecurrence:setTf('recurrence'), ttSetStatus:setTf('status'), ttSetKpi:setTf('kpiId'),
-      ttKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
+      ttKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
       ttChecklist:cl.map((s,i)=>({ i, val:s,
         set:(e)=>{ const a=cl.slice(); a[i]=e.target.value; this.setState({ ttForm:{...f,checklist:a} }); },
         remove:()=>{ const a=cl.slice(); a.splice(i,1); this.setState({ ttForm:{...f,checklist:a.length?a:['']} }); },
@@ -6941,7 +6960,7 @@ class AppRoot extends React.Component {
       if(k==='template'){ const tpl=this.TASK_TEMPLATES().find(x=>x.name===v); if(tpl&&tpl.kpiId){ nf.kpiId=tpl.kpiId; } }
       this.setState({ tkForm:nf });
     };
-    const kpiPool=this.epKpiPool(); const _unused=[].concat((this.MY_KPIS().junior||[]).map(k=>({...k,who:'Junior'})),(this.MY_KPIS().senior||[]).map(k=>({...k,who:'Senior'})),(this.MY_KPIS().team_lead||[]).map(k=>({...k,who:'Team Lead'})));
+    const kpiPool=this.epKpiPool();
     const nextCode='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'));
     return {
@@ -6966,7 +6985,7 @@ class AppRoot extends React.Component {
         }
         return {
           tkKpiOptions:[{id:'',label:pool.length?'None — not KPI-linked':'None — effort only'}]
-            .concat(pool.map(k=>({ id:k.id, label:k.id.toUpperCase()+' · '+k.kpi+' ('+k.unit+') — '+k.who }))),
+            .concat(pool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
           tkKpiScoped:scoped, tkKpiNote:note }; })(),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
