@@ -9640,10 +9640,21 @@ class AppRoot extends React.Component {
     const { data, error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
     if(!error && data.user){
       await this._loadProfile(data.user);
+      this._recordLoginSession();
       this.setState({ authBusy:false });
       return;
     }
     this.setState({ loginError: error ? error.message : 'Invalid credentials.', authBusy:false });
+  }
+  // Fire-and-forget — Admin's Active Sessions list depends on this, but a
+  // failure here must never block or fail the actual sign-in.
+  async _recordLoginSession(){
+    try{
+      const { data } = await supabase.auth.getSession();
+      const token = data && data.session && data.session.access_token;
+      if(!token) return;
+      await fetch('/api/auth/record-session', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token } });
+    }catch(e){ console.warn('[session] record failed:', e.message); }
   }
 
   async _loadProfile(user){
