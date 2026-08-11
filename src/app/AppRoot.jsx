@@ -1682,12 +1682,10 @@ class AppRoot extends React.Component {
         return (dark&&b.darkLogo)||b.companyLogo||''; })(),
       campaignOptions:this.campaignOptionsFor((this.state.tkForm||{}).campaign,true),
       campaignOptionsNone:this.campaignOptionsFor((this.state.okrForm||{}).campaign,true),
-      epCampaignOptions:this.campaignOptionsFor((this.state.epForm||{}).campaign,true),
       okrTitleOptions:this.okrTitleOptionsFor((this.state.epForm||{}).okr),
       okrParentOptions:this.okrTitleOptionsFor((this.state.okrForm||{}).parent),
       tkCampaignVal:this.campaignOpt((this.state.tkForm||{}).campaign),
       okrCampaignVal:this.campaignOpt((this.state.okrForm||{}).campaign),
-      epCampaignVal:this.campaignOpt((this.state.epForm||{}).campaign),
       epOkrVal:this.okrTitleOpt((this.state.epForm||{}).okr),
       okrParentVal:(this.state.okrForm||{}).parent||'None (top level)',
       roleOptions:['admin','ceo','coo','secretary'].map(k=>({key:k,label:this.ROLES[k].label,sel:k===rk})),
@@ -3070,7 +3068,12 @@ class AppRoot extends React.Component {
     if(o.code) this._persistOkr(o.code, { title:o.title, description:o.desc, category:o.category, scope:o.scope, division:o.dept, status:o.status, key_results:krs });
   }
 
-  EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'Q3 SEO push', dept:'SEO', owner:this.currentPerson(), okr:'Increase Organic Traffic by 50%', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
+  // campaign dropped per the Campaign field being removed from Create
+  // Effort Plan; okr no longer defaults to a specific hardcoded title —
+  // that title was one of the 5 seed OKRs, which don't reflect whatever
+  // OKRs actually exist now, so the field starts unset and the user picks
+  // from the live list instead.
+  EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'', dept:'SEO', owner:this.currentPerson(), okr:'', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
   EP_DIVISIONS(){ return ['Content Writer','Graphics','Web Developers','SMM','SEO'].concat(this.state.epCustomDivs||[]); }
   EP_DIV_ROWS(d){
     // assignee defaults to '' (falls back to the plan's overall owner in
@@ -3375,23 +3378,11 @@ class AppRoot extends React.Component {
       epEditTitle:this.state.epPlanId?('Edit effort plan · '+this.state.epPlanId):'Create effort plan',
       epEditSub:this.state.epPlanId?'Saved plan — every effort shows its linked KPI and the tasks generated from it.':'Define effort targets, convert them to KPIs and auto-generate tasks for the period.',
       epSaveLabel:this.state.epPlanId?'Save changes':'Save plan',
-      epSetName:setF('name'), epSetQuarter:setF('quarter'), epSetCampaign:setF('campaign'), epSetDept:setF('dept'), epSetOwner:setF('owner'), epSetOkr:setF('okr'), epSetStart:setF('start'), epSetEnd:setF('end'), epSetType:setF('type'),
+      epSetName:setF('name'), epSetQuarter:setF('quarter'), epSetDept:setF('dept'), epSetOwner:setF('owner'), epSetOkr:setF('okr'), epSetStart:setF('start'), epSetEnd:setF('end'), epSetType:setF('type'),
       epTotalW:totalW+'%', epTotalWColor: totalW===100?'var(--verify-600)':'var(--danger-600)',
       epBalanced: totalW===100,
       epBalanceMsg: totalW===100?'All targets balanced — ready for task generation.':'Weightages must total 100% (currently '+totalW+'%).',
       epGenerated:this.state.epGenerated,
-      epGenerate:()=>this.epGenerate(),
-      ...(()=>{ const mode=this.state.epGenMode||'One task per effort line';
-        const live=rows.filter(r=>r.monthly);
-        const count=mode==='Weekly batches'?live.length*4
-          :mode==='One task per deliverable'?live.reduce((s,r)=>s+Math.min(r.monthly,31),0)
-          :live.length;
-        return {
-          epGenModes:['One task per effort line','Weekly batches','One task per deliverable'].map(m=>({ label:m, active:mode===m,
-            style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'#fff':'rgba(255,255,255,.35)')+';background:'+(mode===m?'var(--paper)':'transparent')+';color:'+(mode===m?'var(--ink-900)':'rgba(255,255,255,.9)'),
-            set:()=>this.setState({ epGenMode:m }) })),
-          epGenPreview:'Will create '+count+' task'+(count===1?'':'s')+' from '+live.length+' effort line'+(live.length===1?'':'s'),
-          epGenWarn:count>20?('That is a lot of tasks — consider “One task per effort line”.'):'' }; })(),
       epOwnerOptions:(this.state.users||[]).filter(u=>u.status==='Active').map(u=>u.name),
     };
   }

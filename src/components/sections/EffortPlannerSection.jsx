@@ -3,9 +3,9 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function EffortPlannerSection({ vm }) {
-  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epCanDeleteDiv, epDeleteDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
-    epIsEdit, epEditTitle, epEditSub, epSaveLabel, epCampaignOptions, epCampaignVal, okrTitleOptions, epOkrVal,
-    epGenModes, epGenPreview, epGenWarn, epCanDelete } = vm;
+  const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epCanDeleteDiv, epDeleteDiv, epDivOptions, epDivision, epFilterDefs, epForm, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
+    epIsEdit, epEditTitle, epEditSub, epSaveLabel, okrTitleOptions, epOkrVal,
+    epCanDelete } = vm;
   return (
     <React.Fragment>
 {Boolean(showEffort) && (
@@ -699,23 +699,7 @@ Period (month)
 <input type="month" value={epForm.quarter} onInput={epSetQuarter} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
 </div>
 
-              
-<div>
-<label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-Campaign
-</label>
-<select value={epCampaignVal} onChange={epSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
-{(epCampaignOptions || []).map((o, $index) => (
-<React.Fragment key={$index}>
-<option value={o}>
-{o}
-</option>
-</React.Fragment>
-))}
-</select>
-</div>
 
-              
 <div>
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Department
@@ -1113,53 +1097,7 @@ Total weightage: {epTotalW}
 </div>
 
 
-          
-{Boolean(epCanEdit) && (
-<React.Fragment>
 
-            
-<div style={{"display":"flex","alignItems":"center","gap":"14px","background":"linear-gradient(150deg,#3d1024,#7A1C46)","color":"#fff","borderRadius":"18px","padding":"20px 24px"}}>
-
-              
-<span style={{"width":"46px","height":"46px","borderRadius":"12px","background":"rgba(255,255,255,.14)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
-<Icon name={"wand-2"} style={{"width":"22px","height":"22px"}} />
-</span>
-
-              
-<div style={{"flex":"1"}}>
-<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"16px"}}>
-Generate tasks from this plan
-</div>
-<div style={{"display":"flex","flexWrap":"wrap","gap":"7px","margin":"9px 0 7px"}}>
-{(epGenModes || []).map((m, $index) => (
-<React.Fragment key={$index}>
-<button onClick={m.set} style={cssTextToObject(m.style)}>{m.label}</button>
-</React.Fragment>
-))}
-</div>
-<div style={{"fontSize":"12px","fontWeight":"700","color":"#fff"}}>{epGenPreview}</div>
-{Boolean(epGenWarn) && (
-<div style={{"fontSize":"11.5px","color":"#F3D9A6"}}>{epGenWarn}</div>
-)}
-<div style={{"fontSize":"13px","color":"rgba(255,255,255,.78)","marginTop":"3px"}}>
-One task per deliverable — 12 blog posts become 12 tasks (+1 each to the KPI); high-volume efforts like 25,000 words split into 4 weekly batch tasks. Dates spread across the month, assignee & KPI carried along.
-</div>
-</div>
-
-              
-<button onClick={epGenerate} style={{"flexShrink":"0","display":"flex","alignItems":"center","gap":"8px","background":"var(--paper)","color":"var(--ink-900)","border":"none","borderRadius":"12px","padding":"12px 20px","fontSize":"14px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"wand-2"} style={{"width":"16px","height":"16px"}} />
-Generate tasks
-</button>
-
-            
-</div>
-
-          
-</React.Fragment>
-)}
-
-          
 </React.Fragment>
 )}
 
