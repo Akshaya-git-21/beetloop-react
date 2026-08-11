@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete } = vm;
+  const { closeNewPage, npAI, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -121,7 +121,23 @@ Repository *
 </select>
 </div>
 
-            
+
+<div>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Brand
+</label>
+<select value={npf.brand||''} onChange={npSetBrand} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+{(npBrandOptions || []).map((b, $index) => (
+<React.Fragment key={$index}>
+<option value={b}>
+{b}
+</option>
+</React.Fragment>
+))}
+</select>
+</div>
+
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Page type
@@ -170,7 +186,11 @@ URL slug
 — auto from name, editable
 </span>
 </label>
-<input value={npf.slug} onInput={npSetSlug} placeholder={npSlug} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","fontFamily":"'Space Mono'"}} />
+<input value={npf.slug} onInput={npSetSlug} disabled={npIsIndex} placeholder={npSlug} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","fontFamily":"'Space Mono'","opacity":npIsIndex?0.5:1}} />
+<label style={{"display":"flex","alignItems":"center","gap":"7px","marginTop":"8px","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
+<input type="checkbox" checked={npIsIndex} onChange={npSetIsIndex} />
+This page is the category's index (URL ends at the folder, no extra slug)
+</label>
 </div>
 
           

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentRepositorySection({ vm }) {
-  const { cPg, contentAI, contentBulk, contentEmpty, contentExport, contentImport, contentKpis, contentNew, contentOnQuery, contentOnStatus, contentQuery, contentRepoLabel, contentRepoTabs, contentRows, contentStatusFilter, showContent } = vm;
+  const { cPg, contentAI, contentBulk, contentEmpty, contentExport, contentImport, contentKpis, contentNew, contentOnQuery, contentOnStatus, contentQuery, contentRepoLabel, contentRepoTabs, contentRows, contentStatusFilter, showContent, contentBrandFilter, contentBrandOptions, contentOnBrand } = vm;
   return (
     <React.Fragment>
 {Boolean(showContent) && (
@@ -84,15 +84,31 @@ Bulk Update
             
 {/* repo switcher */}
 
-            
+
 <div style={{"flex":"none","width":"216px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"12px"}}>
 
-              
+
+<div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".12em","textTransform":"uppercase","color":"var(--ink-400)","padding":"4px 10px 4px"}}>
+Brand
+</div>
+
+
+<select value={contentBrandFilter} onChange={contentOnBrand} style={{"width":"100%","padding":"7px 9px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12.5px","fontWeight":"600","background":"var(--paper)","color":"var(--ink-900)","marginBottom":"12px"}}>
+{(contentBrandOptions || []).map((b, $index) => (
+<React.Fragment key={$index}>
+<option value={b}>
+{b==='All'?'All brands':b}
+</option>
+</React.Fragment>
+))}
+</select>
+
+
 <div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".12em","textTransform":"uppercase","color":"var(--ink-400)","padding":"4px 10px 8px"}}>
 Repositories
 </div>
 
-              
+
 {(contentRepoTabs || []).map((r, $index) => (
 <React.Fragment key={$index}>
 
@@ -226,7 +242,7 @@ NEW
 )}
 </div>
 <div style={{"fontSize":"11px","color":"var(--ink-400)"}}>
-{p.repo} · {p.industry}
+{p.repo} · {p.brand} · {p.industry}
 </div>
 {Boolean(p.hasLinked) && (
 <React.Fragment>

@@ -527,6 +527,29 @@ class AppRoot extends React.Component {
           {CT_Code:'CT-04',Content_Type:'Whitepaper',Avg_Word_Count:3500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
         ],
       },
+      // Backs the "Repositories" category tabs in Content Repository. Every
+      // row here has a Brand — 'All Brands' means it shows for every brand,
+      // a specific brand (e.g. Food Research Lab) means it only shows when
+      // that brand is selected, so different brands can have their own
+      // category taxonomy (e.g. a 'Retort' line only Food Research Lab uses).
+      contentCategory: {
+        label:'Content Category Master', icon:'folder-tree', group:'SEO & Content',
+        desc:'Content Repository categories — universal or brand-specific.',
+        cols:[ {k:'Category_Code',l:'Code',mono:1}, {k:'Category_Name',l:'Category'}, {k:'Brand',l:'Brand'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Category_Code','Category_Name','Brand','Status'],
+        rows:[
+          {Category_Code:'service',Category_Name:'Service',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'insights',Category_Name:'Insights',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'product',Category_Name:'Product',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'career',Category_Name:'Career',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'landing',Category_Name:'Landing Page',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'case',Category_Name:'Case Study',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'resource',Category_Name:'Resource Library',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'faq',Category_Name:'FAQ',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'news',Category_Name:'News',Brand:'All Brands',Status:'Active'},
+          {Category_Code:'home',Category_Name:'Home & Corporate',Brand:'All Brands',Status:'Active'},
+        ],
+      },
       platform: {
         label:'Platform Master', icon:'share-2', group:'Marketing & Quality',
         desc:'Social platforms managed by the SMM team.',
@@ -539,16 +562,20 @@ class AppRoot extends React.Component {
           {PF_Code:'PF-04',Platform:'X',Primary_Format:'Post',Handle:'@beetloop',Post_Frequency:'Daily',Status:'Active'},
         ],
       },
+      // Brand works the same way it does on Content Category: 'All Brands'
+      // shows the industry for every brand's targeting/mapping pickers, a
+      // specific brand scopes it to only that brand (e.g. a niche vertical
+      // only Food Research Lab targets, not the whole company).
       industry: {
         label:'Industry Master', icon:'factory', group:'Marketing & Quality',
-        desc:'Industry verticals for targeting and mapping.',
-        cols:[ {k:'Ind_Code',l:'Code',mono:1}, {k:'Industry',l:'Industry'}, {k:'Clients',l:'Clients'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['Ind_Code','Industry','Clients','Parent_Vertical','Status'],
+        desc:'Industry verticals for targeting and mapping — universal or brand-specific.',
+        cols:[ {k:'Ind_Code',l:'Code',mono:1}, {k:'Industry',l:'Industry'}, {k:'Brand',l:'Brand'}, {k:'Clients',l:'Clients'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Ind_Code','Industry','Brand','Clients','Parent_Vertical','Status'],
         rows:[
-          {Ind_Code:'IND-01',Industry:'Education',Clients:2,Parent_Vertical:'Services',Status:'Active'},
-          {Ind_Code:'IND-02',Industry:'Food',Clients:1,Parent_Vertical:'Consumer',Status:'Active'},
-          {Ind_Code:'IND-03',Industry:'Nutraceutical',Clients:1,Parent_Vertical:'Health',Status:'Active'},
-          {Ind_Code:'IND-04',Industry:'Healthcare',Clients:1,Parent_Vertical:'Health',Status:'Active'},
+          {Ind_Code:'IND-01',Industry:'Education',Brand:'All Brands',Clients:2,Parent_Vertical:'Services',Status:'Active'},
+          {Ind_Code:'IND-02',Industry:'Food',Brand:'All Brands',Clients:1,Parent_Vertical:'Consumer',Status:'Active'},
+          {Ind_Code:'IND-03',Industry:'Nutraceutical',Brand:'All Brands',Clients:1,Parent_Vertical:'Health',Status:'Active'},
+          {Ind_Code:'IND-04',Industry:'Healthcare',Brand:'All Brands',Clients:1,Parent_Vertical:'Health',Status:'Active'},
         ],
       },
       qcChecklist: {
@@ -615,6 +642,8 @@ class AppRoot extends React.Component {
       Default_Owner:{ toUsers:true },
       QC_Checklist:{ toMaster:'qcChecklist', valueField:'Checklist', labelField:'Checklist' },
     },
+    contentCategory: { Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name', none:'All Brands' } },
+    industry: { Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name', none:'All Brands' } },
     kpi: { Department:{ toMaster:'department', valueField:'Department', labelField:'Department' } },
   };
   // Returns null for a plain text/number field, or an array of {value,label}
@@ -923,7 +952,7 @@ class AppRoot extends React.Component {
         return { label:name, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const c=on?cur.filter(x=>x!==name):[...cur,name]; this.setState({ cmpForm:{...f, countries:c.join(', ')} }); } }; }),
-      cmpIndustryRows:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive').map(r=>{ const name=r.Industry;
+      cmpIndustryRows:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive' && (!f.brand || r.Brand==='All Brands' || r.Brand===f.brand)).map(r=>{ const name=r.Industry;
         const cur=(f.industries||'').split(',').map(s=>s.trim()).filter(Boolean); const on=cur.includes(name);
         return { label:name, on,
           style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
@@ -7689,19 +7718,18 @@ class AppRoot extends React.Component {
     };
   }
 
-  CONTENT_REPOS(){ return [
-    {key:'all', name:'All content', icon:'layers'},
-    {key:'service', name:'Service', icon:'briefcase'},
-    {key:'insights', name:'Insights', icon:'lightbulb'},
-    {key:'product', name:'Product', icon:'package'},
-    {key:'career', name:'Career', icon:'user-round'},
-    {key:'landing', name:'Landing Page', icon:'panels-top-left'},
-    {key:'case', name:'Case Study', icon:'file-check-2'},
-    {key:'resource', name:'Resource Library', icon:'library'},
-    {key:'faq', name:'FAQ', icon:'circle-help'},
-    {key:'news', name:'News', icon:'newspaper'},
-    {key:'home', name:'Home & Corporate', icon:'building-2'},
-  ]; }
+  // Category tabs are live Master Data (contentCategory), not a fixed list —
+  // a category tagged 'All Brands' shows for every brand, one tagged to a
+  // specific brand (e.g. Food Research Lab) only shows when that brand is
+  // selected, so admins can add brand-specific categories (e.g. 'Retort')
+  // via Master Data without touching every other brand's taxonomy.
+  // brand===undefined returns every category regardless of brand, so id
+  // lookups (find by key) keep working even when the list is filtered elsewhere.
+  CONTENT_REPOS(brand){
+    const icons={ service:'briefcase', insights:'lightbulb', product:'package', career:'user-round', landing:'panels-top-left', case:'file-check-2', resource:'library', faq:'circle-help', news:'newspaper', home:'building-2' };
+    const rows=this.MASTERS_REG().contentCategory.rows.filter(r=>r.Status!=='Inactive' && (!brand || brand==='All' || r.Brand==='All Brands' || r.Brand===brand));
+    return [{key:'all', name:'All content', icon:'layers'}].concat(rows.map(r=>({ key:r.Category_Code, name:r.Category_Name, icon:icons[r.Category_Code]||'folder' })));
+  }
   CONTENT_PAGES(){
     if(this._cpages) return this._cpages;
     this._cpages = [
@@ -7802,6 +7830,9 @@ class AppRoot extends React.Component {
         analytics:{traffic:'8,700',ctr:'6.2%',pos:'2.4',bounce:'34%',time:'3m 40s',conv:'210',backlinks:'96',speed:'1.6s'},
         activity:[['John Doe','Published','Oct 20, 2024'],['Priya Nair','QC approved','Oct 19, 2024']] },
     ];
+    // Pre-brand-field seed pages default to Beetloop (the house brand) so
+    // existing data doesn't silently vanish once pages are brand-scoped.
+    this._cpages.forEach(p=>{ if(!p.brand) p.brand='Beetloop'; });
     return this._cpages;
   }
 
@@ -7831,8 +7862,10 @@ class AppRoot extends React.Component {
   contentView(){
     const rk=this.state.roleKey;
     const canEdit = ['manager','admin','team_lead'].includes(rk);
-    const repos=this.CONTENT_REPOS();
-    const all=this.allContentPages();
+    const cBrand=this.state.cBrand||'All';
+    const repos=this.CONTENT_REPOS(cBrand);
+    const allRaw=this.allContentPages();
+    const all=allRaw.filter(p=>cBrand==='All'||p.brand===cBrand);
     const cRepo=this.state.cRepo||'all', q=(this.state.cQuery||'').toLowerCase(), cStatus=this.state.cStatus||'All';
     const seoColor=(v)=> v>=80?'var(--verify-600)': v>=60?'var(--warn-600)':'var(--danger-600)';
     let list=all.filter(p=> (cRepo==='all'||p.repo===cRepo) && (cStatus==='All'||p.status===cStatus) && (!q || (p.name+' '+p.keyword+' '+p.topic).toLowerCase().includes(q)) );
@@ -7842,7 +7875,7 @@ class AppRoot extends React.Component {
     const roots=list.filter(p=>!p.pid || !inList[p.pid]);
     const ordered=[]; const walk=(p,depth)=>{ ordered.push({p,depth}); list.filter(c=>c.pid===p.id).forEach(c=>walk(c,depth+1)); };
     roots.forEach(r=>walk(r,0));
-    const byId={}; all.forEach(p=>byId[p.id]=p);
+    const byId={}; allRaw.forEach(p=>byId[p.id]=p);
     const rows=ordered.map(({p,depth})=>{
       const st=this.contentStatusTone(p.status); const exp=(this.state.cExpanded||[]).includes(p.id);
       const isNew=(this.state.cAdded||[]).some(x=>x.id===p.id);
@@ -7850,7 +7883,7 @@ class AppRoot extends React.Component {
         icon: byId[id].repo==='service'?'briefcase':'lightbulb',
         open:(e)=>{ if(e)e.stopPropagation(); this.setState({ cOpen:id, cTab:0 }); } }));
       return { id:p.id, isNew, depth, indent:(depth*26)+'px', isChild:depth>0, linked, hasLinked:linked.length>0,
-        name:p.name, repo:repoName(p.repo), type:p.type, topic:p.topic, industry:p.industry, keyword:p.keyword,
+        name:p.name, repo:repoName(p.repo), brand:p.brand||'—', type:p.type, topic:p.topic, industry:p.industry, keyword:p.keyword,
         status:p.status, statusBg:st.bg, statusColor:st.color, seo:p.seo, seoColor:seoColor(p.seo), updated:p.updated, owner:p.owner, reviewer:p.reviewer,
         metaTitle:(p.seoMeta.find(m=>m[0]==='Meta Title')||[])[1]||'—', metaDesc:(p.seoMeta.find(m=>m[0]==='Meta Description')||[])[1]||'—',
         relCount:Object.values(p.rel||{}).reduce((s,a)=>s+a.length,0), linkCount:(p.internal||[]).length,
@@ -7865,6 +7898,8 @@ class AppRoot extends React.Component {
       style:'display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:none;cursor:pointer;padding:8px 10px;margin-bottom:2px;border-radius:9px;font-size:13px;font-weight:'+(r.key===cRepo?'700':'600')+';'+(r.key===cRepo?'background:var(--orchid-100);color:var(--ink-900)':'background:transparent;color:var(--ink-500)') }));
     return {
       contentRepoTabs:repoTabs, contentCanEdit:canEdit,
+      contentBrandFilter:cBrand, contentBrandOptions:['All'].concat(this.BRAND_LIST()),
+      contentOnBrand:e=>this.setState({ cBrand:e.target.value, cRepo:'all', cExpanded:[] }),
       contentKpis:[
         {label:'Total pages',value:String(all.length),color:'var(--ink-900)',icon:'files'},
         {label:'Published',value:String(cnt(p=>p.status==='Published')),color:'var(--verify-600)',icon:'check-circle-2'},
@@ -7876,7 +7911,7 @@ class AppRoot extends React.Component {
       contentStatusFilter:this.state.cStatus||'All', contentOnStatus:e=>this.setState({cStatus:e.target.value}),
       contentQuery:this.state.cQuery||'', contentOnQuery:e=>this.setState({cQuery:e.target.value}),
       contentRepoLabel:repoName(cRepo), ...(()=>{ const pg=this.pgData('content',rows,8); return { contentRows:pg.rows, cPg:pg }; })(), contentEmpty:rows.length===0,
-      contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npForm:{ repo: cRepo==='all'?'service':cRepo } }):this.flash('View only for your role.'),
+      contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npForm:{ repo: cRepo==='all'?'service':cRepo, brand: cBrand!=='All'?cBrand:'Beetloop' } }):this.flash('View only for your role.'),
       contentAI:()=>this.setState({ route:'ideas' }),
       contentExport:()=>this.exportCsv('content-repository-'+this._todayIso()+'.csv',
         ['ID','Name','Repository','Type','Topic','Keyword','Status','SEO score','Owner','Reviewer','Updated'],
@@ -8000,21 +8035,37 @@ class AppRoot extends React.Component {
     reader.readAsText(file);
   }
 
+  // Legacy categories map to their historical URL prefix; a brand-specific
+  // category added later via Master Data (e.g. 'Retort') has no such
+  // mapping, so its prefix is derived from the category name itself
+  // (slugified) — e.g. Retort -> /retort/.
+  repoUrlPrefix(repoKey){
+    const legacy={ service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' };
+    if(legacy[repoKey]) return legacy[repoKey];
+    const cat=this.CONTENT_REPOS().find(r=>r.key===repoKey);
+    const slug=(cat&&cat.name?cat.name:repoKey).toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
+    return '/'+slug+'/';
+  }
   newPageData(){
     const f=this.state.npForm||{};
     const repos=this.CONTENT_REPOS().filter(r=>r.key!=='all');
     const editId=this.state.npEditId;
     const code = editId||this._nextSeqCode('PG-', this._allContentPageIdsEver(), 1000);
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
-    const baseSlug = f.slug || slugify(f.name);
-    const repoPath = { service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' }[f.repo||'service'] || '/';
+    // "Index page" means this page IS the category/parent root — its URL
+    // ends right at that folder (e.g. /retort-main/) with no extra slug
+    // segment, rather than every page needing its own trailing slug.
+    const baseSlug = f.isIndex ? '' : (f.slug || slugify(f.name));
+    const repoPath = this.repoUrlPrefix(f.repo||'service');
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
     const base = parentPage ? (parentPage.url + '/') : repoPath;
-    const url = baseSlug ? (base + baseSlug) : (base + '…');
+    const url = f.isIndex ? base : (baseSlug ? (base + baseSlug) : (base + '…'));
     const set=(k)=>(e)=>this.setState({ npForm:{...this.state.npForm,[k]:e.target.value} });
     return {
       showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
+      npBrandOptions:this.BRAND_LIST(), npSetBrand:set('brand'),
+      npIsIndex:!!f.isIndex, npSetIsIndex:e=>this.setState({ npForm:{...this.state.npForm, isIndex:e.target.checked} }),
       npParentOptions:[{id:'',label:'None — top-level page'}].concat(this.allContentPages().map(p=>({ id:p.id, label:p.name+'  ·  '+p.url }))),
       npSetParentId:(e)=>this.setState({ npForm:{...this.state.npForm, pid:e.target.value} }),
       npParentUrl: parentPage ? parentPage.url : '',
@@ -8075,19 +8126,25 @@ class AppRoot extends React.Component {
     const repoName=(this.CONTENT_REPOS().find(r=>r.key===repo)||{}).name;
     const name=f.name.trim();
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
-    const slug=f.slug||slugify(name);
-    const repoPath={ service:'/services/', insights:'/insights/', product:'/product/', career:'/careers/', landing:'/lp/', case:'/case-studies/', resource:'/resources/', faq:'/faq/', news:'/news/', home:'/' }[repo]||'/';
+    const slug=f.isIndex?'':(f.slug||slugify(name));
+    const repoPath=this.repoUrlPrefix(repo);
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
-    const url = parentPage ? (parentPage.url+'/'+slug) : (repoPath+slug);
+    const url = f.isIndex ? (parentPage?(parentPage.url+'/'):repoPath) : (parentPage ? (parentPage.url+'/'+slug) : (repoPath+slug));
     const owner=f.owner||this.currentPerson(); const reviewer=f.reviewer||'—';
     const metaTitle=f.metaTitle||name; const metaDesc=f.metaDesc||'—';
     const seo = (f.metaTitle&&f.metaDesc)? (f.keyword?68:58) : (f.metaTitle||f.metaDesc?42:28);
     const today=this.todayStr();
     const page={
-      id:code, name, repo, type:f.type||'Service Page', topic:f.keyword||'—', industry:f.industry||'—', keyword:f.keyword||'—',
+      id:code, name, repo, brand:f.brand||(existing&&existing.brand)||'Beetloop', type:f.type||'Service Page', topic:f.keyword||'—', industry:f.industry||'—', keyword:f.keyword||'—',
       status: activate?'Under Review':'Draft', seo, updated:today, owner, reviewer,
       pid: f.pid||null, linkedIds: [f.relServiceId,f.relInsightId].filter(Boolean),
-      slug, url, parent: parentPage?parentPage.name:(f.parent||repoName), menuCat:f.menuCat||repoName, menuOrder:parseInt(f.menuOrder,10)||0, breadcrumb: parentPage?(parentPage.breadcrumb+' > '+name):('Home > '+(f.parent||repoName)+' > '+name), description:metaDesc,
+      slug, url, isIndex:!!f.isIndex, parent: parentPage?parentPage.name:(f.parent||repoName), menuCat:f.menuCat||repoName, menuOrder:parseInt(f.menuOrder,10)||0,
+      // An index page IS the category/parent folder itself, so its
+      // breadcrumb stops there instead of repeating the page name as an
+      // extra trailing crumb (e.g. "Home > Retort Main", not
+      // "Home > Retort Main > Retort Main").
+      breadcrumb: f.isIndex ? (parentPage?parentPage.breadcrumb:('Home > '+(f.parent||repoName))) : (parentPage?(parentPage.breadcrumb+' > '+name):('Home > '+(f.parent||repoName)+' > '+name)),
+      description:metaDesc,
       cls: repo==='service'
         ? [['Service Category',f.industry||'General'],['Sub-Service',f.subService||'To be assigned'],['Primary Keyword',f.keyword||'—'],['Industry',f.industry||'—'],['Sector',f.sector||'—'],['Application Category','—'],['Target Countries',f.countries||'—']]
         : [['Topic',f.keyword||name],['Author',owner],['Content Type',f.type||'Article'],['Sector',f.sector||'—'],['Tags',f.keyword||'—'],['Target Countries',f.countries||'—'],['Related Services',f.subService||'—']],
@@ -8681,7 +8738,7 @@ class AppRoot extends React.Component {
     this.setState({ showNewPage:true, npTab:0, npEditId:id,
       npLinks:(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})).length?(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})):[{anchor:'',target:'',ltype:'Internal'}],
       npMedia:(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})).length?(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})):[{name:'',alt:'',type:'Image'}],
-      npForm:{ repo:p.repo, type:p.type, name:p.name, slug:p.slug, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
+      npForm:{ repo:p.repo, brand:p.brand||'Beetloop', type:p.type, name:p.name, slug:p.slug, isIndex:!!p.isIndex, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
         metaTitle:seoGet('Meta Title'), metaDesc:p.description, owner:p.owner, reviewer:p.reviewer!=='—'?p.reviewer:'',
         subService:clsGet('Sub-Service')!=='To be assigned'?clsGet('Sub-Service'):'', sector:clsGet('Sector')!=='—'?clsGet('Sector'):'',
         countries:clsGet('Target Countries')!=='—'?clsGet('Target Countries'):'', pid:p.pid||'',
