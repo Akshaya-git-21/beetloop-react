@@ -6,7 +6,8 @@ export default function OkrCreatePanel({ vm }) {
   const { closeOkr, kpiOptions, okrAddKR, okrAuditUser, okrDraftKRs, okrNewCode, okrOwnerOptions, okrSteps, okrTplOptions, okrTplPick, okrTplVal, okrWeightBg, okrWeightColor, okrWeightTotal, saveOkr, saveOkrDraft, showOkrPanel, okrForm, okrSetTitle, okrSetDesc, okrSetOwner, okrSetDept, okrDeptOptions, okrSetBrand, okrBrandOptions, okrSetBusinessUnit, okrBusinessUnitOptions, okrSetWebsiteDomain, okrWebsiteDomainOptions, okrIsEdit, okrPanelTitle, okrPanelCode, okrPanelVerBadge, okrSaveLabel, okrCanDelete, okrDelete,
     okrSetCategory, okrSetPriority, okrSetCycle, okrSetReviewFreq, okrSetStart, okrSetEnd, okrSetParent, okrSetDependsOn, okrSetEffortTargets, okrSetProgressCalc, okrSetDataSource, okrSetReviewer, okrSetStatus, okrSetRisks, okrReviewerOptions,
     okrCampaignVal, campaignOptionsNone, okrSetCampaign, okrParentOptions, okrParentVal,
-    okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions } = vm;
+    okrUnitOptions, okrTsrcOptions, okrToolGroups, okrMethodOptions, okrMfreqOptions, okrTaskLinkOptions, okrEffortLinkOptions,
+    okrContributorChips, okrAddContributorVal, okrAddContributor, okrContributorOptions } = vm;
   return (
     <React.Fragment>
 {Boolean(showOkrPanel) && (
@@ -158,7 +159,27 @@ Owner *
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Contributors
 </label>
-<input placeholder="Add team members…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginBottom":(okrContributorChips&&okrContributorChips.length)?"8px":"0"}}>
+{(okrContributorChips || []).map((c, $index) => (
+<React.Fragment key={$index}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"5px 10px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)","fontSize":"12px","fontWeight":"700"}}>
+{c.name}
+<button onClick={c.remove} style={{"border":"none","background":"none","cursor":"pointer","display":"flex","padding":"0","color":"var(--orchid-700)"}}>
+<Icon name={"x"} style={{"width":"11px","height":"11px"}} />
+</button>
+</span>
+</React.Fragment>
+))}
+</div>
+<select value={okrAddContributorVal} onChange={okrAddContributor} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)","color":"var(--ink-500)"}}>
+{(okrContributorOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.v}>
+{o.label}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
             

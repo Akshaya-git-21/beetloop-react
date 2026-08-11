@@ -7097,7 +7097,7 @@ class AppRoot extends React.Component {
         cycle:o.cycle, reviewFreq:o.reviewFreq||'Weekly', start:this.isoDate(o.start), end:this.isoDate(o.due),
         parent:o.parent||'None (top level)', dependsOn:o.dependsOn||'', effortTargets:o.effortTargets||'',
         progressCalc:o.progressCalc||'Automatic (from KPI logs)', dataSource:o.dataSource||'GA4',
-        reviewer:this.okrReviewerOpt(o.reviewer), status:o.status==='Archived'?'Draft':o.status, risks:o.risks||'' },
+        reviewer:this.okrReviewerOpt(o.reviewer), status:o.status==='Archived'?'Draft':o.status, risks:o.risks||'', contributors:o.contributors||[] },
       okrDraftKRs:(o.krs||[]).map((k,i)=>({ id:i+1, kr:k.t, kpiSel:k.kpi, unit:k.unit, baseline:k.baseline, target:k.target, current:k.current, weight:String(k.weight),
         who:k.who, freq:k.freq||'Monthly', due:this.isoDate(k.due),
         tool:k.tool||'', method:k.method||'', mfreq:k.mfreq||'', evidence:k.evidence||'', tsrc:k.tsrc||'Manual', tref:k.tref||'',
@@ -7122,7 +7122,8 @@ class AppRoot extends React.Component {
       start:this.fmtDate(f.start)||this.todayStr(), due:this.fmtDate(f.end)||'Mar 31, 2026',
       parent:f.parent||'None (top level)', dependsOn:f.dependsOn||'', effortTargets:f.effortTargets||'',
       progressCalc:f.progressCalc||'Automatic (from KPI logs)', dataSource:f.dataSource||'GA4',
-      reviewer:f.reviewer||this.currentPerson(), risks:f.risks||'', krs, status: activate?(f.status&&f.status!=='Draft'?f.status:'Active'):'Draft' };
+      reviewer:f.reviewer||this.currentPerson(), risks:f.risks||'', krs, status: activate?(f.status&&f.status!=='Draft'?f.status:'Active'):'Draft',
+      contributors:(f.contributors||[]), team:(f.contributors&&f.contributors.length)?('+'+f.contributors.length):'' };
     if(editId){
       const prev=this.OKR_DATA().find(x=>x.id===editId)||{};
       const ver='v'+(parseFloat(String(prev.v||'v1.0').replace('v',''))+0.1).toFixed(1);
@@ -7132,7 +7133,7 @@ class AppRoot extends React.Component {
       if(prev.code) this._persistOkr(prev.code, {
         title:shared.title, description:shared.desc, category:shared.category,
         scope:shared.scope, division:shared.dept, status:shared.status, key_results:krs,
-        business_unit:shared.businessUnit, website_domain:shared.websiteDomain,
+        business_unit:shared.businessUnit, website_domain:shared.websiteDomain, contributors:shared.contributors, owner:shared.owner,
       });
       return;
     }
@@ -7154,7 +7155,7 @@ class AppRoot extends React.Component {
     supabase.from('okrs').insert({
       code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
       status:okr.status, key_results:krs, business_unit:okr.businessUnit, website_domain:okr.websiteDomain,
-      created_by:this.state.authUser?this.state.authUser.id:null,
+      contributors:okr.contributors, owner:okr.owner, created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] okr insert failed:', error.message);
     });
@@ -7185,7 +7186,8 @@ class AppRoot extends React.Component {
     const rows=data||[];
     const mapped=rows.filter(r=>!r.deleted).map(r=>({
       id:'okr-'+r.id, code:r.code, v:'v1.0', scope:r.scope||'Department', title:r.title, desc:r.description||'',
-      owner:(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—', team:'', cycle:'Q1 2026',
+      owner:r.owner||(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—',
+      contributors:r.contributors||[], team:(r.contributors&&r.contributors.length)?('+'+r.contributors.length):'', cycle:'Q1 2026',
       brand:'', businessUnit:r.business_unit||'', websiteDomain:r.website_domain||'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
       progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
       status:r.status||'Draft', weight:100, reviewer:'', approver:'',
@@ -8874,7 +8876,7 @@ class AppRoot extends React.Component {
           chosen.map(o=>[o.code, o.title, o.category, this.okrPriority(o).label, o.scope||'Department', o.owner, o.dept, o.brand, o.status, o.progress, o.due]));
         this.setState({ okrSelected:[] }); },
       ...(()=>{ const pg=this.pgData('okr',rows,6); return { okrRows:pg.rows, okrPg:pg }; })(), okrCanEdit:canEdit, okrEmpty:rows.length===0,
-      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:this.BRAND_LIST()[0]||'Beetloop', businessUnit:'', websiteDomain:'', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
+      okrNew:()=>{ if(canEdit) this.setState({ showOkrPanel:true, okrSection:'okrA', okrEditId:null, okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:this.BRAND_LIST()[0]||'Beetloop', businessUnit:'', websiteDomain:'', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'', contributors:[] }, okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 }); else this.flash('Only Managers and Admin can create OKRs.'); },
       showOkrPanel:this.state.showOkrPanel, closeOkr:()=>this.setState({ showOkrPanel:false, okrEditId:null }),
       okrIsEdit:!!this.state.okrEditId, okrPanelTitle:this.state.okrEditId?'Edit OKR':'Create new OKR', okrSaveLabel:this.state.okrEditId?'Save changes':'Save & activate',
       okrCanDelete:canDeleteOkr && !!this.state.okrEditId,
@@ -8888,6 +8890,17 @@ class AppRoot extends React.Component {
       okrSetDesc:e=>this.setState({ okrForm:{...this.state.okrForm, desc:e.target.value} }),
       okrSetOwner:e=>this.setState({ okrForm:{...this.state.okrForm, owner:e.target.value} }),
       okrOwnerOptions:(this.state.users||[]).map(u=>u.name),
+      // Contributors used to be a plain, disconnected text input (no state,
+      // nothing saved) — real users, chip + dropdown, same add/remove
+      // pattern as the multi-KPI-link chips in the Effort Planner.
+      okrContributorChips:(this.state.okrForm&&this.state.okrForm.contributors||[]).map(name=>({ name,
+        remove:()=>{ const cur=(this.state.okrForm.contributors||[]).filter(x=>x!==name); this.setState({ okrForm:{...this.state.okrForm, contributors:cur} }); } })),
+      okrAddContributorVal:'',
+      okrAddContributor:e=>{ const v=e.target.value; if(!v) return;
+        const cur=this.state.okrForm.contributors||[];
+        if(cur.includes(v)){ this.flash(v+' is already a contributor.'); return; }
+        this.setState({ okrForm:{...this.state.okrForm, contributors:[...cur, v]} }); },
+      okrContributorOptions:[{v:'',label:'+ Add contributor…'}].concat((this.state.users||[]).filter(u=>u.status==='Active'&&u.name!==this.state.okrForm.owner&&!(this.state.okrForm.contributors||[]).includes(u.name)).map(u=>({v:u.name,label:u.name}))),
       okrSetDept:e=>this.setState({ okrForm:{...this.state.okrForm, dept:e.target.value} }),
       okrDeptOptions:this.MASTERS_REG().department.rows.map(r=>r.Department),
       okrSetBrand:e=>this.setState({ okrForm:{...this.state.okrForm, brand:e.target.value} }),
