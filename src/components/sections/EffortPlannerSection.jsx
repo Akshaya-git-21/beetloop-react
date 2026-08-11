@@ -5,7 +5,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function EffortPlannerSection({ vm }) {
   const { epAddRow, epAddingDiv, epAlloc, epBack, epBalanceMsg, epCanEdit, epCancelDiv, epCanDeleteDiv, epDeleteDiv, epDivOptions, epDivision, epFilterDefs, epForm, epGenerate, epIsCreate, epIsList, epIsReport, epNew, epNewDiv, epNotCreate, epOnNewDiv, epOwnerOptions, epPlans, epRepFilterDefs, epRepPlans, epRepReset, epRepStats, epResetFilters, epRows2, epSave, epSaveDiv, epSegListStyle, epSegReportStyle, epSetCampaign, epSetDept, epSetDivision, epSetEnd, epSetName, epSetOkr, epSetOwner, epSetQuarter, epSetStart, epSetType, epShowList, epShowReport, epTotalW, epTotalWColor, showEffort,
     epIsEdit, epEditTitle, epEditSub, epSaveLabel, epCampaignOptions, epCampaignVal, okrTitleOptions, epOkrVal,
-    epGenModes, epGenPreview, epGenWarn } = vm;
+    epGenModes, epGenPreview, epGenWarn, epCanDelete } = vm;
   return (
     <React.Fragment>
 {Boolean(showEffort) && (
