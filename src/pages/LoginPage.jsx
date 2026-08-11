@@ -74,7 +74,7 @@ Projects, campaigns, QC and analytics — with role-based access from the CEO to
 
     
 <div style={{"position":"relative","fontSize":"12.5px","color":"rgba(255,255,255,.5)"}}>
-© Beetloop. Internal use only — authorized personnel.
+© {loginPlatformName}. Internal use only — authorized personnel.
 </div>
 
   
@@ -94,7 +94,7 @@ Sign in
 
       
 <p style={{"margin":"0 0 26px","color":"var(--ink-500)","fontSize":"15px"}}>
-Welcome back. Use your Beetloop work account.
+Welcome back. Use your {loginPlatformName} work account.
 </p>
 
 
