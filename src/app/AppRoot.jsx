@@ -756,7 +756,7 @@ class AppRoot extends React.Component {
       cmpFilterDefs:[
         {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Completed']},
         {label:'Type',value:F.type,onChange:setF('type'),options:['All','SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']},
-        {label:'Department',value:F.dept,onChange:setF('dept'),options:['All','SEO','Content','SMM','Web Development','Design']},
+        {label:'Department',value:F.dept,onChange:setF('dept'),options:['All'].concat(this.liveDeptOptions())},
       ],
       cmpReset:()=>this.setState({ cmpFilters:{status:'All',type:'All',dept:'All'} }),
     };
@@ -913,6 +913,7 @@ class AppRoot extends React.Component {
             if(sc) sc.scrollTo({ top:Math.max(0, el.offsetTop-20), behavior:'smooth' }); },0); },
         badgeBg:sec===id?'var(--beet-700)':'var(--surface-50)', badgeColor:sec===id?'#fff':'var(--ink-500)' })),
       cmpSetName:set('name'), cmpSetType:set('type'), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
+      cmpDeptOptions:this.liveDeptOptions(), cmpBrandOptions:this.BRAND_LIST(),
       cmpSetCountries:set('countries'), cmpSetIndustries:set('industries'), cmpSetAudience:set('audience'), cmpSetPersona:set('persona'), cmpSetCompanySize:set('companySize'),
       // Target countries/industries as Master-Data-backed pill toggles —
       // same checkbox-chip pattern as ufBrandRows — storing the same
@@ -1735,6 +1736,7 @@ class AppRoot extends React.Component {
       ufManagerOptions:(this.state.users||[]).filter(u=>['manager','coo','ceo','admin'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       ufLeadOptions:(this.state.users||[]).filter(u=>u.roleKey==='team_lead').map(u=>u.name+' ('+(u.designation||u.role)+')'),
       ufRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
+      ufDeptOptions:this.liveDeptOptions(),
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
       ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
         return { label:b, on,
@@ -4526,7 +4528,7 @@ class AppRoot extends React.Component {
       umSetMobile:setD('mobile'), umSetDesignation:setD('designation'), umSetTeam:setD('team'),
       umSetReportingManager:setD('reportingManager'), umSetTeamLead:setD('teamLead'), umSetOfficeLocation:setD('officeLocation'),
       umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
-      umDeptOptions:['SEO','Content','SMM','Web Development','Design','Analytics','Marketing','Quality','Leadership','Operations'],
+      umDeptOptions:this.liveDeptOptions(),
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
       // Brand assignment is available for every role, including Admin/CEO —
@@ -6142,7 +6144,7 @@ class AppRoot extends React.Component {
       sopSetResources:set('resources'), sopSetDocs:set('docs'), sopSetSuccess:set('successCriteria'),
       sopSetRisks:set('risks'), sopSetEscalation:set('escalation'), sopSetTags:set('tags'),
       sopSetChange:set('changeSummary'), sopSetReason:set('reason'),
-      sopDivisionOptions:['Content','SEO','SMM','Web Development','Design','Quality','Marketing','Analytics','Operations'],
+      sopDivisionOptions:this.liveDeptOptions(),
       // optional brand tag — leave "All brands" for company-wide SOPs; pick a
       // specific brand to restrict this SOP to Sales users assigned that
       // brand (see scopedSops()). Sales sees NO SOPs at all until at least
@@ -7001,7 +7003,7 @@ class AppRoot extends React.Component {
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
-      tkDivisionOptions:['Content','Graphics','Web Developers','SMM','SEO'],
+      tkDivisionOptions:this.liveDeptOptions(),
       tkReviewerOptions:(this.state.users||[])
         .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
         .map(u=>u.name+' ('+u.role+')'),
@@ -8210,6 +8212,7 @@ class AppRoot extends React.Component {
   // filters, Campaign/OKR forms, Brand Playbook. Inactive brands drop out
   // of every dropdown but stay in Master Data (soft-disable, not delete).
   BRAND_LIST(){ return this.MASTERS_REG().brand.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Brand_Name); }
+  liveDeptOptions(){ return this.MASTERS_REG().department.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Department).filter(Boolean); }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},

@@ -24,7 +24,7 @@ export default function CreateCampaignModal({ vm }) {
     cmpEffortForm, cmpAddEffort, cmpEffortEmpty, cmpEffortOptions,
     cmpNewEffortOpen, cmpNe, cmpNeSetName, cmpNeSetQty, cmpNeSetUnit, cmpNeSetCadence, cmpNeSetDivision, cmpNeSetKpi,
     cmpNeKpiOptions, cmpNeDivisions, cmpNeCancel, cmpNeSave,
-    cmpTeamForm, cmpAddTeam, cmpRoleNames,
+    cmpTeamForm, cmpAddTeam, cmpRoleNames, cmpDeptOptions, cmpBrandOptions,
   } = vm;
   const f = cmpf || {};
   const ne = cmpNe || {};
@@ -81,12 +81,12 @@ export default function CreateCampaignModal({ vm }) {
                       </div>
                       <div><label style={label}>Brand / company</label>
                         <select value={f.brand || ''} onChange={cmpSetBrand} style={select}>
-                          {['Beetloop','Pubrica','Food Research Lab','Statswork','Tutors India'].map(o => <option key={o}>{o}</option>)}
+                          {(cmpBrandOptions || []).map(o => <option key={o}>{o}</option>)}
                         </select>
                       </div>
                       <div><label style={label}>Department / division</label>
                         <select value={f.dept || ''} onChange={cmpSetDept} style={select}>
-                          {['SEO','Content','SMM','Web Development','Design'].map(o => <option key={o}>{o}</option>)}
+                          {(cmpDeptOptions || []).map(o => <option key={o}>{o}</option>)}
                         </select>
                       </div>
                       <div><label style={label}>Cycle</label>

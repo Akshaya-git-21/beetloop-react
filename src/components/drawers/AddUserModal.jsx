@@ -4,7 +4,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
   const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
-    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions, ufRoleOptions } = vm;
+    ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions, ufRoleOptions, ufDeptOptions } = vm;
   return (
     <React.Fragment>
 {Boolean(showUserModal) && (
@@ -97,24 +97,7 @@ Organization & hierarchy
 Department
 </label>
 <select value={uf.dept} onChange={ufDept} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
-<option>
-SEO
-</option>
-<option>
-Content
-</option>
-<option>
-SMM
-</option>
-<option>
-Web Development
-</option>
-<option>
-Design
-</option>
-<option>
-Analytics
-</option>
+{(ufDeptOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>
 
