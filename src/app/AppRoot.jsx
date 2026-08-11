@@ -578,6 +578,23 @@ class AppRoot extends React.Component {
           {Ind_Code:'IND-04',Industry:'Healthcare',Brand:'All Brands',Clients:1,Parent_Vertical:'Health',Status:'Active'},
         ],
       },
+      // Backs the "Object Category" field on Content Repository pages
+      // (Service and non-Service alike) — a content/service classification
+      // tag that used to be a hardcoded, uneditable '—' placeholder.
+      objectCategory: {
+        label:'Object Category Master', icon:'shapes', group:'SEO & Content',
+        desc:'Content/service classification tags used on Content Repository pages.',
+        cols:[ {k:'OC_Code',l:'Code',mono:1}, {k:'Category_Name',l:'Category'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['OC_Code','Category_Name','Status'],
+        rows:[
+          {OC_Code:'OC-01',Category_Name:'Infrastructure',Status:'Active'},
+          {OC_Code:'OC-02',Category_Name:'Security',Status:'Active'},
+          {OC_Code:'OC-03',Category_Name:'Analytics',Status:'Active'},
+          {OC_Code:'OC-04',Category_Name:'Data & AI',Status:'Active'},
+          {OC_Code:'OC-05',Category_Name:'Marketing Tech',Status:'Active'},
+          {OC_Code:'OC-06',Category_Name:'Compliance',Status:'Active'},
+        ],
+      },
       qcChecklist: {
         label:'QC Checklist Master', icon:'clipboard-check', group:'Marketing & Quality',
         desc:'Reusable QC checklists applied during review.',
@@ -4850,10 +4867,6 @@ class AppRoot extends React.Component {
     });
   }
   tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'},Closed:{bg:'#EAE4E8',c:'var(--beet-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
-  // Distinct comment-bubble color per commenting role — CEO and COO each get
-  // their own color so a task's comment thread visually distinguishes who's
-  // weighing in at a glance. Falls back to the old text-label regex for
-  // legacy comments that predate the `roleKey` field (no role key stored).
   // Differentiates comment bubbles by the individual person who wrote them,
   // not their role — two people who happen to share a role (e.g. two Admin
   // accounts) must still look visually distinct from each other. Hashing the
@@ -8056,6 +8069,7 @@ class AppRoot extends React.Component {
       showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
       npBrandOptions:this.BRAND_LIST(), npSetBrand:set('brand'),
+      npObjectCategoryOptions:this.MASTERS_REG().objectCategory.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Category_Name), npSetObjectCategory:set('objectCategory'),
       npIsIndex:!!f.isIndex, npSetIsIndex:e=>this.setState({ npForm:{...this.state.npForm, isIndex:e.target.checked} }),
       npParentOptions:[{id:'',label:'None — top-level page'}].concat(this.allContentPages().map(p=>({ id:p.id, label:p.name+'  ·  '+p.url }))),
       npSetParentId:(e)=>this.setState({ npForm:{...this.state.npForm, pid:e.target.value} }),
@@ -8136,8 +8150,8 @@ class AppRoot extends React.Component {
       breadcrumb: f.isIndex ? (parentPage?parentPage.breadcrumb:('Home > '+(f.parent||repoName))) : (parentPage?(parentPage.breadcrumb+' > '+name):('Home > '+(f.parent||repoName)+' > '+name)),
       description:metaDesc,
       cls: repo==='service'
-        ? [['Service Category',f.industry||'General'],['Sub-Service',f.subService||'To be assigned'],['Primary Keyword',f.keyword||'—'],['Industry',f.industry||'—'],['Sector',f.sector||'—'],['Application Category','—'],['Target Countries',f.countries||'—']]
-        : [['Topic',f.keyword||name],['Author',owner],['Content Type',f.type||'Article'],['Sector',f.sector||'—'],['Tags',f.keyword||'—'],['Target Countries',f.countries||'—'],['Related Services',f.subService||'—']],
+        ? [['Service Category',f.industry||'General'],['Sub-Service',f.subService||'To be assigned'],['Primary Keyword',f.keyword||'—'],['Industry',f.industry||'—'],['Sector',f.sector||'—'],['Application Category',f.objectCategory||'—'],['Target Countries',f.countries||'—']]
+        : [['Topic',f.keyword||name],['Author',owner],['Content Type',f.type||'Article'],['Object Category',f.objectCategory||'—'],['Sector',f.sector||'—'],['Tags',f.keyword||'—'],['Target Countries',f.countries||'—'],['Related Services',f.subService||'—']],
       seoMeta:[['Meta Title',metaTitle],['Meta Description',metaDesc],['Primary Keywords',f.primaryKw||f.keyword||'—'],['Secondary Keywords',f.secondaryKw||'—'],['Keyword Intent',f.intent||'—'],['Canonical URL',url],['Schema Type', f.schema||(repo==='service'?'Service':'WebPage')],['Robots',f.robots||'Index, Follow'],['Index Status', activate?'Pending':'Not indexed'],['Hreflang','en-US'],['OG Title',f.ogTitle||metaTitle],['OG Description',f.ogDesc||metaDesc],['OG Image',f.ogImage||'—'],['Twitter Card','summary_large_image']],
       blocks:[['Heading','H1',name],['Paragraph','',f.intro||'Draft introduction — start writing this page.'],
         ['Heading','H2',f.h2||'Overview'],['Paragraph','',f.h2body||f.overview||('Add supporting content for '+(f.keyword||name)+'.')],
@@ -8728,6 +8742,7 @@ class AppRoot extends React.Component {
       npForm:{ repo:p.repo, brand:p.brand||'Beetloop', type:p.type, name:p.name, slug:p.slug, isIndex:!!p.isIndex, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
         metaTitle:seoGet('Meta Title'), metaDesc:p.description, owner:p.owner, reviewer:p.reviewer!=='—'?p.reviewer:'',
         subService:clsGet('Sub-Service')!=='To be assigned'?clsGet('Sub-Service'):'', sector:clsGet('Sector')!=='—'?clsGet('Sector'):'',
+        objectCategory:(()=>{ const v=clsGet('Object Category')||clsGet('Application Category'); return v!=='—'?v:''; })(),
         countries:clsGet('Target Countries')!=='—'?clsGet('Target Countries'):'', pid:p.pid||'',
         menuCat:p.menuCat, menuOrder:String(p.menuOrder||0), secondaryKw:seoGet('Secondary Keywords')!=='—'?seoGet('Secondary Keywords'):'',
         intent:seoGet('Keyword Intent')!=='—'?seoGet('Keyword Intent'):'', schema:seoGet('Schema Type'),
