@@ -17,17 +17,17 @@ export default function UsersSection({ vm }) {
 </div>
 
 {Boolean(umTabPerms) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div style={{"padding":"16px 20px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"12px","flexWrap":"wrap"}}>
 <div style={{"flex":"1","minWidth":"200px"}}>
-<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)"}}>Module permissions</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)"}}>Module permissions</div>
 <div style={{"fontSize":"12px","color":"var(--ink-500)","marginTop":"2px"}}>{permCanManage ? 'Click a dot to grant or revoke that action for the selected role.' : 'View only — only Admin can change permissions.'}</div>
 </div>
-<select value={permRoleVal||''} onChange={permSetRole} style={{"padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff","fontWeight":"700","color":"var(--beet-700)"}}>
+<select value={permRoleVal||''} onChange={permSetRole} style={{"padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)","fontWeight":"700","color":"var(--ink-900)"}}>
 {(permRoleOptions || []).map((o, $i) => (<option key={$i} value={o.key}>{o.label}</option>))}
 </select>
 {Boolean(permCanManage) && (
-<button onClick={permReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={permReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"13px","height":"13px"}} />
 Reset to defaults
 </button>
@@ -75,7 +75,7 @@ Reset to defaults
 
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(150px,1fr))","gap":"12px","marginBottom":"16px"}}>
 {(umStats || []).map((s, $index) => (
-<div key={$index} style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div key={$index} style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>{s.label}</div>
 <div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:22px;color:${s.color};margin-top:4px`)}>{s.value}</div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"2px"}}>{s.sub}</div>
@@ -83,7 +83,7 @@ Reset to defaults
 ))}
 </div>
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div className="blscroll" style={{"overflowX":"auto"}}>
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1340px"}}>
 <thead>
@@ -103,7 +103,7 @@ Reset to defaults
 <tbody>
 {(umRows || []).map((u, $index) => (
 <tr key={$index} style={{"borderBottom":"1px solid var(--line-200)"}}>
-<td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>{u.emp}</td>
+<td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>{u.emp}</td>
 <td onClick={u.open} style={{"padding":"12px 14px","borderBottom":"1px solid var(--line-200)","cursor":"pointer"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"9px"}}>
 {u.hasAvatar ? (
@@ -151,13 +151,13 @@ Reset to defaults
 {u.actionLabel}
 </button>
 {Boolean(u.canSuspend) && (
-<button onClick={u.suspend} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={u.suspend} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"user-x"} style={{"width":"12px","height":"12px"}} />
 {u.suspendLabel}
 </button>
 )}
 {Boolean(u.canDelete) && (
-<button onClick={u.delete} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={u.delete} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px"}} />
 Delete
 </button>

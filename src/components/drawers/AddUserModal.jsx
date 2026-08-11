@@ -14,23 +14,23 @@ export default function AddUserModal({ vm }) {
 <div onClick={closeUserModal} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"150","display":"flex","alignItems":"center","justifyContent":"center","padding":"28px"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"88vh","overflowY":"auto","background":"#fff","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"88vh","overflowY":"auto","background":"var(--paper)","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"padding":"22px 26px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","justifyContent":"space-between","position":"sticky","top":"0","background":"#fff","borderRadius":"22px 22px 0 0"}}>
+<div style={{"padding":"22px 26px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","justifyContent":"space-between","position":"sticky","top":"0","background":"var(--paper)","borderRadius":"22px 22px 0 0"}}>
 
         
 <div>
 <div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 User Master
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 Add new user
 </h3>
 </div>
 
         
-<button onClick={closeUserModal} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={closeUserModal} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
@@ -96,7 +96,7 @@ Organization & hierarchy
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Department
 </label>
-<select value={uf.dept} onChange={ufDept} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
+<select value={uf.dept} onChange={ufDept} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
 <option>
 SEO
 </option>
@@ -147,7 +147,7 @@ Break (minutes)
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Working days / week
 </label>
-<select value={uf.days} onChange={ufDays} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={uf.days} onChange={ufDays} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option value="4">4</option>
 <option value="5">5</option>
 <option value="5.5">5.5</option>
@@ -174,7 +174,7 @@ Designation
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Reporting manager
 </label>
-<select value={uf.manager} onChange={ufManager} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
+<select value={uf.manager} onChange={ufManager} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
 <option value="">
 — None —
 </option>
@@ -191,7 +191,7 @@ Reporting manager
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Team lead
 </label>
-<select value={uf.lead} onChange={ufLead} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
+<select value={uf.lead} onChange={ufLead} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
 <option value="">
 — None —
 </option>
@@ -219,7 +219,7 @@ Security & role
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Role
 </label>
-<select value={uf.role} onChange={ufRole} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
+<select value={uf.role} onChange={ufRole} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
 {(ufRoleOptions||[]).map(r=><option key={r}>{r}</option>)}
 </select>
 </div>
@@ -229,7 +229,7 @@ Role
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Account status
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}}>
+<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
 <option>
 Pending Invitation
 </option>
@@ -275,10 +275,10 @@ activation link
 </div>
 
       
-<div style={{"padding":"18px 26px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px","position":"sticky","bottom":"0","background":"#fff","borderRadius":"0 0 22px 22px"}}>
+<div style={{"padding":"18px 26px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px","position":"sticky","bottom":"0","background":"var(--paper)","borderRadius":"0 0 22px 22px"}}>
 
         
-<button onClick={closeUserModal} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={closeUserModal} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 

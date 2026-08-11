@@ -33,14 +33,14 @@ Lead pipeline
 <React.Fragment>
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(150px,1fr))","gap":"12px","marginBottom":"16px"}}>
 {(pipeStats || []).map((s, $index) => (
-<div key={$index} style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div key={$index} style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>{s.label}</div>
 <div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:22px;color:${s.color};margin-top:4px`)}>{s.value}</div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"2px"}}>{s.sub}</div>
 </div>
 ))}
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
 <div style={{"fontSize":"11.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"14px"}}>Conversion funnel — enquiry → UQL → MQL → SQL → opportunity → won</div>
 <div style={{"display":"flex","flexDirection":"column","gap":"11px"}}>
 {(pipeFunnel || []).map((f, $index) => (
@@ -57,14 +57,14 @@ Lead pipeline
 </div>
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"14px","flexWrap":"wrap"}}>
 {(pipeFilterDefs || []).map((f, $index) => (
-<div key={$index} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div key={$index} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>{f.label}</span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer","maxWidth":"200px"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer","maxWidth":"200px"}}>
 {(f.options || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>
 ))}
-<button onClick={pipeReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<button onClick={pipeReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"12px","height":"12px"}} />
 Reset
 </button>
@@ -81,7 +81,7 @@ Add lead
 </span>
 )}
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div style={{"overflowX":"auto"}}>
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"940px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
@@ -136,7 +136,7 @@ Add lead
 <React.Fragment>
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(160px,1fr))","gap":"12px","marginBottom":"16px"}}>
 {(ldStats || []).map((s, $index) => (
-<div key={$index} style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div key={$index} style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>{s.label}</div>
 <div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:23px;color:${s.color};margin-top:4px`)}>{s.value}</div>
 <div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"2px"}}>{s.sub}</div>
@@ -161,10 +161,10 @@ View only — lead volumes and service performance are visible to you; entry and
 </div>
 )}
 {Boolean(ldCanEnter) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
 <Icon name={"plus-circle"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)"}} />
-<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)"}}>Log leads — daily entry against a service</span>
+<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--ink-900)"}}>Log leads — daily entry against a service</span>
 {Boolean(ldPendingToday) && (
 <span style={{"fontSize":"10.5px","fontWeight":"700","padding":"3px 10px","borderRadius":"999px","background":"var(--warn-100)","color":"var(--warn-600)"}}>Pending for today</span>
 )}
@@ -173,7 +173,7 @@ View only — lead volumes and service performance are visible to you; entry and
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Date</label>
 <input type="date" value={ldf.date||''} onInput={ldSetDate} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","color":"var(--ink-700)"}} /></div>
 <div style={{"gridColumn":"span 2"}}><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Service <span style={{"color":"var(--danger-600)"}}>*</span></label>
-<select value={ldf.service||''} onChange={ldSetService} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={ldf.service||''} onChange={ldSetService} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 <option value="">Select service page…</option>
 {(ldServiceOptions || []).map((o, $i) => (<option key={$i} value={o.v}>{o.label}</option>))}
 </select>
@@ -183,14 +183,14 @@ View only — lead volumes and service performance are visible to you; entry and
 </div>
 </div>
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Source</label>
-<select value={ldf.source||''} onChange={ldSetSource} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={ldf.source||''} onChange={ldSetSource} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 {(ldSourceOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Brand</label>
 {ldBrandLocked ? (
 <div style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--surface-50)","color":"var(--ink-700)","fontWeight":"600"}}>{ldBrandVal}</div>
 ) : (
-<select value={ldBrandVal||''} onChange={ldSetBrand} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={ldBrandVal||''} onChange={ldSetBrand} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 <option value="">Select brand…</option>
 {(ldBrandOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
@@ -208,7 +208,7 @@ View only — lead volumes and service performance are visible to you; entry and
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Est. value</label>
 <input value={ldf.value||''} onInput={ldSetValue} placeholder="₹1,20,000" style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>Campaign</label>
-<select value={ldf.campaign||''} onChange={ldSetCampaign} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={ldf.campaign||''} onChange={ldSetCampaign} style={{"width":"100%","minWidth":"0","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 {(ldCampaignOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 <div style={{"display":"flex","alignItems":"center","gap":"4px","marginTop":"4px","fontSize":"10px","fontWeight":"600","color":"var(--orchid-700)"}}>
@@ -229,19 +229,19 @@ Log leads
 )}
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"14px","flexWrap":"wrap"}}>
 {(ldFilterDefs || []).map((f, $index) => (
-<div key={$index} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div key={$index} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>{f.label}</span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer","maxWidth":"210px"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer","maxWidth":"210px"}}>
 {(f.options || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>
 ))}
-<button onClick={ldReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<button onClick={ldReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"12px","height":"12px"}} />
 Reset
 </button>
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"6px","flexWrap":"wrap"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","flex":"1"}}>{ldReportTitle}</span>
 {(ldPeriodBtns || []).map((p, $i) => (<button key={$i} onClick={p.set} style={cssTextToObject(p.style)}>{p.label}</button>))}
@@ -270,8 +270,8 @@ Reset
 </div>
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px","marginBottom":"16px"}}>
 {(ldSplit || []).map((g, $index) => (
-<div key={$index} style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
-<div style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)","marginBottom":"10px"}}>{g.label}</div>
+<div key={$index} style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--ink-900)","marginBottom":"10px"}}>{g.label}</div>
 <div style={{"display":"flex","alignItems":"baseline","gap":"14px","marginBottom":"8px"}}>
 <div><div style={{"fontSize":"10.5px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".05em","color":"var(--ink-400)"}}>Visitors</div><div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--info-600)"}}>{g.visitors}</div></div>
 <div><div style={{"fontSize":"10.5px","fontWeight":"700","textTransform":"uppercase","letterSpacing":".05em","color":"var(--ink-400)"}}>Leads</div><div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--ink-900)"}}>{g.leads}</div></div>
@@ -311,7 +311,7 @@ Reset
 <Icon name={"info"} style={{"width":"14px","height":"14px","flexShrink":"0","color":"var(--orchid-600)"}} />
 <span>{ldSplitNote}</span>
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","marginBottom":"16px"}}>
 <div style={{"fontSize":"11.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"14px"}}>Leads by service</div>
 <div style={{"display":"flex","flexDirection":"column","gap":"13px"}}>
 {(ldSvcRows || []).map((s, $index) => (
@@ -332,7 +332,7 @@ Reset
 ))}
 </div>
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div style={{"overflowX":"auto"}}>
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1120px"}}>
 <thead><tr style={{"background":"var(--surface-50)"}}>
@@ -354,7 +354,7 @@ Reset
 <div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
 <span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${l.dateBg};color:${l.dateColor}`)}>{l.date}</span>
 {Boolean(l.canDeleteLead) && (
-<button onClick={l.deleteLead} title="Delete lead" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"22px","height":"22px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"7px","cursor":"pointer","flexShrink":"0"}}>
+<button onClick={l.deleteLead} title="Delete lead" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"22px","height":"22px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"7px","cursor":"pointer","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"11px","height":"11px","color":"var(--danger-600)"}} />
 </button>
 )}
@@ -382,7 +382,7 @@ Reset
 <td style={{"padding":"12px 18px","borderBottom":"1px solid var(--line-200)"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"7px","flexWrap":"wrap"}}>
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:${l.detailBg};color:${l.detailColor}`)}>{l.detailCount}</span>
-<button onClick={l.addDetail} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"4px 10px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={l.addDetail} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"4px 10px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"user-plus"} style={{"width":"10px","height":"10px"}} />
 {l.detailLabel}
 </button>

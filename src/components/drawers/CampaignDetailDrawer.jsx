@@ -16,8 +16,8 @@ export default function CampaignDetailDrawer({ vm }) {
       {Boolean(cmpDrawerOpen) && (
         <React.Fragment>
           <div onClick={cmpClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(31,8,20,.5)', display: 'flex', justifyContent: 'flex-end' }}>
-            <div onClick={cmpStop} className="blscroll" style={{ width: '100%', maxWidth: 840, height: '100%', background: '#fff', boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .3s var(--ease-out)' }}>
-              <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '1px solid var(--line-200)', padding: '18px 24px', zIndex: 3 }}>
+            <div onClick={cmpStop} className="blscroll" style={{ width: '100%', maxWidth: 840, height: '100%', background: 'var(--paper)', boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .3s var(--ease-out)' }}>
+              <div style={{ position: 'sticky', top: 0, background: 'var(--paper)', borderBottom: '1px solid var(--line-200)', padding: '18px 24px', zIndex: 3 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -25,10 +25,10 @@ export default function CampaignDetailDrawer({ vm }) {
                       <span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${cmpD.statusBg};color:${cmpD.statusColor}`)}>{cmpD.status}</span>
                       <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: 'var(--orchid-100)', color: 'var(--orchid-700)' }}>{cmpD.type}</span>
                     </div>
-                    <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--beet-700)', margin: '6px 0 0' }}>{cmpD.name}</h3>
+                    <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--ink-900)', margin: '6px 0 0' }}>{cmpD.name}</h3>
                     <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4 }}>{cmpD.goal}</div>
                   </div>
-                  <button onClick={cmpClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <button onClick={cmpClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Icon name="x" style={{ width: 17, height: 17, color: 'var(--ink-700)' }} />
                   </button>
                 </div>
@@ -85,7 +85,7 @@ export default function CampaignDetailDrawer({ vm }) {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
                         <span style={{ width: 22, height: 22, borderRadius: 7, background: 'var(--beet-700)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>1</span>
-                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--beet-700)' }}>Linked KPIs — what success is measured by</span>
+                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--ink-900)' }}>Linked KPIs — what success is measured by</span>
                       </div>
                       <div style={{ border: '1px solid var(--line-200)', borderRadius: 14, overflow: 'hidden' }}>
                         {(cmpKpiRows || []).map((k, i) => (
@@ -116,7 +116,7 @@ export default function CampaignDetailDrawer({ vm }) {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
                         <span style={{ width: 22, height: 22, borderRadius: 7, background: 'var(--beet-700)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>2</span>
-                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--beet-700)' }}>Effort lines — the output volume required</span>
+                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--ink-900)' }}>Effort lines — the output volume required</span>
                       </div>
                       <div style={{ border: '1px solid var(--line-200)', borderRadius: 14, overflow: 'hidden' }}>
                         {(cmpEffortRows || []).map((e, i) => (
@@ -132,7 +132,7 @@ export default function CampaignDetailDrawer({ vm }) {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
                         <span style={{ width: 22, height: 22, borderRadius: 7, background: 'var(--beet-700)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>3</span>
-                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--beet-700)' }}>Tasks — the assignable work generated</span>
+                        <span style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14, color: 'var(--ink-900)' }}>Tasks — the assignable work generated</span>
                       </div>
                       <div style={{ background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 14, padding: 16 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
@@ -141,8 +141,8 @@ export default function CampaignDetailDrawer({ vm }) {
                         <div style={{ height: 7, borderRadius: 99, background: 'var(--line-200)', overflow: 'hidden', marginBottom: 13 }}><div style={cssTextToObject(`height:100%;border-radius:99px;width:${cmpTaskPctW};background:var(--info-500)`)} /></div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button onClick={cmpGoTasks} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="list-checks" style={{ width: 13, height: 13 }} />View campaign tasks</button>
-                          <button onClick={cmpGoEffort} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="gauge" style={{ width: 13, height: 13 }} />Open Effort Planner</button>
-                          <button onClick={cmpGoOkr} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="target" style={{ width: 13, height: 13 }} />Open OKR & KPI</button>
+                          <button onClick={cmpGoEffort} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="gauge" style={{ width: 13, height: 13 }} />Open Effort Planner</button>
+                          <button onClick={cmpGoOkr} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="target" style={{ width: 13, height: 13 }} />Open OKR & KPI</button>
                         </div>
                       </div>
                     </div>
@@ -179,7 +179,7 @@ export default function CampaignDetailDrawer({ vm }) {
                     <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>Effort target → tasks → driver KPI → contribution</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                       {(cmpModel.rows || []).map((r, i) => (
-                        <div key={i} style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '16px 18px' }}>
+                        <div key={i} style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '16px 18px' }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
                             <span style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--orchid-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               <Icon name="gauge" style={{ width: 15, height: 15, color: 'var(--orchid-600)' }} />

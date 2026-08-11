@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 
 const label = { display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5 };
 const input = { width: '100%', padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13, outline: 'none' };
-const select = { ...input, background: '#fff' };
+const select = { ...input, background: 'var(--paper)' };
 
 export default function RaiseTicketModal({ vm }) {
   const {
@@ -20,13 +20,13 @@ export default function RaiseTicketModal({ vm }) {
     <React.Fragment>
       {Boolean(tktFormOpen) && (
         <div onClick={tktClose} style={{ position: 'fixed', inset: 0, zIndex: 178, background: 'rgba(31,8,20,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
-          <div onClick={tktStop} className="blscroll" style={{ width: '100%', maxWidth: 640, maxHeight: '100%', background: '#fff', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
-            <div style={{ position: 'sticky', top: 0, background: '#fff', padding: '18px 22px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, zIndex: 2 }}>
+          <div onClick={tktStop} className="blscroll" style={{ width: '100%', maxWidth: 640, maxHeight: '100%', background: 'var(--paper)', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
+            <div style={{ position: 'sticky', top: 0, background: 'var(--paper)', padding: '18px 22px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, zIndex: 2 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>Help &amp; support</div>
-                <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--beet-700)', margin: '4px 0 0' }}>Raise a ticket</h3>
+                <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', margin: '4px 0 0' }}>Raise a ticket</h3>
               </div>
-              <button onClick={tktClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <button onClick={tktClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon name="x" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} />
               </button>
             </div>
@@ -69,7 +69,7 @@ export default function RaiseTicketModal({ vm }) {
                 </div>
               </div>
 
-              <button onClick={tktToggleTraining} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderRadius: 12, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'left', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)' }}>
+              <button onClick={tktToggleTraining} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderRadius: 12, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'left', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)' }}>
                 <Icon name="graduation-cap" style={{ width: 14, height: 14, color: 'var(--orchid-600)' }} />
                 I also need training on this
                 <span style={{ flex: 1 }} />
@@ -89,14 +89,14 @@ export default function RaiseTicketModal({ vm }) {
                     ))}
                   </div>
                 )}
-                <button onClick={tktAttach} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px dashed var(--line-300)', background: '#fff', color: 'var(--orchid-600)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={tktAttach} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px dashed var(--line-300)', background: 'var(--paper)', color: 'var(--orchid-600)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   <Icon name="paperclip" style={{ width: 13, height: 13 }} />Attach screenshot / file
                 </button>
               </div>
             </div>
 
-            <div style={{ position: 'sticky', bottom: 0, background: '#fff', padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button onClick={tktClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
+            <div style={{ position: 'sticky', bottom: 0, background: 'var(--paper)', padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button onClick={tktClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={tktSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 <Icon name="send" style={{ width: 14, height: 14 }} />Submit ticket
               </button>

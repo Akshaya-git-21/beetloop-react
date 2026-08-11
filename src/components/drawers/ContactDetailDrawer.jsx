@@ -9,21 +9,21 @@ export default function ContactDetailDrawer({ vm }) {
     <React.Fragment>
 {Boolean(cnDrawerOpen) && (
 <div onClick={cnDClose} style={{"position":"fixed","inset":"0","zIndex":"60","background":"rgba(31,8,20,.5)","display":"flex","justifyContent":"flex-end"}}>
-<div onClick={cnDStop} className="blscroll" style={{"width":"100%","maxWidth":"620px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
+<div onClick={cnDStop} className="blscroll" style={{"width":"100%","maxWidth":"620px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
 <div style={{"minWidth":"0"}}>
 <div style={{"fontFamily":"'Space Mono'","fontSize":"11px","color":"var(--ink-400)"}}>{d.id}</div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>{d.name}</h3>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>{d.name}</h3>
 <div style={{"fontSize":"12.5px","color":"var(--ink-500)","marginTop":"2px"}}>{d.company} · {d.country}</div>
 </div>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
 {Boolean(cnDCanDelete) && (
-<button onClick={cnDDelete} style={{"display":"flex","alignItems":"center","gap":"6px","height":"34px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","padding":"0 12px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={cnDDelete} style={{"display":"flex","alignItems":"center","gap":"6px","height":"34px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"10px","padding":"0 12px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />Delete
 </button>
 )}
-<button onClick={cnDClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={cnDClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>

@@ -13,17 +13,17 @@ export default function CheckInModal({ vm }) {
 <div onClick={closeCi} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"170","display":"flex","alignItems":"center","justifyContent":"center","padding":"24px"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"520px","maxHeight":"90vh","overflowY":"auto","background":"#fff","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"520px","maxHeight":"90vh","overflowY":"auto","background":"var(--paper)","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","padding":"20px 24px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","padding":"20px 24px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
 
         
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 {ciTitle}
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"18px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"18px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 {ciSubtitle}
 </h3>
 <div style={{"display":"flex","alignItems":"center","gap":"6px","fontSize":"12px","color":"var(--verify-600)","fontWeight":"600","marginTop":"5px"}}>
@@ -33,7 +33,7 @@ export default function CheckInModal({ vm }) {
 </div>
 
         
-<button onClick={closeCi} style={{"width":"32px","height":"32px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={closeCi} style={{"width":"32px","height":"32px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"16px","height":"16px","color":"var(--ink-700)"}} />
 </button>
 
@@ -293,7 +293,7 @@ Risks & dependencies
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Confidence to hit target
 </label>
-<select value={cf.confidence} onChange={ciSetConf} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"#fff"}}>
+<select value={cf.confidence} onChange={ciSetConf} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"var(--paper)"}}>
 <option>
 High
 </option>
@@ -391,7 +391,7 @@ Manager comments
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Overall health *
 </label>
-<select value={cf.health} onChange={ciSetHealth} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"#fff"}}>
+<select value={cf.health} onChange={ciSetHealth} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"var(--paper)"}}>
 <option value>
 Select…
 </option>
@@ -412,7 +412,7 @@ Critical
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Decision
 </label>
-<select value={cf.decision} onChange={ciSetDecision} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"#fff"}}>
+<select value={cf.decision} onChange={ciSetDecision} style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"14px","background":"var(--paper)"}}>
 <option>
 Continue
 </option>
@@ -459,17 +459,17 @@ Executive comment
 </div>
 
       
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
 
         
-<button onClick={closeCi} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={closeCi} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 
         
 {Boolean(isCiLead) && (
 <React.Fragment>
-<button onClick={submitCiEscalate} style={{"padding":"10px 16px","border":"1px solid var(--warn-500)","background":"#fff","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","display":"flex","alignItems":"center","gap":"7px"}}>
+<button onClick={submitCiEscalate} style={{"padding":"10px 16px","border":"1px solid var(--warn-500)","background":"var(--paper)","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","display":"flex","alignItems":"center","gap":"7px"}}>
 <Icon name={"triangle-alert"} style={{"width":"15px","height":"15px"}} />
 Escalate
 </button>
@@ -479,7 +479,7 @@ Escalate
         
 {Boolean(isCiKpi) && (
 <React.Fragment>
-<button onClick={submitCiEscalate} style={{"padding":"10px 16px","border":"1px solid var(--warn-500)","background":"#fff","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","display":"flex","alignItems":"center","gap":"7px"}}>
+<button onClick={submitCiEscalate} style={{"padding":"10px 16px","border":"1px solid var(--warn-500)","background":"var(--paper)","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","display":"flex","alignItems":"center","gap":"7px"}}>
 <Icon name={"arrow-up"} style={{"width":"15px","height":"15px"}} />
 Request escalation
 </button>

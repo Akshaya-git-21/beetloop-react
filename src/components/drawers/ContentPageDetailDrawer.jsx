@@ -15,10 +15,10 @@ export default function ContentPageDetailDrawer({ vm }) {
 <div onClick={closeContent} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"165","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"720px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"720px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"5"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"5"}}>
 
         
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
@@ -37,7 +37,7 @@ export default function ContentPageDetailDrawer({ vm }) {
 </div>
 
             
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"5px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"5px 0 0"}}>
 {cd_name}
 </h3>
 
@@ -52,12 +52,12 @@ export default function ContentPageDetailDrawer({ vm }) {
 
 <div style={{"flex":"none","display":"flex","alignItems":"center","gap":"8px"}}>
 {Boolean(cdCanEdit) && (
-<button onClick={cdEdit} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","fontSize":"13px","fontWeight":"700","color":"var(--ink-700)"}}>
+<button onClick={cdEdit} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","fontSize":"13px","fontWeight":"700","color":"var(--ink-700)"}}>
 <Icon name={"pencil"} style={{"width":"15px","height":"15px"}} />
 Edit
 </button>
 )}
-<button onClick={closeContent} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={closeContent} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -257,7 +257,7 @@ AI generate
 <React.Fragment key={$index}>
 
                 
-<div style={{"display":"flex","alignItems":"center","gap":"12px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"12px 14px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"12px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"12px 14px"}}>
 
                   
 <span style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"10.5px","fontWeight":"800","color":"var(--orchid-600)","background":"var(--orchid-100)","borderRadius":"7px","padding":"4px 8px","flexShrink":"0"}}>
@@ -286,7 +286,7 @@ AI generate
 ))}
 
               
-<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"7px","justifyContent":"center","padding":"10px","border":"1px dashed var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"7px","justifyContent":"center","padding":"10px","border":"1px dashed var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"14px","height":"14px"}} />
 Add block — Heading · Paragraph · Image · CTA · FAQ · Table · Accordion…
 </button>
@@ -307,7 +307,7 @@ Add block — Heading · Paragraph · Image · CTA · FAQ · Table · Accordion�
 <React.Fragment>
 
             
-<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","background":"#fff","padding":"26px 28px","display":"flex","flexDirection":"column","gap":"16px"}}>
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","background":"var(--paper)","padding":"26px 28px","display":"flex","flexDirection":"column","gap":"16px"}}>
 
               
 {(cd_blocks || []).map((b, $index) => (
@@ -316,7 +316,7 @@ Add block — Heading · Paragraph · Image · CTA · FAQ · Table · Accordion�
                 
 {Boolean(b.isHeading) && (
 <React.Fragment>
-<div style={cssTextToObject(`font-family:'Sora';font-weight:${b.hWeight};font-size:${b.hSize};color:var(--beet-700);letter-spacing:-.01em;line-height:1.2`)}>
+<div style={cssTextToObject(`font-family:'Sora';font-weight:${b.hWeight};font-size:${b.hSize};color:var(--ink-900);letter-spacing:-.01em;line-height:1.2`)}>
 {b.text}
 </div>
 </React.Fragment>
@@ -502,7 +502,7 @@ AI SUGGESTED INTERNAL LINKS
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-300)"}}>
 Score {l.score}
 </span>
-<button onClick={contentAINote} style={{"background":"#fff","color":"var(--beet-700)","border":"none","borderRadius":"8px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={contentAINote} style={{"background":"var(--paper)","color":"var(--ink-900)","border":"none","borderRadius":"8px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Accept
 </button>
 </div>
@@ -622,11 +622,11 @@ alt: {m.alt}
 {Boolean(cd_tab7) && (
 <React.Fragment>
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden","marginBottom":"20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden","marginBottom":"20px"}}>
 <div style={{"padding":"14px 17px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
 <Icon name={"workflow"} style={{"width":"16px","height":"16px","color":"var(--orchid-600)","flexShrink":"0"}} />
 <div style={{"flex":"1","minWidth":"170px"}}>
-<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--beet-700)"}}>Production chain — page → tasks → QC → KPI</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--ink-900)"}}>Production chain — page → tasks → QC → KPI</div>
 <div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"1px"}}>{cwLinkedCount}</div>
 </div>
 {(cwModeBtns || []).map((m, $index) => (
@@ -638,7 +638,7 @@ alt: {m.alt}
 <div style={{"padding":"12px 17px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"9px","flexWrap":"wrap"}}>
 {Boolean(cwCanRun) && (
 <React.Fragment>
-<button onClick={cwApprove} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={cwApprove} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"shield-check"} style={{"width":"13px","height":"13px"}} />{cwApproveLabel}
 </button>
 <button onClick={cwGenerate} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 15px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
@@ -647,7 +647,7 @@ alt: {m.alt}
 </React.Fragment>
 )}
 {Boolean(cwHasTasks) && (
-<button onClick={cwOpenTasks} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={cwOpenTasks} style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"8px 14px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"external-link"} style={{"width":"13px","height":"13px"}} />Open in Tasks
 </button>
 )}
@@ -669,7 +669,7 @@ alt: {m.alt}
 <tbody>
 {(cwStages || []).map((s, $index) => (
 <tr key={$index} onClick={s.open} style={{"cursor":"pointer"}}>
-<td style={{"padding":"11px 17px","borderTop":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>{s.n}</td>
+<td style={{"padding":"11px 17px","borderTop":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>{s.n}</td>
 <td style={{"padding":"11px 12px","borderTop":"1px solid var(--line-200)"}}>
 <div style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>{s.stage}</div>
 <div style={{"fontSize":"10px","color":"var(--ink-400)"}}>{s.division} · {s.dep}</div>
@@ -742,11 +742,11 @@ alt: {m.alt}
 <React.Fragment>
 
 {Boolean(cd_liveHas) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
 <Icon name={"activity"} style={{"width":"15px","height":"15px","color":"var(--verify-600)","flexShrink":"0"}} />
 <div>
-<div style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)"}}>Recorded performance — from platform data</div>
+<div style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--ink-900)"}}>Recorded performance — from platform data</div>
 <div style={{"fontSize":"11px","color":"var(--ink-500)","marginTop":"1px"}}>{cd_liveNote}</div>
 </div>
 </div>
@@ -778,11 +778,11 @@ alt: {m.alt}
             
 {(cd_analytics || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"14px 16px"}}>
 <div style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
 {f.k}
 </div>
-<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--beet-700)","marginTop":"5px"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--ink-900)","marginTop":"5px"}}>
 {f.v}
 </div>
 </div>

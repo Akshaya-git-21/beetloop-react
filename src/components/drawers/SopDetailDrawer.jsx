@@ -24,8 +24,8 @@ export default function SopDetailDrawer({ vm }) {
     <React.Fragment>
       {Boolean(sopDrawerOpen) && (
         <div onClick={sopDClose} style={{ position: 'fixed', inset: 0, zIndex: 168, background: 'rgba(31,8,20,.5)', display: 'flex', justifyContent: 'flex-end' }}>
-          <div onClick={sopDStop} className="blscroll" style={{ width: '100%', maxWidth: 760, height: '100%', background: '#fff', boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .3s var(--ease-out)' }}>
-            <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '1px solid var(--line-200)', padding: '18px 24px', zIndex: 3 }}>
+          <div onClick={sopDStop} className="blscroll" style={{ width: '100%', maxWidth: 760, height: '100%', background: 'var(--paper)', boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .3s var(--ease-out)' }}>
+            <div style={{ position: 'sticky', top: 0, background: 'var(--paper)', borderBottom: '1px solid var(--line-200)', padding: '18px 24px', zIndex: 3 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -34,10 +34,10 @@ export default function SopDetailDrawer({ vm }) {
                     <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:${sopD.statusBg};color:${sopD.statusColor}`)}>{sopD.status}</span>
                     <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:${sopD.priBg};color:${sopD.priColor}`)}>{sopD.priority}</span>
                   </div>
-                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--beet-700)', margin: '5px 0 0' }}>{sopD.title}</h3>
+                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--ink-900)', margin: '5px 0 0' }}>{sopD.title}</h3>
                   <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: 3 }}>{sopD.category} · {sopD.division} · owner {sopD.owner} · updated {sopD.updated} by {sopD.updatedBy}</div>
                 </div>
-                <button onClick={sopDClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <button onClick={sopDClose} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name="x" style={{ width: 17, height: 17, color: 'var(--ink-700)' }} />
                 </button>
               </div>
@@ -203,7 +203,7 @@ export default function SopDetailDrawer({ vm }) {
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 7 }}>Resources &amp; attachments</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                         {(sopDocs || []).map((d, i) => (
-                          <button key={i} onClick={d.open} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, cursor: 'pointer', textAlign: 'left' }}>
+                          <button key={i} onClick={d.open} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, cursor: 'pointer', textAlign: 'left' }}>
                             <Icon name={d.icon} style={{ width: 13, height: 13, color: 'var(--orchid-600)', flexShrink: 0 }} />
                             <span style={{ flex: 1, minWidth: 0, fontFamily: "'Space Mono'", fontSize: 11, fontWeight: 700, color: 'var(--ink-700)' }}>{d.name}</span>
                             <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--surface-50)', color: 'var(--ink-500)' }}>{d.kind}</span>
@@ -222,7 +222,7 @@ export default function SopDetailDrawer({ vm }) {
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 7 }}>Linked KPIs — this SOP contributes to</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {(sopKpiRowsD || []).map((k, i) => (
-                          <button key={i} onClick={k.open} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 12, cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
+                          <button key={i} onClick={k.open} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 12, cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
                             <Icon name="target" style={{ width: 13, height: 13, color: 'var(--orchid-600)', flexShrink: 0 }} />
                             <span style={{ flex: 1, minWidth: 120 }}>
                               <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--ink-900)' }}>{k.name}</span>
@@ -239,11 +239,11 @@ export default function SopDetailDrawer({ vm }) {
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 7 }}>Dependencies</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {(sopRelRowsD || []).map((r, i) => (
-                          <button key={i} onClick={r.open} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 12, cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
+                          <button key={i} onClick={r.open} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 12, cursor: 'pointer', textAlign: 'left', flexWrap: 'wrap' }}>
                             <span style={cssTextToObject(`display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;background:${r.bg};color:${r.color};flex-shrink:0`)}>
                               <Icon name={r.icon} style={{ width: 10, height: 10 }} />{r.rel}
                             </span>
-                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--beet-700)' }}>{r.id}</span>
+                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--ink-900)' }}>{r.id}</span>
                             <span style={{ flex: 1, minWidth: 100, fontSize: 12.5, fontWeight: 600, color: 'var(--ink-900)' }}>{r.title}</span>
                             <span style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>{r.status}</span>
                           </button>
@@ -256,8 +256,8 @@ export default function SopDetailDrawer({ vm }) {
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 7 }}>Referenced by</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {(sopUsedBy || []).map((u, i) => (
-                          <button key={i} onClick={u.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
-                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10, color: 'var(--beet-700)' }}>{u.id}</span>{u.title}
+                          <button key={i} onClick={u.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
+                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10, color: 'var(--ink-900)' }}>{u.id}</span>{u.title}
                           </button>
                         ))}
                       </div>
@@ -310,7 +310,7 @@ export default function SopDetailDrawer({ vm }) {
                             </div>
                             <div style={{ flex: 1, minWidth: 0, paddingBottom: 14 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: "'Space Mono'", fontSize: 12, fontWeight: 700, color: 'var(--beet-700)' }}>{v.v}</span>
+                                <span style={{ fontFamily: "'Space Mono'", fontSize: 12, fontWeight: 700, color: 'var(--ink-900)' }}>{v.v}</span>
                                 {Boolean(v.current) && <span style={{ fontSize: 9.5, fontWeight: 800, padding: '2px 8px', borderRadius: 999, background: 'var(--orchid-100)', color: 'var(--orchid-700)' }}>CURRENT</span>}
                                 <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{v.date} · {v.by}</span>
                               </div>
@@ -361,7 +361,7 @@ export default function SopDetailDrawer({ vm }) {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
                             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)' }}>{c.by}</span>
                             <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{c.when}</span>
-                            {Boolean(c.hasStep) && <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fff', border: '1px solid var(--line-300)', color: 'var(--ink-500)' }}>on: {c.step}</span>}
+                            {Boolean(c.hasStep) && <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-500)' }}>on: {c.step}</span>}
                           </div>
                           <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{c.text}</div>
                         </div>
@@ -371,7 +371,7 @@ export default function SopDetailDrawer({ vm }) {
                   <div style={{ border: '1px solid var(--line-300)', borderRadius: 13, padding: '13px 15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)' }}>Reference a step</span>
-                      <select value={sopCmtStep} onChange={sopSetCmtStep} style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11.5, background: '#fff' }}>
+                      <select value={sopCmtStep} onChange={sopSetCmtStep} style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11.5, background: 'var(--paper)' }}>
                         <option value="">Whole SOP</option>
                         {(sopStepOptions || []).map((o, i) => <option key={i} value={o}>{o}</option>)}
                       </select>
@@ -400,7 +400,7 @@ export default function SopDetailDrawer({ vm }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', borderTop: '1px solid var(--line-200)', paddingTop: 14 }}>
                 <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ink-400)', flex: 1, minWidth: 160 }}>{sopPermLine}</span>
                 {Boolean(sopCanDownload) && (
-                  <button onClick={sopDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="download" style={{ width: 13, height: 13 }} />Download
                   </button>
                 )}
@@ -411,23 +411,23 @@ export default function SopDetailDrawer({ vm }) {
                   <button onClick={sopPublish} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="upload-cloud" style={{ width: 13, height: 13 }} />{sopPublishLabel}
                   </button>
-                  <button onClick={sopBump} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopBump} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="git-branch" style={{ width: 13, height: 13 }} />New version
                   </button>
-                  <button onClick={sopMarkReviewed} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopMarkReviewed} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="eye" style={{ width: 13, height: 13 }} />Mark reviewed
                   </button>
-                  <button onClick={sopDuplicate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopDuplicate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="copy" style={{ width: 13, height: 13 }} />Duplicate
                   </button>
-                  <button onClick={sopSaveAsTemplate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopSaveAsTemplate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="layout-template" style={{ width: 13, height: 13 }} />Save as template
                   </button>
-                  <button onClick={sopRetire} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={sopRetire} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                     <Icon name="archive" style={{ width: 13, height: 13 }} />{sopRetireLabel}
                   </button>
                   {Boolean(sopCanDeleteD) && (
-                    <button onClick={sopDelete} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid #F1C9CF', background: '#fff', color: 'var(--danger-600)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={sopDelete} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: '1px solid #F1C9CF', background: 'var(--paper)', color: 'var(--danger-600)', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                       <Icon name="trash-2" style={{ width: 13, height: 13 }} />Delete
                     </button>
                   )}

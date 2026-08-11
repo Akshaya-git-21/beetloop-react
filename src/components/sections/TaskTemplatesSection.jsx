@@ -45,7 +45,7 @@ OKR templates
 <React.Fragment key={$index}>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 
                   
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -83,11 +83,11 @@ OKR Master — reusable objective blueprints with KPI-linked key results, target
 <React.Fragment key={$index}>
 
                 
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -113,7 +113,7 @@ OKR Master — reusable objective blueprints with KPI-linked key results, target
 <React.Fragment key={$index}>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","display":"flex","flexDirection":"column","gap":"10px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px","display":"flex","flexDirection":"column","gap":"10px"}}>
 
                   
 <div style={{"display":"flex","alignItems":"flex-start","gap":"10px"}}>
@@ -187,17 +187,17 @@ Use template — create OKR
 <React.Fragment>
 
                       
-<button onClick={t.edit} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.edit} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Edit
 </button>
 
 
-<button onClick={t.duplicate} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.duplicate} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Duplicate
 </button>
 
 
-<button onClick={t.toggleStatus} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.toggleStatus} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-500)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
 </button>
 
@@ -205,7 +205,7 @@ Duplicate
 </React.Fragment>
 )}
 {Boolean(ttCanDelete) && (
-<button onClick={t.delete} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"8px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.delete} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"8px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px"}} />
 Delete
 </button>
@@ -263,7 +263,7 @@ Next
 <React.Fragment key={$index}>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 
                   
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -301,11 +301,11 @@ KPI Master — standardized KPI definitions (unit, direction, default target, ca
 <React.Fragment key={$index}>
 
                 
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -324,7 +324,7 @@ KPI Master — standardized KPI definitions (unit, direction, default target, ca
 </div>
 
             
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
               
 <div style={{"overflowX":"auto"}}>
@@ -475,17 +475,17 @@ Actions
 <React.Fragment>
 
 
-<button onClick={t.edit} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.edit} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Edit
 </button>
 
 
-<button onClick={t.duplicate} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.duplicate} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Duplicate
 </button>
 
 
-<button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
 </button>
 
@@ -493,7 +493,7 @@ Duplicate
 </React.Fragment>
 )}
 {Boolean(ttCanDelete) && (
-<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
 Delete
 </button>
@@ -561,7 +561,7 @@ Next
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 
                 
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -599,11 +599,11 @@ Task Master — every template standardizes a repeatable task: default checklist
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -622,7 +622,7 @@ Task Master — every template standardizes a repeatable task: default checklist
 </div>
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
 <div style={{"overflowX":"auto"}}>
@@ -697,7 +697,7 @@ Actions
 <tr style-hover="background:var(--surface-50)">
 
                     
-<td style={{"padding":"13px 16px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>
+<td style={{"padding":"13px 16px","borderBottom":"1px solid var(--line-200)","fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>
 {t.id}
 </td>
 
@@ -775,22 +775,22 @@ Actions
 <div style={{"display":"inline-flex","gap":"6px"}}>
 
                           
-<button onClick={t.edit} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.edit} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Edit
 </button>
 
                           
-<button onClick={t.duplicate} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.duplicate} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Duplicate
 </button>
 
                           
-<button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.toggleStatus} style={{"padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-500)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 {t.statusAction}
 </button>
 
 {Boolean(ttCanDelete) && (
-<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={t.delete} style={{"display":"inline-flex","alignItems":"center","gap":"4px","padding":"6px 12px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"11px","height":"11px"}} />
 Delete
 </button>

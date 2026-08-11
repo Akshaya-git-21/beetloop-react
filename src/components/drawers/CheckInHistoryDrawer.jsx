@@ -13,23 +13,23 @@ export default function CheckInHistoryDrawer({ vm }) {
 <div onClick={closeHistory} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"165","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"460px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"460px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"20px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"20px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
 
         
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 Check-in history
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"18px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"18px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 {historyTitle}
 </h3>
 </div>
 
         
-<button onClick={closeHistory} style={{"width":"32px","height":"32px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={closeHistory} style={{"width":"32px","height":"32px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"16px","height":"16px","color":"var(--ink-700)"}} />
 </button>
 

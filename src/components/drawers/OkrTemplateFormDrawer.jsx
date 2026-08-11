@@ -12,23 +12,23 @@ export default function OkrTemplateFormDrawer({ vm }) {
 <div onClick={otClose} style={{"position":"fixed","inset":"0","zIndex":"60","background":"rgba(31,8,20,.5)","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={ttStop} className="blscroll" style={{"width":"100%","maxWidth":"680px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={ttStop} className="blscroll" style={{"width":"100%","maxWidth":"680px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"3"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"3"}}>
 
         
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 OKR Master
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 {otFormTitle}
 </h3>
 </div>
 
         
-<button onClick={otClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={otClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
@@ -73,7 +73,7 @@ Description
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Category
 </label>
-<select value={otf.category} onChange={otSetCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={otf.category} onChange={otSetCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 SEO
 </option>
@@ -106,7 +106,7 @@ Revenue
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Scope
 </label>
-<select value={otf.scope} onChange={otSetScope} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={otf.scope} onChange={otSetScope} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Organization
 </option>
@@ -124,7 +124,7 @@ Individual
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Division
 </label>
-<select value={otf.division} onChange={otSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={otf.division} onChange={otSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 SEO
 </option>
@@ -151,7 +151,7 @@ All
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Status
 </label>
-<select value={otf.status} onChange={otSetStatus} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={otf.status} onChange={otSetStatus} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Active
 </option>
@@ -175,7 +175,7 @@ Archived
 <span style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)"}}>
 Key results (KPI-linked)
 </span>
-<button onClick={otAddKr} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={otAddKr} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
 Add KR
 </button>
@@ -195,12 +195,12 @@ Add KR
 <div style={{"display":"flex","gap":"8px","alignItems":"center","marginBottom":"8px"}}>
 
                   
-<input value={k.t} onInput={k.setT} placeholder="Key result statement…" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+<input value={k.t} onInput={k.setT} placeholder="Key result statement…" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
 
                   
 {Boolean(k.canRemove) && (
 <React.Fragment>
-<button onClick={k.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={k.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"13px","height":"13px","color":"var(--ink-500)"}} />
 </button>
 </React.Fragment>
@@ -213,13 +213,13 @@ Add KR
 <div style={{"display":"grid","gridTemplateColumns":"1.4fr .7fr .6fr","gap":"8px"}}>
 
                   
-<input value={k.kpi} onInput={k.setKpi} list="ot-kpi-list" placeholder="Linked KPI (from KPI templates)" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={k.kpi} onInput={k.setKpi} list="ot-kpi-list" placeholder="Linked KPI (from KPI templates)" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                   
-<input value={k.target} onInput={k.setTarget} placeholder="Default target" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={k.target} onInput={k.setTarget} placeholder="Default target" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                   
-<input value={k.weight} onInput={k.setWeight} placeholder="Weight %" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={k.weight} onInput={k.setWeight} placeholder="Weight %" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                 
 </div>
@@ -258,10 +258,10 @@ Active OKR templates appear in Create New OKR ("Start from an OKR template") and
 </div>
 
       
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
 
         
-<button onClick={otClose} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={otClose} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 

@@ -20,7 +20,7 @@ export default function SopSection({ vm }) {
         <React.Fragment>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 12, marginBottom: 16 }}>
             {(sopStats || []).map((s, i) => (
-              <div key={i} style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
+              <div key={i} style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</div>
                 <div style={{ fontFamily: "'Sora'", fontWeight: 800, fontSize: 22, color: s.color, marginTop: 4 }}>{s.value}</div>
                 <div style={{ fontSize: 10.5, color: 'var(--ink-400)', marginTop: 2 }}>{s.sub}</div>
@@ -28,13 +28,13 @@ export default function SopSection({ vm }) {
             ))}
           </div>
 
-          <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '14px 16px', marginBottom: 14 }}>
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '14px 16px', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
                 <Icon name="search" style={{ width: 14, height: 14, color: 'var(--ink-400)', position: 'absolute', left: 11, top: 10 }} />
                 <input value={sopQuery} onInput={sopSetQuery} placeholder="Search SOPs…" style={{ width: '100%', padding: '8px 11px 8px 33px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none' }} />
               </div>
-              <button onClick={sopReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}>
+              <button onClick={sopReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}>
                 <Icon name="rotate-ccw" style={{ width: 12, height: 12 }} />Reset
               </button>
               {Boolean(sopCanAuthor) && (
@@ -53,7 +53,7 @@ export default function SopSection({ vm }) {
               {(sopFilters || []).map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface-50)', border: '1px solid var(--line-300)', borderRadius: 10, padding: '5px 9px' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-500)' }}>{f.label}</span>
-                  <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 12, fontWeight: 600, color: 'var(--beet-700)', outline: 'none', cursor: 'pointer', maxWidth: 170 }}>
+                  <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 12, fontWeight: 600, color: 'var(--ink-900)', outline: 'none', cursor: 'pointer', maxWidth: 170 }}>
                     {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
@@ -61,7 +61,7 @@ export default function SopSection({ vm }) {
             </div>
           </div>
 
-          <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             <div className="blscroll" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1220 }}>
                 <thead>
@@ -77,7 +77,7 @@ export default function SopSection({ vm }) {
                       <tr>
                         <td onClick={s.open} style={{ padding: '12px 16px', borderBottom: '1px solid var(--line-200)', cursor: 'pointer', minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--beet-700)' }}>{s.id}</span>
+                            <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--ink-900)' }}>{s.id}</span>
                             <span style={{ fontFamily: "'Space Mono'", fontSize: 10, fontWeight: 700, color: 'var(--orchid-700)' }}>{s.version}</span>
                             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>{s.title}</span>
                           </div>
@@ -105,7 +105,7 @@ export default function SopSection({ vm }) {
                             <button onClick={s.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 9, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                               <Icon name="book-open" style={{ width: 11, height: 11 }} />Read
                             </button>
-                            <button onClick={s.toggle} style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <button onClick={s.toggle} style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon name="chevrons-up-down" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} />
                             </button>
                           </div>
@@ -139,7 +139,7 @@ export default function SopSection({ vm }) {
                                 <div style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 4 }}>Tags</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                                   {(s.tagList || []).map((t, i) => (
-                                    <span key={i} style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fff', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{t.label}</span>
+                                    <span key={i} style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{t.label}</span>
                                   ))}
                                 </div>
                               </div>

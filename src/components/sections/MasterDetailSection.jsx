@@ -46,7 +46,7 @@ Master Data
 
                 
 <div>
-<h1 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"26px","letterSpacing":"-.02em","color":"var(--beet-700)","margin":"0"}}>
+<h1 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"26px","letterSpacing":"-.02em","color":"var(--ink-900)","margin":"0"}}>
 {mdLabel}
 </h1>
 <p style={{"margin":"3px 0 0","color":"var(--ink-500)","fontSize":"14px"}}>
@@ -107,7 +107,7 @@ Add entry
 <React.Fragment key={$index}>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
                   
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -141,10 +141,10 @@ Add entry
 <div style={{"display":"grid","gridTemplateColumns":"1.3fr 1fr","gap":"16px","marginBottom":"16px"}}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 16px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 16px"}}>
 DA distribution
 </h3>
 
@@ -179,10 +179,10 @@ DA distribution
 </div>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 16px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 16px"}}>
 Platform types
 </h3>
 
@@ -199,7 +199,7 @@ Platform types
 <span style={{"flex":"1","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-800)"}}>
 {p.name}
 </span>
-<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--ink-900)"}}>
 {p.count}
 </span>
 </div>
@@ -218,11 +218,11 @@ Platform types
 </div>
 
             
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
               
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"14px"}}>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0"}}>
 Recent activities
 </h3>
 <button onClick={blVerify} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--orchid-100)","color":"var(--orchid-700)","border":"1px solid var(--orchid-200)","borderRadius":"10px","padding":"7px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
@@ -282,15 +282,15 @@ Run verification
               
 <div style={{"position":"relative","flex":"1","minWidth":"220px","maxWidth":"340px"}}>
 <Icon name={"search"} style={{"width":"15px","height":"15px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"10px"}} />
-<input value={blQuery} onInput={blOnQuery} placeholder="Search by domain, platform, category…" style={{"width":"100%","padding":"9px 12px 9px 34px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none","background":"#fff"}} />
+<input value={blQuery} onInput={blOnQuery} placeholder="Search by domain, platform, category…" style={{"width":"100%","padding":"9px 12px 9px 34px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none","background":"var(--paper)"}} />
 </div>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Status
 </span>
-<select value={blFStatus} onChange={blOnFStatus} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={blFStatus} onChange={blOnFStatus} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 <option>
 All
 </option>
@@ -310,11 +310,11 @@ Blacklisted
 </div>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Platform
 </span>
-<select value={blFPlatform} onChange={blOnFPlatform} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={blFPlatform} onChange={blOnFPlatform} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(blPlatformOptions || []).map((p, $index) => (
 <React.Fragment key={$index}>
 <option value={p}>
@@ -329,13 +329,13 @@ Platform
 <div style={{"flex":"1"}} />
 
               
-<button onClick={blImport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={blImport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"upload"} style={{"width":"14px","height":"14px"}} />
 Import
 </button>
 
               
-<button onClick={blExport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={blExport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"download"} style={{"width":"14px","height":"14px"}} />
 Export
 </button>
@@ -349,7 +349,7 @@ Export
 </div>
 
             
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
               
 <div style={{"overflowX":"auto"}}>
@@ -435,7 +435,7 @@ Last verified
 
                         
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
-<div style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--beet-700)"}}>
+<div style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)"}}>
 {r.name}
 </div>
 <div style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","color":"var(--ink-400)"}}>
@@ -506,7 +506,7 @@ Last verified
 
                         
 <td style={{"padding":"12px 14px 12px 0","borderBottom":"1px solid var(--line-200)","textAlign":"right"}}>
-<button onClick={r.open} style={{"width":"30px","height":"30px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"inline-flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={r.open} style={{"width":"30px","height":"30px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"inline-flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"eye"} style={{"width":"15px","height":"15px","color":"var(--ink-500)"}} />
 </button>
 </td>
@@ -559,7 +559,7 @@ No domains match these filters.
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"10px"}}>
-<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"23px","color":"var(--beet-700)","margin":"0"}}>
+<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"23px","color":"var(--ink-900)","margin":"0"}}>
 {bd_name}
 </h2>
 <span style={cssTextToObject(`font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:${bd_statusBg};color:${bd_statusColor}`)}>
@@ -579,14 +579,14 @@ No domains match these filters.
 <div style={{"display":"flex","gap":"9px"}}>
 
 
-<button onClick={bd_back} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={bd_back} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"arrow-left"} style={{"width":"14px","height":"14px"}} />
 Back to list
 </button>
 
 
 {Boolean(bd_canDelete) && (
-<button onClick={bd_delete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={bd_delete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"11px","padding":"10px 15px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />
 Delete
 </button>
@@ -628,10 +628,10 @@ Save
 <div style={{"display":"grid","gridTemplateColumns":"1.4fr 1fr","gap":"16px","alignItems":"start"}}>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                   
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 16px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 16px"}}>
 Domain identification
 </h3>
 
@@ -663,10 +663,10 @@ Domain identification
 </div>
 
                 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                   
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 16px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 16px"}}>
 Status & dates
 </h3>
 
@@ -735,7 +735,7 @@ Tags
                 
 {(bd_quality || []).map((qm, $index) => (
 <React.Fragment key={$index}>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 16px"}}>
 <div style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
 {qm.k}
 </div>
@@ -754,7 +754,7 @@ Tags
 </div>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
 <div style={{"display":"grid","gridTemplateColumns":"repeat(5,1fr)","gap":"14px"}}>
@@ -793,10 +793,10 @@ Tags
 <React.Fragment>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px","marginBottom":"16px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 14px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 14px"}}>
 Platform features
 </h3>
 
@@ -806,7 +806,7 @@ Platform features
                   
 {(bd_features || []).map((ft, $index) => (
 <React.Fragment key={$index}>
-<button onClick={ft.toggle} style={{"display":"flex","alignItems":"center","gap":"9px","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"10px 13px","background":"#fff","cursor":"pointer","textAlign":"left","width":"100%"}}>
+<button onClick={ft.toggle} style={{"display":"flex","alignItems":"center","gap":"9px","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"10px 13px","background":"var(--paper)","cursor":"pointer","textAlign":"left","width":"100%"}}>
 <Icon name={ft.icon} style={cssTextToObject(`width:16px;height:16px;color:${ft.color}`)} />
 <span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--ink-800)"}}>
 {ft.label}
@@ -822,10 +822,10 @@ Platform features
 </div>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 10px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 10px"}}>
 Important notes
 </h3>
 
@@ -847,10 +847,10 @@ Important notes
 <React.Fragment>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px","marginBottom":"16px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 14px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 14px"}}>
 Linked information
 </h3>
 
@@ -913,11 +913,11 @@ Add
                 
 {(bd_linkStats || []).map((ls, $index) => (
 <React.Fragment key={$index}>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 16px"}}>
 <div style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
 {ls.k}
 </div>
-<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--beet-700)","marginTop":"6px"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"20px","color":"var(--ink-900)","marginTop":"6px"}}>
 {ls.v}
 </div>
 </div>
@@ -937,10 +937,10 @@ Add
 <React.Fragment>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 10px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 10px"}}>
 Notes
 </h3>
 
@@ -965,10 +965,10 @@ Saved when you click Save above.
 <React.Fragment>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"20px 22px"}}>
 
                 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 16px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 16px"}}>
 Activity log
 </h3>
 
@@ -1019,7 +1019,7 @@ Activity log
 <React.Fragment>
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"14px 18px","borderBottom":"1px solid var(--line-200)"}}>

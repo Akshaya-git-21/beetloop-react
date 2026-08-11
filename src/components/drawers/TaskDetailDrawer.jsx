@@ -18,10 +18,10 @@ export default function TaskDetailDrawer({ vm }) {
 <div onClick={tkClose} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"160","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","height":"100%","background":"#fff","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","height":"100%","background":"var(--paper)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px max(24px,calc((100% - 1040px)/2))","zIndex":"3"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px max(24px,calc((100% - 1040px)/2))","zIndex":"3"}}>
 
         
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
@@ -40,7 +40,7 @@ export default function TaskDetailDrawer({ vm }) {
 </div>
 
             
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"6px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--ink-900)","margin":"6px 0 0"}}>
 {tkD.name}
 </h3>
 
@@ -50,11 +50,11 @@ export default function TaskDetailDrawer({ vm }) {
 
 <div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
 {Boolean(tkCanDelete) && (
-<button onClick={tkDelete} title="Delete task" style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={tkDelete} title="Delete task" style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"trash-2"} style={{"width":"15px","height":"15px","color":"var(--danger-600)"}} />
 </button>
 )}
-<button onClick={tkClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={tkClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -71,7 +71,7 @@ export default function TaskDetailDrawer({ vm }) {
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Status
 </span>
-<select value={tkStatusVal} onChange={tkSetStatusSel} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)","background":"#fff","cursor":"pointer"}}>
+<select value={tkStatusVal} onChange={tkSetStatusSel} style={{"padding":"8px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","background":"var(--paper)","cursor":"pointer"}}>
 {(tkStatusOptions || []).map((o, $index) => (
 <option key={$index} value={o}>{o}</option>
 ))}
@@ -120,10 +120,10 @@ Status
 <React.Fragment>
 
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 18px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 18px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"9px","marginBottom":"10px","flexWrap":"wrap"}}>
 <Icon name={"message-square-quote"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)","flexShrink":"0"}} />
-<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--beet-700)","flex":"1","minWidth":"140px"}}>
+<span style={{"fontSize":"12.5px","fontWeight":"800","color":"var(--ink-900)","flex":"1","minWidth":"140px"}}>
 QC review outcome
 </span>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-700)"}}>
@@ -171,13 +171,13 @@ QC review outcome
             
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"11px"}}>
 <Icon name={"shield-check"} style={{"width":"16px","height":"16px","color":"var(--warn-600)"}} />
-<span style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14px","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14px","color":"var(--ink-900)"}}>
 QC review — this task is awaiting your decision
 </span>
 </div>
 
             
-<textarea value={tkQcFbVal} onInput={tkQcOnFb} rows="2" placeholder="QC comments / feedback — what's good, what must change (required for rework)…" style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical","background":"#fff"}} />
+<textarea value={tkQcFbVal} onInput={tkQcOnFb} rows="2" placeholder="QC comments / feedback — what's good, what must change (required for rework)…" style={{"width":"100%","padding":"11px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","resize":"vertical","background":"var(--paper)"}} />
 
             
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"10px","flexWrap":"wrap"}}>
@@ -185,11 +185,11 @@ QC review — this task is awaiting your decision
               
 <div style={{"position":"relative","flex":"1","minWidth":"200px"}}>
 <Icon name={"link"} style={{"width":"14px","height":"14px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"11px"}} />
-<input value={tkQcUrl} onInput={tkQcOnUrl} placeholder="Reference URL — e.g. https://healthline.com/… (style / structure to follow)" style={{"width":"100%","padding":"9px 12px 9px 33px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff","fontFamily":"'Space Mono'"}} />
+<input value={tkQcUrl} onInput={tkQcOnUrl} placeholder="Reference URL — e.g. https://healthline.com/… (style / structure to follow)" style={{"width":"100%","padding":"9px 12px 9px 33px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)","fontFamily":"'Space Mono'"}} />
 </div>
 
               
-<button onClick={tkQcAddFile} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={tkQcAddFile} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"9px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"image-plus"} style={{"width":"14px","height":"14px"}} />
 Attach reference image
 </button>
@@ -207,7 +207,7 @@ Attach reference image
                 
 {(tkQcFiles || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 8px 5px 10px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)"}}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 8px 5px 10px","borderRadius":"999px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)"}}>
 <Icon name={"image"} style={{"width":"11px","height":"11px"}} />
 <button onClick={f.open} style={{"background":"none","border":"none","padding":"0","cursor":"pointer","color":"var(--ink-700)","font":"inherit"}}>{f.name}</button>
 <button onClick={f.remove} style={{"background":"none","border":"none","cursor":"pointer","color":"var(--ink-500)","display":"flex","padding":"0"}}>
@@ -233,7 +233,7 @@ Comments & references are posted to the task thread so the assignee sees exactly
 </span>
 
               
-<button onClick={tkQcRework} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 15px","border":"1px solid var(--warn-500)","background":"#fff","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={tkQcRework} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 15px","border":"1px solid var(--warn-500)","background":"var(--paper)","color":"var(--warn-600)","borderRadius":"11px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"14px","height":"14px"}} />
 Request rework
 </button>
@@ -283,10 +283,10 @@ Linked KPI · {tkD.kpi}
 <React.Fragment>
 
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"12px"}}>
 <span style={{"width":"38px","height":"38px","borderRadius":"11px","background":"var(--surface-50)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
-<Icon name={"timer"} style={{"width":"18px","height":"18px","color":"var(--beet-700)"}} />
+<Icon name={"timer"} style={{"width":"18px","height":"18px","color":"var(--ink-900)"}} />
 </span>
 <div style={{"flex":"1","minWidth":"0"}}>
 <div style={{"fontFamily":"'Space Mono'","fontWeight":"700","fontSize":"22px","color":"var(--ink-900)","letterSpacing":".02em"}}>
@@ -383,7 +383,7 @@ Workflow pipeline — stages unlock on QC approval
 <React.Fragment key={$index}>
 
                 
-<div onClick={s.open} style={{"flex":"1","minWidth":"170px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"10px 13px","cursor":"pointer"}} style-hover="border-color:var(--orchid-300)">
+<div onClick={s.open} style={{"flex":"1","minWidth":"170px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"12px","padding":"10px 13px","cursor":"pointer"}} style-hover="border-color:var(--orchid-300)">
 
                   
 <div style={{"display":"flex","alignItems":"center","gap":"6px"}}>
@@ -428,11 +428,11 @@ Workflow pipeline — stages unlock on QC approval
 )}
 
 {Boolean(clHas) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 <div style={{"padding":"15px 18px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
 <Icon name={"clipboard-check"} style={{"width":"16px","height":"16px","color":"var(--orchid-600)","flexShrink":"0"}} />
 <div style={{"flex":"1","minWidth":"180px"}}>
-<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--beet-700)"}}>Compliance checklist — {clKind}</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--ink-900)"}}>Compliance checklist — {clKind}</div>
 <div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"1px"}}>{clStatusNote}</div>
 </div>
 <span style={{"fontSize":"11px","fontWeight":"700","padding":"3px 10px","borderRadius":"999px","background":"var(--surface-50)","color":"var(--ink-500)"}}>{clProgress}</span>
@@ -442,7 +442,7 @@ Workflow pipeline — stages unlock on QC approval
 </div>
 {(clSections || []).map((s, $si) => (
 <div key={$si}>
-<div style={{"padding":"9px 18px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--beet-700)"}}>{s.h}</div>
+<div style={{"padding":"9px 18px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-900)"}}>{s.h}</div>
 <div style={{"overflowX":"auto"}}>
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"1180px"}}>
 <thead><tr>
@@ -486,7 +486,7 @@ Workflow pipeline — stages unlock on QC approval
 {Boolean(r.hasEv) && (
 <div style={{"display":"flex","flexDirection":"column","gap":"4px","marginBottom":"5px"}}>
 {(r.evFiles || []).map((ev, $ei) => (
-<span key={$ei} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 8px","border":"1px solid var(--line-300)","borderRadius":"8px","fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--ink-700)","background":"#fff"}}>
+<span key={$ei} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 8px","border":"1px solid var(--line-300)","borderRadius":"8px","fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--ink-700)","background":"var(--paper)"}}>
 <Icon name={ev.icon} style={{"width":"10px","height":"10px","color":"var(--orchid-600)","flexShrink":"0"}} />
 <button onClick={ev.open} style={{"flex":"1","minWidth":"0","textAlign":"left","background":"none","border":"none","padding":"0","cursor":"pointer","color":"var(--ink-700)","font":"inherit"}}>{ev.name}</button>
 {Boolean(r.writerEditable) && (
@@ -500,7 +500,7 @@ Workflow pipeline — stages unlock on QC approval
 )}
 {Boolean(r.writerEditable) && (
 <React.Fragment>
-<button onClick={r.addEv} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"5px 10px","border":"1px dashed var(--line-300)","background":"#fff","color":"var(--orchid-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={r.addEv} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"5px 10px","border":"1px dashed var(--line-300)","background":"var(--paper)","color":"var(--orchid-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
 Attach
 </button>
@@ -556,13 +556,13 @@ Submit for QC
 </button>
 )}
 {Boolean(clCanReopen) && (
-<button onClick={clReopen} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={clReopen} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"13px","height":"13px"}} />
 Return to assignee
 </button>
 )}
 {Boolean(clCanDelete) && (
-<button onClick={clDelete} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--danger-300, #e5a3a3)","background":"#fff","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={clDelete} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"1px solid var(--danger-300, #e5a3a3)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"13px","height":"13px"}} />
 Delete checklist
 </button>
@@ -572,7 +572,7 @@ Delete checklist
 <div style={{"padding":"12px 18px","borderTop":"1px solid var(--line-200)","background":"var(--orchid-100)","display":"flex","alignItems":"center","gap":"10px","flexWrap":"wrap"}}>
 <Icon name={"shield-check"} style={{"width":"15px","height":"15px","color":"var(--orchid-700)","flexShrink":"0"}} />
 <div style={{"flex":"1","minWidth":"170px"}}>
-<div style={{"fontSize":"12px","fontWeight":"800","color":"var(--beet-700)"}}>Report your compliance verdict against the submitted evidence</div>
+<div style={{"fontSize":"12px","fontWeight":"800","color":"var(--ink-900)"}}>Report your compliance verdict against the submitted evidence</div>
 <div style={{"fontSize":"10.5px","color":"var(--orchid-700)","marginTop":"1px"}}>{clQcCoverage}</div>
 </div>
 <div style={{"flex":"1","minWidth":"90px","height":"6px","borderRadius":"99px","background":"rgba(255,255,255,.6)","overflow":"hidden"}}>
@@ -618,7 +618,7 @@ Details
 {m.k}
 </span>
 {m.isSelect ? (
-<select value={m.v} onChange={m.onChange} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 8px","background":"#fff"}}>
+<select value={m.v} onChange={m.onChange} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 8px","background":"var(--paper)"}}>
 {(m.options || []).map((o, $oi) => (
 <React.Fragment key={$oi}>
 <option value={o}>{o}</option>
@@ -627,8 +627,8 @@ Details
 </select>
 ) : m.isDateTime ? (
 <div style={{"display":"flex","gap":"6px"}}>
-<input type="date" value={m.dateVal} onChange={m.onChangeDate} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"#fff"}} />
-<input type="time" value={m.timeVal} onChange={m.onChangeTime} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"#fff","width":"90px"}} />
+<input type="date" value={m.dateVal} onChange={m.onChangeDate} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"var(--paper)"}} />
+<input type="time" value={m.timeVal} onChange={m.onChangeTime} style={{"fontSize":"12px","fontWeight":"700","color":"var(--ink-900)","border":"1px solid var(--line-300)","borderRadius":"8px","padding":"4px 6px","background":"var(--paper)","width":"90px"}} />
 </div>
 ) : (
 <span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","textAlign":"right"}}>
@@ -721,7 +721,7 @@ Attach
 <button onClick={f.open} title="Preview" style={{"border":"none","background":"none","padding":"0","fontFamily":"'Manrope'","fontSize":"12px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
 {f.name}
 </button>
-<button onClick={f.download} title="Download" style={{"width":"22px","height":"22px","borderRadius":"999px","border":"none","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={f.download} title="Download" style={{"width":"22px","height":"22px","borderRadius":"999px","border":"none","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"download"} style={{"width":"11px","height":"11px","color":"var(--ink-500)"}} />
 </button>
 </span>
@@ -776,7 +776,7 @@ Comments & feedback — assignee ↔ QC
 <span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>
 {c.who}
 </span>
-<span style={{"fontSize":"10px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-200)","color":"var(--ink-500)"}}>
+<span style={{"fontSize":"10px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--paper)","border":"1px solid var(--line-200)","color":"var(--ink-500)"}}>
 {c.role}
 </span>
 <span style={{"fontSize":"11px","color":"var(--ink-400)"}}>
@@ -797,7 +797,7 @@ Comments & feedback — assignee ↔ QC
 <button onClick={c.saveEdit} style={{"padding":"6px 14px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Save
 </button>
-<button onClick={c.cancelEdit} style={{"padding":"6px 14px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={c.cancelEdit} style={{"padding":"6px 14px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Cancel
 </button>
 </div>
@@ -816,7 +816,7 @@ Cancel
 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
 {(c.files || []).map((f, $index) => (
 <React.Fragment key={$index}>
-<button onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 10px","borderRadius":"999px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 10px","borderRadius":"999px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
 {f.name}
 </button>
@@ -866,7 +866,7 @@ Delete
 <React.Fragment>
 
             
-<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","padding":"12px 14px","background":"#fff"}}>
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","padding":"12px 14px","background":"var(--paper)"}}>
 
               
 <textarea value={tkCommentVal} onInput={tkOnComment} rows="2" placeholder="Add a comment or QC feedback — the assignee and reviewer both see this thread…" style={{"width":"100%","border":"none","outline":"none","fontSize":"13.5px","resize":"vertical","background":"none"}} />
@@ -898,7 +898,7 @@ Delete
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"6px"}}>
 
                 
-<button onClick={tkAddCommentFile} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={tkAddCommentFile} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"13px","height":"13px"}} />
 Attach document
 </button>

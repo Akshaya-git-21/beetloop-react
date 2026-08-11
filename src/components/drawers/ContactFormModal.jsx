@@ -10,13 +10,13 @@ export default function ContactFormModal({ vm }) {
     <React.Fragment>
 {Boolean(cnFormOpen) && (
 <div onClick={cnClose} style={{"position":"fixed","inset":"0","zIndex":"170","background":"rgba(31,8,20,.5)","display":"flex","alignItems":"center","justifyContent":"center","padding":"28px"}}>
-<div onClick={cnStop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"100%","background":"#fff","borderRadius":"20px","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .28s var(--ease-out)"}}>
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 22px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px","zIndex":"2"}}>
+<div onClick={cnStop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"100%","background":"var(--paper)","borderRadius":"20px","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .28s var(--ease-out)"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 22px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px","zIndex":"2"}}>
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>Lead pipeline</div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"4px 0 0"}}>Add lead</h3>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--ink-900)","margin":"4px 0 0"}}>Add lead</h3>
 </div>
-<button onClick={cnClose} style={{"width":"32px","height":"32px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={cnClose} style={{"width":"32px","height":"32px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"16px","height":"16px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -37,29 +37,29 @@ export default function ContactFormModal({ vm }) {
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Phone</label>
 <input value={f.phone||''} onInput={cnSetPhone} placeholder="+91 98400 22114" style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Country</label>
-<select value={f.country||''} onChange={cnSetCountry} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={f.country||''} onChange={cnSetCountry} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(cnCountryOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Brand</label>
 {cnBrandLocked ? (
 <div style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--surface-50)","color":"var(--ink-700)","fontWeight":"600"}}>{cnBrandVal}</div>
 ) : (
-<select value={cnBrandVal||''} onChange={cnSetBrand} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={cnBrandVal||''} onChange={cnSetBrand} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(cnBrandOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select>
 )}
 {Boolean(cnBrandNote) && (<div style={{"fontSize":"10.5px","color":"var(--ink-500)","marginTop":"4px"}}>{cnBrandNote}</div>)}
 </div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Service requested</label>
-<select value={f.service||''} onChange={cnSetService} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={f.service||''} onChange={cnSetService} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(cnServiceOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Source</label>
-<select value={f.source||''} onChange={cnSetSource} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={f.source||''} onChange={cnSetSource} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(cnSourceOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Stage</label>
-<select value={f.stage||''} onChange={cnSetStage} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={f.stage||''} onChange={cnSetStage} style={{"width":"100%","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(cnStageOptions||[]).map((o,$i)=>(<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Est. value</label>
@@ -70,8 +70,8 @@ export default function ContactFormModal({ vm }) {
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Description / requirement</label>
 <textarea value={f.desc||''} onInput={cnSetDesc} rows="3" placeholder="What the prospect asked for, timelines, budget signals…" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none","resize":"vertical"}} /></div>
 </div>
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
-<button onClick={cnClose} style={{"padding":"10px 17px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
+<button onClick={cnClose} style={{"padding":"10px 17px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={cnSave} style={{"display":"flex","alignItems":"center","gap":"7px","padding":"10px 20px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"check"} style={{"width":"14px","height":"14px"}} />
 Save lead

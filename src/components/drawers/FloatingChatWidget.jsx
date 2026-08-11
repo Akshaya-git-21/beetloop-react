@@ -13,7 +13,7 @@ export default function FloatingChatWidget({ vm }) {
   return (
     <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
       {Boolean(cwOpen) && (
-        <div style={{ width: 340, height: cwMinimized ? 'auto' : 500, background: '#fff', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ width: 340, height: cwMinimized ? 'auto' : 500, background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '12px 14px', background: '#7A1C46', color: '#fff', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={cwToggleMinimize}>
             {!cwShowList && (
               <button onClick={(e) => { e.stopPropagation(); cwBack(); }} style={{ border: 'none', background: 'none', cursor: 'pointer', display: 'flex', color: '#fff', padding: 0 }}>
@@ -43,7 +43,7 @@ export default function FloatingChatWidget({ vm }) {
                     <div key={t.id} onClick={t.open} style={{ display: 'flex', gap: 9, padding: '9px 10px', borderRadius: 10, cursor: 'pointer' }}>
                       <span style={{ position: 'relative', width: 28, height: 28, flexShrink: 0 }}>
                         <span style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name={t.icon} style={{ width: 13, height: 13, color: 'var(--beet-700)' }} />
+                          <Icon name={t.icon} style={{ width: 13, height: 13, color: 'var(--ink-900)' }} />
                         </span>
                         {t.icon === 'user' && (
                           <span style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, borderRadius: 99, border: '2px solid #fff', background: t.onlineDotColor }} />
@@ -107,7 +107,7 @@ export default function FloatingChatWidget({ vm }) {
                           {Boolean(m.hasFiles) && !m.deleted && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
                               {(m.fileRows || []).map((fl, i) => (
-                                <button key={i} onClick={fl.openRepo} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 8px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 8, fontSize: 9.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
+                                <button key={i} onClick={fl.openRepo} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 8px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 8, fontSize: 9.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
                                   <Icon name={fl.icon} style={{ width: 10, height: 10, color: 'var(--orchid-600)' }} />{fl.name}
                                 </button>
                               ))}
@@ -116,20 +116,20 @@ export default function FloatingChatWidget({ vm }) {
 
                           {!m.deleted && (
                             <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
-                              <button onClick={m.reply} title="Reply" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="reply" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
-                              <button onClick={m.forward} title="Forward" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="forward" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
-                              <button onClick={m.copy} title="Copy" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="copy" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
-                              {Boolean(m.canEdit) && <button onClick={m.startEdit} title="Edit" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="pencil" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>}
-                              {Boolean(m.canDelete) && <button onClick={m.remove} title="Delete" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash-2" style={{ width: 10, height: 10, color: 'var(--danger-500)' }} /></button>}
+                              <button onClick={m.reply} title="Reply" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="reply" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
+                              <button onClick={m.forward} title="Forward" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="forward" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
+                              <button onClick={m.copy} title="Copy" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="copy" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>
+                              {Boolean(m.canEdit) && <button onClick={m.startEdit} title="Edit" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="pencil" style={{ width: 10, height: 10, color: 'var(--ink-500)' }} /></button>}
+                              {Boolean(m.canDelete) && <button onClick={m.remove} title="Delete" style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash-2" style={{ width: 10, height: 10, color: 'var(--danger-500)' }} /></button>}
                             </div>
                           )}
 
                           {Boolean(m.forwardPicker) && (
                             <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginTop: 5, width: '100%' }}>
-                              <select onChange={m.forwardPick} style={{ flex: 1, minWidth: 0, padding: '6px 8px', border: '1px solid var(--orchid-300)', borderRadius: 8, fontSize: 10.5, background: '#fff' }}>
+                              <select onChange={m.forwardPick} style={{ flex: 1, minWidth: 0, padding: '6px 8px', border: '1px solid var(--orchid-300)', borderRadius: 8, fontSize: 10.5, background: 'var(--paper)' }}>
                                 {(m.forwardOptions || []).map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
                               </select>
-                              <button onClick={m.forwardCancel} style={{ padding: '6px 9px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 8, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                              <button onClick={m.forwardCancel} style={{ padding: '6px 9px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 8, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                             </div>
                           )}
                         </div>
@@ -164,11 +164,11 @@ export default function FloatingChatWidget({ vm }) {
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
-                      <button onClick={cwAttach} title="Attach file" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="paperclip" style={{ width: 13, height: 13, color: 'var(--ink-700)' }} /></button>
-                      <button onClick={cwAttachImage} title="Attach image" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="image-plus" style={{ width: 13, height: 13, color: 'var(--ink-700)' }} /></button>
-                      <button onClick={cwToggleEmoji} title="Emoji" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid ' + (cwEmojiOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: cwEmojiOpen ? 'var(--orchid-100)' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="smile" style={{ width: 13, height: 13, color: cwEmojiOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} /></button>
+                      <button onClick={cwAttach} title="Attach file" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="paperclip" style={{ width: 13, height: 13, color: 'var(--ink-700)' }} /></button>
+                      <button onClick={cwAttachImage} title="Attach image" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="image-plus" style={{ width: 13, height: 13, color: 'var(--ink-700)' }} /></button>
+                      <button onClick={cwToggleEmoji} title="Emoji" style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid ' + (cwEmojiOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: cwEmojiOpen ? 'var(--orchid-100)' : 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="smile" style={{ width: 13, height: 13, color: cwEmojiOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} /></button>
                       {Boolean(cwEmojiOpen) && (
-                        <div style={{ position: 'absolute', bottom: 36, left: 0, background: '#fff', border: '1px solid var(--line-300)', borderRadius: 10, boxShadow: 'var(--shadow-lg)', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 3, zIndex: 5, width: 240 }}>
+                        <div style={{ position: 'absolute', bottom: 36, left: 0, background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 10, boxShadow: 'var(--shadow-lg)', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 3, zIndex: 5, width: 240 }}>
                           {(cwEmojiList || []).map((em, i) => (
                             <button key={i} onClick={() => cwPickEmoji(em)} style={{ border: 'none', background: 'none', fontSize: 15, cursor: 'pointer', padding: 2, borderRadius: 5 }}>{em}</button>
                           ))}

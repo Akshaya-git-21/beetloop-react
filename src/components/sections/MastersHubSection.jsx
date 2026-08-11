@@ -21,7 +21,7 @@ export default function MastersHubSection({ vm }) {
                 
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
 <Icon name={g.icon} style={{"width":"15px","height":"15px","color":"var(--orchid-500)"}} />
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0"}}>
 {g.name}
 </h3>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-400)","background":"var(--surface-50)","padding":"2px 8px","borderRadius":"999px","border":"1px solid var(--line-200)"}}>
@@ -37,7 +37,7 @@ export default function MastersHubSection({ vm }) {
 <React.Fragment key={$index}>
 
                     
-<button onClick={m.open} style={{"textAlign":"left","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-xs)","padding":"15px 16px","cursor":"pointer","transition":".15s"}} style-hover="border-color:var(--orchid-300);box-shadow:var(--shadow-md)">
+<button onClick={m.open} style={{"textAlign":"left","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-xs)","padding":"15px 16px","cursor":"pointer","transition":".15s"}} style-hover="border-color:var(--orchid-300);box-shadow:var(--shadow-md)">
 
                       
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"10px"}}>

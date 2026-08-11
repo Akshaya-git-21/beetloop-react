@@ -15,7 +15,7 @@ export default function Topbar({ vm }) {
 <Icon name={"search"} style={{"width":"16px","height":"16px","color":"var(--ink-400)","position":"absolute","left":"12px","top":"10px"}} />
 
         
-<input placeholder="Search projects, tasks, keywords…" style={{"width":"100%","padding":"9px 12px 9px 36px","border":"1px solid var(--line-300)","borderRadius":"12px","fontSize":"13.5px","background":"#fff","outline":"none"}} />
+<input placeholder="Search projects, tasks, keywords…" style={{"width":"100%","padding":"9px 12px 9px 36px","border":"1px solid var(--line-300)","borderRadius":"12px","fontSize":"13.5px","background":"var(--paper)","outline":"none"}} />
 
       
 </div>
@@ -24,18 +24,18 @@ export default function Topbar({ vm }) {
 <div style={{"flex":"1"}} />
 
 <div style={{"position":"relative"}}>
-<button onClick={toggleNotifications} style={{"position":"relative","width":"38px","height":"38px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={toggleNotifications} style={{"position":"relative","width":"38px","height":"38px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"bell"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 {unreadCount>0 && (
 <span style={{"position":"absolute","top":"8px","right":"9px","width":"7px","height":"7px","borderRadius":"50%","background":"var(--danger-500)"}} />
 )}
 </button>
 {showNotifications && (
-<div style={{"position":"absolute","top":"46px","right":"0","width":"360px","maxHeight":"420px","overflowY":"auto","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","boxShadow":"var(--shadow-lg)","zIndex":"50"}}>
-<div style={{"position":"sticky","top":"0","background":"#fff","padding":"14px 16px","borderBottom":"1px solid var(--line-300)","display":"flex","alignItems":"center","justifyContent":"space-between"}}>
+<div style={{"position":"absolute","top":"46px","right":"0","width":"360px","maxHeight":"420px","overflowY":"auto","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","boxShadow":"var(--shadow-lg)","zIndex":"50"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","padding":"14px 16px","borderBottom":"1px solid var(--line-300)","display":"flex","alignItems":"center","justifyContent":"space-between"}}>
 <span style={{"fontWeight":"700","fontSize":"13.5px","color":"var(--ink-900)"}}>Notifications</span>
 {unreadCount>0 && (
-<button onClick={markAllNotificationsRead} style={{"border":"none","background":"none","cursor":"pointer","fontSize":"12px","fontWeight":"700","color":"var(--beet-700)"}}>Mark all as read</button>
+<button onClick={markAllNotificationsRead} style={{"border":"none","background":"none","cursor":"pointer","fontSize":"12px","fontWeight":"700","color":"var(--ink-900)"}}>Mark all as read</button>
 )}
 </div>
 {(notifications||[]).length===0 ? (

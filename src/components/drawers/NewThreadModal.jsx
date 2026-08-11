@@ -13,13 +13,13 @@ export default function NewThreadModal({ vm }) {
       {Boolean(thFormOpen) && (
         <React.Fragment>
           <div onClick={thClose} style={{ position: 'fixed', inset: 0, zIndex: 170, background: 'rgba(31,8,20,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
-            <div onClick={thStop} className="blscroll" style={{ width: '100%', maxWidth: 560, maxHeight: '100%', background: '#fff', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
+            <div onClick={thStop} className="blscroll" style={{ width: '100%', maxWidth: 560, maxHeight: '100%', background: 'var(--paper)', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
               <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>Messages</div>
-                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--beet-700)', margin: '4px 0 0' }}>{thFormTitle}</h3>
+                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', margin: '4px 0 0' }}>{thFormTitle}</h3>
                 </div>
-                <button onClick={thClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <button onClick={thClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name="x" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} />
                 </button>
               </div>
@@ -27,7 +27,7 @@ export default function NewThreadModal({ vm }) {
               <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {(thKindBtns || []).map((k, i) => (
-                    <button key={i} onClick={k.set} style={{ flex: 1, padding: '9px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (k.active ? 'var(--beet-700)' : 'var(--line-300)'), background: k.active ? 'var(--beet-700)' : '#fff', color: k.active ? '#fff' : 'var(--ink-700)' }}>{k.label}</button>
+                    <button key={i} onClick={k.set} style={{ flex: 1, padding: '9px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (k.active ? 'var(--beet-700)' : 'var(--line-300)'), background: k.active ? 'var(--beet-700)' : 'var(--paper)', color: k.active ? '#fff' : 'var(--ink-700)' }}>{k.label}</button>
                   ))}
                 </div>
 
@@ -61,7 +61,7 @@ export default function NewThreadModal({ vm }) {
               </div>
 
               <div style={{ padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button onClick={thClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={thClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
                 <button onClick={thSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}><Icon name="check" style={{ width: 14, height: 14 }} />Create</button>
               </div>
             </div>

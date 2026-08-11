@@ -13,10 +13,10 @@ export default function OkrDetailDrawer({ vm }) {
 <div onClick={okClose} style={{"position":"fixed","inset":"0","zIndex":"60","background":"rgba(31,8,20,.5)","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={okStop} className="blscroll" style={{"width":"100%","maxWidth":"860px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={okStop} className="blscroll" style={{"width":"100%","maxWidth":"860px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
 
         
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"14px"}}>
@@ -38,7 +38,7 @@ export default function OkrDetailDrawer({ vm }) {
 </div>
 
             
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"6px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"6px 0 0"}}>
 {okD.title}
 </h3>
 
@@ -51,7 +51,7 @@ export default function OkrDetailDrawer({ vm }) {
 </div>
 
           
-<button onClick={okClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={okClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
@@ -247,7 +247,7 @@ Owner
 <div onClick={lt.open} style={{"display":"flex","alignItems":"center","gap":"9px","padding":"8px 11px","border":"1px solid var(--line-200)","borderRadius":"10px","cursor":"pointer","flexWrap":"wrap"}} style-hover="border-color:var(--orchid-300);background:var(--surface-50)">
 
                           
-<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-900)"}}>
 {lt.id}
 </span>
 
@@ -306,12 +306,12 @@ Owner
 </div>
 {Boolean(k.hasSops) && (
 <React.Fragment>
-<div style={{"fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)","marginTop":"3px","marginLeft":"18px"}}>
+<div style={{"fontSize":"10.5px","fontWeight":"700","color":"var(--ink-900)","marginTop":"3px","marginLeft":"18px"}}>
 {k.sopLabel}
 </div>
 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginLeft":"18px","marginTop":"3px"}}>
 {(k.sopList || []).map((sp, $si) => (
-<button key={$si} onClick={sp.open} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"999px","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button key={$si} onClick={sp.open} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"999px","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"book-open-check"} style={{"width":"10px","height":"10px","color":"var(--orchid-600)"}} />
 {sp.title}
 <span style={cssTextToObject(`font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:${sp.bg};color:${sp.color}`)}>{sp.status}</span>

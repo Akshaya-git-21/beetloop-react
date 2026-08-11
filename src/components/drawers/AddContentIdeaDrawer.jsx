@@ -13,24 +13,24 @@ export default function AddContentIdeaDrawer({ vm }) {
 <div onClick={idfClose} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"165","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"760px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"760px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"3"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"3"}}>
 
         
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 Content Repository
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 Add Content Idea
 </h3>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"6px"}}>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>
 Idea ID
 </span>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
 {idfCode}
 </span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
@@ -40,7 +40,7 @@ auto-generated
 </div>
 
         
-<button onClick={idfClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={idfClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
@@ -67,7 +67,7 @@ auto-generated
 <React.Fragment>
 
         
-<div style={{"margin":"14px 24px 0","display":"flex","alignItems":"center","gap":"9px","background":"#fff","border":"1.5px solid var(--orchid-400)","borderRadius":"13px","padding":"11px 14px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"margin":"14px 24px 0","display":"flex","alignItems":"center","gap":"9px","background":"var(--paper)","border":"1.5px solid var(--orchid-400)","borderRadius":"13px","padding":"11px 14px","boxShadow":"var(--shadow-sm)"}}>
 
           
 <Icon name={"plus-circle"} style={{"width":"16px","height":"16px","color":"var(--orchid-600)","flexShrink":"0"}} />
@@ -87,7 +87,7 @@ Add & select
 </button>
 
           
-<button onClick={idfCancelCustom} style={{"padding":"8px 13px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfCancelCustom} style={{"padding":"8px 13px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 Cancel
 </button>
 
@@ -150,7 +150,7 @@ Idea source
 *
 </span>
 </label>
-<select value={idf.source} onChange={idfSetSource} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.source} onChange={idfSetSource} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfSourceOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -169,7 +169,7 @@ Content type
 *
 </span>
 </label>
-<select value={idf.type} onChange={idfSetType} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.type} onChange={idfSetType} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfTypeOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -188,7 +188,7 @@ Category
 *
 </span>
 </label>
-<select value={idf.category} onChange={idfSetCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.category} onChange={idfSetCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfCatOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -204,7 +204,7 @@ Category
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Sub category
 </label>
-<select value={idf.subCategory} onChange={idfSetSubCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.subCategory} onChange={idfSetSubCategory} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfSubCatOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -220,7 +220,7 @@ Sub category
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Service (related)
 </label>
-<select value={idf.service} onChange={idfSetService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.service} onChange={idfSetService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfServiceOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -236,7 +236,7 @@ Service (related)
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Campaign (optional)
 </label>
-<select value={idf.campaign} onChange={idfSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.campaign} onChange={idfSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfCampaignOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -255,7 +255,7 @@ Priority
 *
 </span>
 </label>
-<select value={idf.priority} onChange={idfSetPriority} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.priority} onChange={idfSetPriority} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Critical
 </option>
@@ -282,7 +282,7 @@ Owner
 *
 </span>
 </label>
-<select value={idf.owner} onChange={idfSetOwner} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.owner} onChange={idfSetOwner} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfOwnerOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -301,7 +301,7 @@ Who will drive this content idea forward
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Expected publish month
 </label>
-<input type="month" value={idf.publishMonth} onInput={idfSetMonth} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
+<input type="month" value={idf.publishMonth} onInput={idfSetMonth} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
 </div>
 
             
@@ -323,7 +323,7 @@ to
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Recommended length
 </label>
-<select value={idf.recLength} onChange={idfSetRecLength} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.recLength} onChange={idfSetRecLength} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfRecLengthOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -339,7 +339,7 @@ Recommended length
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Reading level
 </label>
-<select value={idf.readLevel} onChange={idfSetReadLevel} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.readLevel} onChange={idfSetReadLevel} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfReadLevelOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -391,7 +391,7 @@ Publication destination
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>
 Internal page type
 </label>
-<select value={idfIntType} onChange={idfSetIntType} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={idfIntType} onChange={idfSetIntType} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 <option>
 Service page
 </option>
@@ -406,7 +406,7 @@ Insights
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>
 Pull from Content repositories
 </label>
-<select value={idfIntPull} onChange={idfSetIntPull} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={idfIntPull} onChange={idfSetIntPull} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 {(idfIntPullOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -452,7 +452,7 @@ External URL (manual)
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>
 What is this URL? (categorize)
 </label>
-<select value={idf.extCat} onChange={idfSetExtCat} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={idf.extCat} onChange={idfSetExtCat} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 {(idfExtCatOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -485,7 +485,7 @@ Effort plan linkage
 </div>
 
             
-<select value={idf.effortPlan} onChange={idfSetEffort} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={idf.effortPlan} onChange={idfSetEffort} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(idfEffortOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -581,7 +581,7 @@ Search intent
 *
 </span>
 </label>
-<select value={idf.intent} onChange={idfSetIntent} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.intent} onChange={idfSetIntent} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Informational
 </option>
@@ -621,7 +621,7 @@ Topic & content architecture
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Topic cluster
 </label>
-<select value={idf.cluster} onChange={idfSetCluster} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.cluster} onChange={idfSetCluster} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfClusterOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -637,7 +637,7 @@ Topic cluster
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Pillar page
 </label>
-<select value={idf.pillar} onChange={idfSetPillar} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.pillar} onChange={idfSetPillar} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfPillarOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -653,7 +653,7 @@ Pillar page
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Target audience / persona
 </label>
-<select value={idf.audience} onChange={idfSetAudience} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.audience} onChange={idfSetAudience} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfAudienceOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -669,7 +669,7 @@ Target audience / persona
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Customer journey stage
 </label>
-<select value={idf.journey} onChange={idfSetJourney} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.journey} onChange={idfSetJourney} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfJourneyOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -685,7 +685,7 @@ Customer journey stage
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Content goal
 </label>
-<select value={idf.goal} onChange={idfSetGoal} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={idf.goal} onChange={idfSetGoal} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(idfGoalOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -821,10 +821,10 @@ Ensure all claims are evidence-backed and properly cited using the provided refe
 
             
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
-<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--ink-900)"}}>
 1. Scientific references
 </span>
-<button onClick={idfAddRef} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddRef} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
 Add reference
 </button>
@@ -849,12 +849,12 @@ Peer-reviewed studies, clinical trials and scientific papers relevant to this to
 <div style={{"display":"flex","gap":"8px","alignItems":"center","marginBottom":"8px"}}>
 
                     
-<input value={r.title} onInput={r.set_title} placeholder="Title — e.g. Curcumin and Its Derivatives: A Review…" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+<input value={r.title} onInput={r.set_title} placeholder="Title — e.g. Curcumin and Its Derivatives: A Review…" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
 
                     
 {Boolean(r.canRemove) && (
 <React.Fragment>
-<button onClick={r.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={r.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"13px","height":"13px","color":"var(--ink-500)"}} />
 </button>
 </React.Fragment>
@@ -867,13 +867,13 @@ Peer-reviewed studies, clinical trials and scientific papers relevant to this to
 <div style={{"display":"grid","gridTemplateColumns":"1.2fr 1fr .5fr","gap":"8px","marginBottom":"8px"}}>
 
                     
-<input value={r.authors} onInput={r.set_authors} placeholder="Authors — e.g. Aggarwal, B.B., Gupta, S.C." style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={r.authors} onInput={r.set_authors} placeholder="Authors — e.g. Aggarwal, B.B., Gupta, S.C." style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<input value={r.source} onInput={r.set_source} placeholder="Journal / source" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={r.source} onInput={r.set_source} placeholder="Journal / source" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<input value={r.year} onInput={r.set_year} placeholder="Year" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={r.year} onInput={r.set_year} placeholder="Year" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                   
 </div>
@@ -882,7 +882,7 @@ Peer-reviewed studies, clinical trials and scientific papers relevant to this to
 <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"8px"}}>
 
                     
-<select value={r.rtype} onChange={r.set_rtype} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
+<select value={r.rtype} onChange={r.set_rtype} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"var(--paper)"}}>
 {(idfRefTypes || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -893,7 +893,7 @@ Peer-reviewed studies, clinical trials and scientific papers relevant to this to
 </select>
 
                     
-<select value={r.use} onChange={r.set_use} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
+<select value={r.use} onChange={r.set_use} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"var(--paper)"}}>
 {(idfRefUses || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -924,10 +924,10 @@ Peer-reviewed studies, clinical trials and scientific papers relevant to this to
 
             
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
-<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--ink-900)"}}>
 2. Statistics & data
 </span>
-<button onClick={idfAddStat} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddStat} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
 Add statistic
 </button>
@@ -952,12 +952,12 @@ Key statistics, market data and numerical insights to be included.
 <div style={{"display":"flex","gap":"8px","alignItems":"center","marginBottom":"8px"}}>
 
                     
-<input value={s.stat} onInput={s.set_stat} placeholder="Statistic / data point — e.g. Market size valued at USD 1.1B, CAGR 10.2%" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"#fff"}} />
+<input value={s.stat} onInput={s.set_stat} placeholder="Statistic / data point — e.g. Market size valued at USD 1.1B, CAGR 10.2%" style={{"flex":"1","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
 
                     
 {Boolean(s.canRemove) && (
 <React.Fragment>
-<button onClick={s.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={s.remove} style={{"width":"30px","height":"30px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"13px","height":"13px","color":"var(--ink-500)"}} />
 </button>
 </React.Fragment>
@@ -970,13 +970,13 @@ Key statistics, market data and numerical insights to be included.
 <div style={{"display":"grid","gridTemplateColumns":"1fr .4fr .8fr .8fr","gap":"8px"}}>
 
                     
-<input value={s.source} onInput={s.set_source} placeholder="Source — e.g. Grand View Research" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={s.source} onInput={s.set_source} placeholder="Source — e.g. Grand View Research" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<input value={s.year} onInput={s.set_year} placeholder="Year" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={s.year} onInput={s.set_year} placeholder="Year" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<select value={s.use} onChange={s.set_use} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
+<select value={s.use} onChange={s.set_use} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"var(--paper)"}}>
 {(idfStatUses || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -987,7 +987,7 @@ Key statistics, market data and numerical insights to be included.
 </select>
 
                     
-<input value={s.citation} onInput={s.set_citation} placeholder="Citation — e.g. GVR, 2023" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={s.citation} onInput={s.set_citation} placeholder="Citation — e.g. GVR, 2023" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                   
 </div>
@@ -1013,10 +1013,10 @@ Key statistics, market data and numerical insights to be included.
 
               
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
-<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--ink-900)"}}>
 3. Trusted external resources
 </span>
-<button onClick={idfAddExt} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddExt} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
 Add
 </button>
@@ -1041,12 +1041,12 @@ Authoritative websites, databases and organizations.
 <div style={{"display":"flex","gap":"7px","alignItems":"center"}}>
 
                       
-<input value={x.name} onInput={x.set_name} placeholder="e.g. National Institutes of Health (NIH)" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={x.name} onInput={x.set_name} placeholder="e.g. National Institutes of Health (NIH)" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                       
 {Boolean(x.canRemove) && (
 <React.Fragment>
-<button onClick={x.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={x.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
 </button>
 </React.Fragment>
@@ -1056,7 +1056,7 @@ Authoritative websites, databases and organizations.
 </div>
 
                     
-<input value={x.url} onInput={x.set_url} placeholder="https://…" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"11.5px","outline":"none","background":"#fff","fontFamily":"'Space Mono'"}} />
+<input value={x.url} onInput={x.set_url} placeholder="https://…" style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"11.5px","outline":"none","background":"var(--paper)","fontFamily":"'Space Mono'"}} />
 
                   
 </div>
@@ -1076,10 +1076,10 @@ Authoritative websites, databases and organizations.
 
               
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
-<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--ink-900)"}}>
 4. Internal resources
 </span>
-<button onClick={idfAddInt} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddInt} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
 Add
 </button>
@@ -1101,10 +1101,10 @@ Company data, whitepapers, previous content and templates.
 <div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"10px","display":"flex","gap":"7px","alignItems":"center"}}>
 
                     
-<input value={x.name} onInput={x.set_name} placeholder="e.g. FRL Whitepaper — Curcumin Applications" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={x.name} onInput={x.set_name} placeholder="e.g. FRL Whitepaper — Curcumin Applications" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<select value={x.itype} onChange={x.set_itype} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
+<select value={x.itype} onChange={x.set_itype} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"var(--paper)"}}>
 {(idfIntTypes || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -1117,7 +1117,7 @@ Company data, whitepapers, previous content and templates.
                     
 {Boolean(x.canRemove) && (
 <React.Fragment>
-<button onClick={x.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={x.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
 </button>
 </React.Fragment>
@@ -1146,7 +1146,7 @@ Company data, whitepapers, previous content and templates.
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"4px"}}>
 
               
-<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--beet-700)"}}>
+<span style={{"fontSize":"13px","fontWeight":"800","color":"var(--ink-900)"}}>
 5. Attachments & images
 </span>
 
@@ -1154,13 +1154,13 @@ Company data, whitepapers, previous content and templates.
 <div style={{"display":"flex","gap":"6px"}}>
 
                 
-<button onClick={idfAddDoc} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddDoc} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"12px","height":"12px"}} />
 Attach file
 </button>
 
                 
-<button onClick={idfAddImg} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idfAddImg} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"image-plus"} style={{"width":"12px","height":"12px"}} />
 Add image
 </button>
@@ -1196,10 +1196,10 @@ Briefs, planning documents, research files and images supporting this idea.
 </span>
 
                     
-<input value={a.name} onInput={a.setName} style={{"width":"200px","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff","fontFamily":"'Space Mono'"}} />
+<input value={a.name} onInput={a.setName} style={{"width":"200px","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)","fontFamily":"'Space Mono'"}} />
 
                     
-<select value={a.category} onChange={a.setCategory} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"#fff"}}>
+<select value={a.category} onChange={a.setCategory} style={{"padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","background":"var(--paper)"}}>
 {(idfAttCats || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -1210,10 +1210,10 @@ Briefs, planning documents, research files and images supporting this idea.
 </select>
 
                     
-<input value={a.desc} onInput={a.setDesc} placeholder="Description — what this file contains" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"#fff"}} />
+<input value={a.desc} onInput={a.setDesc} placeholder="Description — what this file contains" style={{"flex":"1","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)"}} />
 
                     
-<button onClick={a.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={a.remove} style={{"width":"28px","height":"28px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"trash-2"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
 </button>
 
@@ -1261,12 +1261,12 @@ Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG (Max 20 MB per
 </div>
 
       
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"16px 24px","borderTop":"1px solid var(--line-200)","display":"flex","gap":"10px"}}>
 
         
 {Boolean(idfNotFirst) && (
 <React.Fragment>
-<button onClick={idfPrev} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={idfPrev} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"arrow-left"} style={{"width":"14px","height":"14px"}} />
 Back
 </button>
@@ -1277,12 +1277,12 @@ Back
 <div style={{"flex":"1"}} />
 
         
-<button onClick={idfClose} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={idfClose} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 
         
-<button onClick={idfSaveDraft} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={idfSaveDraft} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Save as draft
 </button>
 

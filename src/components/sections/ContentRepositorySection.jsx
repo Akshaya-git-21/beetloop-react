@@ -19,25 +19,25 @@ New Page
 </button>
 
             
-<button onClick={contentAI} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--orchid-700)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={contentAI} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","color":"var(--orchid-700)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"sparkles"} style={{"width":"15px","height":"15px"}} />
 AI Content Assistant
 </button>
 
             
-<button onClick={contentImport} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
+<button onClick={contentImport} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
 <Icon name={"upload"} style={{"width":"15px","height":"15px"}} />
 Import
 </button>
 
             
-<button onClick={contentExport} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
+<button onClick={contentExport} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
 <Icon name={"download"} style={{"width":"15px","height":"15px"}} />
 Export
 </button>
 
             
-<button onClick={contentBulk} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
+<button onClick={contentBulk} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","color":"var(--ink-700)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 14px","fontSize":"13px","fontWeight":"600","cursor":"pointer"}}>
 <Icon name={"layers"} style={{"width":"15px","height":"15px"}} />
 Bulk Update
 </button>
@@ -53,7 +53,7 @@ Bulk Update
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -85,7 +85,7 @@ Bulk Update
 {/* repo switcher */}
 
             
-<div style={{"flex":"none","width":"216px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"12px"}}>
+<div style={{"flex":"none","width":"216px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"12px"}}>
 
               
 <div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".12em","textTransform":"uppercase","color":"var(--ink-400)","padding":"4px 10px 8px"}}>
@@ -126,15 +126,15 @@ Repositories
                 
 <div style={{"position":"relative","flex":"1","minWidth":"220px","maxWidth":"340px"}}>
 <Icon name={"search"} style={{"width":"15px","height":"15px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"10px"}} />
-<input value={contentQuery} onInput={contentOnQuery} placeholder="Search pages, keywords, topics…" style={{"width":"100%","padding":"9px 12px 9px 34px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none","background":"#fff"}} />
+<input value={contentQuery} onInput={contentOnQuery} placeholder="Search pages, keywords, topics…" style={{"width":"100%","padding":"9px 12px 9px 34px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","outline":"none","background":"var(--paper)"}} />
 </div>
 
                 
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Status
 </span>
-<select value={contentStatusFilter} onChange={contentOnStatus} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={contentStatusFilter} onChange={contentOnStatus} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 <option>
 All
 </option>
@@ -168,7 +168,7 @@ Archived
 </div>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
                 
 <div style={{"display":"grid","gridTemplateColumns":"2.2fr 1fr 1.1fr .8fr .9fr 40px","gap":"12px","padding":"12px 18px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"10.5px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
@@ -266,7 +266,7 @@ NEW
 </span>
 
                       
-<button onClick={p.open} style={{"justifySelf":"end","width":"30px","height":"30px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={p.open} style={{"justifySelf":"end","width":"30px","height":"30px","borderRadius":"8px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"panel-right-open"} style={{"width":"15px","height":"15px","color":"var(--ink-500)"}} />
 </button>
 
@@ -340,7 +340,7 @@ Updated
 
                         
 <div style={{"gridColumn":"1 / -1"}}>
-<button onClick={p.open} style={{"display":"inline-flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--beet-700)","borderRadius":"10px","padding":"8px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={p.open} style={{"display":"inline-flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-900)","borderRadius":"10px","padding":"8px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"panel-right-open"} style={{"width":"14px","height":"14px"}} />
 Open full record
 </button>

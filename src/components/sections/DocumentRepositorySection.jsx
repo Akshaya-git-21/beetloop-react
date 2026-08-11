@@ -17,7 +17,7 @@ export default function DocumentRepositorySection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px","boxShadow":"var(--shadow-sm)"}}>
 
                 
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -61,7 +61,7 @@ Showing files from your assigned tasks only.
             
 <div style={{"position":"relative","flex":"1","minWidth":"220px","maxWidth":"320px"}}>
 <Icon name={"search"} style={{"width":"15px","height":"15px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"9px"}} />
-<input value={flQuery} onInput={flOnQuery} placeholder="Search file, task or uploader…" style={{"width":"100%","padding":"8px 12px 8px 34px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none","background":"#fff"}} />
+<input value={flQuery} onInput={flOnQuery} placeholder="Search file, task or uploader…" style={{"width":"100%","padding":"8px 12px 8px 34px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none","background":"var(--paper)"}} />
 </div>
 
             
@@ -69,11 +69,11 @@ Showing files from your assigned tasks only.
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -89,7 +89,7 @@ Showing files from your assigned tasks only.
 ))}
 
             
-<button onClick={flReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<button onClick={flReset} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"7px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"12px","height":"12px"}} />
 Reset
 </button>
@@ -98,7 +98,7 @@ Reset
 </div>
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
 <div style={{"overflowX":"auto"}}>
@@ -198,10 +198,10 @@ Actions
 
 <td style={{"padding":"12px 16px","borderBottom":"1px solid var(--line-200)"}}>
 <div onClick={f.open} title="Open task" style={{"display":"flex","alignItems":"center","gap":"7px","cursor":"pointer"}}>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--beet-700)","textDecoration":"underline"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","fontWeight":"700","color":"var(--ink-900)","textDecoration":"underline"}}>
 {f.taskId}
 </span>
-<span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--beet-700)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","maxWidth":"220px","display":"inline-block","textDecoration":"underline"}}>
+<span style={{"fontSize":"12.5px","fontWeight":"600","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","maxWidth":"220px","display":"inline-block","textDecoration":"underline"}}>
 {f.taskName}
 </span>
 </div>
@@ -231,10 +231,10 @@ Actions
 <Icon name={"eye"} style={{"width":"12px","height":"12px"}} />
 Preview
 </button>
-<button onClick={f.download} title="Download" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={f.download} title="Download" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"download"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
 </button>
-<button onClick={f.open} title="Open task" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={f.open} title="Open task" style={{"width":"28px","height":"28px","borderRadius":"9px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"external-link"} style={{"width":"12px","height":"12px","color":"var(--ink-500)"}} />
 </button>
 </div>

@@ -23,17 +23,23 @@
 export function applyTheme(theme) {
   if (!theme) return;
   const root = document.documentElement;
-  if (theme.mode) {
-    const wantsDark = theme.mode === 'dark' || (theme.mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    root.setAttribute('data-theme', wantsDark ? 'dark' : 'light');
-  }
+  const wantsDark = theme.mode === 'dark' || (theme.mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (theme.mode) root.setAttribute('data-theme', wantsDark ? 'dark' : 'light');
   if (theme.primaryColor) root.style.setProperty('--beet-700', theme.primaryColor);
   if (theme.secondaryColor) root.style.setProperty('--beet-600', theme.secondaryColor);
   if (theme.sidebarColor) root.style.setProperty('--sidebar-bg', theme.sidebarColor);
   if (theme.navbarColor) root.style.setProperty('--navbar-bg', theme.navbarColor);
   if (theme.buttonColor) root.style.setProperty('--orchid-500', theme.buttonColor);
-  if (theme.cardColor) root.style.setProperty('--surface-50', theme.cardColor);
-  if (theme.textColor) root.style.setProperty('--ink-900', theme.textColor);
+  // Card/Text color are saved as a single light-mode-oriented value with no
+  // dark-mode counterpart. Pinning them as an inline override — like the
+  // branded colors above — would permanently defeat the [data-theme="dark"]
+  // CSS block's own --surface-50/--ink-900 values, since inline style always
+  // wins the cascade. So these two only apply in light mode; in dark mode we
+  // clear any prior inline override and let the dark CSS block stand.
+  if (theme.cardColor && !wantsDark) root.style.setProperty('--surface-50', theme.cardColor);
+  else if (wantsDark) root.style.removeProperty('--surface-50');
+  if (theme.textColor && !wantsDark) root.style.setProperty('--ink-900', theme.textColor);
+  else if (wantsDark) root.style.removeProperty('--ink-900');
   if (theme.fontFamily) document.body.style.fontFamily = theme.fontFamily;
   if (theme.borderRadius != null && theme.borderRadius !== '') root.style.setProperty('--radius', theme.borderRadius + 'px');
   applyCustomCss(theme.customCss);

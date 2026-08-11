@@ -88,7 +88,7 @@ Projects, campaigns, QC and analytics — with role-based access from the CEO to
 <div style={{"width":"100%","maxWidth":"400px","animation":"blrise .5s var(--ease-out)"}}>
 
       
-<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"27px","letterSpacing":"-.01em","color":"var(--beet-700)","margin":"0 0 6px"}}>
+<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"27px","letterSpacing":"-.01em","color":"var(--ink-900)","margin":"0 0 6px"}}>
 Sign in
 </h2>
 
@@ -127,7 +127,7 @@ Work email
 <Icon name={"mail"} style={{"width":"17px","height":"17px","color":"var(--ink-400)","position":"absolute","left":"13px","top":"13px"}} />
 
         
-<input value={email} onInput={onEmail} placeholder="you@beetloop.com" style={{"width":"100%","padding":"12px 14px 12px 40px","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"14.5px","background":"#fff","outline":"none"}} />
+<input value={email} onInput={onEmail} placeholder="you@company.com" style={{"width":"100%","padding":"12px 14px 12px 40px","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"14.5px","background":"var(--paper)","outline":"none"}} />
 
       
 </div>
@@ -156,7 +156,7 @@ Forgot password?
 <Icon name={"lock"} style={{"width":"17px","height":"17px","color":"var(--ink-400)","position":"absolute","left":"13px","top":"13px"}} />
 
         
-<input type="password" value={password} onInput={onPassword} placeholder="••••••••••••" style={{"width":"100%","padding":"12px 14px 12px 40px","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"14.5px","background":"#fff","outline":"none"}} />
+<input type="password" value={password} onInput={onPassword} placeholder="••••••••••••" style={{"width":"100%","padding":"12px 14px 12px 40px","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"14.5px","background":"var(--paper)","outline":"none"}} />
 
       
 </div>
@@ -183,13 +183,13 @@ OR
 <div style={{"display":"flex","gap":"10px"}}>
 
         
-<button onClick={oauthGoogle} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
+<button onClick={oauthGoogle} style={{"flex":"1","padding":"11px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
 <Icon name={"globe"} style={{"width":"16px","height":"16px"}} />
  Google
 </button>
 
         
-<button onClick={oauthMicrosoft} style={{"flex":"1","padding":"11px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
+<button onClick={oauthMicrosoft} style={{"flex":"1","padding":"11px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","fontSize":"13.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","gap":"8px"}}>
 <Icon name={"grid-3x3"} style={{"width":"16px","height":"16px"}} />
  Microsoft
 </button>

@@ -11,14 +11,14 @@ export default function FilePickerModal({ vm }) {
     <React.Fragment>
 {Boolean(fpOpen) && (
 <div onClick={fpClose} style={{"position":"fixed","inset":"0","zIndex":"190","background":"rgba(31,8,20,.5)","display":"flex","alignItems":"center","justifyContent":"center","padding":"28px"}}>
-<div onClick={fpStop} className="blscroll" style={{"width":"100%","maxWidth":"660px","maxHeight":"100%","background":"#fff","borderRadius":"20px","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .28s var(--ease-out)"}}>
-<div style={{"position":"sticky","top":"0","background":"#fff","padding":"18px 22px","borderBottom":"1px solid var(--line-200)","zIndex":"2"}}>
+<div onClick={fpStop} className="blscroll" style={{"width":"100%","maxWidth":"660px","maxHeight":"100%","background":"var(--paper)","borderRadius":"20px","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .28s var(--ease-out)"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","padding":"18px 22px","borderBottom":"1px solid var(--line-200)","zIndex":"2"}}>
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>Document repository</div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"4px 0 0"}}>{fpTitle}</h3>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--ink-900)","margin":"4px 0 0"}}>{fpTitle}</h3>
 </div>
-<button onClick={fpClose} style={{"width":"32px","height":"32px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={fpClose} style={{"width":"32px","height":"32px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"16px","height":"16px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -42,7 +42,7 @@ Upload new
 <Icon name={"search"} style={{"width":"14px","height":"14px","color":"var(--ink-400)","position":"absolute","left":"11px","top":"11px"}} />
 <input value={fpQuery} onInput={fpSetQuery} placeholder="Search files, task, uploader…" style={{"width":"100%","padding":"9px 11px 9px 33px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none"}} />
 </div>
-<select value={fpTypeVal} onChange={fpSetType} style={{"padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"#fff"}}>
+<select value={fpTypeVal} onChange={fpSetType} style={{"padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","background":"var(--paper)"}}>
 {(fpTypeOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>
@@ -67,9 +67,9 @@ Upload new
 </div>
 )}
 </div>
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"10px"}}>
 <span style={{"flex":"1","fontSize":"12px","fontWeight":"700","color":"var(--ink-500)"}}>{fpCount}</span>
-<button onClick={fpClose} style={{"padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
+<button onClick={fpClose} style={{"padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={fpAttach} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 18px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"paperclip"} style={{"width":"13px","height":"13px"}} />
 Attach selected
@@ -95,7 +95,7 @@ Attach selected
 </div>
 <div>
 <label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Type</label>
-<select value={fpKindVal} onChange={fpSetKind} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={fpKindVal} onChange={fpSetKind} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(fpKindOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select>
 </div>
@@ -105,8 +105,8 @@ Attach selected
 {fpExtNote}
 </div>
 </div>
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
-<button onClick={fpClose} style={{"padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"14px 22px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
+<button onClick={fpClose} style={{"padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={fpUpload} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 18px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"upload"} style={{"width":"13px","height":"13px"}} />
 Upload & attach

@@ -750,7 +750,7 @@ class AppRoot extends React.Component {
         edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('You do not have permission to edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
       }; }),6);
     const K=(label,value,color)=>({label,value,color});
-    const stats=[K('Campaigns',String(all.length),'var(--beet-700)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>c.status==='Planning').length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
+    const stats=[K('Campaigns',String(all.length),'var(--ink-900)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>c.status==='Planning').length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
     const out={ cmpStats:stats, cmpRows:pg.rows, cmpPg:pg, cmpCanEdit:canEdit, cmpEmpty:list.length===0, cmpOwnNote:own,
       cmpFilterDefs:[
         {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Completed']},
@@ -767,7 +767,7 @@ class AppRoot extends React.Component {
     const c=this.allCampaigns().find(x=>x.id===id); if(!c) return { cmpDrawerOpen:false };
     const t=tone(c.status); const p=this.cmpProgress(c);
     const tab=this.state.cmpTab||'overview';
-    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:none;background:'+(on?'#fff':'transparent')+';color:'+(on?'var(--beet-700)':'var(--ink-500)')+';box-shadow:'+(on?'var(--shadow-sm)':'none');
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:none;background:'+(on?'var(--paper)':'transparent')+';color:'+(on?'var(--ink-900)':'var(--ink-500)')+';box-shadow:'+(on?'var(--shadow-sm)':'none');
     return {
       cmpDrawerOpen:true,
       cmpD:{ ...c, statusBg:t.bg, statusColor:t.c, progress:p+'%', progressW:p+'%', progressColor:p>=70?'var(--verify-500)':p>=40?'var(--warn-500)':'var(--danger-500)', dates:c.start+' → '+c.end, taskLabel:c.taskDone+' / '+c.taskCount },
@@ -919,12 +919,12 @@ class AppRoot extends React.Component {
       cmpCountryRows:this.MASTERS_REG().country.rows.filter(r=>r.Status!=='Inactive').map(r=>{ const name=r.Country_Name;
         const cur=(f.countries||'').split(',').map(s=>s.trim()).filter(Boolean); const on=cur.includes(name);
         return { label:name, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const c=on?cur.filter(x=>x!==name):[...cur,name]; this.setState({ cmpForm:{...f, countries:c.join(', ')} }); } }; }),
       cmpIndustryRows:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive').map(r=>{ const name=r.Industry;
         const cur=(f.industries||'').split(',').map(s=>s.trim()).filter(Boolean); const on=cur.includes(name);
         return { label:name, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const c=on?cur.filter(x=>x!==name):[...cur,name]; this.setState({ cmpForm:{...f, industries:c.join(', ')} }); } }; }),
       cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
       cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortOptions:effOptions,
@@ -1739,7 +1739,7 @@ class AppRoot extends React.Component {
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
       ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
         return { label:b, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const f=this.state.uf||{}; const c=f.brands||[]; this.setState({ uf:{...f, brands: on?c.filter(x=>x!==b):[...c,b]} }); } }; }),
       ufCapNote:(()=>{ const f=this.state.uf||{}; const hm=(s)=>{ const p=String(s||'').split(':'); return (parseInt(p[0],10)||0)+((parseInt(p[1],10)||0)/60); };
         const gross=hm(f.shiftEnd||'18:00')-hm(f.shiftStart||'09:00');
@@ -1784,7 +1784,7 @@ class AppRoot extends React.Component {
     if(showMessages){ Object.assign(out, this.messagesView()); Object.assign(out, this.tkFormData()); }
     if(showSop){
       const tab=this.state.sopTab||'playbook';
-      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
       Object.assign(out, {
         sopTabPlaybook:tab==='playbook', sopTabSops:tab==='sops',
         sopSegPb:seg(tab==='playbook'), sopSegSop:seg(tab==='sops'),
@@ -1806,7 +1806,7 @@ class AppRoot extends React.Component {
     if(showLeads){
       const leadCanEdit=this.hasPerm('leads','edit');
       const lt=this.state.leadsTab||'leads';
-      const seg2=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      const seg2=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
       Object.assign(out, { okrModLeads:lt==='leads', okrModPipe:lt==='pipe',
         okrSegLeadsStyle:seg2(lt==='leads'), okrSegPipeStyle:seg2(lt==='pipe'),
         okrGoLeads:()=>this.setState({ leadsTab:'leads' }), okrGoPipe:()=>this.setState({ leadsTab:'pipe' }),
@@ -1831,7 +1831,7 @@ class AppRoot extends React.Component {
     if(showUsersTable) Object.assign(out, this.tableData(route, rk, lvl, readOnly));
     if(showTasks2){ Object.assign(out, this.tasksView());
       const tkTab=this.state.tkTab||'list';
-      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
       Object.assign(out, { tkTabList:tkTab==='list', tkTabTime:tkTab==='time', tkTabCal:tkTab==='cal',
         tkSegListStyle:seg(tkTab==='list'), tkSegTimeStyle:seg(tkTab==='time'), tkSegCalStyle:seg(tkTab==='cal'),
         tkShowList:()=>this.setState({ tkTab:'list' }), tkShowTime:()=>this.setState({ tkTab:'time' }),
@@ -2087,7 +2087,7 @@ class AppRoot extends React.Component {
     const leadScopeNote=myDivision?(' — '+myDivision):'';
     const EXTRA={
       exec:[X('OKRs at risk',String(atRisk),'need leadership attention',atRisk?'var(--danger-600)':'var(--verify-600)'),
-        X('Avg OKR progress',(okrs.length?Math.round(okrs.reduce((s,o)=>s+o.progress,0)/okrs.length):0)+'%','across '+okrs.length+' objectives','var(--beet-700)'),
+        X('Avg OKR progress',(okrs.length?Math.round(okrs.reduce((s,o)=>s+o.progress,0)/okrs.length):0)+'%','across '+okrs.length+' objectives','var(--ink-900)'),
         X('Awaiting QC',String(inQC),'deliverables in review','var(--info-600)'),
         X('Overdue tasks',String(overdue(tasks)),'past due date',overdue(tasks)?'var(--danger-600)':'var(--verify-600)')],
       ops:[X('Over capacity',String(overCap),'people beyond shift hours',overCap?'var(--danger-600)':'var(--verify-600)'),
@@ -2218,7 +2218,7 @@ class AppRoot extends React.Component {
           qcNoComments:!d.hasAny,
           qcReviewLabel:t.status==='Submitted'?'Review & comment':'Open review',
           qcReviewStyle:'display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(t.status==='Submitted'
-            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)') }; })(),
+            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)') }; })(),
       actionable: canAct && t.status==='Submitted',
       reviewed: t.status!=='Submitted',
       feedback: t.qcFeedback||'No QC comment recorded.',
@@ -2253,7 +2253,7 @@ class AppRoot extends React.Component {
     const dayCount=(d)=>merged.filter(r=>r.day===d).length;
     const qcDayChips=['All','Overdue','Today','Tomorrow','Day after','Later'].map(d=>{ const active=df2===d; const n=d==='All'?merged.length:dayCount(d);
       return { label:d, count:String(n), active,
-        style:'display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':(d==='Overdue'&&n>0?'#F1C9CF':'var(--line-300)'))+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':(d==='Overdue'&&n>0?'var(--danger-600)':'var(--ink-700)')),
+        style:'display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':(d==='Overdue'&&n>0?'#F1C9CF':'var(--line-300)'))+';background:'+(active?'var(--beet-700)':'var(--paper)')+';color:'+(active?'#fff':(d==='Overdue'&&n>0?'var(--danger-600)':'var(--ink-700)')),
         countStyle:'font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:'+(active?'rgba(255,255,255,.2)':'var(--orchid-100)')+';color:'+(active?'#fff':'var(--orchid-700)'),
         set:()=>this.setState({ qcDayF:d, pg:{...(this.state.pg||{}),qc:0} }) }; });
     let filtered=sf==='All'?merged:merged.filter(r=>r.status===(sf==='Submitted'?'Awaiting QC':sf) || r.status===sf);
@@ -2273,7 +2273,7 @@ class AppRoot extends React.Component {
       {label:'Rework requested', value:String(wkRework), pctW:pct(wkRework)+'%', color:'var(--danger-500)', pct:pct(wkRework)+'% of assigned'},
     ];
     const qcPeriodBtns=['Weekly','Monthly'].map(p=>{ const active=period===p; return { label:p+' report', active,
-      style:'padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':'var(--ink-700)'),
+      style:'padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'var(--paper)')+';color:'+(active?'#fff':'var(--ink-700)'),
       set:()=>this.setState({ qcPeriod:p }) }; });
     const cs=this.complianceStats(list);
     return { kpis, qcRows:pg.rows, qcPg:pg, qcCanAct:canAct, qcDayChips, qcWeek, qcPeriodBtns, qcPeriodLabel:'Task analytics — all users · '+period.toLowerCase()+' report',
@@ -2283,7 +2283,7 @@ class AppRoot extends React.Component {
         { label:'Rework rate', value:cs.reworkPct+'%', sub:cs.rework+' lines sent back', color:cs.reworkPct<=10?'var(--verify-600)':'var(--danger-600)' },
         { label:'Conditional accepts', value:String(cs.conditional), sub:'passed with caveats', color:'var(--warn-600)' },
         { label:'Evidence attached', value:cs.evidencePct+'%', sub:cs.evidence+' of '+cs.scored+' scored checks', color:cs.evidencePct>=90?'var(--verify-600)':'var(--warn-600)' },
-        { label:'Checklists submitted', value:String(cs.submitted), sub:'of '+list.length+' tasks in queue', color:'var(--beet-700)' },
+        { label:'Checklists submitted', value:String(cs.submitted), sub:'of '+list.length+' tasks in queue', color:'var(--ink-900)' },
       ],
       qcComplianceDiv:cs.byDiv.map(d=>({ label:d.label,
         selfPct:d.selfPct+'%', w:d.selfPct+'%',
@@ -2307,7 +2307,7 @@ class AppRoot extends React.Component {
     if(!may.length) return { dbHasBoards:false };
     const cur=may.includes(this.state.dbTab)?this.state.dbTab:may[0];
     const META={ exec:{label:'Executive',icon:'crown'}, capacity:{label:'Resource & Capacity',icon:'users'}, dept:{label:'Department',icon:'building-2'}, team:{label:'Team',icon:'user-check'} };
-    const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
     // Team Lead only ever sees their own division's slice here — Resource &
     // Capacity, Department and Team dashboards all derive from this same
     // scoped list, so a Team Lead can't browse other divisions' people,
@@ -2406,7 +2406,7 @@ class AppRoot extends React.Component {
         capacity:'Workload and utilisation across the team — who is over or under capacity.',
         dept:'Department-level delivery and objective progress.',
         team:'Individual scorecards — throughput, quality and schedule adherence.' }[cur],
-      dbExecKpis:[KP('Avg OKR progress',avgOkr+'%','across '+okrs.length+' objectives','var(--beet-700)'),
+      dbExecKpis:[KP('Avg OKR progress',avgOkr+'%','across '+okrs.length+' objectives','var(--ink-900)'),
         KP('OKRs at risk',String(atRisk),'need leadership attention',atRisk?'var(--danger-600)':'var(--verify-600)'),
         KP('Live campaigns',String(camps.filter(c=>c.status==='Live').length),'of '+camps.length+' total','var(--orchid-600)'),
         KP('Task completion',(tasks.length?Math.round(done/tasks.length*100):0)+'%',done+' of '+tasks.length+' approved','var(--verify-600)'),
@@ -2420,14 +2420,14 @@ class AppRoot extends React.Component {
           color:p>=70?'var(--verify-500)':p>=40?'var(--warn-500)':'var(--danger-500)',
           spend:'₹'+Math.round(sp/1000)+'K / ₹'+Math.round(bd/1000)+'K', spendW:Math.min(100,Math.round(sp/(bd||1)*100))+'%',
           open:()=>this.setState({ route:'campaigns', cmpOpen:c.id, cmpTab:'model' }) }; }),
-      dbCapKpis:[KP('People tracked',String(people.length),'with assigned work','var(--beet-700)'),
+      dbCapKpis:[KP('People tracked',String(people.length),'with assigned work','var(--ink-900)'),
         KP('Overloaded',String(capRows.filter(r=>parseInt(r.util)>100).length),'assigned beyond shift capacity','var(--danger-600)'),
         KP('Underloaded',String(capRows.filter(r=>parseInt(r.util)<40).length),'below 40% of capacity','var(--info-600)'),
         KP('Open workload',String(open),'tasks in flight','var(--info-600)'),
         KP('Rework load',String(rework),'tasks sent back','var(--orchid-600)')],
       dbCapRows:capRows,
       dbDeptRows:deptRows,
-      dbDeptKpis:[KP('Departments',String(divs.length),'delivering work','var(--beet-700)'),
+      dbDeptKpis:[KP('Departments',String(divs.length),'delivering work','var(--ink-900)'),
         KP('Tasks in flight',String(open),'open across departments','var(--info-600)'),
         KP('Approved',String(done),'QC-passed','var(--verify-600)'),
         KP('Rework',String(rework),'awaiting correction','var(--danger-600)')],
@@ -2442,7 +2442,7 @@ class AppRoot extends React.Component {
         ? ('Custom range '+(this.fmtDate(TF.from)||'start')+' → '+(this.fmtDate(TF.to)||'today')+' · '+teamTasks.length+' tasks')
         : (TF.period+' · '+teamTasks.length+' tasks'+(TF.division!=='All'?(' · '+TF.division):'')),
       dbTeamEmpty:teamRows.length===0,
-      dbTeamKpis:[KP('Team members',String(teamPeople.length),'with tasks in range','var(--beet-700)'),
+      dbTeamKpis:[KP('Team members',String(teamPeople.length),'with tasks in range','var(--ink-900)'),
         KP('Avg completion',(teamRows.length?Math.round(teamRows.reduce((s,r)=>s+parseInt(r.pct),0)/teamRows.length):0)+'%','approved vs assigned','var(--verify-600)'),
         KP('Overdue tasks',String(teamRows.reduce((s,r)=>s+parseInt(r.late),0)),'past due date','var(--danger-600)'),
         KP('Rework items',String(teamTasks.filter(t=>t.status==='Rework').length),'quality returns','var(--warn-600)')],
@@ -2629,7 +2629,7 @@ class AppRoot extends React.Component {
       out.mdShowTable=false;
       out.blIsBacklink=!rec; out.blShowDash=view==='dash'&&!rec; out.blShowRepo=view==='repo'&&!rec; out.blShowDetail=!!rec;
       const seg=(v,label,icon)=>({ label, icon, active:view===v, go:()=>this.setState({blView:v, blRecord:null}),
-        style:'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(view===v?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)') });
+        style:'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(view===v?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)') });
       out.blSegs=[seg('dash','Dashboard','layout-dashboard'), seg('repo','Domain Repository','database')];
       out.mdAdd=()=>this.setState({ blRecord:'new', blTab:0, blView:'repo', blForm:this.blankBacklinkDomain() });
       if(out.blShowDash) Object.assign(out, this.backlinkDashData());
@@ -2645,7 +2645,7 @@ class AppRoot extends React.Component {
         out.mdRecEdit = ()=>this.openMasterRecordEdit(key, this.state.masterRecord);
         out.mdRecFields = m.fields.map(f=>({ label:this.humanize(f), value: (rec[f]===undefined||rec[f]===''||rec[f]===null)?'—':String(rec[f]) }));
         const ti = this.state.masterTab;
-        const tabStyle = (active)=> 'padding:9px 14px;border:none;background:none;border-bottom:2px solid '+(active?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(active?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px';
+        const tabStyle = (active)=> 'padding:9px 14px;border:none;background:none;border-bottom:2px solid '+(active?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(active?'var(--ink-900)':'var(--ink-500)')+';margin-bottom:-1px';
         out.mdTabs = (m.tabs||[]).map((t,i)=>({ label:t, active:i===ti, style:tabStyle(i===ti), go:()=>this.setState({ masterTab:i }) }));
         out.mdHasTabs = !!(m.tabs && m.tabs.length);
         out.mdShowFields = !m.tabs || ti===0;
@@ -2745,7 +2745,7 @@ class AppRoot extends React.Component {
       bd_name:isNew?'New domain':f.name, bd_url:f.url||'—', bd_isNew:!!isNew,
       bd_status:f.status, bd_statusBg:st.bg, bd_statusColor:st.color,
       bd_sub:[f.platform,f.category,f.industry].filter(Boolean).join(' · ')||'Fill in the details below',
-      bd_tabs:tabs.map((t,i)=>({ label:t, go:()=>this.setState({blTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===tab?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===tab?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
+      bd_tabs:tabs.map((t,i)=>({ label:t, go:()=>this.setState({blTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===tab?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===tab?'var(--ink-900)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       bd_tab0:tab===0, bd_tab1:tab===1, bd_tab2:tab===2, bd_tab3:tab===3, bd_tab4:tab===4, bd_tab5:tab===5,
       bd_ident:[
         editableRow('Domain Name',f.name,'name'), editableRow('Domain URL',f.url,'url'),
@@ -2764,8 +2764,8 @@ class AppRoot extends React.Component {
         {...editableRow('Domain Authority (DA)',f.da,'da'), color:this.blScoreColor(f.da)},
         {...editableRow('Domain Rating (DR)',f.dr,'dr'), color:this.blScoreColor(f.dr)},
         {...editableRow('Spam Score',f.spam,'spam'), color:this.blScoreColor(f.spam,true)},
-        {...editableRow('Traffic (est.)',f.traffic,'traffic'), color:'var(--beet-700)'},
-        {...editableRow('Backlinks (est.)',f.backlinks,'backlinks'), color:'var(--beet-700)'},
+        {...editableRow('Traffic (est.)',f.traffic,'traffic'), color:'var(--ink-900)'},
+        {...editableRow('Backlinks (est.)',f.backlinks,'backlinks'), color:'var(--ink-900)'},
       ],
       bd_qmeta:[
         editableRow('Follow Type',f.followType,'followType'), editableRow('Link Placement',f.placement,'placement'),
@@ -2829,7 +2829,7 @@ class AppRoot extends React.Component {
   backlinkDashData(){
     return {
       blKpis:[
-        {label:'Total domains', value:'48', icon:'globe', color:'var(--beet-700)', sub:'in repository'},
+        {label:'Total domains', value:'48', icon:'globe', color:'var(--ink-900)', sub:'in repository'},
         {label:'Active accounts', value:'36', icon:'user-check', color:'var(--verify-600)', sub:'logins verified'},
         {label:'Pending submissions', value:'12', icon:'clock', color:'var(--warn-600)', sub:'awaiting approval'},
         {label:'Live backlinks', value:'1,240', icon:'link', color:'var(--info-600)', sub:'indexed & live'},
@@ -3018,7 +3018,7 @@ class AppRoot extends React.Component {
     const rows=tasks.map(t=>{ const done=this.taskIsDone(t); return {
       id:t.id, title:t.title, kpi:t.kpi, contribution:'+'+t.units+' '+t.unit, due:t.due, done,
       statusLabel: done?'Done':'Open', statusBg: done?'var(--verify-100)':'var(--info-100)', statusColor: done?'var(--verify-600)':'var(--info-600)',
-      boxBg: done?'var(--verify-500)':'#fff', boxBorder: done?'var(--verify-500)':'var(--line-300)', checkOpacity: done?'1':'0',
+      boxBg: done?'var(--verify-500)':'var(--paper)', boxBorder: done?'var(--verify-500)':'var(--line-300)', checkOpacity: done?'1':'0',
       actionLabel: done?'Reopen':'Mark done',
       toggle:()=>this.toggleTask(t.id),
     }; });
@@ -3026,7 +3026,7 @@ class AppRoot extends React.Component {
     return {
       jtRows:rows,
       jtStats:[
-        {label:'My tasks',value:String(tasks.length),color:'var(--beet-700)',icon:'list-checks'},
+        {label:'My tasks',value:String(tasks.length),color:'var(--ink-900)',icon:'list-checks'},
         {label:'Completed',value:String(done),color:'var(--verify-600)',icon:'check-circle-2'},
         {label:'Open',value:String(tasks.length-done),color:'var(--warn-600)',icon:'circle-dot'},
         {label:'KPIs advanced',value:String(new Set(rows.filter(r=>r.done).map(r=>r.kpi)).size),color:'var(--orchid-600)',icon:'target'},
@@ -3133,7 +3133,7 @@ class AppRoot extends React.Component {
     const pg=this.pgData('fl',filtered,10);
     const K=(label,value,color)=>({label,value,color});
     return {
-      flStats:[K('All files',String(enriched.length),'var(--beet-700)'),K('Images',String(enriched.filter(f=>f.type==='Image').length),'var(--orchid-600)'),K('Documents & PDFs',String(enriched.filter(f=>['Document','PDF','Spreadsheet'].includes(f.type)).length),'var(--info-600)'),K('Videos',String(enriched.filter(f=>f.type==='Video').length),'var(--verify-600)'),K('On tasks awaiting QC',String(enriched.filter(f=>f.status==='Submitted').length),'var(--warn-600)')],
+      flStats:[K('All files',String(enriched.length),'var(--ink-900)'),K('Images',String(enriched.filter(f=>f.type==='Image').length),'var(--orchid-600)'),K('Documents & PDFs',String(enriched.filter(f=>['Document','PDF','Spreadsheet'].includes(f.type)).length),'var(--info-600)'),K('Videos',String(enriched.filter(f=>f.type==='Video').length),'var(--verify-600)'),K('On tasks awaiting QC',String(enriched.filter(f=>f.status==='Submitted').length),'var(--warn-600)')],
       flRows:pg.rows, flPg:pg, flEmpty:filtered.length===0,
       flOwnNote:own,
       flFilterDefs:[
@@ -3246,7 +3246,7 @@ class AppRoot extends React.Component {
     const avgEffort=allR.length?Math.round(allR.reduce((s,r)=>s+r.epPct,0)/allR.length):0;
     const withOutcome=allR.filter(r=>r.hasOutcome);
     const avgOutcome=withOutcome.length?Math.round(withOutcome.reduce((s,r)=>s+Math.min(100,parseInt(r.outcome.ach,10)),0)/withOutcome.length):0;
-    const seg=(active)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(active?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)');
+    const seg=(active)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(active?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)');
     return {
       epIsList:view==='list', epIsCreate:view==='create', epIsReport:view==='report', epNotCreate:view!=='create',
       epShowList:()=>this.setState({ epView:'list' }), epShowReport:()=>this.setState({ epView:'report' }),
@@ -3259,7 +3259,7 @@ class AppRoot extends React.Component {
       ],
       epRepReset:()=>this.setState({ epRepFilters:{year:'All',month:'All',role:'All'} }),
       epRepStats:[
-        {label:'Efforts tracked',value:String(allR.length),color:'var(--beet-700)',icon:'gauge'},
+        {label:'Efforts tracked',value:String(allR.length),color:'var(--ink-900)',icon:'gauge'},
         {label:'Achieved',value:String(achieved),color:'var(--verify-600)',icon:'check-circle-2'},
         {label:'On track',value:String(onTrackC),color:'var(--info-600)',icon:'trending-up'},
         {label:'Behind',value:String(behind),color:'var(--warn-600)',icon:'alert-triangle'},
@@ -3334,7 +3334,7 @@ class AppRoot extends React.Component {
           :live.length;
         return {
           epGenModes:['One task per effort line','Weekly batches','One task per deliverable'].map(m=>({ label:m, active:mode===m,
-            style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'#fff':'rgba(255,255,255,.35)')+';background:'+(mode===m?'#fff':'transparent')+';color:'+(mode===m?'var(--beet-700)':'rgba(255,255,255,.9)'),
+            style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'#fff':'rgba(255,255,255,.35)')+';background:'+(mode===m?'var(--paper)':'transparent')+';color:'+(mode===m?'var(--ink-900)':'rgba(255,255,255,.9)'),
             set:()=>this.setState({ epGenMode:m }) })),
           epGenPreview:'Will create '+count+' task'+(count===1?'':'s')+' from '+live.length+' effort line'+(live.length===1?'':'s'),
           epGenWarn:count>20?('That is a lot of tasks — consider “One task per effort line”.'):'' }; })(),
@@ -3468,7 +3468,7 @@ class AppRoot extends React.Component {
       cvHasRow:!!row,
       cvKpiExisting:!isNew, cvKpiNew:isNew,
       cvModeBtns:[{k:'existing',l:'Link existing KPI'},{k:'new',l:'Create new KPI'}].map(m=>({ label:m.l,
-        style:'flex:1;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(f.kpiMode===m.k?'var(--beet-700)':'var(--line-300)')+';background:'+(f.kpiMode===m.k?'var(--beet-700)':'#fff')+';color:'+(f.kpiMode===m.k?'#fff':'var(--ink-700)'),
+        style:'flex:1;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(f.kpiMode===m.k?'var(--beet-700)':'var(--line-300)')+';background:'+(f.kpiMode===m.k?'var(--beet-700)':'var(--paper)')+';color:'+(f.kpiMode===m.k?'#fff':'var(--ink-700)'),
         set:()=>this.setState({ cvForm:{...f,kpiMode:m.k} }) })),
       cvKpiOptions:[{v:'',label:'— Select a KPI —'}].concat(kpiPool.map(k=>({v:k.id,label:k.kpi+' — '+k.who+' ('+k.target+' '+k.unit+')'}))),
       cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
@@ -3543,7 +3543,7 @@ class AppRoot extends React.Component {
     const setF=(k)=>(e)=>this.setState({ ideaFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),ideas:0} });
     return {
       ideaStats:[
-        {label:'Content ideas',value:String(all.length),color:'var(--beet-700)',icon:'lightbulb'},
+        {label:'Content ideas',value:String(all.length),color:'var(--ink-900)',icon:'lightbulb'},
         {label:'Awaiting QC',value:String(all.filter(i=>i.status==='Submitted for QC').length),color:'var(--orchid-600)',icon:'shield-check'},
         {label:'Approved',value:String(all.filter(i=>i.status==='Approved').length),color:'var(--verify-600)',icon:'check-circle-2'},
         {label:'Moved to tasks',value:String(all.filter(i=>i.taskId).length),color:'var(--info-600)',icon:'list-checks'},
@@ -3565,7 +3565,7 @@ class AppRoot extends React.Component {
     const co=this.state.ideaCustomOpts||{};
     const opts=(k,base)=>base.concat(co[k]||[]).concat([CUSTOM]);
     const step=this.state.ideaStep||1;
-    const stepBtn=(n,label)=>({ n:String(n), label, active:step===n, style:'display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(step===n?'var(--beet-700)':'var(--line-300)')+';background:'+(step===n?'var(--beet-700)':'#fff')+';color:'+(step===n?'#fff':'var(--ink-500)'), go:()=>this.setState({ ideaStep:n }) });
+    const stepBtn=(n,label)=>({ n:String(n), label, active:step===n, style:'display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(step===n?'var(--beet-700)':'var(--line-300)')+';background:'+(step===n?'var(--beet-700)':'var(--paper)')+';color:'+(step===n?'#fff':'var(--ink-500)'), go:()=>this.setState({ ideaStep:n }) });
     return {
       showIdeaForm:this.state.showIdeaForm,
       idf:f, idfCode:'CI-'+String(this.allIdeas().length+1).padStart(3,'0'),
@@ -3617,7 +3617,7 @@ class AppRoot extends React.Component {
       idfPubDest:f.pubDest||'Internal',
       idfPubIsInternal:(f.pubDest||'Internal')==='Internal', idfPubIsExternal:f.pubDest==='External',
       idfPubBtns:['Internal','External'].map(d=>{ const active=(f.pubDest||'Internal')===d; return { label:d+' publication', active,
-        style:'flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':'var(--ink-700)'),
+        style:'flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'var(--paper)')+';color:'+(active?'#fff':'var(--ink-700)'),
         set:()=>this.setState({ ideaForm:{...f, pubDest:d} }) }; }),
       idfSetIntType:set('intType'), idfIntType:f.intType||'Service page',
       idfSetIntUrl:set('intUrl'),
@@ -3820,7 +3820,7 @@ class AppRoot extends React.Component {
     const used=(t)=>this.allTasks().filter(x=>x.template===t.name).length;
     const list=all.filter(t=> (F.division==='All'||t.division===F.division) && (F.status==='All'||t.status===F.status) );
     const K=(label,value,color)=>({label,value,color});
-    const ttStats=[K('Templates',String(all.length),'var(--beet-700)'),K('Active',String(all.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked',String(all.filter(t=>t.kpiId).length),'var(--orchid-600)'),K('Tasks created from templates',String(this.allTasks().filter(t=>t.template&&t.template!=='Custom task').length),'var(--info-600)')];
+    const ttStats=[K('Templates',String(all.length),'var(--ink-900)'),K('Active',String(all.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked',String(all.filter(t=>t.kpiId).length),'var(--orchid-600)'),K('Tasks created from templates',String(this.allTasks().filter(t=>t.template&&t.template!=='Custom task').length),'var(--info-600)')];
     const pg=this.pgData('tt',list.map(t=>{
       const k=kpiPool.find(x=>x.id===t.kpiId);
       return { ...t, estH:(t.estH||0)+' h', kpiLabel:k?k.kpi:'—', hasKpi:!!k, steps:t.checklist.length+' steps', used:String(used(t)),
@@ -3850,7 +3850,7 @@ class AppRoot extends React.Component {
     const cl=f.checklist||[''];
     // KPI templates tab
     const tab=this.state.ttTab||'task';
-    const seg2=(active)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(active?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const seg2=(active)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(active?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
     const allK=this.allKpiTemplates();
     const kf=this.state.ktForm||{};
     const setKf=(k)=>(e)=>this.setState({ ktForm:{...kf,[k]:e.target.value} });
@@ -3877,7 +3877,7 @@ class AppRoot extends React.Component {
       statusAction:t.status==='Active'?'Archive':'Activate',
       delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'kpi')),
     })),8);
-    const ktStats=[K('KPI templates',String(allK.length),'var(--beet-700)'),K('Active',String(allK.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('Auto-tracked (API source)',String(allK.filter(t=>t.source!=='KPI Log'&&t.source!=='Manual').length),'var(--info-600)'),K('Pulled into tasks / KRs',String(allK.reduce((s,t)=>s+ktUsage(t),0)),'var(--orchid-600)')];
+    const ktStats=[K('KPI templates',String(allK.length),'var(--ink-900)'),K('Active',String(allK.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('Auto-tracked (API source)',String(allK.filter(t=>t.source!=='KPI Log'&&t.source!=='Manual').length),'var(--info-600)'),K('Pulled into tasks / KRs',String(allK.reduce((s,t)=>s+ktUsage(t),0)),'var(--orchid-600)')];
     // OKR templates tab
     const allO=this.allOkrTemplates();
     const of2=this.state.otForm||{};
@@ -3905,7 +3905,7 @@ class AppRoot extends React.Component {
       statusAction:t.status==='Active'?'Archive':'Activate',
       delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'okr')),
     })),8);
-    const otStats=[K('OKR templates',String(allO.length),'var(--beet-700)'),K('Active',String(allO.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked key results',String(allO.reduce((s,t)=>s+t.krs.length,0)),'var(--orchid-600)'),K('Departments covered',String([...new Set(allO.map(t=>t.division))].length),'var(--info-600)')];
+    const otStats=[K('OKR templates',String(allO.length),'var(--ink-900)'),K('Active',String(allO.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('KPI-linked key results',String(allO.reduce((s,t)=>s+t.krs.length,0)),'var(--orchid-600)'),K('Departments covered',String([...new Set(allO.map(t=>t.division))].length),'var(--info-600)')];
     const otKpiNames=this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>t.name);
     return {
       ttTabTask:tab==='task', ttTabKpi:tab==='kpi', ttTabOkr:tab==='okr',
@@ -4471,7 +4471,7 @@ class AppRoot extends React.Component {
       // other role uses it only to fence Brand Playbook (see playbookView()).
       umBrandRows:this.BRAND_LIST().map(b=>{ const on=(d.brands||[]).includes(b);
         return { label:b, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.brands||[]; this.setState({ umDraft:{...d, brands: on?cur.filter(x=>x!==b):[...cur,b]} }); } }; }),
       // Dashboard widget visibility — Admin picks which Dashboard blocks this
       // specific person sees. Stored as the list of HIDDEN keys; unticking a
@@ -4481,7 +4481,7 @@ class AppRoot extends React.Component {
         ['scope','Scope & access card'],['accessSummary','Access-level breakdown']].map(([key,label])=>{
         const hidden=(d.hiddenWidgets||[]).includes(key); const on=!hidden;
         return { key, label, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.hiddenWidgets||[]; this.setState({ umDraft:{...d, hiddenWidgets: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
       // Leads column visibility — same hidden-key-list pattern as Dashboard
       // widgets above, but for the two Leads-module tables (Pipeline +
@@ -4491,7 +4491,7 @@ class AppRoot extends React.Component {
         ['ldService','Daily: Service'],['ldSource','Daily: Source'],['ldVisitors','Daily: Visitors'],['ldLeads','Daily: Leads'],['ldQualified','Daily: Qualified'],['ldValue','Daily: Est. value'],['ldLoggedBy','Daily: Logged by'],['ldNotes','Daily: Notes'],['ldDetails','Daily: Lead details']].map(([key,label])=>{
         const hidden=(d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[])).includes(key); const on=!hidden;
         return { key, label, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=d.hiddenLeadColumns!==undefined?d.hiddenLeadColumns:(u.hiddenLeadColumns||[]); this.setState({ umDraft:{...d, hiddenLeadColumns: hidden?cur.filter(x=>x!==key):[...cur,key]} }); } }; }),
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
@@ -4788,7 +4788,7 @@ class AppRoot extends React.Component {
     const pages=Math.max(1,Math.ceil(rows.length/size));
     const page=Math.min((this.state.pg||{})[key]||0,pages-1);
     const set=(p)=>this.setState({ pg:{...(this.state.pg||{}),[key]:p} });
-    const bs=(dis)=>'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:'+(dis?'var(--ink-300)':'var(--ink-700)');
+    const bs=(dis)=>'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--paper);color:'+(dis?'var(--ink-300)':'var(--ink-700)');
     return { rows:rows.slice(page*size,(page+1)*size), label:'Page '+(page+1)+' of '+pages+' · '+rows.length+' items',
       prev:()=>set(Math.max(0,page-1)), next:()=>set(Math.min(pages-1,page+1)),
       prevStyle:bs(page===0), nextStyle:bs(page>=pages-1), show:rows.length>0 };
@@ -4831,7 +4831,7 @@ class AppRoot extends React.Component {
       return {
       tmRunning:tmr.running, tmElapsed:this.hms(tmSec), tmHasTime:tmSec>0,
       tmShow:(t.assignee===person||['manager','team_lead','admin'].includes(rk)) && t.status!=='Approved' && t.status!=='Closed',
-      tmBtnStyle:'display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid '+(tmr.running?'var(--danger-600)':'var(--line-300)')+';background:'+(tmr.running?'var(--danger-600)':'#fff')+';color:'+(tmr.running?'#fff':'var(--ink-700)'),
+      tmBtnStyle:'display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid '+(tmr.running?'var(--danger-600)':'var(--line-300)')+';background:'+(tmr.running?'var(--danger-600)':'var(--paper)')+';color:'+(tmr.running?'#fff':'var(--ink-700)'),
       tmIcon:tmr.running?'square':'play',
       tmText:tmr.running?this.hms(tmSec):(tmSec>0?this.hms(tmSec):'Start'),
       tmToggle:(e)=>{ if(e)e.stopPropagation(); tmr.running?this.stopTimer(t.id):this.startTimer(t.id); },
@@ -4866,7 +4866,7 @@ class AppRoot extends React.Component {
         const openIt=(e)=>{ if(e)e.stopPropagation(); this.setState({ tkOpen:t.id }); };
         const A=(label,icon,go,primary,hint)=>({ naLabel:label, naIcon:icon, naGo:go, naHint:hint||'',
           naStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;'+(primary
-            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)') });
+            ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)') });
         if(blockedBy && ['Assigned','In Progress'].includes(t.status))
           return A('Blocked — open '+blockedBy.id,'lock',openIt,false,'Predecessor must finish first');
         if(locked) return A('Clear pending first','lock',openIt,false,'Finish overdue work before today’s');
@@ -4901,7 +4901,7 @@ class AppRoot extends React.Component {
     const queueToday=isOwn?this.allTasks().filter(t=>t.assignee===person && this.dayDiff(t)===0 && ['Assigned','In Progress','Rework'].includes(t.status)).map(t=>({ name:t.name, id:t.id, locked:hasPending, open:()=>this.setState({ tkOpen:t.id }) })):[];
     const c=(s)=>list.filter(t=>t.status===s).length;
     const tkStats=[
-      {label:isOwn?'My tasks':'All tasks',value:String(list.length),color:'var(--beet-700)',icon:'list-checks'},
+      {label:isOwn?'My tasks':'All tasks',value:String(list.length),color:'var(--ink-900)',icon:'list-checks'},
       {label:'In progress',value:String(c('In Progress')+c('Assigned')),color:'var(--info-600)',icon:'circle-dot'},
       {label:'Awaiting QC',value:String(c('Submitted')),color:'var(--orchid-600)',icon:'shield-check'},
       {label:'Approved → KPI',value:String(c('Approved')),color:'var(--verify-600)',icon:'check-circle-2'},
@@ -4924,7 +4924,7 @@ class AppRoot extends React.Component {
       {label:'Rework requested', value:String(aRework), pctW:apct(aRework)+'%', color:'var(--danger-500)', pct:apct(aRework)+'% of assigned'},
     ];
     const tkPeriodBtns=['Weekly','Monthly'].map(p=>{ const active=period===p; return { label:p+' report', active,
-      style:'padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':'var(--ink-700)'),
+      style:'padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'var(--paper)')+';color:'+(active?'#fff':'var(--ink-700)'),
       set:()=>this.setState({ tkPeriod:p }) }; });
     const tkPeriodLabel='Task analytics — '+(isOwn?'my tasks':'all users')+' · '+period.toLowerCase()+' report';
     const pageSize=8, pageCount=Math.max(1,Math.ceil(tkRows.length/pageSize));
@@ -4949,8 +4949,8 @@ class AppRoot extends React.Component {
       tkPageLabel:'Page '+(page+1)+' of '+pageCount+' · '+tkRows.length+' tasks',
       tkPrev:()=>this.setState({ tkPage:Math.max(0,page-1) }), tkNext:()=>this.setState({ tkPage:Math.min(pageCount-1,page+1) }),
       tkPrevDisabled:page===0, tkNextDisabled:page>=pageCount-1,
-      tkPrevStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:'+(page===0?'var(--ink-300)':'var(--ink-700)'),
-      tkNextStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:'+(page>=pageCount-1?'var(--ink-300)':'var(--ink-700)'),
+      tkPrevStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--paper);color:'+(page===0?'var(--ink-300)':'var(--ink-700)'),
+      tkNextStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--paper);color:'+(page>=pageCount-1?'var(--ink-300)':'var(--ink-700)'),
       tkNewOpen:()=>this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } }),
       ...this.tkDetailData(), ...this.tkFormData() };
   }
@@ -4990,7 +4990,7 @@ class AppRoot extends React.Component {
     const K=(label,value,color)=>({label,value,color});
     const withOpts=(defs)=>defs.map(d=>({...d, opts:d.options.map(o=>({ v:o, label:(d.labels&&d.labels[o])||o }))}));
     return {
-      trStats:[K('Tasks in scope',String(rows.length),'var(--beet-700)'),K('Estimated',Math.round(sumEst*10)/10+' h','var(--info-600)'),K('Actual logged',Math.round(sumAct*10)/10+' h','var(--verify-600)'),K('Variance',((sumAct-sumEst)>0?'+':'')+Math.round((sumAct-sumEst)*10)/10+' h',(sumAct>sumEst)?'var(--danger-600)':'var(--verify-600)'),K('Avg per task',(rows.length?Math.round(sumAct/rows.length*100)/100:0)+' h','var(--orchid-600)')],
+      trStats:[K('Tasks in scope',String(rows.length),'var(--ink-900)'),K('Estimated',Math.round(sumEst*10)/10+' h','var(--info-600)'),K('Actual logged',Math.round(sumAct*10)/10+' h','var(--verify-600)'),K('Variance',((sumAct-sumEst)>0?'+':'')+Math.round((sumAct-sumEst)*10)/10+' h',(sumAct>sumEst)?'var(--danger-600)':'var(--verify-600)'),K('Avg per task',(rows.length?Math.round(sumAct/rows.length*100)/100:0)+' h','var(--orchid-600)')],
       trRows:pg.rows, trPg:pg, trGroupRows:groupRows, trEmpty:rows.length===0,
       trGroupTitle:'Totals by '+({assignee:'assignee',division:'division',campaign:'campaign'}[groupKey]),
       trFilterDefs:withOpts([
@@ -5069,7 +5069,7 @@ class AppRoot extends React.Component {
         key:k, day:String(d.getDate()),
         dim:!weekView&&curMonth!==null&&d.getMonth()!==curMonth,
         isToday, weekend,
-        bg:isToday?'var(--orchid-100)':(weekend?'var(--surface-50)':'#fff'),
+        bg:isToday?'var(--orchid-100)':(weekend?'var(--surface-50)':'var(--paper)'),
         dayColor:isToday?'var(--orchid-700)':(d.getMonth()!==curMonth&&!weekView?'var(--ink-400)':'var(--ink-900)'),
         hasItems:items.length>0,
         count:items.length?String(items.length):'',
@@ -5150,7 +5150,7 @@ class AppRoot extends React.Component {
           calGanttEmpty:Object.keys(groups).length===0,
         }; })(),
       calReset:()=>this.setState({ calF:{ scope:orgView?'Organisation':'Mine', person:'All', type:'All', view:'Month' }, calOff:0 }),
-      calStats:[K('Tasks due',String(dueCount),weekView?'this week':'this month','var(--beet-700)'),
+      calStats:[K('Tasks due',String(dueCount),weekView?'this week':'this month','var(--ink-900)'),
         K('Overdue',String(inRange.reduce((s,c)=>s+(parseInt(c.overdueLabel)||0),0)),'past due, not approved','var(--danger-600)'),
         K('Overloaded days',String(inRange.filter(c=>c.over).length),'beyond daily capacity','var(--warn-600)'),
         K('Unscheduled',String(unscheduled.length),'no due date set','var(--info-600)')],
@@ -5185,7 +5185,7 @@ class AppRoot extends React.Component {
       return r ? { ...defaults, name:r.Brand_Name, sector:r.Sector||defaults.sector, site:r.Website||defaults.site, tagline:r.Tagline||defaults.tagline } : defaults; };
     return [
     merge('Beetloop', { key:'beetloop', name:'Beetloop', sector:'B2B platform · Food, nutrition, cosmeceutical, agri, health',
-      site:'beetloop.com', tagline:'Verified intelligence from formulation to market.', color:'var(--beet-700)' }),
+      site:'beetloop.com', tagline:'Verified intelligence from formulation to market.', color:'var(--ink-900)' }),
     merge('Food Research Lab', { key:'frl', name:'Food Research Lab', sector:'Product development & food R&D services',
       site:'foodresearchlab.com', tagline:'From kitchen idea to compliant shelf-ready product.', color:'var(--verify-600)' }),
     merge('Pubrica', { key:'pubrica', name:'Pubrica', sector:'Scientific & medical writing',
@@ -6086,12 +6086,12 @@ class AppRoot extends React.Component {
       sopApproverOptions:(this.state.users||[]).map(u=>u.name),
       sopStdRows:this.GOLD_STANDARDS().map(g=>{ const on=(f.standards||[]).includes(g.id);
         return { id:g.id, label:g.name, note:g.note, on,
-          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-700)'),
           toggle:()=>{ const cur=f.standards||[];
             this.setState({ sopForm:{...f, standards:on?cur.filter(x=>x!==g.id):[...cur,g.id]} }); } }; }),
       sopKpiRows:kpiOpts.map(n=>{ const on=(f.kpis||[]).includes(n);
         return { name:n, on,
-          style:'display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--orchid-400)':'var(--line-300)')+';background:'+(on?'var(--orchid-100)':'#fff')+';color:'+(on?'var(--orchid-700)':'var(--ink-700)'),
+          style:'display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--orchid-400)':'var(--line-300)')+';background:'+(on?'var(--orchid-100)':'var(--paper)')+';color:'+(on?'var(--orchid-700)':'var(--ink-700)'),
           toggle:()=>{ const cur=f.kpis||[];
             this.setState({ sopForm:{...f, kpis:on?cur.filter(x=>x!==n):[...cur,n]} }); } }; }),
       sopRelRows:(f.rels||[{rel:'Related SOP',id:''}]).map((r,i)=>({
@@ -6111,7 +6111,7 @@ class AppRoot extends React.Component {
         setNotes:(e)=>{ const a=steps.slice(); a[i]={...a[i],notes:e.target.value}; this.setState({ sopForm:{...f,steps:a} }); },
         evRows:this.SOP_EVIDENCE().map(ev=>{ const on=(st.ev||[]).includes(ev);
           return { label:ev, on,
-            style:'padding:4px 9px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--info-500)':'var(--line-300)')+';background:'+(on?'var(--info-100)':'#fff')+';color:'+(on?'var(--info-600)':'var(--ink-500)'),
+            style:'padding:4px 9px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--info-500)':'var(--line-300)')+';background:'+(on?'var(--info-100)':'var(--paper)')+';color:'+(on?'var(--info-600)':'var(--ink-500)'),
             toggle:()=>{ const a=steps.slice(); const cur=a[i].ev||[];
               a[i]={...a[i], ev:on?cur.filter(x=>x!==ev):[...cur,ev]};
               this.setState({ sopForm:{...f,steps:a} }); } }; }),
@@ -6236,7 +6236,7 @@ class AppRoot extends React.Component {
         K('Needs my sign-off',String(unack.length),unack.length?'read and acknowledge':'all acknowledged',unack.length?'var(--warn-600)':'var(--verify-600)'),
         K('Reviews overdue',String(overdue.length),'past review date','var(--danger-600)'),
         K('Reviews due soon',String(soon.length),'within 30 days','var(--warn-600)'),
-        K('Categories',String([...new Set(all.map(s=>s.category))].length),'covered','var(--beet-700)')],
+        K('Categories',String([...new Set(all.map(s=>s.category))].length),'covered','var(--ink-900)')],
       sopRows:pg.rows, sopPg:pg, sopEmpty:list.length===0,
       sopCanAuthor:canAuthor,
       sopPermSet:this.sopPermLabel(rk),
@@ -6287,7 +6287,7 @@ class AppRoot extends React.Component {
         if(error) console.warn('[supabase] sop upsert failed:', error.message);
       }); };
     const tab=this.state.sopTabD||'overview';
-    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
     const byId=(x)=>this.allSops().find(y=>y.id===x);
     const relTone=(r)=>({ 'Requires completion of':{bg:'var(--danger-100)',c:'var(--danger-600)',icon:'lock'},
       'Related SOP':{bg:'var(--info-100)',c:'var(--info-600)',icon:'link'},
@@ -6605,7 +6605,7 @@ class AppRoot extends React.Component {
         open:()=>this.setState({ tktOpen:t.id }) }; }),8);
     return {
       supIsList:true,
-      supStats:[K('Open tickets',String(open.length),'awaiting resolution','var(--beet-700)'),
+      supStats:[K('Open tickets',String(open.length),'awaiting resolution','var(--ink-900)'),
         K('Unassigned',String(all.filter(t=>!t.assignee&&!['Resolved','Closed'].includes(t.status)).length),'need triage','var(--warn-600)'),
         K('SLA breached',String(all.filter(t=>breached(t)).length),'past target response','var(--danger-600)'),
         K('Training requests',String(all.filter(t=>t.trainingNeeded||t.cat==='training').length),'flagged for L&D','var(--orchid-600)'),
@@ -6614,7 +6614,7 @@ class AppRoot extends React.Component {
       supRows:pg.rows, supPg:pg, supEmpty:list.length===0,
       supIsTriage:isTriage, supIsAdmin:isAdmin,
       supScopeBtns:isTriage?['All tickets','My tickets'].map(s=>({ label:s, active:scope===s,
-        style:'padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(scope===s?'var(--beet-700)':'var(--line-300)')+';background:'+(scope===s?'var(--beet-700)':'#fff')+';color:'+(scope===s?'#fff':'var(--ink-700)'),
+        style:'padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(scope===s?'var(--beet-700)':'var(--line-300)')+';background:'+(scope===s?'var(--beet-700)':'var(--paper)')+';color:'+(scope===s?'#fff':'var(--ink-700)'),
         set:()=>this.setState({ tktScope:s }) })):[],
       supFilters:[
         {label:'Category',value:F.cat,onChange:setF('cat'),options:['All'].concat(this.TICKET_CATS().map(c=>c.label))},
@@ -6721,7 +6721,7 @@ class AppRoot extends React.Component {
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
     const checklist=(t.checklist||[]).map((c,i)=>({ t:c.t, done:c.done,
-      boxBg:c.done?'var(--verify-500)':'#fff', boxBorder:c.done?'var(--verify-500)':'var(--line-300)', op:c.done?'1':'0',
+      boxBg:c.done?'var(--verify-500)':'var(--paper)', boxBorder:c.done?'var(--verify-500)':'var(--line-300)', op:c.done?'1':'0',
       toggle:()=>{ if(!isAssignee){ this.flash('Only the assignee updates the checklist.'); return; } const arr=(t.checklist||[]).map((x,j)=>j===i?{...x,done:!x.done}:x); this.tkPatch(t.id,{checklist:arr},(c.done?'Unchecked':'Completed')+' checklist item — '+c.t); } }));
     const evidence=(t.evidence||[]).map(f=>{ const k=this.fileKind(f);
       return { name:f, icon:k.icon, open:()=>this.openFilePreview(f),
@@ -7478,7 +7478,7 @@ class AppRoot extends React.Component {
     rows.forEach(r=>{
       const cad=r.freq.split(' ')[0];
       const btn=(label,bg,fg,border)=>{ r.btnLabel=label; r.btnStyle='display:flex;align-items:center;gap:6px;border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;background:'+bg+';color:'+fg+';border:'+(border||'none'); };
-      r.cardStyle='background:#fff;border:1px solid var(--line-300);border-radius:18px;box-shadow:var(--shadow-sm);padding:18px 20px';
+      r.cardStyle='background:var(--paper);border:1px solid var(--line-300);border-radius:18px;box-shadow:var(--shadow-sm);padding:18px 20px';
       r.btnIcon='clipboard-check';
       if(pendingY[r.id]){ // date passed, missed → red
         r.due={label:'Delayed — missed check-in',bg:'var(--danger-100)',color:'var(--danger-600)'};
@@ -7502,7 +7502,7 @@ class AppRoot extends React.Component {
       else { // date not arrived → blurred & locked
         r.due={label:'Unlocks '+({Monthly:'at month end',Quarterly:'at quarter end'}[cad]||'later'),bg:'var(--surface-50)',color:'var(--ink-400)'};
         r.upcoming=true;
-        r.cardStyle='background:#fff;border:1px solid var(--line-200);border-radius:18px;padding:18px 20px;opacity:.55;filter:grayscale(.4)';
+        r.cardStyle='background:var(--paper);border:1px solid var(--line-200);border-radius:18px;padding:18px 20px;opacity:.55;filter:grayscale(.4)';
         btn('Locked until due','var(--surface-50)','var(--ink-400)','1px solid var(--line-300)'); r.btnIcon='lock';
         r.checkin=()=>this.flash('This check-in unlocks when its date arrives.');
         r.history=r.history;
@@ -7590,7 +7590,7 @@ class AppRoot extends React.Component {
       isCiSenior:t==='senior', isCiLead:t==='lead', isCiManager:t==='manager', isCiExec:t==='exec', isCiKpi:t==='kpi',
       ciNeedsActuals: t==='senior'||t==='lead'||t==='kpi',
       ciFlagOn:!!cf.flag,
-      ciFlagStyle:'display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid '+(cf.flag?'var(--warn-500)':'var(--line-300)')+';background:'+(cf.flag?'var(--warn-100)':'#fff')+';color:'+(cf.flag?'var(--warn-600)':'var(--ink-700)'),
+      ciFlagStyle:'display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid '+(cf.flag?'var(--warn-500)':'var(--line-300)')+';background:'+(cf.flag?'var(--warn-100)':'var(--paper)')+';color:'+(cf.flag?'var(--warn-600)':'var(--ink-700)'),
       ciToggleFlag:()=>this.setState({ ciForm:{...cf, flag:!cf.flag} }),
       ciFiles:(cf.files||[]).map((f,i)=>({ name:f, remove:()=>{ const arr=(cf.files||[]).slice(); arr.splice(i,1); this.setState({ ciForm:{...cf, files:arr} }); } })),
       ciHasFiles:(cf.files||[]).length>0,
@@ -7782,11 +7782,11 @@ class AppRoot extends React.Component {
     const cnt=(f)=>all.filter(f).length;
     const repoTabs=repos.map(r=>({ key:r.key, name:r.name, icon:r.icon, active:r.key===cRepo, count: r.key==='all'?all.length:all.filter(p=>p.repo===r.key).length,
       go:()=>this.setState({ cRepo:r.key, cExpanded:[] }),
-      style:'display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:none;cursor:pointer;padding:8px 10px;margin-bottom:2px;border-radius:9px;font-size:13px;font-weight:'+(r.key===cRepo?'700':'600')+';'+(r.key===cRepo?'background:var(--orchid-100);color:var(--beet-700)':'background:transparent;color:var(--ink-500)') }));
+      style:'display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:none;cursor:pointer;padding:8px 10px;margin-bottom:2px;border-radius:9px;font-size:13px;font-weight:'+(r.key===cRepo?'700':'600')+';'+(r.key===cRepo?'background:var(--orchid-100);color:var(--ink-900)':'background:transparent;color:var(--ink-500)') }));
     return {
       contentRepoTabs:repoTabs, contentCanEdit:canEdit,
       contentKpis:[
-        {label:'Total pages',value:String(all.length),color:'var(--beet-700)',icon:'files'},
+        {label:'Total pages',value:String(all.length),color:'var(--ink-900)',icon:'files'},
         {label:'Published',value:String(cnt(p=>p.status==='Published')),color:'var(--verify-600)',icon:'check-circle-2'},
         {label:'Draft',value:String(cnt(p=>p.status==='Draft')),color:'var(--ink-500)',icon:'file-pen'},
         {label:'Scheduled',value:String(cnt(p=>p.status==='Scheduled')),color:'var(--orchid-600)',icon:'calendar-clock'},
@@ -7969,7 +7969,7 @@ class AppRoot extends React.Component {
         canRemove:(this.state.npMedia||[]).length>1,
       })),
       npAddMedia:()=>this.setState({ npMedia:[...(this.state.npMedia&&this.state.npMedia.length?this.state.npMedia:[{name:'',alt:'',type:'Image'}]),{name:'',alt:'',type:'Image'}] }),
-      npTabs:['Page Info','Classification','SEO','Content','Relationships','Links','Media','Publishing','Analytics','Activity'].map((t,i)=>({ label:t, go:()=>this.setState({npTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===(this.state.npTab||0)?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===(this.state.npTab||0)?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
+      npTabs:['Page Info','Classification','SEO','Content','Relationships','Links','Media','Publishing','Analytics','Activity'].map((t,i)=>({ label:t, go:()=>this.setState({npTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===(this.state.npTab||0)?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===(this.state.npTab||0)?'var(--ink-900)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       npTab0:(this.state.npTab||0)===0, npTab1:this.state.npTab===1, npTab2:this.state.npTab===2, npTab3:this.state.npTab===3, npTab4:this.state.npTab===4, npTab5:this.state.npTab===5, npTab6:this.state.npTab===6, npTab7:this.state.npTab===7, npTab8:this.state.npTab===8, npTab9:this.state.npTab===9,
       npOwnerName: f.owner||this.currentPerson(), npToday:this.todayStr(),
       npNext:()=>this.setState({ npTab: Math.min(9,(this.state.npTab||0)+1) }),
@@ -8200,7 +8200,7 @@ class AppRoot extends React.Component {
         open:()=>{ if(!canWrite){ this.flash('View only — lead detail is restricted to Admin, Manager and Sales.'); return; }
           this.setState({ cnOpen:c.id }); } }; }),8);
     return {
-      pipeStats:[K('Total leads',String(total),'in pipeline','var(--beet-700)'),
+      pipeStats:[K('Total leads',String(total),'in pipeline','var(--ink-900)'),
         K('MQL',String(mql),total?Math.round(mql/total*100)+'% of enquiries':'—','var(--info-600)'),
         K('SQL',String(sql),mql?Math.round(sql/mql*100)+'% of MQLs':'—','var(--orchid-600)'),
         K('Won',String(won),sql?Math.round(won/sql*100)+'% SQL conversion':'—','var(--verify-600)'),
@@ -8336,7 +8336,7 @@ class AppRoot extends React.Component {
       ldStats:[K('Leads today',String(todayTotal),'target '+target+' / day',todayTotal>=target?'var(--verify-600)':'var(--warn-600)'),
         K('Qualified today',String(sum(todays,'qualified')),'from '+todays.length+' entries','var(--orchid-600)'),
         K('In range',String(sum(list,'count')),F.range.toLowerCase(),'var(--info-600)'),
-        K('Services active',String(Object.keys(svcMap).length),'generating leads','var(--beet-700)'),
+        K('Services active',String(Object.keys(svcMap).length),'generating leads','var(--ink-900)'),
         K('My entries today',String(mine.length),mine.length?'logged':'not logged yet',mine.length?'var(--verify-600)':'var(--danger-600)')],
       ldTodayPct:pct+'%', ldTodayW:pct+'%',
       ldTodayColor:pct>=100?'var(--verify-500)':pct>=60?'var(--warn-500)':'var(--danger-500)',
@@ -8399,7 +8399,7 @@ class AppRoot extends React.Component {
         return {
           ldPeriod:per,
           ldPeriodBtns:['Weekly','Monthly','Quarterly'].map(p=>({ label:p, active:per===p,
-            style:'padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(per===p?'var(--beet-700)':'var(--line-300)')+';background:'+(per===p?'var(--beet-700)':'#fff')+';color:'+(per===p?'#fff':'var(--ink-700)'),
+            style:'padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(per===p?'var(--beet-700)':'var(--line-300)')+';background:'+(per===p?'var(--beet-700)':'var(--paper)')+';color:'+(per===p?'#fff':'var(--ink-700)'),
             set:()=>this.setState({ ldPeriod:p }) })),
           ldReportTitle:per+' lead report',
           ldReportRows:rows.map(r=>({ ...r, countLabel:String(r.count), qualifiedLabel:String(r.qualified),
@@ -8475,7 +8475,7 @@ class AppRoot extends React.Component {
     return {
       cwMode:mode, cwCanRun:canRun,
       cwModeBtns:['New page','Revamp'].map(m=>({ label:m==='New page'?'New page build':'Revamp existing content', active:mode===m,
-        style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'var(--beet-700)':'var(--line-300)')+';background:'+(mode===m?'var(--beet-700)':'#fff')+';color:'+(mode===m?'#fff':'var(--ink-700)'),
+        style:'padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;border:1px solid '+(mode===m?'var(--beet-700)':'var(--line-300)')+';background:'+(mode===m?'var(--beet-700)':'var(--paper)')+';color:'+(mode===m?'#fff':'var(--ink-700)'),
         set:()=>this.setState({ cwMode:{...(this.state.cwMode||{}),[p.id]:m} }) })),
       cwApproved:approved,
       cwApproveLabel:approved?'Brief approved':'Approve brief for production',
@@ -8534,7 +8534,7 @@ class AppRoot extends React.Component {
     const wfIdx=wf.indexOf(p.workflow); const activeWf=wfIdx<0?0:wfIdx;
     return {
       contentOpen:true, cd_name:p.name, cd_id:p.id, cd_url:p.url, cd_status:p.status, cd_statusBg:st.bg, cd_statusColor:st.color,
-      cd_tabs:tabs.map((t,i)=>({ label:t, active:i===tab, go:()=>this.setState({cTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===tab?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===tab?'var(--beet-700)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
+      cd_tabs:tabs.map((t,i)=>({ label:t, active:i===tab, go:()=>this.setState({cTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===tab?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===tab?'var(--ink-900)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       cd_tab:tab, cd_tab0:tab===0,cd_tab1:tab===1,cd_tab2:tab===2,cd_tab3:tab===3,cd_tab4:tab===4,cd_tab5:tab===5,cd_tab6:tab===6,cd_tab7:tab===7,cd_tab8:tab===8,cd_tab9:tab===9,
       cd_info:[['Repository',this.CONTENT_REPOS().find(r=>r.key===p.repo).name],['Page Type',p.type],['Page Name',p.name],['URL Slug',p.slug],['Page URL',p.url],['Parent Page',p.parent],['Menu Category',p.menuCat],['Menu Order',String(p.menuOrder)],['Breadcrumb',p.breadcrumb],['Status',p.status],['Description',p.description]].map(x=>({k:x[0],v:x[1]})),
       cd_cls:p.cls.map(x=>({k:x[0],v:x[1]})), cd_isService:p.repo==='service',
@@ -8547,8 +8547,8 @@ class AppRoot extends React.Component {
       }),
       cdPreview: !!this.state.cdPreview, cdEditorMode: !this.state.cdPreview,
       cdSetEditor:()=>this.setState({cdPreview:false}), cdSetPreview:()=>this.setState({cdPreview:true}),
-      cdEditorStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(!this.state.cdPreview?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
-      cdPreviewStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(this.state.cdPreview?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
+      cdEditorStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(!this.state.cdPreview?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
+      cdPreviewStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(this.state.cdPreview?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
       cd_rel:Object.entries(p.rel||{}).map(([k,v])=>({ group:k, items:v })),
       cd_internal:(p.internal||[]).map(l=>({ anchor:l[0], target:l[1], strength:l[2], score:l[3] })),
       cd_ai:(p.aiLinks||[]).map(l=>({ anchor:l[0], target:l[1], score:l[2] })),
@@ -8629,7 +8629,7 @@ class AppRoot extends React.Component {
     const freqCount=(f)=>allKrs.filter(k=>k.freq===f).length;
     const kpiFreqChips=['All','Daily','Weekly','Monthly','Quarterly','Yearly'].map(f=>{ const active=fq===f; const n=f==='All'?allKrs.length:freqCount(f); return {
       label:(f==='All'?'Total KPIs this year':f), count:String(n), active,
-      style:'display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'#fff')+';color:'+(active?'#fff':'var(--ink-700)'),
+      style:'display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'var(--beet-700)':'var(--line-300)')+';background:'+(active?'var(--beet-700)':'var(--paper)')+';color:'+(active?'#fff':'var(--ink-700)'),
       countStyle:'font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px;background:'+(active?'rgba(255,255,255,.2)':'var(--orchid-100)')+';color:'+(active?'#fff':'var(--orchid-700)'),
       set:()=>this.setState({ okrFilters:{...F, kpiFreq:f} }),
     };});
@@ -8657,7 +8657,7 @@ class AppRoot extends React.Component {
         progress:o.progress, progressColor:pc(o.progress), progressW:o.progress+'%',
         status:o.status, statusBg:tS.bg, statusColor:tS.color,
         expanded, chevron: expanded?'chevron-down':'chevron-right',
-        checked, checkBg: checked?'#7A1C46':'#fff', checkBorder: checked?'#7A1C46':'var(--line-300)', checkIconOpacity: checked?'1':'0',
+        checked, checkBg: checked?'#7A1C46':'var(--paper)', checkBorder: checked?'#7A1C46':'var(--line-300)', checkIconOpacity: checked?'1':'0',
         toggleSel:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrSelected: checked?sel.filter(x=>x!==o.id):[...sel,o.id] }); },
         toggle:(e)=>{ if(e)e.stopPropagation(); this.setState({ okrExpanded: expanded?this.state.okrExpanded.filter(x=>x!==o.id):[...this.state.okrExpanded,o.id] }); },
         menuOpen: this.state.okrMenu===o.id,
@@ -8698,7 +8698,7 @@ class AppRoot extends React.Component {
     const cur = this.state.okrSection;
     const okrSteps = steps.map(([id,letter,name])=>{ const active=id===cur; return { id, letter, name, label:letter+' · '+name,
       go:(e)=>{ if(e)e.preventDefault(); this.setState({ okrSection:id }); const el=document.getElementById(id); if(el){ const sc=el.closest('.blscroll'); if(sc) sc.scrollTo({ top: el.offsetTop - 20, behavior:'smooth' }); } },
-      navStyle:'display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:2px;border-radius:10px;font-size:13px;font-weight:'+(active?'700':'600')+';text-decoration:none;'+(active?'background:var(--orchid-100);color:var(--beet-700)':'color:var(--ink-500)'),
+      navStyle:'display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:2px;border-radius:10px;font-size:13px;font-weight:'+(active?'700':'600')+';text-decoration:none;'+(active?'background:var(--orchid-100);color:var(--ink-900)':'color:var(--ink-500)'),
       badgeBg: active?'var(--beet-700)':'var(--surface-50)', badgeColor: active?'#fff':'var(--ink-500)' }; });
     const reg = this.MASTERS_REG();
     const kpiOptions = reg.kpi.rows.map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
@@ -8785,7 +8785,7 @@ class AppRoot extends React.Component {
         {label:'At risk',value:String(cntRisk),color:'var(--warn-600)',icon:'alert-triangle'},
         {label:'Overdue',value:String(cntOverdue),color:'var(--danger-600)',icon:'clock-alert'},
         {label:'Completed',value:String(cntDone),color:'var(--verify-600)',icon:'check-circle-2'},
-        {label:'Avg achievement',value:avgAch+'%',color:'var(--beet-700)',icon:'gauge'},
+        {label:'Avg achievement',value:avgAch+'%',color:'var(--ink-900)',icon:'gauge'},
         {label:'Upcoming reviews',value:String(cntReview),color:'var(--orchid-600)',icon:'calendar-clock'},
       ],
       okrFilters:[
@@ -8908,7 +8908,7 @@ class AppRoot extends React.Component {
       const cur=this.getPerm(m,permRole);
       this.setPerm(m,permRole,action,!cur[action]);
     };
-    const dotStyle=(on)=>'display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;cursor:'+(permCanManage?'pointer':'default')+';border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'#fff')+';color:'+(on?'var(--verify-600)':'var(--ink-400)');
+    const dotStyle=(on)=>'display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;cursor:'+(permCanManage?'pointer':'default')+';border:1px solid '+(on?'var(--verify-500)':'var(--line-300)')+';background:'+(on?'var(--verify-100)':'var(--paper)')+';color:'+(on?'var(--verify-600)':'var(--ink-400)');
     return {
       permCanManage,
       permRoleOptions:roleKeys.map(k=>({ key:k, label:this.ROLES[k].label })),
@@ -8947,12 +8947,12 @@ class AppRoot extends React.Component {
     const tag=(t,tone)=>({tag:t,tagBg:{ok:'var(--verify-100)',warn:'var(--warn-100)',info:'var(--info-100)',draft:'var(--surface-50)'}[tone],tagColor:{ok:'var(--verify-600)',warn:'var(--warn-600)',info:'var(--info-600)',draft:'var(--ink-500)'}[tone]});
     const act=(label,fn,primary)=>({actionLabel:label,action:fn,actionStyle: primary
       ? 'padding:6px 13px;border:none;background:#7A1C46;color:#fff;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer'
-      : 'padding:6px 13px;border:1px solid var(--line-300);background:#fff;color:var(--ink-700);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer'});
+      : 'padding:6px 13px;border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer'});
 
     if(route==='users'){
       const empOf=(name)=>{ const idx=this.state.users.findIndex(u=>u.name===name); return 'EMP-'+String(100+idx+1).slice(-3); };
       const umTab=this.state.umTab||'list';
-      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+      const seg=(on)=>'display:flex;align-items:center;gap:7px;padding:8px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
       return {
         umTabList:umTab==='list', umTabPerms:umTab==='perms',
         umSegListStyle:seg(umTab==='list'), umSegPermStyle:seg(umTab==='perms'),
@@ -8987,7 +8987,7 @@ class AppRoot extends React.Component {
             statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)',
             actionLabel:this.hasPerm('users','edit')?'Manage':'View',
             actionStyle:'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'+(this.hasPerm('users','edit')
-              ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
+              ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)'),
             open:()=>this.setState({ umOpen:u.name, umEdit:false }),
             suspendLabel:u.status==='Suspended'?'Reactivate':'Suspend',
             suspend:(e)=>{ if(e)e.stopPropagation();
@@ -9015,7 +9015,7 @@ class AppRoot extends React.Component {
             const wk=this.weeklyCapacity(u.name)||40;
             return wk?Math.round(open.reduce((s,t)=>s+(parseFloat(t.estH)||0),0)/wk*100):0; });
           const K=(label,value,sub,color)=>({label,value,sub,color});
-          return [K('Users',String(this.state.users.length),'on the platform','var(--beet-700)'),
+          return [K('Users',String(this.state.users.length),'on the platform','var(--ink-900)'),
             K('Active',String(this.state.users.filter(u=>u.status==='Active').length),'can sign in','var(--verify-600)'),
             K('Overloaded',String(rows.filter(x=>x>100).length),'beyond shift capacity','var(--danger-600)'),
             K('Underloaded',String(rows.filter(x=>x<40).length),'below 40% of capacity','var(--info-600)'),
@@ -9121,7 +9121,7 @@ class AppRoot extends React.Component {
     const list=all.filter(f=>{ const k=this.fileKind(f.name);
       return (type==='All'||k.t===type) && (!q || (f.name+' '+f.source+' '+f.by+' '+f.where).toLowerCase().indexOf(q)>=0); });
     const tab=this.state.fpTab||'browse';
-    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(on?'background:#fff;color:var(--beet-700);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
+    const seg=(on)=>'display:flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(on?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-sm)':'background:none;color:var(--ink-500)');
     return {
       fpOpen:true, fpTitle:this.state.fpTitle||'Attach files',
       fpIsBrowse:tab==='browse', fpIsUpload:tab==='upload',
@@ -9134,7 +9134,7 @@ class AppRoot extends React.Component {
       fpTypeOptions:['All','Image','Video','PDF','Spreadsheet','Document'],
       fpRows:list.map(f=>{ const k=this.fileKind(f.name); const on=sel.includes(f.name);
         return { name:f.name, source:f.source, by:f.by, where:f.where, kind:k.t, icon:k.icon, iconBg:k.bg, iconColor:k.color, on,
-          rowStyle:'display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid '+(on?'var(--orchid-400)':'var(--line-200)')+';background:'+(on?'var(--orchid-100)':'#fff')+';border-radius:11px;cursor:pointer;text-align:left;width:100%',
+          rowStyle:'display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid '+(on?'var(--orchid-400)':'var(--line-200)')+';background:'+(on?'var(--orchid-100)':'var(--paper)')+';border-radius:11px;cursor:pointer;text-align:left;width:100%',
           toggle:()=>this.setState({ fpSel:on?sel.filter(x=>x!==f.name):[...sel,f.name] }) }; }),
       fpEmpty:list.length===0,
       fpEmptyNote:all.length?'No files match this search.':'The repository is empty — upload a new file instead.',
@@ -9349,7 +9349,7 @@ class AppRoot extends React.Component {
         actionLabel:['junior','senior'].includes(rk)?'Open':(canEdit?'Manage':'View'),
         action:r.go,
         actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit
-          ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:#fff;color:var(--ink-700)'),
+          ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)'),
         canDelete: r.custom && canDelete,
         delete: r.custom ? ()=>this.confirmDelete('Delete Repository?', 'Are you sure you want to delete "'+r.name+'"? This action cannot be undone.', ()=>this.repoDeleteCustom(r.key)) : null,
       })),

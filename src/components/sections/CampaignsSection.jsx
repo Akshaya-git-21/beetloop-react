@@ -10,7 +10,7 @@ export default function CampaignsSection({ vm }) {
         <React.Fragment>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, marginBottom: 18 }}>
             {(cmpStats || []).map((s, i) => (
-              <div key={i} style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
+              <div key={i} style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</div>
                 <div style={{ fontFamily: "'Sora'", fontWeight: 800, fontSize: 24, color: s.color, marginTop: 4 }}>{s.value}</div>
               </div>
@@ -31,35 +31,35 @@ export default function CampaignsSection({ vm }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
             {(cmpFilterDefs || []).map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1px solid var(--line-300)', borderRadius: 11, padding: '6px 10px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 11, padding: '6px 10px' }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)' }}>{f.label}</span>
-                <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 13, fontWeight: 600, color: 'var(--beet-700)', outline: 'none', cursor: 'pointer' }}>
+                <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 13, fontWeight: 600, color: 'var(--ink-900)', outline: 'none', cursor: 'pointer' }}>
                   {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             ))}
-            <button onClick={cmpReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}>
+            <button onClick={cmpReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}>
               <Icon name="rotate-ccw" style={{ width: 12, height: 12 }} />Reset
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
             {(cmpRows || []).map(c => (
-              <div key={c.id} onClick={c.open} style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 11, cursor: 'pointer' }}>
+              <div key={c.id} onClick={c.open} style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 11, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--orchid-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Icon name="megaphone" style={{ width: 16, height: 16, color: 'var(--orchid-600)' }} />
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--beet-700)' }}>{c.id}</span>
+                      <span style={{ fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--ink-900)' }}>{c.id}</span>
                       <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:${c.statusBg};color:${c.statusColor}`)}>{c.status}</span>
                     </div>
                     <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink-900)', marginTop: 3 }}>{c.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>{c.brand} · {c.dept} · {c.type}</div>
                   </div>
                   {Boolean(cmpCanEdit) && (
-                    <button onClick={c.edit} style={{ padding: '6px 11px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Edit</button>
+                    <button onClick={c.edit} style={{ padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Edit</button>
                   )}
                 </div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{c.goal}</div>
@@ -87,7 +87,7 @@ export default function CampaignsSection({ vm }) {
           </div>
 
           {Boolean(cmpEmpty) && (
-            <div style={{ padding: 44, textAlign: 'center', color: 'var(--ink-500)', background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18 }}>
+            <div style={{ padding: 44, textAlign: 'center', color: 'var(--ink-500)', background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18 }}>
               <Icon name="megaphone" style={{ width: 26, height: 26, color: 'var(--ink-400)' }} />
               <div style={{ fontSize: 14, fontWeight: 600, marginTop: 10 }}>No campaigns match these filters.</div>
             </div>

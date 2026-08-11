@@ -13,28 +13,28 @@ export default function MasterRecordSlideOver({ vm }) {
 <div onClick={mdRecClose} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"160","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"560px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"560px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"20px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"20px 24px","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
 
         
 <div>
 <div style={{"fontFamily":"'Space Mono'","fontSize":"12px","color":"var(--ink-400)"}}>
 {mdRecSub}
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 {mdRecTitle}
 </h3>
 </div>
 
 
 <div style={{"display":"flex","gap":"8px"}}>
-<button onClick={mdRecEdit} style={{"padding":"0 14px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","gap":"6px","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)"}}>
+<button onClick={mdRecEdit} style={{"padding":"0 14px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","gap":"6px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)"}}>
 <Icon name={"pencil"} style={{"width":"14px","height":"14px"}} />
 Edit
 </button>
-<button onClick={mdRecClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={mdRecClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>

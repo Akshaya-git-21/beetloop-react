@@ -37,7 +37,7 @@ export default function TableSection({ vm }) {
 )}
 
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
 
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"14px 18px","borderBottom":"1px solid var(--line-200)"}}>
@@ -49,7 +49,7 @@ export default function TableSection({ vm }) {
 </div>
 
 
-<button style={{"display":"flex","alignItems":"center","gap":"6px","padding":"8px 12px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
+<button style={{"display":"flex","alignItems":"center","gap":"6px","padding":"8px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"600","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"sliders-horizontal"} style={{"width":"14px","height":"14px"}} />
 Filters
 </button>
@@ -146,7 +146,7 @@ Filters
 {row.actionLabel}
 </button>
 {Boolean(row.canDelete) && (
-<button onClick={row.delete} title="Delete" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"30px","height":"30px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--danger-600)","borderRadius":"9px","cursor":"pointer"}}>
+<button onClick={row.delete} title="Delete" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"30px","height":"30px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"9px","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />
 </button>
 )}

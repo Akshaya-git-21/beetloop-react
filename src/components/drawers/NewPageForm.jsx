@@ -13,10 +13,10 @@ export default function NewPageForm({ vm }) {
 <div onClick={closeNewPage} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"170","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"720px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"720px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"5"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"5"}}>
 
         
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between"}}>
@@ -30,7 +30,7 @@ Content Repository
 </div>
 
             
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"3px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"3px 0 0"}}>
 {npPanelTitle || 'Create new page'}
 </h3>
 
@@ -39,7 +39,7 @@ Content Repository
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>
 Page code
 </span>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
 {npCode}
 </span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
@@ -54,13 +54,13 @@ Page code
 <div style={{"display":"flex","alignItems":"center","gap":"8px"}}>
 
 {Boolean(npCanDelete) && (
-<button onClick={npDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={npDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"15px","height":"15px"}} />
 Delete
 </button>
 )}
 
-<button onClick={closeNewPage} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={closeNewPage} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -110,7 +110,7 @@ Page information
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Repository *
 </label>
-<select value={npf.repo} onChange={npSetRepo} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.repo} onChange={npSetRepo} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(npRepos || []).map((r, $index) => (
 <React.Fragment key={$index}>
 <option value={r.key}>
@@ -126,7 +126,7 @@ Repository *
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Page type
 </label>
-<select value={npf.type} onChange={npSetType} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.type} onChange={npSetType} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Service Page
 </option>
@@ -210,7 +210,7 @@ Parent page
 — nests this page under it (URL inherits)
 </span>
 </label>
-<select value={npf.pid} onChange={npSetParentId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.pid} onChange={npSetParentId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(npParentOptions || []).map((po, $index) => (
 <React.Fragment key={$index}>
 <option value={po.id}>
@@ -404,7 +404,7 @@ Comma-separated secondary keywords
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Keyword intent
 </label>
-<select value={npf.intent} onChange={npSetIntent} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.intent} onChange={npSetIntent} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option value>
 Select…
 </option>
@@ -428,7 +428,7 @@ Navigational
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Schema type
 </label>
-<select value={npf.schema} onChange={npSetSchema} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.schema} onChange={npSetSchema} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option value>
 Auto (by repository)
 </option>
@@ -526,7 +526,7 @@ Technical SEO
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Robots
 </label>
-<select value={npf.robots} onChange={npSetRobots} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.robots} onChange={npSetRobots} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Index, Follow
 </option>
@@ -686,7 +686,7 @@ Relationships
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Related service
 </label>
-<select value={npf.relServiceId} onChange={npSetRelServiceId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.relServiceId} onChange={npSetRelServiceId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(npServiceOptions || []).map((so, $index) => (
 <React.Fragment key={$index}>
 <option value={so.id}>
@@ -712,7 +712,7 @@ Related service
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Related insight / article
 </label>
-<select value={npf.relInsightId} onChange={npSetRelInsightId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={npf.relInsightId} onChange={npSetRelInsightId} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(npInsightOptions || []).map((io, $index) => (
 <React.Fragment key={$index}>
 <option value={io.id}>
@@ -793,7 +793,7 @@ Target URL
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Link type
 </label>
-<select value={l.ltype} onChange={l.setLtype} style={{"width":"100%","padding":"10px 10px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={l.ltype} onChange={l.setLtype} style={{"width":"100%","padding":"10px 10px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 <option>
 Internal
 </option>
@@ -806,7 +806,7 @@ External
                 
 {Boolean(l.canRemove) && (
 <React.Fragment>
-<button onClick={l.remove} title="Remove link" style={{"flex":"none","width":"40px","height":"40px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={l.remove} title="Remove link" style={{"flex":"none","width":"40px","height":"40px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"trash-2"} style={{"width":"15px","height":"15px","color":"var(--danger-600)"}} />
 </button>
 </React.Fragment>
@@ -869,7 +869,7 @@ Media
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Type {m.n}
 </label>
-<select value={m.type} onChange={m.setType} style={{"width":"100%","padding":"10px 10px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={m.type} onChange={m.setType} style={{"width":"100%","padding":"10px 10px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 <option>
 Image
 </option>
@@ -907,7 +907,7 @@ Alt text
                 
 {Boolean(m.canRemove) && (
 <React.Fragment>
-<button onClick={m.remove} title="Remove media" style={{"flex":"none","width":"40px","height":"40px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={m.remove} title="Remove media" style={{"flex":"none","width":"40px","height":"40px","borderRadius":"11px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"trash-2"} style={{"width":"15px","height":"15px","color":"var(--danger-600)"}} />
 </button>
 </React.Fragment>
@@ -981,7 +981,7 @@ Reviewer
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Planned publish date
 </label>
-<input type="date" value={npf.publishDate} onInput={npSetPublishDate} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
+<input type="date" value={npf.publishDate} onInput={npSetPublishDate} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
 </div>
 
             
@@ -1071,12 +1071,12 @@ Creation, edits, reviews, approvals and publishing are recorded with user and da
 </div>
 
       
-<div style={{"position":"sticky","bottom":"0","background":"#fff","borderTop":"1px solid var(--line-200)","padding":"16px 24px","display":"flex","alignItems":"center","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","borderTop":"1px solid var(--line-200)","padding":"16px 24px","display":"flex","alignItems":"center","gap":"10px"}}>
 
         
 {Boolean(npNotFirst) && (
 <React.Fragment>
-<button onClick={npBack} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"11px 16px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={npBack} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"11px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 <Icon name={"arrow-left"} style={{"width":"14px","height":"14px"}} />
 Back
 </button>
@@ -1087,12 +1087,12 @@ Back
 <div style={{"flex":"1"}} />
 
         
-<button onClick={closeNewPage} style={{"padding":"11px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={closeNewPage} style={{"padding":"11px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 
         
-<button onClick={submitNewPageDraft} style={{"padding":"11px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={submitNewPageDraft} style={{"padding":"11px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Save as draft
 </button>
 

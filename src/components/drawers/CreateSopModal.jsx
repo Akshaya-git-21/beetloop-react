@@ -4,7 +4,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 
 const label = { display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5 };
 const input = { width: '100%', padding: '9px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none' };
-const select = { ...input, background: '#fff' };
+const select = { ...input, background: 'var(--paper)' };
 const textarea = { ...input, resize: 'vertical' };
 
 export default function CreateSopModal({ vm }) {
@@ -29,16 +29,16 @@ export default function CreateSopModal({ vm }) {
     <React.Fragment>
       {Boolean(sopFormOpen) && (
         <div onClick={sopClose} style={{ position: 'fixed', inset: 0, zIndex: 182, background: 'rgba(31,8,20,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
-          <div onClick={sopStop} className="blscroll" style={{ width: '100%', maxWidth: 740, maxHeight: '100%', background: '#fff', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
-            <div style={{ position: 'sticky', top: 0, background: '#fff', padding: '18px 22px', borderBottom: '1px solid var(--line-200)', zIndex: 2 }}>
+          <div onClick={sopStop} className="blscroll" style={{ width: '100%', maxWidth: 740, maxHeight: '100%', background: 'var(--paper)', borderRadius: 20, boxShadow: 'var(--shadow-xl)', overflowY: 'auto', animation: 'blrise .28s var(--ease-out)' }}>
+            <div style={{ position: 'sticky', top: 0, background: 'var(--paper)', padding: '18px 22px', borderBottom: '1px solid var(--line-200)', zIndex: 2 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>Standard operating procedure</div>
-                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--beet-700)', margin: '4px 0 0' }}>
+                  <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', margin: '4px 0 0' }}>
                     New SOP <span style={{ fontFamily: "'Space Mono'", fontSize: 12, fontWeight: 700, color: 'var(--ink-400)' }}>{sopNextId}</span>
                   </h3>
                 </div>
-                <button onClick={sopClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <button onClick={sopClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name="x" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} />
                 </button>
               </div>
@@ -56,7 +56,7 @@ export default function CreateSopModal({ vm }) {
                 <React.Fragment>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 11, padding: '9px 12px' }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)', flexShrink: 0 }}>Start from an existing SOP</span>
-                    <select onChange={sopDupFrom} defaultValue="" style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11.5, background: '#fff' }}>
+                    <select onChange={sopDupFrom} defaultValue="" style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11.5, background: 'var(--paper)' }}>
                       <option value="">Blank SOP</option>
                       {(sopDupOptions || []).filter(Boolean).map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
@@ -166,7 +166,7 @@ export default function CreateSopModal({ vm }) {
                 <React.Fragment>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)' }}>{sopStepCount}</span>
-                    <button onClick={sopAddStep} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={sopAddStep} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
                       <Icon name="plus" style={{ width: 11, height: 11 }} />Add step
                     </button>
                   </div>
@@ -176,14 +176,14 @@ export default function CreateSopModal({ vm }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                           <span style={{ width: 22, height: 22, borderRadius: 99, background: 'var(--beet-700)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 800, flexShrink: 0 }}>{s.n}</span>
                           <span style={{ flex: 1 }} />
-                          <button onClick={s.moveUp} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button onClick={s.moveUp} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Icon name="chevron-up" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} />
                           </button>
-                          <button onClick={s.moveDown} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button onClick={s.moveDown} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Icon name="chevron-down" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} />
                           </button>
                           {Boolean(s.canRemove) && (
-                            <button onClick={s.remove} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <button onClick={s.remove} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon name="trash-2" style={{ width: 12, height: 12, color: 'var(--danger-600)' }} />
                             </button>
                           )}
@@ -207,14 +207,14 @@ export default function CreateSopModal({ vm }) {
                               <div key={j} style={{ display: 'flex', gap: 6 }}>
                                 <input value={sb.t} onInput={sb.setT} placeholder="Sub-step" style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11, outline: 'none' }} />
                                 <input value={sb.d} onInput={sb.setD} placeholder="Detail" style={{ flex: 1, minWidth: 0, padding: '7px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 11, outline: 'none' }} />
-                                <button onClick={sb.remove} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <button onClick={sb.remove} style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <Icon name="x" style={{ width: 11, height: 11, color: 'var(--ink-500)' }} />
                                 </button>
                               </div>
                             ))}
                           </div>
                         )}
-                        <button onClick={s.addSub} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', border: '1px dashed var(--line-300)', background: '#fff', color: 'var(--orchid-600)', borderRadius: 8, fontSize: 10.5, fontWeight: 700, cursor: 'pointer' }}>
+                        <button onClick={s.addSub} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', border: '1px dashed var(--line-300)', background: 'var(--paper)', color: 'var(--orchid-600)', borderRadius: 8, fontSize: 10.5, fontWeight: 700, cursor: 'pointer' }}>
                           <Icon name="plus" style={{ width: 10, height: 10 }} />Add sub-step
                         </button>
                       </div>
@@ -238,21 +238,21 @@ export default function CreateSopModal({ vm }) {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                       <label style={{ ...label, marginBottom: 0 }}>Linked SOPs</label>
-                      <button onClick={sopAddRel} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                      <button onClick={sopAddRel} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                         <Icon name="plus" style={{ width: 11, height: 11 }} />Add link
                       </button>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                       {(sopRelRows || []).map((r, i) => (
                         <div key={i} style={{ display: 'flex', gap: 7 }}>
-                          <select value={r.rel} onChange={r.setRel} style={{ width: 180, flexShrink: 0, padding: '8px 10px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 11.5, background: '#fff' }}>
+                          <select value={r.rel} onChange={r.setRel} style={{ width: 180, flexShrink: 0, padding: '8px 10px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 11.5, background: 'var(--paper)' }}>
                             {(r.relOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
-                          <select value={r.id} onChange={r.setId} style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 11.5, background: '#fff' }}>
+                          <select value={r.id} onChange={r.setId} style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 11.5, background: 'var(--paper)' }}>
                             {(r.sopOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
                           {Boolean(r.canRemove) && (
-                            <button onClick={r.remove} style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <button onClick={r.remove} style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               <Icon name="x" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} />
                             </button>
                           )}
@@ -309,8 +309,8 @@ export default function CreateSopModal({ vm }) {
               )}
             </div>
 
-            <div style={{ position: 'sticky', bottom: 0, background: '#fff', padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button onClick={sopClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
+            <div style={{ position: 'sticky', bottom: 0, background: 'var(--paper)', padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button onClick={sopClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={sopSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 <Icon name="check" style={{ width: 14, height: 14 }} />Save SOP
               </button>

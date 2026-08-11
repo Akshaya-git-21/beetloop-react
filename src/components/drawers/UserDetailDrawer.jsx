@@ -13,8 +13,8 @@ export default function UserDetailDrawer({ vm }) {
     <React.Fragment>
 {Boolean(umDrawerOpen) && (
 <div onClick={umClose} style={{"position":"fixed","inset":"0","zIndex":"160","background":"rgba(31,8,20,.5)","display":"flex","justifyContent":"flex-end"}}>
-<div onClick={umStop} className="blscroll" style={{"width":"100%","maxWidth":"620px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3","display":"flex","alignItems":"flex-start","gap":"12px"}}>
+<div onClick={umStop} className="blscroll" style={{"width":"100%","maxWidth":"620px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3","display":"flex","alignItems":"flex-start","gap":"12px"}}>
 {u.hasAvatar ? (
 <img src={u.avatarUrl} alt={u.name} style={{"width":"40px","height":"40px","borderRadius":"99px","objectFit":"cover","flexShrink":"0"}} />
 ) : (
@@ -23,24 +23,24 @@ export default function UserDetailDrawer({ vm }) {
 <div style={{"flex":"1","minWidth":"0"}}>
 {Boolean(umCanEdit) && (
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"4px"}}>
-<label style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<label style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"4px 9px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
 {umAvatarBusy ? 'Uploading…' : (umHasAvatar ? 'Change photo' : 'Upload photo')}
 <input type="file" accept="image/*" onChange={umUploadAvatar} disabled={umAvatarBusy} style={{"display":"none"}} />
 </label>
 {Boolean(umHasAvatar) && (
-<button onClick={umRemoveAvatar} disabled={umAvatarBusy} style={{"padding":"4px 9px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--danger-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={umRemoveAvatar} disabled={umAvatarBusy} style={{"padding":"4px 9px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>
 Remove
 </button>
 )}
 </div>
 )}
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"0"}}>{u.name}</h3>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--ink-900)","margin":"0"}}>{u.name}</h3>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"3px","flexWrap":"wrap"}}>
 <span style={{"fontSize":"12.5px","color":"var(--ink-500)"}}>{u.sub}</span>
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:${u.statusBg};color:${u.statusColor}`)}>{u.status}</span>
 </div>
 </div>
-<button onClick={umClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={umClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -49,7 +49,7 @@ Remove
 <div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"14px","padding":"15px 17px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"9px","flexWrap":"wrap"}}>
 <Icon name={"gauge"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)","flexShrink":"0"}} />
-<span style={{"fontSize":"12px","fontWeight":"800","color":"var(--beet-700)","flex":"1","minWidth":"120px"}}>Workload & capacity</span>
+<span style={{"fontSize":"12px","fontWeight":"800","color":"var(--ink-900)","flex":"1","minWidth":"120px"}}>Workload & capacity</span>
 <span style={{"fontSize":"11px","color":"var(--ink-500)"}}>{umLoad && umLoad.cap}</span>
 <span style={{"fontSize":"11px","color":"var(--ink-500)"}}>{umLoad && umLoad.assigned}</span>
 <span style={cssTextToObject(`font-size:11.5px;font-weight:800;color:${umLoad && umLoad.freeColor}`)}>{umLoad && umLoad.free}</span>
@@ -75,19 +75,19 @@ Remove
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Break (minutes)</label>
 <input value={umD.breakMin} onInput={umSetBreak} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Working days / week</label>
-<select value={umD.days} onChange={umSetDays} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff"}}>
+<select value={umD.days} onChange={umSetDays} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)"}}>
 {(umDayOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Role</label>
-<select value={umD.role} onChange={umSetRole} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff"}}>
+<select value={umD.role} onChange={umSetRole} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)"}}>
 {(umRoleOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Department</label>
-<select value={umD.dept} onChange={umSetDept} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff"}}>
+<select value={umD.dept} onChange={umSetDept} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)"}}>
 {(umDeptOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div style={{"gridColumn":"1 / -1"}}><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Account status</label>
-<select value={umD.status} onChange={umSetStatus} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"#fff"}}>
+<select value={umD.status} onChange={umSetStatus} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)"}}>
 {(umStatusOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Mobile</label>
@@ -137,7 +137,7 @@ Remove
 </div>
 </div>
 <div style={{"display":"flex","justifyContent":"flex-end","gap":"9px","marginTop":"14px"}}>
-<button onClick={umCancelEdit} style={{"padding":"9px 15px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
+<button onClick={umCancelEdit} style={{"padding":"9px 15px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
 <button onClick={umSave} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 17px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"check"} style={{"width":"13px","height":"13px"}} />Save changes</button>
 </div>
@@ -159,7 +159,7 @@ Remove
 <div style={{"border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden"}}>
 {(umTasks || []).map((t, $i) => (
 <div key={$i} onClick={t.open} style={{"padding":"9px 13px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"center","gap":"9px","cursor":"pointer"}}>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--beet-700)","flexShrink":"0"}}>{t.id}</span>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10px","fontWeight":"700","color":"var(--ink-900)","flexShrink":"0"}}>{t.id}</span>
 <span style={{"fontSize":"12px","fontWeight":"600","color":"var(--ink-900)","flex":"1","minWidth":"0"}}>{t.name}</span>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--orchid-700)","flexShrink":"0"}}>{t.hours}</span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-500)","flexShrink":"0"}}>{t.dates}</span>
@@ -175,12 +175,12 @@ Remove
 <div style={{"display":"flex","gap":"9px","flexWrap":"wrap","paddingTop":"4px"}}>
 <button onClick={umStartEdit} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"pencil"} style={{"width":"13px","height":"13px"}} />Edit user & shift</button>
-<button onClick={umSuspend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={umSuspend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"user-x"} style={{"width":"13px","height":"13px"}} />{umSuspendLabel}</button>
-<button onClick={umResetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={umResetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"key-round"} style={{"width":"13px","height":"13px"}} />Reset password</button>
 {Boolean(umShowResend) && (
-<button onClick={umResend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={umResend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"mail"} style={{"width":"13px","height":"13px"}} />Resend invitation</button>
 )}
 </div>

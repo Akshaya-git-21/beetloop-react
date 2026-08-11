@@ -24,7 +24,7 @@ export default function PageHead({ vm }) {
 </div>
 
             
-<h1 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"29px","letterSpacing":"-.02em","color":"var(--beet-700)","margin":"0"}}>
+<h1 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"29px","letterSpacing":"-.02em","color":"var(--ink-900)","margin":"0"}}>
 {page.title}
 </h1>
 

@@ -23,9 +23,9 @@ const TIMEZONES = (() => {
 })();
 
 const label = { display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' };
-const input = { width: '100%', minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13, outline: 'none', background: '#fff' };
-const card = { background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '20px 22px', marginBottom: 16 };
-const sectionTitle = { fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--beet-700)', margin: '0 0 14px' };
+const input = { width: '100%', minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 13, outline: 'none', background: 'var(--paper)' };
+const card = { background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '20px 22px', marginBottom: 16 };
+const sectionTitle = { fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--ink-900)', margin: '0 0 14px' };
 
 function resizeToDataUrl(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
@@ -142,8 +142,8 @@ function Toolbar({ canEdit, s, resetLabel, saveLabel }) {
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
-        <button onClick={s.resetToDefault} disabled={s.busy} style={{ padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>{resetLabel || 'Reset'}</button>
-        <button onClick={s.cancel} disabled={s.busy || !s.dirty} style={{ padding: '10px 16px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, color: s.dirty ? 'var(--ink-700)' : 'var(--ink-400)', cursor: s.dirty ? 'pointer' : 'not-allowed' }}>Cancel</button>
+        <button onClick={s.resetToDefault} disabled={s.busy} style={{ padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>{resetLabel || 'Reset'}</button>
+        <button onClick={s.cancel} disabled={s.busy || !s.dirty} style={{ padding: '10px 16px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: s.dirty ? 'var(--ink-700)' : 'var(--ink-400)', cursor: s.dirty ? 'pointer' : 'not-allowed' }}>Cancel</button>
         <button onClick={s.save} disabled={s.busy || !s.dirty} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', background: (s.busy || !s.dirty) ? 'var(--ink-400)' : '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: (s.busy || !s.dirty) ? 'not-allowed' : 'pointer' }}>
           {s.busy ? 'Saving…' : (<><Icon name="check" style={{ width: 14, height: 14 }} />{saveLabel || 'Save'}</>)}
         </button>
@@ -215,7 +215,7 @@ function ImageField({ shows, labelText, value, onPick, onRemove, maxDim, canEdit
         {value ? <img src={value} alt={labelText} style={{ width: 44, height: 44, borderRadius: round ? 22 : 9, objectFit: 'cover', border: '1px solid var(--line-300)', background: '#f5f5f5' }} /> : (
           <div style={{ width: 44, height: 44, borderRadius: round ? 22 : 9, border: '1px dashed var(--line-300)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-400)' }}><Icon name="image" style={{ width: 16, height: 16 }} /></div>
         )}
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', cursor: canEdit ? 'pointer' : 'not-allowed', background: '#fff' }}>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, color: 'var(--ink-700)', cursor: canEdit ? 'pointer' : 'not-allowed', background: 'var(--paper)' }}>
           <Icon name="upload" style={{ width: 13, height: 13 }} />{value ? 'Replace' : 'Upload'}
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={onPick} disabled={!canEdit} />
         </label>
@@ -369,7 +369,7 @@ export default function ConfigurationSection({ vm }) {
     <div>
       <div style={{ display: 'inline-flex', background: 'var(--surface-50)', border: '1px solid var(--line-300)', borderRadius: 12, padding: 3, marginBottom: 18 }}>
         {TABS.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: tab === t.key ? '#fff' : 'none', color: tab === t.key ? 'var(--beet-700)' : 'var(--ink-500)', boxShadow: tab === t.key ? 'var(--shadow-xs)' : 'none' }}>
+          <button key={t.key} onClick={() => setTab(t.key)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: tab === t.key ? 'var(--paper)' : 'none', color: tab === t.key ? 'var(--ink-900)' : 'var(--ink-500)', boxShadow: tab === t.key ? 'var(--shadow-xs)' : 'none' }}>
             <Icon name={t.icon} style={{ width: 15, height: 15 }} />{t.label}
           </button>
         ))}

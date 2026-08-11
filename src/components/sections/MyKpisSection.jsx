@@ -17,7 +17,7 @@ export default function MyKpisSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 18px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"15px 18px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -82,12 +82,12 @@ My tasks
 <div style={{"display":"grid","gridTemplateColumns":"1.4fr 1fr","gap":"16px","marginBottom":"18px"}}>
 
             
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
 
               
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
 <Icon name={"sun"} style={{"width":"16px","height":"16px","color":"var(--warn-600)"}} />
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0"}}>
 Today's check-ins
 </h3>
 </div>
@@ -234,7 +234,7 @@ Check in
 <h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","margin":"0"}}>
 Consolidated KPI report
 </h3>
-<button onClick={shareReport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","color":"var(--beet-700)","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={shareReport} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","color":"var(--ink-900)","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"share-2"} style={{"width":"13px","height":"13px"}} />
 Share
 </button>
@@ -385,7 +385,7 @@ Linked OKR · {k.okr}
 <div style={{"display":"flex","gap":"8px","flexShrink":"0"}}>
 
                     
-<button onClick={k.history} style={{"display":"flex","alignItems":"center","gap":"6px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"8px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={k.history} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"8px 13px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"history"} style={{"width":"14px","height":"14px"}} />
 History
 </button>

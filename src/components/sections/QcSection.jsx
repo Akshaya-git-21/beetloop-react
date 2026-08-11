@@ -18,7 +18,7 @@ export default function QcSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
 <div style={{"fontSize":"13px","fontWeight":"600","color":"var(--ink-500)","marginBottom":"8px"}}>
 {k.label}
 </div>
@@ -70,7 +70,7 @@ Mirror of the Tasks screen — submitted tasks land here for review. Approve to 
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"13px 15px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"13px 15px","boxShadow":"var(--shadow-sm)"}}>
 
                 
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -102,7 +102,7 @@ Mirror of the Tasks screen — submitted tasks land here for review. Approve to 
 
 </div>
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"16px 18px","marginBottom":"14px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"12px"}}>
 <Icon name={"clipboard-check"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)","flexShrink":"0"}} />
 <span style={{"fontSize":"11.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)"}}>Compliance quality — from checklist data</span>
@@ -160,11 +160,11 @@ Mirror of the Tasks screen — submitted tasks land here for review. Approve to 
 ))}
 
             
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px","marginLeft":"auto"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px","marginLeft":"auto"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Status
 </span>
-<select value={qcStatusF} onChange={qcOnStatusF} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={qcStatusF} onChange={qcOnStatusF} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(qcStatusOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -179,7 +179,7 @@ Status
 </div>
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
 <div style={{"display":"grid","gridTemplateColumns":"2fr .7fr .9fr .9fr .8fr 1.6fr","gap":"12px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>

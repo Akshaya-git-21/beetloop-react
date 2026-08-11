@@ -11,7 +11,7 @@ export default function ActivatePage({ vm }) {
 <div style={{"minHeight":"100vh","display":"flex","alignItems":"center","justifyContent":"center","padding":"40px 24px","background":"linear-gradient(160deg,var(--surface-100),#F1E9EF)"}}>
 
   
-<div style={{"width":"100%","maxWidth":"460px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"24px","boxShadow":"var(--shadow-lg)","padding":"36px 34px","animation":"blrise .5s var(--ease-out)"}}>
+<div style={{"width":"100%","maxWidth":"460px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"24px","boxShadow":"var(--shadow-lg)","padding":"36px 34px","animation":"blrise .5s var(--ease-out)"}}>
 
     
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"22px"}}>
@@ -22,7 +22,7 @@ export default function ActivatePage({ vm }) {
 </div>
 
       
-<span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".14em","fontSize":"15px","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".14em","fontSize":"15px","color":"var(--ink-900)"}}>
 BEETLOOP
 </span>
 
@@ -35,7 +35,7 @@ BEETLOOP
 </div>
 
 
-<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"24px","color":"var(--beet-700)","margin":"8px 0 4px"}}>
+<h2 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"24px","color":"var(--ink-900)","margin":"8px 0 4px"}}>
 {activateIsRecovery ? 'Set a new password' : 'Set up your account'}
 </h2>
 
@@ -115,7 +115,7 @@ Recommended for your account
 
       
 <button onClick={toggleMfa} style={cssTextToObject(`width:44px;height:26px;border-radius:99px;border:none;cursor:pointer;position:relative;transition:.2s;background:${mfaBg}`)}>
-<span style={cssTextToObject(`position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;left:${mfaX}`)} />
+<span style={cssTextToObject(`position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:var(--paper);transition:.2s;left:${mfaX}`)} />
 </button>
 
     

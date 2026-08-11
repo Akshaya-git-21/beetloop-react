@@ -12,24 +12,24 @@ export default function CreateTaskModal({ vm }) {
 <div onClick={tkCloseNew} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"170","display":"flex","alignItems":"center","justifyContent":"center","padding":"24px"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"90vh","overflowY":"auto","background":"#fff","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"640px","maxHeight":"90vh","overflowY":"auto","background":"var(--paper)","borderRadius":"22px","boxShadow":"var(--shadow-xl)","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","padding":"20px 26px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","padding":"20px 26px","borderBottom":"1px solid var(--line-200)","display":"flex","alignItems":"flex-start","justifyContent":"space-between","zIndex":"2"}}>
 
         
 <div>
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".1em","textTransform":"uppercase","color":"var(--orchid-500)"}}>
 Tasks
 </div>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--beet-700)","margin":"4px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"20px","color":"var(--ink-900)","margin":"4px 0 0"}}>
 Create task
 </h3>
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"6px"}}>
 <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--ink-500)"}}>
 Task ID
 </span>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--beet-700)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","background":"var(--surface-50)","border":"1px solid var(--line-300)","borderRadius":"7px","padding":"2px 9px"}}>
 {tkCode}
 </span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
@@ -39,7 +39,7 @@ auto-generated
 </div>
 
         
-<button onClick={tkCloseNew} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
+<button onClick={tkCloseNew} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 
@@ -57,7 +57,7 @@ auto-generated
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Task template (Task Master)
 </label>
-<select value={tkf.template} onChange={tkSetTemplate} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.template} onChange={tkSetTemplate} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(tkTplOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.name}>
@@ -73,7 +73,7 @@ Task template (Task Master)
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Priority
 </label>
-<select value={tkf.priority} onChange={tkSetPriority} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.priority} onChange={tkSetPriority} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 Critical
 </option>
@@ -117,7 +117,7 @@ Description
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Campaign
 </label>
-<select value={tkf.campaign} onChange={tkSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.campaign} onChange={tkSetCampaign} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(tkCampaignOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -134,8 +134,8 @@ Campaign
 Start date
 </label>
 <div style={{"display":"flex","gap":"8px"}}>
-<input type="date" value={tkf.start} onInput={tkSetStart} style={{"flex":"1","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
-<input type="time" value={tkf.startTime||''} onInput={tkSetStartTime} style={{"width":"110px","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
+<input type="date" value={tkf.start} onInput={tkSetStart} style={{"flex":"1","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
+<input type="time" value={tkf.startTime||''} onInput={tkSetStartTime} style={{"width":"110px","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
 </div>
 </div>
 
@@ -145,8 +145,8 @@ Start date
 End date
 </label>
 <div style={{"display":"flex","gap":"8px"}}>
-<input type="date" value={tkf.end} onInput={tkSetEnd} style={{"flex":"1","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
-<input type="time" value={tkf.endTime||''} onInput={tkSetEndTime} style={{"width":"110px","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"#fff"}} />
+<input type="date" value={tkf.end} onInput={tkSetEnd} style={{"flex":"1","minWidth":"0","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
+<input type="time" value={tkf.endTime||''} onInput={tkSetEndTime} style={{"width":"110px","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}} />
 </div>
 </div>
 
@@ -155,7 +155,7 @@ End date
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Assignee
 </label>
-<select value={tkf.assignee} onChange={tkSetAssignee} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.assignee} onChange={tkSetAssignee} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(tkAssigneeOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -171,7 +171,7 @@ Assignee
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Task type / division
 </label>
-<select value={tkf.division} onChange={tkSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.division} onChange={tkSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(tkDivisionOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -187,7 +187,7 @@ Task type / division
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Reviewer / QC
 </label>
-<select value={tkf.reviewer} onChange={tkSetReviewer} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.reviewer} onChange={tkSetReviewer} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 {(tkReviewerOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -203,7 +203,7 @@ Reviewer / QC
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Recurrence
 </label>
-<select value={tkf.recurrence} onChange={tkSetRecurrence} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"#fff"}}>
+<select value={tkf.recurrence} onChange={tkSetRecurrence} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
 <option>
 None
 </option>
@@ -241,7 +241,7 @@ Effort linkage
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Effort plan
 </label>
-<select value={tkf.effortPlan} onChange={tkSetEffort} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={tkf.effortPlan} onChange={tkSetEffort} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(tkEffortOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.v}>
@@ -261,7 +261,7 @@ Effort plan
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Effort (from this plan)
 </label>
-<select value={tkEffortRowVal} onChange={tkSetEffortRow} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={tkEffortRowVal} onChange={tkSetEffortRow} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(tkEffortRowOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.v}>
@@ -314,7 +314,7 @@ KPI linkage
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Linked KPI
 </label>
-<select value={tkf.kpiId} onChange={tkSetKpi} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={tkf.kpiId} onChange={tkSetKpi} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(tkKpiOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.id}>
@@ -364,7 +364,7 @@ Counted toward the KPI only after QC approval.
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Dependency (upstream task)
 </label>
-<select value={tkf.dep} onChange={tkSetDep} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={tkf.dep} onChange={tkSetDep} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(tkDepOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -380,7 +380,7 @@ Dependency (upstream task)
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Dependency mode
 </label>
-<select value={tkf.depMode} onChange={tkSetDepMode} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"#fff"}}>
+<select value={tkf.depMode} onChange={tkSetDepMode} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 <option>
 Parallel
 </option>
@@ -411,10 +411,10 @@ Checklist from template:
 </div>
 
       
-<div style={{"position":"sticky","bottom":"0","background":"#fff","padding":"16px 26px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
+<div style={{"position":"sticky","bottom":"0","background":"var(--paper)","padding":"16px 26px","borderTop":"1px solid var(--line-200)","display":"flex","justifyContent":"flex-end","gap":"10px"}}>
 
         
-<button onClick={tkCloseNew} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
+<button onClick={tkCloseNew} style={{"padding":"10px 18px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>
 Cancel
 </button>
 

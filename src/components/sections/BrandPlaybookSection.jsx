@@ -7,7 +7,7 @@ function Tokens({ tokens }) {
     <React.Fragment>
       {(tokens || []).map((tk, i) => {
         if (tk.bold) return <span key={i} style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{tk.text}</span>;
-        if (tk.code) return <span key={i} style={{ fontFamily: "'Space Mono'", fontSize: '.92em', background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 5, padding: '1px 5px', color: 'var(--beet-700)' }}>{tk.text}</span>;
+        if (tk.code) return <span key={i} style={{ fontFamily: "'Space Mono'", fontSize: '.92em', background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 5, padding: '1px 5px', color: 'var(--ink-900)' }}>{tk.text}</span>;
         return <span key={i}>{tk.text}</span>;
       })}
     </React.Fragment>
@@ -15,7 +15,7 @@ function Tokens({ tokens }) {
 }
 
 function Block({ bl }) {
-  if (bl.isH) return <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--beet-700)', marginTop: 6 }}>{bl.text}</div>;
+  if (bl.isH) return <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--ink-900)', marginTop: 6 }}>{bl.text}</div>;
   if (bl.isP) return <div style={{ fontSize: 13.5, color: 'var(--ink-700)', lineHeight: 1.6 }}><Tokens tokens={bl.tokens} /></div>;
   if (bl.isList) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -94,11 +94,11 @@ function Block({ bl }) {
       {(bl.icps || []).map((p, i) => (
         <div key={i} style={{ border: '1px solid var(--line-300)', borderRadius: 14, overflow: 'hidden' }}>
           <div style={{ padding: '13px 16px', background: 'var(--surface-50)', borderBottom: '1px solid var(--line-200)' }}>
-            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14.5, color: 'var(--beet-700)' }}>{p.name}</div>
+            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 14.5, color: 'var(--ink-900)' }}>{p.name}</div>
             <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 3, lineHeight: 1.5 }}>{p.who}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 7 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: '#fff', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{p.size}</span>
-              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: '#fff', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{p.geo}</span>
+              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{p.size}</span>
+              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)' }}>{p.geo}</span>
             </div>
           </div>
           <div style={{ padding: '13px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 13 }}>
@@ -149,9 +149,9 @@ export default function BrandPlaybookSection({ vm }) {
     return (
       <React.Fragment>
         {Boolean(pbIsOpen) && (
-          <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '32px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: '32px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
             <Icon name="tag" style={{ width: 22, height: 22, color: 'var(--ink-400)' }} />
-            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--beet-700)' }}>No brand playbook to show</div>
+            <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 15, color: 'var(--ink-900)' }}>No brand playbook to show</div>
             <div style={{ fontSize: 13, color: 'var(--ink-500)', maxWidth: 420, lineHeight: 1.55 }}>{pbEmptyNote}</div>
           </div>
         )}
@@ -191,7 +191,7 @@ export default function BrandPlaybookSection({ vm }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '300px minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: 14, minWidth: 0 }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: 14, minWidth: 0 }}>
               <div style={{ position: 'relative', marginBottom: 11 }}>
                 <Icon name="search" style={{ width: 14, height: 14, color: 'var(--ink-400)', position: 'absolute', left: 11, top: 10 }} />
                 <input value={pbQuery} onInput={pbSetQuery} placeholder="Search the playbook…" style={{ width: '100%', padding: '8px 11px 8px 33px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, outline: 'none' }} />
@@ -221,7 +221,7 @@ export default function BrandPlaybookSection({ vm }) {
               </div>
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', minWidth: 0 }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', minWidth: 0 }}>
               <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line-200)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--orchid-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -229,13 +229,13 @@ export default function BrandPlaybookSection({ vm }) {
                   </span>
                   <div style={{ flex: 1, minWidth: 180 }}>
                     <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>Chapter {pbCur.n} of {pbCur.total}</div>
-                    <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--beet-700)', marginTop: 2 }}>{pbCur.title}</div>
+                    <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', marginTop: 2 }}>{pbCur.title}</div>
                     <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 3 }}>{pbCur.summary}</div>
                     <div style={{ fontSize: 10.5, color: 'var(--ink-400)', marginTop: 4 }}>Chapter owner · {pbCur.owner}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
                     {Boolean(pbEditable) && (
-                      <button onClick={pbEdit} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <button onClick={pbEdit} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
                         <Icon name="pencil" style={{ width: 12, height: 12 }} />Edit chapter
                       </button>
                     )}
@@ -254,11 +254,11 @@ export default function BrandPlaybookSection({ vm }) {
                 {(pbBlocks || []).map((bl, i) => <div key={i} style={{ minWidth: 0 }}><Block bl={bl} /></div>)}
               </div>
               <div style={{ padding: '14px 22px', borderTop: '1px solid var(--line-200)', background: 'var(--surface-50)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button onClick={pbPrev} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={pbPrev} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   <Icon name="chevron-left" style={{ width: 13, height: 13 }} />Previous
                 </button>
                 <span style={{ flex: 1 }} />
-                <button onClick={pbNext} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={pbNext} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   Next chapter<Icon name="chevron-right" style={{ width: 13, height: 13 }} />
                 </button>
               </div>

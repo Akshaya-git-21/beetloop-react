@@ -15,7 +15,7 @@ export default function ContentCalendarSection({ vm }) {
         <React.Fragment>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, marginBottom: 14 }}>
             {(calStats || []).map((s, i) => (
-              <div key={i} style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
+              <div key={i} style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</div>
                 <div style={{ fontFamily: "'Sora'", fontWeight: 800, fontSize: 22, color: s.color, marginTop: 4 }}>{s.value}</div>
                 <div style={{ fontSize: 10.5, color: 'var(--ink-400)', marginTop: 2 }}>{s.sub}</div>
@@ -24,31 +24,31 @@ export default function ContentCalendarSection({ vm }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-            <button onClick={calPrev} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chevron-left" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} /></button>
-            <button onClick={calNext} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chevron-right" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} /></button>
-            <button onClick={calToday} style={{ padding: '8px 13px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 10, fontSize: 12, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>{calTodayLabel}</button>
+            <button onClick={calPrev} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chevron-left" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} /></button>
+            <button onClick={calNext} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="chevron-right" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} /></button>
+            <button onClick={calToday} style={{ padding: '8px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 10, fontSize: 12, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>{calTodayLabel}</button>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17, color: 'var(--beet-700)' }}>{calTitle}</div>
+              <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 17, color: 'var(--ink-900)' }}>{calTitle}</div>
               <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: 1 }}>{calScopeLabel}</div>
             </div>
             <div style={{ flex: 1 }} />
             {(calFilters || []).map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1px solid var(--line-300)', borderRadius: 11, padding: '6px 10px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 11, padding: '6px 10px' }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)' }}>{f.label}</span>
-                <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 12.5, fontWeight: 600, color: 'var(--beet-700)', outline: 'none', cursor: 'pointer', maxWidth: 150 }}>
+                <select value={f.value} onChange={f.onChange} style={{ border: 'none', background: 'none', fontSize: 12.5, fontWeight: 600, color: 'var(--ink-900)', outline: 'none', cursor: 'pointer', maxWidth: 150 }}>
                   {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             ))}
-            <button onClick={calReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}><Icon name="rotate-ccw" style={{ width: 12, height: 12 }} />Reset</button>
+            <button onClick={calReset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 12, fontWeight: 700, color: 'var(--ink-500)', cursor: 'pointer' }}><Icon name="rotate-ccw" style={{ width: 12, height: 12 }} />Reset</button>
             <button onClick={calExport} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="download" style={{ width: 13, height: 13 }} />Export .ics</button>
           </div>
 
           {Boolean(calIsGantt) && (
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
               <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <Icon name="gantt-chart" style={{ width: 15, height: 15, color: 'var(--orchid-600)', flexShrink: 0 }} />
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--beet-700)', flex: 1 }}>Timeline — {calGanttGroupBy}</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-900)', flex: 1 }}>Timeline — {calGanttGroupBy}</span>
                 <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>Bar spans start → end · red bars are overdue · click to open the task</span>
               </div>
               <div className="blscroll" style={{ overflowX: 'auto' }}>
@@ -61,7 +61,7 @@ export default function ContentCalendarSection({ vm }) {
                   {(calGanttRows || []).map((g, gi) => (
                     <div key={gi} style={{ borderBottom: '1px solid var(--line-200)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 18px', background: 'var(--surface-50)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--beet-700)', flex: 1, minWidth: 0 }}>{g.label}</span>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-900)', flex: 1, minWidth: 0 }}>{g.label}</span>
                         <span style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>{g.count}</span>
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger-600)' }}>{g.late}</span>
                       </div>
@@ -69,7 +69,7 @@ export default function ContentCalendarSection({ vm }) {
                         <div key={bi} style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--line-200)' }}>
                           <div onClick={b.open} style={{ width: 210, flexShrink: 0, padding: '7px 12px', cursor: 'pointer', minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontFamily: "'Space Mono'", fontSize: 9.5, fontWeight: 700, color: 'var(--beet-700)', flexShrink: 0 }}>{b.id}</span>
+                              <span style={{ fontFamily: "'Space Mono'", fontSize: 9.5, fontWeight: 700, color: 'var(--ink-900)', flexShrink: 0 }}>{b.id}</span>
                               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</span>
                             </div>
                             <div style={{ fontSize: 9.5, color: 'var(--ink-400)', marginTop: 1 }}>{b.dates} · {b.hours}</div>
@@ -103,7 +103,7 @@ export default function ContentCalendarSection({ vm }) {
           )}
 
           {Boolean(calIsGrid) && (
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
               <div style={cssTextToObject(`display:grid;grid-template-columns:${calCols};background:var(--surface-50);border-bottom:1px solid var(--line-200)`)}>
                 {(calDows || []).map((d, i) => (
                   <div key={i} style={{ padding: '9px 10px', fontSize: 10.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', textAlign: 'center' }}>{d}</div>
@@ -139,11 +139,11 @@ export default function ContentCalendarSection({ vm }) {
           )}
 
           {Boolean(calHasUnscheduled) && (
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '14px 17px', marginTop: 14 }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 16, boxShadow: 'var(--shadow-sm)', padding: '14px 17px', marginTop: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 9 }}>Unscheduled — no due date</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {(calUnscheduled || []).map((u, i) => (
-                  <button key={i} onClick={u.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: '1px dashed var(--line-300)', background: '#fff', borderRadius: 9, fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
+                  <button key={i} onClick={u.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', border: '1px dashed var(--line-300)', background: 'var(--paper)', borderRadius: 9, fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
                     <Icon name="calendar-plus" style={{ width: 11, height: 11, color: 'var(--orchid-600)' }} />{u.id} · {u.name}<span style={{ fontWeight: 500, color: 'var(--ink-400)' }}>{u.who}</span>
                   </button>
                 ))}

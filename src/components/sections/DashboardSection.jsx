@@ -21,7 +21,7 @@ export default function DashboardSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"12px"}}>
@@ -34,7 +34,7 @@ export default function DashboardSection({ vm }) {
 </div>
 
                 
-<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"30px","letterSpacing":"-.02em","color":"var(--beet-700)"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"800","fontSize":"30px","letterSpacing":"-.02em","color":"var(--ink-900)"}}>
 {k.value}
 </div>
 
@@ -56,7 +56,7 @@ export default function DashboardSection({ vm }) {
 )}
 
 {Boolean(dashShowNeedsAttention) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"14px 18px","marginBottom":"20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"14px 18px","marginBottom":"20px"}}>
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"11px","flexWrap":"wrap"}}>
 <Icon name="bell-ring" style={{"width":"13px","height":"13px","color":"var(--orchid-600)"}} />
 <span style={{"fontSize":"10.5px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","flex":"1"}}>{dashExtrasLabel}</span>
@@ -80,10 +80,10 @@ export default function DashboardSection({ vm }) {
 
 {Boolean(dashHasLeads) && (
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(420px,1fr))","gap":"16px","marginBottom":"16px"}}>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"16px","gap":"12px","flexWrap":"wrap"}}>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--beet-700)","margin":"0"}}>Lead pipeline</h3>
-<button onClick={dashLeadOpen} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 12px","border":"1px solid var(--line-300)","background":"#fff","color":"var(--ink-700)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--ink-900)","margin":"0"}}>Lead pipeline</h3>
+<button onClick={dashLeadOpen} style={{"display":"inline-flex","alignItems":"center","gap":"5px","padding":"6px 12px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"11.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"filter"} style={{"width":"12px","height":"12px"}} />
 Open pipeline
 </button>
@@ -119,7 +119,7 @@ Open pipeline
 Daily leads
 </button>
 </div>
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"18px 20px"}}>
 <div style={{"fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"11px"}}>Leads by service</div>
 <div style={{"display":"flex","flexDirection":"column","gap":"7px"}}>
 {(dashLeadTopSvc || []).map((t, $index) => (
@@ -138,11 +138,11 @@ Daily leads
 
 
 {Boolean(dashShowActivity) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"22px"}}>
 
 
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"18px"}}>
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--beet-700)","margin":"0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"17px","color":"var(--ink-900)","margin":"0"}}>
 {dashPanelTitle}
 </h3>
 <a href="#" onClick={noop} style={{"fontSize":"12.5px","fontWeight":"700"}}>
@@ -225,10 +225,10 @@ View all
 )}
 
 {Boolean(dashShowAccessSummary) && (
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"20px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","padding":"20px"}}>
 
 
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--beet-700)","margin":"0 0 14px"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"15px","color":"var(--ink-900)","margin":"0 0 14px"}}>
 Your access at a glance
 </h3>
 

@@ -23,7 +23,7 @@ All repositories
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -64,11 +64,11 @@ Flow: idea captured against the effort plan (e.g. 12 blogs/month) → submitted 
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -87,7 +87,7 @@ Flow: idea captured against the effort plan (e.g. 12 blogs/month) → submitted 
 </div>
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
             
 <div style={{"display":"grid","gridTemplateColumns":".6fr 2fr .9fr .8fr .8fr .8fr 1.5fr","gap":"11px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
@@ -126,7 +126,7 @@ Action / QC feedback
 <div onClick={i.openIdea} style={{"display":"grid","gridTemplateColumns":".6fr 2fr .9fr .8fr .8fr .8fr 1.5fr","gap":"11px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
 
                 
-<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>
 {i.id}
 </span>
 
@@ -233,7 +233,7 @@ Move to Tasks
 )}
 
                   
-<button onClick={i.reuseIdea} style={{"display":"flex","alignItems":"center","gap":"5px","background":"#fff","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"9px","padding":"7px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={i.reuseIdea} style={{"display":"flex","alignItems":"center","gap":"5px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"9px","padding":"7px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"repeat"} style={{"width":"12px","height":"12px"}} />
 Reuse
 </button>

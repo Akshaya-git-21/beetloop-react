@@ -17,7 +17,7 @@ export default function OkrSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -79,11 +79,11 @@ export default function OkrSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -164,7 +164,7 @@ Export
 
 
           
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"visible"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"visible"}}>
 
             
 <div style={{"overflowX":"auto","borderRadius":"20px"}}>
@@ -359,7 +359,7 @@ achievement
 <td style={{"padding":"12px 8px 12px 0","borderBottom":"1px solid var(--line-200)","position":"relative","textAlign":"right"}}>
 
                         
-<button onClick={o.toggleMenu} style={{"width":"30px","height":"30px","borderRadius":"8px","border":"1px solid transparent","background":"none","cursor":"pointer","display":"inline-flex","alignItems":"center","justifyContent":"center"}} style-hover="border-color:var(--line-300);background:#fff">
+<button onClick={o.toggleMenu} style={{"width":"30px","height":"30px","borderRadius":"8px","border":"1px solid transparent","background":"none","cursor":"pointer","display":"inline-flex","alignItems":"center","justifyContent":"center"}} style-hover="border-color:var(--line-300);background:var(--paper)">
 <Icon name={"more-vertical"} style={{"width":"16px","height":"16px","color":"var(--ink-500)"}} />
 </button>
 
@@ -368,7 +368,7 @@ achievement
 <React.Fragment>
 
                           
-<div onClick={stop} style={{"position":"absolute","right":"12px","top":"44px","zIndex":"20","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"12px","boxShadow":"var(--shadow-lg)","padding":"6px","width":"158px","textAlign":"left"}}>
+<div onClick={stop} style={{"position":"absolute","right":"12px","top":"44px","zIndex":"20","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"12px","boxShadow":"var(--shadow-lg)","padding":"6px","width":"158px","textAlign":"left"}}>
 
                             
 <button onClick={o.viewAct} style={{"display":"flex","alignItems":"center","gap":"9px","width":"100%","padding":"8px 10px","border":"none","background":"none","borderRadius":"8px","fontSize":"13px","color":"var(--ink-700)","cursor":"pointer"}} style-hover="background:var(--surface-50)">
@@ -453,7 +453,7 @@ Key results — KPI linked
 </div>
 
                           
-<div style={{"background":"#fff","border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden","overflowX":"auto"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-200)","borderRadius":"12px","overflow":"hidden","overflowX":"auto"}}>
 
                             
 <table style={{"width":"100%","borderCollapse":"collapse","minWidth":"900px"}}>

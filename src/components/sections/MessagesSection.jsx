@@ -15,13 +15,13 @@ export default function MessagesSection({ vm }) {
       {Boolean(showMessages) && (
         <React.Fragment>
           <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, alignItems: 'start' }}>
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: 12 }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px 10px' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', flex: 1 }}>Conversations</span>
-                <button onClick={msgToggleArchiveView} title={msgArchiveOpen ? 'Back to conversations' : 'Archived chats'} style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid ' + (msgArchiveOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgArchiveOpen ? 'var(--orchid-100)' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={msgToggleArchiveView} title={msgArchiveOpen ? 'Back to conversations' : 'Archived chats'} style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid ' + (msgArchiveOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgArchiveOpen ? 'var(--orchid-100)' : 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="archive" style={{ width: 13, height: 13, color: msgArchiveOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} />
                 </button>
-                <button onClick={msgNewDm} title="New message" style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={msgNewDm} title="New message" style={{ width: 28, height: 28, borderRadius: 9, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="pen-square" style={{ width: 13, height: 13, color: 'var(--ink-700)' }} />
                 </button>
                 <button onClick={msgNewGroup} title="New group" style={{ width: 28, height: 28, borderRadius: 9, border: 'none', background: '#7A1C46', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -37,7 +37,7 @@ export default function MessagesSection({ vm }) {
                   <div key={t.id} onClick={t.open} style={cssTextToObject(t.style)}>
                     <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0 }}>
                       <span style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--surface-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name={t.icon} style={{ width: 14, height: 14, color: 'var(--beet-700)' }} />
+                        <Icon name={t.icon} style={{ width: 14, height: 14, color: 'var(--ink-900)' }} />
                       </span>
                       {!t.isChannel && (
                         <span style={cssTextToObject(`position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:99px;border:2px solid #fff;background:${t.onlineDotColor}`)} />
@@ -70,7 +70,7 @@ export default function MessagesSection({ vm }) {
               </div>
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 18, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {Boolean(msgEmpty) ? (
                 <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-500)', fontSize: 13 }}>No conversations to show.</div>
               ) : (
@@ -85,10 +85,10 @@ export default function MessagesSection({ vm }) {
                   )}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 16, color: 'var(--beet-700)' }}>{msgCurName}</div>
+                  <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 16, color: 'var(--ink-900)' }}>{msgCurName}</div>
                   <div style={cssTextToObject(`font-size:11.5px;margin-top:1px;color:${msgCurStatusIsTyping ? 'var(--verify-600)' : 'var(--ink-500)'};font-weight:${msgCurStatusIsTyping ? 700 : 400}`)}>{msgCurStatusLine || msgCurMembers}</div>
                 </div>
-                <button onClick={msgToggleSearch} title="Search in conversation" style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid ' + (msgSearchOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgSearchOpen ? 'var(--orchid-100)' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <button onClick={msgToggleSearch} title="Search in conversation" style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid ' + (msgSearchOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgSearchOpen ? 'var(--orchid-100)' : 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name="search" style={{ width: 14, height: 14, color: msgSearchOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} />
                 </button>
               </div>
@@ -146,7 +146,7 @@ export default function MessagesSection({ vm }) {
                       {Boolean(m.hasFiles) && !m.deleted && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
                           {(m.fileRows || []).map((fl, i) => (
-                            <button key={i} onClick={fl.openRepo} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', border: '1px solid var(--line-300)', background: '#fff', borderRadius: 9, fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
+                            <button key={i} onClick={fl.openRepo} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 9, fontFamily: "'Space Mono'", fontSize: 10.5, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>
                               <Icon name={fl.icon} style={{ width: 11, height: 11, color: 'var(--orchid-600)' }} />{fl.name}
                             </button>
                           ))}
@@ -154,7 +154,7 @@ export default function MessagesSection({ vm }) {
                       )}
 
                       {Boolean(m.hasTask) && !m.deleted && (
-                        <div onClick={m.openTask} style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginTop: 7, padding: '8px 12px', border: '1px solid var(--line-300)', borderRadius: 11, cursor: 'pointer', background: '#fff' }}>
+                        <div onClick={m.openTask} style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginTop: 7, padding: '8px 12px', border: '1px solid var(--line-300)', borderRadius: 11, cursor: 'pointer', background: 'var(--paper)' }}>
                           <Icon name="list-checks" style={{ width: 13, height: 13, color: 'var(--orchid-600)', flexShrink: 0 }} />
                           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)', flex: 1, minWidth: 0 }}>{m.taskLabel}</span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: 'var(--orchid-700)', flexShrink: 0 }}><Icon name="target" style={{ width: 10, height: 10 }} />{m.taskKpi}</span>
@@ -165,36 +165,36 @@ export default function MessagesSection({ vm }) {
 
                       {!m.deleted && (
                         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                          <button onClick={m.reply} title="Reply" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="reply" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
-                          <button onClick={m.forward} title="Forward" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="forward" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
-                          <button onClick={m.copy} title="Copy" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="copy" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
-                          {Boolean(m.canEdit) && <button onClick={m.startEdit} title="Edit" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="pencil" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>}
-                          {Boolean(m.canDelete) && <button onClick={m.remove} title="Delete" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash-2" style={{ width: 12, height: 12, color: 'var(--danger-500)' }} /></button>}
+                          <button onClick={m.reply} title="Reply" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="reply" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
+                          <button onClick={m.forward} title="Forward" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="forward" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
+                          <button onClick={m.copy} title="Copy" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="copy" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>
+                          {Boolean(m.canEdit) && <button onClick={m.startEdit} title="Edit" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="pencil" style={{ width: 12, height: 12, color: 'var(--ink-500)' }} /></button>}
+                          {Boolean(m.canDelete) && <button onClick={m.remove} title="Delete" style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid var(--line-200)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash-2" style={{ width: 12, height: 12, color: 'var(--danger-500)' }} /></button>}
                         </div>
                       )}
 
                       {Boolean(m.forwardPicker) && (
                         <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginTop: 7 }}>
-                          <select onChange={m.forwardPick} style={{ flex: 1, minWidth: 0, padding: '8px 11px', border: '1px solid var(--orchid-300)', borderRadius: 10, fontSize: 12, background: '#fff' }}>
+                          <select onChange={m.forwardPick} style={{ flex: 1, minWidth: 0, padding: '8px 11px', border: '1px solid var(--orchid-300)', borderRadius: 10, fontSize: 12, background: 'var(--paper)' }}>
                             {(m.forwardOptions || []).map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
                           </select>
-                          <button onClick={m.forwardCancel} style={{ padding: '8px 12px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={m.forwardCancel} style={{ padding: '8px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                         </div>
                       )}
 
                       {Boolean(msgCanAct) && !m.deleted && !m.linkPicker && (
                         <div style={{ display: 'flex', gap: 7, marginTop: 7 }}>
-                          <button onClick={m.convert} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 11, height: 11 }} />Create task</button>
-                          <button onClick={m.linkOpen} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="link" style={{ width: 11, height: 11 }} />Link to task</button>
+                          <button onClick={m.convert} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 11, height: 11 }} />Create task</button>
+                          <button onClick={m.linkOpen} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}><Icon name="link" style={{ width: 11, height: 11 }} />Link to task</button>
                         </div>
                       )}
 
                       {Boolean(m.linkPicker) && (
                         <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginTop: 7 }}>
-                          <select onChange={m.linkPick} style={{ flex: 1, minWidth: 0, padding: '8px 11px', border: '1px solid var(--orchid-300)', borderRadius: 10, fontSize: 12, background: '#fff' }}>
+                          <select onChange={m.linkPick} style={{ flex: 1, minWidth: 0, padding: '8px 11px', border: '1px solid var(--orchid-300)', borderRadius: 10, fontSize: 12, background: 'var(--paper)' }}>
                             {(m.linkOptions || []).map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
                           </select>
-                          <button onClick={m.linkCancel} style={{ padding: '8px 12px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={m.linkCancel} style={{ padding: '8px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                         </div>
                       )}
                     </div>
@@ -229,11 +229,11 @@ export default function MessagesSection({ vm }) {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative' }}>
-                  <button onClick={msgAttach} title="Attach file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="paperclip" style={{ width: 15, height: 15, color: 'var(--ink-700)' }} /></button>
-                  <button onClick={msgAttachImage} title="Attach image" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--line-300)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="image-plus" style={{ width: 15, height: 15, color: 'var(--ink-700)' }} /></button>
-                  <button onClick={msgToggleEmoji} title="Emoji" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid ' + (msgEmojiOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgEmojiOpen ? 'var(--orchid-100)' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="smile" style={{ width: 15, height: 15, color: msgEmojiOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} /></button>
+                  <button onClick={msgAttach} title="Attach file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="paperclip" style={{ width: 15, height: 15, color: 'var(--ink-700)' }} /></button>
+                  <button onClick={msgAttachImage} title="Attach image" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="image-plus" style={{ width: 15, height: 15, color: 'var(--ink-700)' }} /></button>
+                  <button onClick={msgToggleEmoji} title="Emoji" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid ' + (msgEmojiOpen ? 'var(--orchid-400)' : 'var(--line-300)'), background: msgEmojiOpen ? 'var(--orchid-100)' : 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="smile" style={{ width: 15, height: 15, color: msgEmojiOpen ? 'var(--orchid-700)' : 'var(--ink-700)' }} /></button>
                   {Boolean(msgEmojiOpen) && (
-                    <div style={{ position: 'absolute', bottom: 46, left: 0, background: '#fff', border: '1px solid var(--line-300)', borderRadius: 12, boxShadow: 'var(--shadow-lg)', padding: 10, display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 4, zIndex: 5 }}>
+                    <div style={{ position: 'absolute', bottom: 46, left: 0, background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 12, boxShadow: 'var(--shadow-lg)', padding: 10, display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 4, zIndex: 5 }}>
                       {(msgEmojiList || []).map((em, i) => (
                         <button key={i} onClick={() => msgPickEmoji(em)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', padding: 4, borderRadius: 6 }}>{em}</button>
                       ))}

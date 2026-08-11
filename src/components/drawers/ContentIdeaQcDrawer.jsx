@@ -13,10 +13,10 @@ export default function ContentIdeaQcDrawer({ vm }) {
 <div onClick={idClose} style={{"position":"fixed","inset":"0","background":"rgba(31,8,20,.5)","backdropFilter":"blur(3px)","zIndex":"168","display":"flex","justifyContent":"flex-end"}}>
 
     
-<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"600px","height":"100%","background":"#fff","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
+<div onClick={stop} className="blscroll" style={{"width":"100%","maxWidth":"600px","height":"100%","background":"var(--paper)","boxShadow":"var(--shadow-xl)","overflowY":"auto","animation":"blrise .3s var(--ease-out)"}}>
 
       
-<div style={{"position":"sticky","top":"0","background":"#fff","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
+<div style={{"position":"sticky","top":"0","background":"var(--paper)","borderBottom":"1px solid var(--line-200)","padding":"18px 24px","zIndex":"3"}}>
 
         
 <div style={{"display":"flex","alignItems":"flex-start","justifyContent":"space-between","gap":"12px"}}>
@@ -35,7 +35,7 @@ export default function ContentIdeaQcDrawer({ vm }) {
 </div>
 
             
-<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--beet-700)","margin":"6px 0 0"}}>
+<h3 style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"19px","color":"var(--ink-900)","margin":"6px 0 0"}}>
 {idD.title}
 </h3>
 
@@ -46,13 +46,13 @@ export default function ContentIdeaQcDrawer({ vm }) {
 <div style={{"display":"flex","alignItems":"center","gap":"8px","flexShrink":"0"}}>
 
 {Boolean(idCanDelete) && (
-<button onClick={idDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idDelete} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--danger-300, #e5a3a3)","color":"var(--danger-600)","borderRadius":"10px","padding":"9px 14px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"15px","height":"15px"}} />
 Delete
 </button>
 )}
 
-<button onClick={idClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"#fff","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<button onClick={idClose} style={{"width":"34px","height":"34px","borderRadius":"10px","border":"1px solid var(--line-300)","background":"var(--paper)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
 <Icon name={"x"} style={{"width":"17px","height":"17px","color":"var(--ink-700)"}} />
 </button>
 </div>
@@ -71,7 +71,7 @@ Delete
 <input value={idFbVal} onInput={idOnFb} placeholder="QC comment / feedback (required for rework)…" style={{"flex":"1","minWidth":"180px","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none"}} />
 
             
-<button onClick={idRework} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","border":"1px solid #F0DDBB","background":"#fff","color":"var(--warn-600)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<button onClick={idRework} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 14px","border":"1px solid #F0DDBB","background":"var(--paper)","color":"var(--warn-600)","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"rotate-ccw"} style={{"width":"14px","height":"14px"}} />
 Rework
 </button>

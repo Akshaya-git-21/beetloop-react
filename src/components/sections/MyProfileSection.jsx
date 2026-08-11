@@ -7,7 +7,7 @@ export default function MyProfileSection({ vm }) {
     <React.Fragment>
       {Boolean(showProfile) && (
         <React.Fragment>
-          <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 20, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line-300)', borderRadius: 20, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '22px 24px', borderBottom: '1px solid var(--line-200)' }}>
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 {pfHasAvatar ? (
@@ -19,15 +19,15 @@ export default function MyProfileSection({ vm }) {
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--beet-700)' }}>{pfName}</div>
+                <div style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 20, color: 'var(--ink-900)' }}>{pfName}</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 2 }}>{pfRoleLabel}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     {pfAvatarBusy ? 'Uploading…' : (pfHasAvatar ? 'Change photo' : 'Upload photo')}
                     <input type="file" accept="image/*" onChange={pfUploadAvatar} disabled={pfAvatarBusy} style={{ display: 'none' }} />
                   </label>
                   {Boolean(pfHasAvatar) && (
-                    <button onClick={pfRemoveAvatar} disabled={pfAvatarBusy} style={{ padding: '7px 12px', border: '1px solid var(--line-300)', background: '#fff', color: 'var(--danger-600)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={pfRemoveAvatar} disabled={pfAvatarBusy} style={{ padding: '7px 12px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--danger-600)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                       Remove
                     </button>
                   )}

@@ -51,7 +51,7 @@ export default function TasksSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"13px 15px","boxShadow":"var(--shadow-sm)"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"14px","padding":"13px 15px","boxShadow":"var(--shadow-sm)"}}>
 
                 
 <div style={{"fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-400)"}}>
@@ -91,7 +91,7 @@ export default function TasksSection({ vm }) {
 <React.Fragment key={$index}>
 
               
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
                 
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
@@ -128,12 +128,12 @@ export default function TasksSection({ vm }) {
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"14px"}}>
 
             
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <Icon name={"gauge"} style={{"width":"13px","height":"13px","color":"var(--orchid-500)"}} />
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 Effort plan
 </span>
-<select value={tkFilterVal} onChange={tkOnFilter} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer","maxWidth":"280px"}}>
+<select value={tkFilterVal} onChange={tkOnFilter} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer","maxWidth":"280px"}}>
 {(tkFilterOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -149,11 +149,11 @@ Effort plan
 <React.Fragment key={$index}>
 
               
-<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"#fff","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
 </span>
-<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--beet-700)","outline":"none","cursor":"pointer"}}>
+<select value={f.value} onChange={f.onChange} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
 {(f.options || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o}>
@@ -185,12 +185,12 @@ Showing tasks from this effort plan.
 <React.Fragment>
 
             
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"16px 20px","marginBottom":"16px"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"18px","boxShadow":"var(--shadow-sm)","padding":"16px 20px","marginBottom":"16px"}}>
 
               
 <div style={{"display":"flex","alignItems":"center","gap":"8px","marginBottom":"11px"}}>
 <Icon name={"sun"} style={{"width":"15px","height":"15px","color":"var(--warn-600)"}} />
-<span style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14px","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14px","color":"var(--ink-900)"}}>
 My day
 </span>
 <span style={{"fontSize":"11.5px","color":"var(--ink-500)"}}>
@@ -268,7 +268,7 @@ Today
 )}
 
 
-<div style={{"background":"#fff","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
 
 <div className="blscroll" style={{"overflowX":"auto"}}>
@@ -318,7 +318,7 @@ Action
 <div onClick={t.open} style={{"display":"grid","gridTemplateColumns":"90px minmax(220px,1.7fr) 92px 120px 130px 150px 110px minmax(150px,1fr) 110px 172px","gap":"10px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
 
 
-<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--beet-700)"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>
 {t.id}
 </span>
 
