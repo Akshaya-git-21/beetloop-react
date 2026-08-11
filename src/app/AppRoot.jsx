@@ -6535,10 +6535,10 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] ticket delete failed:', error.message);
     });
   }
-  tktPatch(id,patch,note){
+  tktPatch(id,patch,note,files){
     const upd={...(this.state.tktUpd||{})};
     const cur=this.allTickets().find(t=>t.id===id)||{};
-    const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr()]]:(cur.thread||[]);
+    const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr(),files||[]]]:(cur.thread||[]);
     upd[id]={ ...(upd[id]||{}), ...patch, thread };
     this.setState({ tktUpd:upd });
     const nx={ ...cur, ...patch, thread };
@@ -6694,14 +6694,20 @@ class AppRoot extends React.Component {
       tktDClose:()=>this.setState({ tktOpen:null }),
       tktDStop:(e)=>e.stopPropagation(),
       tktThread:(t.thread||[]).map(x=>({ who:x[0], text:x[1], when:x[2],
-        mine:x[0]===me, bg:x[0]===me?'var(--orchid-100)':'var(--surface-50)' })),
+        mine:x[0]===me, bg:x[0]===me?'var(--orchid-100)':'var(--surface-50)',
+        files:(x[3]||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(x[3]||[]).length>0 })),
       tktFilesD:(t.files||[]).map(n=>({ name:n })),
       tktHasFilesD:(t.files||[]).length>0,
       tktOpenTask:()=>this.setState({ tktOpen:null, route:'tasks', tkTab:'list', tkOpen:t.task }),
       tktReply:this.state.tktReply||'',
       tktSetReply:(e)=>this.setState({ tktReply:e.target.value }),
-      tktSend:()=>{ const v=(this.state.tktReply||'').trim(); if(!v){ this.flash('Type a reply first.'); return; }
-        this.tktPatch(t.id,{},v); this.setState({ tktReply:'' }); },
+      tktReplyFiles:(this.state.tktReplyFiles||[]).map((f,i)=>({ name:f, remove:()=>{ const a=(this.state.tktReplyFiles||[]).slice(); a.splice(i,1); this.setState({tktReplyFiles:a}); } })),
+      tktHasReplyFiles:(this.state.tktReplyFiles||[]).length>0,
+      tktAddReplyFile:()=>this.openFilePicker('ticketReply','Attach to reply'),
+      tktSend:()=>{ const v=(this.state.tktReply||'').trim(); const files=this.state.tktReplyFiles||[];
+        if(!v && !files.length){ this.flash('Type a reply or attach a file.'); return; }
+        this.tktPatch(t.id,{},v||('Attached '+files.length+' file'+(files.length>1?'s':'')), files);
+        this.setState({ tktReply:'', tktReplyFiles:[] }); },
       tktCanTriage:isTriage,
       tktCanWork:isTriage||isOwner,
       tktCanDelete:canDeleteTicket,
@@ -9137,6 +9143,7 @@ class AppRoot extends React.Component {
     if(t==='msg') this.setState({ msgFiles:[...(this.state.msgFiles||[]), ...names] });
     else if(t==='chatwidget') this.setState({ chatWidgetFiles:[...(this.state.chatWidgetFiles||[]), ...names] });
     else if(t==='ticket'){ const f=this.state.tktForm||{}; this.setState({ tktForm:{...f, files:[...(f.files||[]), ...names]} }); }
+    else if(t==='ticketReply') this.setState({ tktReplyFiles:[...(this.state.tktReplyFiles||[]), ...names] });
     else if(t==='comment') this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]), ...names] });
     else if(t==='checkin'){ const cf=this.state.ciForm||{}; this.setState({ ciForm:{...cf, files:[...(cf.files||[]), ...names]} }); }
     else if(t.indexOf('qcref:')===0){ const id=t.slice(6); const refs={...(this.state.qcRef||{})};

@@ -10,6 +10,7 @@ export default function TicketDetailDrawer({ vm }) {
     tktStatusOptions, tktSetStatus, tktPriorityVal, tktSetPriorityD, tktPriorityOptionsD,
     tktToggleTrainingD, tktTrainingLabel, tktToTask, tktResolve,
     tktThread, tktReply, tktSetReply, tktSend,
+    tktReplyFiles, tktHasReplyFiles, tktAddReplyFile,
     tktCanClose, tktConfirm, tktReopen,
     tktCanDelete, tktDelete,
   } = vm;
@@ -114,10 +115,34 @@ export default function TicketDetailDrawer({ vm }) {
                         <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{m.when}</span>
                       </div>
                       <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{m.text}</div>
+                      {Boolean(m.hasFiles) && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {(m.files || []).map((f, fi) => (
+                            <button key={fi} onClick={f.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', cursor: 'pointer' }}>
+                              <Icon name="paperclip" style={{ width: 10, height: 10 }} />{f.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
+                {Boolean(tktHasReplyFiles) && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                    {(tktReplyFiles || []).map((f, fi) => (
+                      <span key={fi} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: 'var(--orchid-100)', border: '1px solid var(--orchid-200)', color: 'var(--orchid-700)' }}>
+                        <Icon name="paperclip" style={{ width: 10, height: 10 }} />{f.name}
+                        <button onClick={f.remove} style={{ border: 'none', background: 'none', cursor: 'pointer', display: 'flex', padding: 0, color: 'var(--orchid-700)' }}>
+                          <Icon name="x" style={{ width: 10, height: 10 }} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 9, marginTop: 11 }}>
+                  <button onClick={tktAddReplyFile} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, flexShrink: 0, border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--orchid-600)', borderRadius: 11, cursor: 'pointer' }} title="Attach a file">
+                    <Icon name="paperclip" style={{ width: 15, height: 15 }} />
+                  </button>
                   <input value={tktReply} onInput={tktSetReply} placeholder="Add a reply…" style={{ flex: 1, minWidth: 0, padding: '10px 13px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none' }} />
                   <button onClick={tktSend} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 15px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
                     <Icon name="send" style={{ width: 13, height: 13 }} />Send
