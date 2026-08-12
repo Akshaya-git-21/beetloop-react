@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function TaskTemplateFormDrawer({ vm }) {
-  const { ttAddStep, ttChecklist, ttClose, ttFormTitle, ttKpiOptions, ttNew, ttSave, ttSetDesc, ttSetDivision, ttSetEstH, ttSetKpi, ttSetName, ttSetPriority, ttSetRecurrence, ttSetStatus, ttSetUnit, ttStop, ttf } = vm;
+  const { ttAddStep, ttChecklist, ttClose, ttDivisionOptions, ttFormTitle, ttKpiOptions, ttNew, ttSave, ttSetDesc, ttSetDivision, ttSetEstH, ttSetKpi, ttSetName, ttSetPriority, ttSetRecurrence, ttSetStatus, ttSetUnit, ttStop, ttf } = vm;
   return (
     <React.Fragment>
 {Boolean(ttNew) && (
@@ -66,24 +66,13 @@ Description
 Division
 </label>
 <select value={ttf.division} onChange={ttSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
-<option>
-SEO
+{(ttDivisionOptions || []).map((d, $index) => (
+<React.Fragment key={$index}>
+<option value={d}>
+{d}
 </option>
-<option>
-Content
-</option>
-<option>
-Graphics
-</option>
-<option>
-Web Developers
-</option>
-<option>
-SMM
-</option>
-<option>
-All
-</option>
+</React.Fragment>
+))}
 </select>
 </div>
 

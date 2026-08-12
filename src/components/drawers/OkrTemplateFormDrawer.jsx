@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function OkrTemplateFormDrawer({ vm }) {
-  const { otAddKr, otClose, otFormTitle, otKpiNames, otKrs, otNew, otSave, otSetCategory, otSetDesc, otSetDivision, otSetName, otSetObjective, otSetScope, otSetStatus, otf, ttStop } = vm;
+  const { otAddKr, otClose, otDivisionOptions, otFormTitle, otKpiNames, otKrs, otNew, otSave, otSetCategory, otSetDesc, otSetDivision, otSetName, otSetObjective, otSetScope, otSetStatus, otf, ttStop } = vm;
   return (
     <React.Fragment>
 {Boolean(otNew) && (
@@ -125,24 +125,13 @@ Individual
 Division
 </label>
 <select value={otf.division} onChange={otSetDivision} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
-<option>
-SEO
+{(otDivisionOptions || []).map((d, $index) => (
+<React.Fragment key={$index}>
+<option value={d}>
+{d}
 </option>
-<option>
-Content
-</option>
-<option>
-Graphics
-</option>
-<option>
-Web Developers
-</option>
-<option>
-SMM
-</option>
-<option>
-All
-</option>
+</React.Fragment>
+))}
 </select>
 </div>
 

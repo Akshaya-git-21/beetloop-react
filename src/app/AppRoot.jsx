@@ -406,7 +406,14 @@ class AppRoot extends React.Component {
         desc:'Functional departments and their heads.',
         cols:[ {k:'Dept_Code',l:'Code',mono:1}, {k:'Department',l:'Department'}, {k:'Head',l:'Head'}, {k:'Members',l:'Members'}, {k:'Status',l:'Status',tag:1} ],
         fields:['Dept_Code','Department','Head','Members','Cost_Center','Status'],
-        rows:[],
+        rows:[
+          {Dept_Code:'D-SEO',Department:'SEO',Status:'Active'},
+          {Dept_Code:'D-CNT',Department:'Content',Status:'Active'},
+          {Dept_Code:'D-GFX',Department:'Graphics',Status:'Active'},
+          {Dept_Code:'D-WEB',Department:'Web Developers',Status:'Active'},
+          {Dept_Code:'D-SMM',Department:'SMM',Status:'Active'},
+          {Dept_Code:'D-ALL',Department:'All',Status:'Active'},
+        ],
       },
       businessUnit: {
         label:'Business Unit Master', icon:'briefcase', group:'Organization & Security',
@@ -4068,6 +4075,7 @@ class AppRoot extends React.Component {
       otNew:this.state.otNew, otf:of2,
       otFormTitle:this.state.otEditId?'Edit OKR template':'New OKR template',
       otClose:()=>this.setState({ otNew:false, otEditId:null, otForm:{} }),
+      otDivisionOptions:this.liveDeptOptions(),
       otSetName:setOf('name'), otSetCategory:setOf('category'), otSetScope:setOf('scope'), otSetDivision:setOf('division'), otSetObjective:setOf('objective'), otSetDesc:setOf('desc'), otSetStatus:setOf('status'),
       otKpiNames:otKpiNames,
       otKrs:okrs2.map((k,i)=>({ i, ...k,
@@ -4112,6 +4120,7 @@ class AppRoot extends React.Component {
         if(this.methodForTool(v)) this.flash('Measurement method & frequency auto-filled for '+v+'.'); },
       ktMethodAuto:this.methodForTool((this.state.ktForm||{}).tool)?('Auto-set from '+(this.state.ktForm||{}).tool):'',
       ktSetMethod:setKf('method'), ktSetMfreq:setKf('mfreq'), ktSetEvidence:setKf('evidence'),
+      ktDivisionOptions:this.liveDeptOptions(),
       ktSetName:setKf('name'), ktSetCategory:setKf('category'), ktSetDivision:setKf('division'), ktSetUnit:setKf('unit'), ktSetDirection:setKf('direction'), ktSetDefTarget:setKf('defTarget'), ktSetFreq:setKf('freq'), ktSetSource:setKf('source'), ktSetDesc:setKf('desc'), ktSetStatus:setKf('status'),
       ktSave:()=>{
         if(!this.hasPerm('templates', this.state.ktEditId?'edit':'create')){ this.flash('You do not have permission to '+(this.state.ktEditId?'edit':'create')+' templates.'); return; }
@@ -4143,6 +4152,7 @@ class AppRoot extends React.Component {
       ttFormTitle:this.state.ttEditId?('Edit template · '+this.state.ttEditId):'New task template',
       ttClose:()=>this.setState({ ttNew:false, ttEditId:null, ttForm:{} }),
       ttStop:(e)=>e.stopPropagation(),
+      ttDivisionOptions:this.liveDeptOptions(),
       ttSetName:setTf('name'), ttSetDivision:setTf('division'), ttSetDesc:setTf('desc'), ttSetUnit:setTf('unit'), ttSetEstH:setTf('estH'), ttSetPriority:setTf('priority'), ttSetRecurrence:setTf('recurrence'), ttSetStatus:setTf('status'), ttSetKpi:setTf('kpiId'),
       ttKpiOptions:[{id:'',label:'None — not KPI-linked'}].concat(kpiPool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
       ttChecklist:cl.map((s,i)=>({ i, val:s,
@@ -8123,9 +8133,14 @@ class AppRoot extends React.Component {
         const name=e.target.value;
         const row=this.MASTERS_REG().service.rows.find(r=>r.Service_Name===name);
         if(!row){ this.setState({ npForm:{...this.state.npForm, linkService:''} }); return; }
+        // Only fill the page name from the service when the author hasn't
+        // already named the page — a page nested under a category (e.g. a
+        // landing page for a service) keeps its own name, it just borrows
+        // the service's SEO metadata.
+        const curName=(this.state.npForm.name||'').trim();
         this.setState({ npForm:{...this.state.npForm,
           linkService:name,
-          name:name,
+          name: curName?curName:name,
           metaTitle:row.Title_Tag||'',
           metaDesc:row.Meta_Description||'',
           primaryKw:row.Primary_Keywords||'',

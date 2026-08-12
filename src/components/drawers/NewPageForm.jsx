@@ -121,7 +121,7 @@ Repository *
 </select>
 </div>
 
-{Boolean(npf.repo==='service') && (
+{Boolean(npServiceMasterOptions && npServiceMasterOptions.length) && (
 <React.Fragment>
 <div style={{"gridColumn":"1 / -1","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 12px"}}>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-700)","marginBottom":"6px"}}>
