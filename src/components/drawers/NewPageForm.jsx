@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory } = vm;
+  const { closeNewPage, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory, npTypeOptions, npIndustryOptions, npServiceMasterOptions, npLinkServiceVal, npPullFromService } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -121,6 +121,25 @@ Repository *
 </select>
 </div>
 
+{Boolean(npf.repo==='service') && (
+<React.Fragment>
+<div style={{"gridColumn":"1 / -1","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 12px"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-700)","marginBottom":"6px"}}>
+Pull SEO details from Service Master
+</label>
+<select value={npLinkServiceVal} onChange={npPullFromService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+<option value="">— Select a service to auto-fill meta title, description, keywords, industry & countries —</option>
+{(npServiceMasterOptions || []).map((s, $index) => (
+<React.Fragment key={$index}>
+<option value={s}>
+{s}
+</option>
+</React.Fragment>
+))}
+</select>
+</div>
+</React.Fragment>
+)}
 
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
@@ -143,30 +162,13 @@ Brand
 Page type
 </label>
 <select value={npf.type} onChange={npSetType} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
-<option>
-Service Page
+{(npTypeOptions || []).map((t, $index) => (
+<React.Fragment key={$index}>
+<option value={t}>
+{t}
 </option>
-<option>
-Blog
-</option>
-<option>
-Landing Page
-</option>
-<option>
-Case Study
-</option>
-<option>
-Product Page
-</option>
-<option>
-FAQ
-</option>
-<option>
-News
-</option>
-<option>
-Resource
-</option>
+</React.Fragment>
+))}
 </select>
 </div>
 
@@ -307,7 +309,16 @@ Primary keyword
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Industry
 </label>
-<input value={npf.industry} onInput={npSetIndustry} placeholder="e.g. Technology" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<select value={npf.industry||''} onChange={npSetIndustry} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+<option value="">— Select —</option>
+{(npIndustryOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o}>
+{o}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
             

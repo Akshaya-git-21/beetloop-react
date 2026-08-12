@@ -446,6 +446,9 @@ class AppRoot extends React.Component {
           {Role_Code:'R-JR',Role:'Junior Executive',Scope:'Assigned only',Users:18,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
           {Role_Code:'R-QC',Role:'QC Reviewer',Scope:'QC tasks',Users:3,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
           {Role_Code:'R-ADM',Role:'Admin',Scope:'Full platform',Users:1,Can_Edit_Masters:'Yes',Can_Manage_Users:'Yes',Status:'Active'},
+          {Role_Code:'R-DM',Role:'Digital Marketing Executive',Scope:'Own work',Users:0,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
+          {Role_Code:'R-SL',Role:'Sales Executive',Scope:'Leads & pipeline',Users:0,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
+          {Role_Code:'R-SEC',Role:'Secretary',Scope:'Company (view all)',Users:0,Can_Edit_Masters:'No',Can_Manage_Users:'No',Status:'Active'},
         ],
       },
       brand: {
@@ -476,6 +479,8 @@ class AppRoot extends React.Component {
           {Country_Code:'DE',Country_Name:'Germany',Status:'Active'},
           {Country_Code:'AE',Country_Name:'UAE',Status:'Active'},
           {Country_Code:'AU',Country_Name:'Australia',Status:'Active'},
+          {Country_Code:'JP',Country_Name:'Japan',Status:'Active'},
+          {Country_Code:'XX',Country_Name:'Other',Status:'Active'},
         ],
       },
       client: {
@@ -525,6 +530,21 @@ class AppRoot extends React.Component {
           {CT_Code:'CT-02',Content_Type:'Landing Page',Avg_Word_Count:800,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-03',Content_Type:'Case Study',Avg_Word_Count:2000,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-04',Content_Type:'Whitepaper',Avg_Word_Count:3500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-05',Content_Type:'Service Page',Avg_Word_Count:1200,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-06',Content_Type:'Product Page',Avg_Word_Count:900,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-07',Content_Type:'FAQ',Avg_Word_Count:600,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-08',Content_Type:'News',Avg_Word_Count:500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-09',Content_Type:'Resource',Avg_Word_Count:700,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-10',Content_Type:'Checklist',Avg_Word_Count:900,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-11',Content_Type:'Video Script',Avg_Word_Count:600,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-12',Content_Type:'Infographic',Avg_Word_Count:300,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-13',Content_Type:'Webinar',Avg_Word_Count:400,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-14',Content_Type:'Social Content',Avg_Word_Count:150,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-15',Content_Type:'Email',Avg_Word_Count:350,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-16',Content_Type:'Press Release',Avg_Word_Count:600,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-17',Content_Type:'Glossary',Avg_Word_Count:400,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-18',Content_Type:'Pillar Page',Avg_Word_Count:4000,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-19',Content_Type:'Cluster Page',Avg_Word_Count:1500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
         ],
       },
       // Backs the "Repositories" category tabs in Content Repository. Every
@@ -593,6 +613,25 @@ class AppRoot extends React.Component {
           {OC_Code:'OC-04',Category_Name:'Data & AI',Status:'Active'},
           {OC_Code:'OC-05',Category_Name:'Marketing Tech',Status:'Active'},
           {OC_Code:'OC-06',Category_Name:'Compliance',Status:'Active'},
+        ],
+      },
+      // Backs the Lead Source dropdown across Contacts/Leads — was a plain
+      // hardcoded array (leadSourceList()) with no Master Data entry at all.
+      leadSource: {
+        label:'Lead Source Master', icon:'radar', group:'Business',
+        desc:'Where inbound leads and contacts originate from.',
+        cols:[ {k:'LS_Code',l:'Code',mono:1}, {k:'Source_Name',l:'Source'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['LS_Code','Source_Name','Status'],
+        rows:[
+          {LS_Code:'LS-01',Source_Name:'Organic Search',Status:'Active'},
+          {LS_Code:'LS-02',Source_Name:'Paid Search',Status:'Active'},
+          {LS_Code:'LS-03',Source_Name:'Social Media',Status:'Active'},
+          {LS_Code:'LS-04',Source_Name:'Email Campaign',Status:'Active'},
+          {LS_Code:'LS-05',Source_Name:'Referral',Status:'Active'},
+          {LS_Code:'LS-06',Source_Name:'Direct',Status:'Active'},
+          {LS_Code:'LS-07',Source_Name:'Guest Post / External',Status:'Active'},
+          {LS_Code:'LS-08',Source_Name:'Webinar',Status:'Active'},
+          {LS_Code:'LS-09',Source_Name:'Trade Enquiry',Status:'Active'},
         ],
       },
       qcChecklist: {
@@ -1781,7 +1820,7 @@ class AppRoot extends React.Component {
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
       ufManagerOptions:(this.state.users||[]).filter(u=>['manager','coo','ceo','admin'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       ufLeadOptions:(this.state.users||[]).filter(u=>u.roleKey==='team_lead').map(u=>u.name+' ('+(u.designation||u.role)+')'),
-      ufRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
+      ufRoleOptions:this.ROLE_LIST(),
       ufDeptOptions:this.liveDeptOptions(),
       ufShiftStart:e=>this.uf('shiftStart',e), ufShiftEnd:e=>this.uf('shiftEnd',e), ufBreak:e=>this.uf('breakMin',e), ufDays:e=>this.uf('days',e),
       ufBrandRows:this.BRAND_LIST().map(b=>{ const cur=(this.state.uf||{}).brands||[]; const on=cur.includes(b);
@@ -3742,7 +3781,7 @@ class AppRoot extends React.Component {
       idfSetExtCat:set('extCat'),
       idfExtCatOptions:opts('extCat',['Guest post','News / PR site','Industry publication','Partner blog','Directory / listing','Social platform','Forum / community','Other']),
       idfSourceOptions:opts('source',['Employee','SEO Audit','Google Search Console','Competitor','Customer Question','Sales Team','Product Team','Research Team','AI Suggestion']),
-      idfTypeOptions:opts('type',['Blog','Landing Page','Service Page','FAQ','Case Study','Whitepaper','Checklist','Video Script','Infographic','Webinar','Social Content','Email','Press Release','Glossary','Pillar Page','Cluster Page']),
+      idfTypeOptions:opts('type',this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
       idfCatOptions:opts('category',['Nutrition','Science','Compliance','Marketing','Health','Food Technology']),
       idfSubCatOptions:opts('subCategory',['— Optional —','Plant Proteins','Formulation','Regulatory','SEO','Branding','Clinical']),
       idfServiceOptions:opts('service',['— Optional —','Content Writing','SEO','Technical SEO','Web Development','Digital Marketing','Social Media','CRO']),
@@ -4573,7 +4612,7 @@ class AppRoot extends React.Component {
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
       umSetMobile:setD('mobile'), umSetDesignation:setD('designation'), umSetTeam:setD('team'),
       umSetReportingManager:setD('reportingManager'), umSetTeamLead:setD('teamLead'), umSetOfficeLocation:setD('officeLocation'),
-      umRoleOptions:['CEO','COO','Manager','Team Lead','Senior Executive','Junior Executive','QC Reviewer','Admin','Digital Marketing Executive','Sales Executive','Secretary'],
+      umRoleOptions:this.ROLE_LIST(),
       umDeptOptions:this.liveDeptOptions(),
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
       umDayOptions:['4','5','5.5','6'],
@@ -8062,7 +8101,9 @@ class AppRoot extends React.Component {
     const baseSlug = f.isIndex ? '' : (f.slug || slugify(f.name));
     const repoPath = this.repoUrlPrefix(f.repo||'service');
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
-    const base = parentPage ? (parentPage.url + '/') : repoPath;
+    // Parent pages that are themselves an index already end in '/' — strip
+    // it before appending our own slash so we don't emit a double '//'.
+    const base = parentPage ? (parentPage.url.replace(/\/+$/,'') + '/') : repoPath;
     const url = f.isIndex ? base : (baseSlug ? (base + baseSlug) : (base + '…'));
     const set=(k)=>(e)=>this.setState({ npForm:{...this.state.npForm,[k]:e.target.value} });
     return {
@@ -8070,6 +8111,30 @@ class AppRoot extends React.Component {
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
       npBrandOptions:this.BRAND_LIST(), npSetBrand:set('brand'),
       npObjectCategoryOptions:this.MASTERS_REG().objectCategory.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Category_Name), npSetObjectCategory:set('objectCategory'),
+      npTypeOptions:this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type),
+      // Service Master already carries real SEO metadata (Title_Tag,
+      // Meta_Description, Primary_Keywords, Target_Industries/Countries) for
+      // every service — picking one here pulls it straight in instead of
+      // making the author retype what Master Data already has on file.
+      npServiceMasterOptions:this.MASTERS_REG().service.rows.filter(r=>r.Page_Status!=='Archived').map(r=>r.Service_Name),
+      npIndustryOptions:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Industry),
+      npLinkServiceVal:f.linkService||'',
+      npPullFromService:(e)=>{
+        const name=e.target.value;
+        const row=this.MASTERS_REG().service.rows.find(r=>r.Service_Name===name);
+        if(!row){ this.setState({ npForm:{...this.state.npForm, linkService:''} }); return; }
+        this.setState({ npForm:{...this.state.npForm,
+          linkService:name,
+          name:name,
+          metaTitle:row.Title_Tag||'',
+          metaDesc:row.Meta_Description||'',
+          primaryKw:row.Primary_Keywords||'',
+          keyword:(row.Primary_Keywords||'').split(',')[0].trim(),
+          industry:(row.Target_Industries||'').split(',')[0].trim(),
+          countries:row.Target_Countries||'',
+        } });
+        this.flash('Pulled SEO details from Service Master — '+name+'.');
+      },
       npIsIndex:!!f.isIndex, npSetIsIndex:e=>this.setState({ npForm:{...this.state.npForm, isIndex:e.target.checked} }),
       npParentOptions:[{id:'',label:'None — top-level page'}].concat(this.allContentPages().map(p=>({ id:p.id, label:p.name+'  ·  '+p.url }))),
       npSetParentId:(e)=>this.setState({ npForm:{...this.state.npForm, pid:e.target.value} }),
@@ -8133,7 +8198,8 @@ class AppRoot extends React.Component {
     const slug=f.isIndex?'':(f.slug||slugify(name));
     const repoPath=this.repoUrlPrefix(repo);
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
-    const url = f.isIndex ? (parentPage?(parentPage.url+'/'):repoPath) : (parentPage ? (parentPage.url+'/'+slug) : (repoPath+slug));
+    const parentBase = parentPage ? parentPage.url.replace(/\/+$/,'') : '';
+    const url = f.isIndex ? (parentPage?(parentBase+'/'):repoPath) : (parentPage ? (parentBase+'/'+slug) : (repoPath+slug));
     const owner=f.owner||this.currentPerson(); const reviewer=f.reviewer||'—';
     const metaTitle=f.metaTitle||name; const metaDesc=f.metaDesc||'—';
     const seo = (f.metaTitle&&f.metaDesc)? (f.keyword?68:58) : (f.metaTitle||f.metaDesc?42:28);
@@ -8229,7 +8295,7 @@ class AppRoot extends React.Component {
   }
   SERVICE_LIST(){ return this.SERVICE_PAGES().map(s=>s.name); }
   servicePageOf(name){ return this.SERVICE_PAGES().find(s=>s.name===name)||null; }
-  leadSourceList(){ return ['Organic Search','Paid Search','Social Media','Email Campaign','Referral','Direct','Guest Post / External','Webinar','Trade Enquiry']; }
+  leadSourceList(){ return this.MASTERS_REG().leadSource.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Source_Name); }
   LEAD_SEED(){ const d=(n)=>this.relDate(-n); return [
     { id:'LD-001', date:d(0), service:'New Product Development', source:'Organic Search', visitors:1240, count:4, qualified:3, value:'₹4,20,000', who:'Neha Verma', notes:'2 enquiries from the NPD services page.', brand:'Food Research Lab' },
     { id:'LD-002', date:d(0), service:'Nutraceutical Formulation', source:'Paid Search', visitors:860, count:2, qualified:1, value:'₹1,10,000', who:'Neha Verma', notes:'', brand:'Food Research Lab' },
@@ -8273,6 +8339,7 @@ class AppRoot extends React.Component {
   // of every dropdown but stay in Master Data (soft-disable, not delete).
   BRAND_LIST(){ return this.MASTERS_REG().brand.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Brand_Name); }
   liveDeptOptions(){ return this.MASTERS_REG().department.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Department).filter(Boolean); }
+  ROLE_LIST(){ return this.MASTERS_REG().role.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Role); }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
     MQL:{bg:'var(--info-100)',c:'var(--info-600)'}, SQL:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     Opportunity:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Won:{bg:'var(--verify-100)',c:'var(--verify-600)'},
@@ -8378,7 +8445,7 @@ class AppRoot extends React.Component {
       cnSetValue:set('value'), cnSetDesc:set('desc'), cnSetDate:set('date'), cnSetBrand:set('brand'),
       cnSetEmail:set('email'), cnSetPhone:set('phone'),
       cnServiceOptions:this.SERVICE_LIST(), cnSourceOptions:this.leadSourceList(), cnStageOptions:this.LEAD_STAGES(),
-      cnCountryOptions:['India','United States','United Kingdom','UAE','Singapore','Germany','Australia','Japan','Canada','Other'],
+      cnCountryOptions:this.MASTERS_REG().country.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Country_Name),
       cnBrandOptions: this._leadBrandRestricted() ? this.mySalesBrands() : this.BRAND_LIST(),
       cnBrandVal: this._leadBrandRestricted() ? (f.brand||this.mySalesBrands()[0]||'') : (f.brand||''),
       cnBrandLocked: this._leadBrandRestricted() && this.mySalesBrands().length<=1,
