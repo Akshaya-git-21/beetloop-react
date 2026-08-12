@@ -112,8 +112,9 @@ Repositories
 {(contentRepoTabs || []).map((r, $index) => (
 <React.Fragment key={$index}>
 
-                
-<button onClick={r.go} style={cssTextToObject(r.style)}>
+
+<div style={{"display":"flex","alignItems":"center","gap":"4px","marginBottom":"2px"}}>
+<button onClick={r.go} style={{...cssTextToObject(r.style), marginBottom:0}}>
 <Icon name={r.icon} style={{"width":"16px","height":"16px","flexShrink":"0"}} />
 <span style={{"flex":"1"}}>
 {r.name}
@@ -122,8 +123,19 @@ Repositories
 {r.count}
 </span>
 </button>
+{Boolean(r.canManage) && (
+<button onClick={r.edit} title="Edit category" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"26px","height":"26px","flexShrink":"0","border":"none","background":"none","color":"var(--ink-400)","cursor":"pointer","borderRadius":"7px"}}>
+<Icon name={"pencil"} style={{"width":"13px","height":"13px"}} />
+</button>
+)}
+{Boolean(r.canDelete) && (
+<button onClick={r.delete} title="Delete category" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"26px","height":"26px","flexShrink":"0","border":"none","background":"none","color":"var(--ink-400)","cursor":"pointer","borderRadius":"7px"}}>
+<Icon name={"trash-2"} style={{"width":"13px","height":"13px"}} />
+</button>
+)}
+</div>
 
-              
+
 </React.Fragment>
 ))}
 

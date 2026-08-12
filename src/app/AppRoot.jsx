@@ -2658,6 +2658,24 @@ class AppRoot extends React.Component {
     m.fields.forEach(f=>{ form[f] = (idx!=null && m.rows[idx] && m.rows[idx][f]!=null) ? m.rows[idx][f] : ''; });
     this.setState({ showMasterRecordEdit:true, mrKey:key, mrIndex:idx, mrForm:form });
   }
+  // Thin wrappers around the generic Master Record editor/delete for the
+  // Content Repository sidebar's own custom categories — same underlying
+  // contentCategory master Master Data already manages, just reachable
+  // without leaving the Content Repository screen.
+  editContentCategory(key){
+    const idx=this.MASTERS_REG().contentCategory.rows.findIndex(r=>r.Category_Code===key);
+    if(idx<0) return;
+    this.openMasterRecordEdit('contentCategory', idx);
+  }
+  deleteContentCategory(key){
+    if(!this.hasPerm('masters','delete')){ this.flash('You do not have permission to delete master records.'); return; }
+    const idx=this.MASTERS_REG().contentCategory.rows.findIndex(r=>r.Category_Code===key);
+    if(idx<0) return;
+    const row=this.MASTERS_REG().contentCategory.rows[idx];
+    this.confirmDelete('Delete Content Category?', 'Are you sure you want to delete "'+row.Category_Name+'"? Pages already in this category are not deleted, but it will no longer appear as a repository option. This action cannot be undone.', ()=>{
+      this.setState({ mrKey:'contentCategory', mrIndex:idx }, ()=>this.deleteMasterRecord());
+    });
+  }
   submitMasterRecord(){
     const { mrKey, mrIndex, mrForm } = this.state;
     if(!this.hasPerm('masters', mrIndex!=null?'edit':'create')){ this.flash('You do not have permission to '+(mrIndex!=null?'edit':'create')+' master records.'); return; }
@@ -8265,8 +8283,17 @@ class AppRoot extends React.Component {
       };
     });
     const cnt=(f)=>all.filter(f).length;
+    // The 10 seed Category_Codes ship with the app and existing pages
+    // reference them by key (repo==='service' etc.) — only categories
+    // added later via Master Data (brand-specific ones like "Retort Main
+    // Test") are safe to let someone edit/delete straight from this list.
+    const foundational=['service','insights','product','career','landing','case','resource','faq','news','home'];
     const repoTabs=repos.map(r=>({ key:r.key, name:r.name, icon:r.icon, active:r.key===cRepo, count: r.key==='all'?all.length:all.filter(p=>p.repo===r.key).length,
       go:()=>this.setState({ cRepo:r.key, cExpanded:[] }),
+      canManage: r.key!=='all' && !foundational.includes(r.key) && this.hasPerm('masters','edit'),
+      edit:(e)=>{ if(e)e.stopPropagation(); this.editContentCategory(r.key); },
+      canDelete: r.key!=='all' && !foundational.includes(r.key) && this.hasPerm('masters','delete'),
+      delete:(e)=>{ if(e)e.stopPropagation(); this.deleteContentCategory(r.key); },
       style:'display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:none;cursor:pointer;padding:8px 10px;margin-bottom:2px;border-radius:9px;font-size:13px;font-weight:'+(r.key===cRepo?'700':'600')+';'+(r.key===cRepo?'background:var(--orchid-100);color:var(--ink-900)':'background:transparent;color:var(--ink-500)') }));
     return {
       contentRepoTabs:repoTabs, contentCanEdit:canEdit,
@@ -8432,7 +8459,14 @@ class AppRoot extends React.Component {
     // Parent pages that are themselves an index already end in '/' — strip
     // it before appending our own slash so we don't emit a double '//'.
     const base = parentPage ? (parentPage.url.replace(/\/+$/,'') + '/') : repoPath;
-    const url = f.isIndex ? base : (baseSlug ? (base + baseSlug) : (base + '…'));
+    // A pulled Service/Sub-Service Master record's Primary_URL is that
+    // record's own full, authoritative path (see npPullFromService) — it
+    // wins over the generic repoUrlPrefix()+slug reconstruction, but only
+    // when the author hasn't explicitly nested this page under a different
+    // parent or marked it an index page, either of which is a deliberate
+    // structural choice that should take precedence.
+    const url = (f.customUrl && !parentPage && !f.isIndex) ? f.customUrl
+      : f.isIndex ? base : (baseSlug ? (base + baseSlug) : (base + '…'));
     const set=(k)=>(e)=>this.setState({ npForm:{...this.state.npForm,[k]:e.target.value} });
     return {
       showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
@@ -8441,7 +8475,7 @@ class AppRoot extends React.Component {
       // Changing Brand invalidates whatever Service was picked under the
       // old brand — a Service Page's Service must belong to its own Brand,
       // never a mismatched leftover from before the switch.
-      npSetBrand:(e)=>this.setState({ npForm:{...this.state.npForm, brand:e.target.value, linkService:'', linkSubService:'' } }),
+      npSetBrand:(e)=>this.setState({ npForm:{...this.state.npForm, brand:e.target.value, linkService:'', linkSubService:'', customUrl:'' } }),
       npObjectCategoryOptions:this.MASTERS_REG().objectCategory.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Category_Name), npSetObjectCategory:set('objectCategory'),
       npTypeOptions:this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type),
       // Service Master already carries real SEO metadata (Title_Tag,
@@ -8460,7 +8494,7 @@ class AppRoot extends React.Component {
       npPullFromService:(e)=>{
         const name=e.target.value;
         const row=this.MASTERS_REG().service.rows.find(r=>r.Service_Name===name);
-        if(!row){ this.setState({ npForm:{...this.state.npForm, linkService:''} }); return; }
+        if(!row){ this.setState({ npForm:{...this.state.npForm, linkService:'', customUrl:''} }); return; }
         // Only fill the page name from the service when the author hasn't
         // already named the page — a page nested under a category (e.g. a
         // landing page for a service) keeps its own name, it just borrows
@@ -8473,6 +8507,15 @@ class AppRoot extends React.Component {
           // re-deriving one from the name — the two can differ (e.g. a
           // service renamed after its slug was already indexed).
           slug:row.Slug||slugify(name),
+          // Primary_URL is the record's OWN full, authoritative path — it
+          // is NOT necessarily repoUrlPrefix(repo)+slug. A brand like Food
+          // Research Lab may live at the domain root ('/retort-main-test/')
+          // with no '/services/' folder at all, while Beetloop's own seed
+          // services genuinely do sit under '/services/…'. Overriding the
+          // generic prefix+slug reconstruction with this value (see
+          // newPageData()/submitNewPage()) is what makes the live URL match
+          // the master record instead of a folder that may not apply.
+          customUrl:row.Primary_URL||'',
           metaTitle:row.Title_Tag||'',
           metaDesc:row.Meta_Description||'',
           primaryKw:row.Primary_Keywords||'',
@@ -8498,6 +8541,7 @@ class AppRoot extends React.Component {
         this.setState({ npForm:{...this.state.npForm,
           linkSubService:name, subService:name,
           slug:row.Slug||slugify(name),
+          customUrl:row.Primary_URL||'',
           metaTitle:row.Title_Tag||this.state.npForm.metaTitle,
           metaDesc:row.Meta_Description||this.state.npForm.metaDesc,
         } });
@@ -8508,7 +8552,15 @@ class AppRoot extends React.Component {
       npSetParentId:(e)=>this.setState({ npForm:{...this.state.npForm, pid:e.target.value} }),
       npParentUrl: parentPage ? parentPage.url : '',
       npHasParent: !!parentPage,
-      npf:f, npSetRepo:set('repo'), npSetType:set('type'), npSetName:set('name'), npSetSlug:set('slug'), npSetKeyword:set('keyword'), npSetIndustry:set('industry'), npSetMetaTitle:set('metaTitle'), npSetMetaDesc:set('metaDesc'), npSetOwner:set('owner'), npSetReviewer:set('reviewer'),
+      npf:f,
+      // Repo change or a manual slug edit invalidates a pulled Service
+      // Master customUrl (it was that record's full path, not just a
+      // fragment to recombine with a new folder/slug) — clear it so the
+      // normal repoUrlPrefix()+slug reconstruction takes back over.
+      npSetRepo:(e)=>this.setState({ npForm:{...this.state.npForm, repo:e.target.value, customUrl:''} }),
+      npSetType:set('type'), npSetName:set('name'),
+      npSetSlug:(e)=>this.setState({ npForm:{...this.state.npForm, slug:e.target.value, customUrl:''} }),
+      npSetKeyword:set('keyword'), npSetIndustry:set('industry'), npSetMetaTitle:set('metaTitle'), npSetMetaDesc:set('metaDesc'), npSetOwner:set('owner'), npSetReviewer:set('reviewer'),
       npSetSubService:set('subService'), npSetSector:set('sector'), npSetCountries:set('countries'), npSetParent:set('parent'), npSetMenuCat:set('menuCat'), npSetMenuOrder:set('menuOrder'), npSetSecondaryKw:set('secondaryKw'), npSetIntent:set('intent'), npSetSchema:set('schema'),
       npSetPrimaryKw:set('primaryKw'), npSetOgTitle:set('ogTitle'), npSetOgDesc:set('ogDesc'), npSetOgImage:set('ogImage'), npSetRobots:set('robots'),
       npTitleLen:((f.metaTitle||'').length)+'/60 characters', npTitleLenColor:(f.metaTitle||'').length>60?'var(--danger-600)':'var(--ink-400)',
@@ -8567,7 +8619,12 @@ class AppRoot extends React.Component {
     const repoPath=this.repoUrlPrefix(repo);
     const parentPage = f.pid ? this.allContentPages().find(p=>p.id===f.pid) : null;
     const parentBase = parentPage ? parentPage.url.replace(/\/+$/,'') : '';
-    const url = f.isIndex ? (parentPage?(parentBase+'/'):repoPath) : (parentPage ? (parentBase+'/'+slug) : (repoPath+slug));
+    // See newPageData()'s matching comment — a pulled Service/Sub-Service
+    // Master record's own Primary_URL overrides the generic
+    // repoUrlPrefix()+slug reconstruction unless the author explicitly
+    // nested or index-flagged this page.
+    const url = (f.customUrl && !parentPage && !f.isIndex) ? f.customUrl
+      : f.isIndex ? (parentPage?(parentBase+'/'):repoPath) : (parentPage ? (parentBase+'/'+slug) : (repoPath+slug));
     const owner=f.owner||this.currentPerson(); const reviewer=f.reviewer||'—';
     const metaTitle=f.metaTitle||name; const metaDesc=f.metaDesc||'—';
     const seo = (f.metaTitle&&f.metaDesc)? (f.keyword?68:58) : (f.metaTitle||f.metaDesc?42:28);
