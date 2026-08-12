@@ -5004,6 +5004,7 @@ class AppRoot extends React.Component {
       tmToggle:(e)=>{ if(e)e.stopPropagation(); tmr.running?this.stopTimer(t.id):this.startTimer(t.id); },
       waiting: blockedBy && ['Assigned','In Progress'].includes(t.status) ? ('Waiting on '+blockedBy.id) : '',
       division:this.tkDivision(t), divBg:this.tkDivTone(this.tkDivision(t)).bg, divColor:this.tkDivTone(this.tkDivision(t)).c,
+      contentType:t.contentType||'—',
       id:t.id, name:t.name, kpi:t.kpi, kpiId:t.kpiId, contribution:'+'+t.units+' '+t.unit,
       effortPlan:t.effortPlan||'', hasEffort:!!t.effortPlan,
       dueAlert:this.tkDueAlert(t), day:this.dayTag(t), locked,
@@ -6959,7 +6960,7 @@ class AppRoot extends React.Component {
     const canReassign=['manager','team_lead','admin','ceo'].includes(rk) && !isAssignee;
     const canEditDates=this.hasPerm('tasks','edit');
     const tn=this.tkTone(t.status);
-    const meta=[['Campaign',t.campaign],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
+    const meta=[['Campaign',t.campaign],['Campaign Type',t.contentType||'—'],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
@@ -7099,6 +7100,10 @@ class AppRoot extends React.Component {
           k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
           onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
         };
+        if(m[0]==='Campaign Type'&&canEditDates) return {
+          k:m[0], v:m[1], isSelect:true, options:['—'].concat(this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
+          onChange:e=>{ const nv=e.target.value==='—'?'':e.target.value; this.tkPatch(t.id,{contentType:nv},'Campaign Type → '+(nv||'—')); },
+        };
         if((m[0]==='Start date'||m[0]==='End date')&&canEditDates){
           const isStart=m[0]==='Start date';
           return { k:m[0], v:m[1], isDateTime:true,
@@ -7169,6 +7174,12 @@ class AppRoot extends React.Component {
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
       tkDivisionOptions:this.liveDeptOptions(),
+      // "Campaign Type" on Tasks is the same Content Type Master that backs
+      // Content Repository's "Content Type" and (later) QC's checklist
+      // lookup — one shared vocabulary flowing Task → Content → QC, just
+      // labelled differently per screen, not a separate master.
+      tkContentTypeOptions:this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type),
+      tkSetContentType:set('contentType'),
       tkReviewerOptions:(this.state.users||[])
         .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
         .map(u=>u.name+' ('+u.role+')'),
@@ -7199,7 +7210,7 @@ class AppRoot extends React.Component {
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
     const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
@@ -8810,7 +8821,7 @@ class AppRoot extends React.Component {
           kpiId:'', kpi:s.kpi, units:1, unit:'pages', estH:s.hrs, actH:0, recurrence:'None',
           reviewer, effortPlan:'Auto — from '+p.id, effortType:s.effort,
           depMode:'Sequential', dep:i===0?'—':taskIds[i-1],
-          division:s.division, stage:s.stage, sourcePage:p.id, sourcePageUrl:p.url,
+          division:s.division, contentType:p.type||'', stage:s.stage, sourcePage:p.id, sourcePageUrl:p.url,
           checklist:[{t:'Work complete',done:false},{t:'Evidence attached',done:false},{t:'Compliance checklist filled',done:false}],
           evidence:[], status:i===0?'Assigned':'Assigned',
           activity:[[who,'Generated from '+p.id+' ('+mode+' chain, stage '+(i+1)+' of '+stages.length+')',this.todayStr()]] }));

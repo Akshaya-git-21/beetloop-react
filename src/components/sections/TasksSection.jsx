@@ -354,6 +354,11 @@ LOCKED
 <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:${t.divBg};color:${t.divColor}`)}>
 {t.division}
 </span>
+{t.contentType !== '—' && (
+<span style={{"fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)"}} title="Campaign type">
+{t.contentType}
+</span>
+)}
 <span style={{"display":"inline-flex","alignItems":"center","gap":"5px","fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
 <Icon name={"target"} style={{"width":"11px","height":"11px"}} />
 {t.kpi}
