@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon.jsx';
 import { supabase } from '../../utils/supabaseClient.js';
-import { applyTheme, applyFavicon } from '../../utils/theme.js';
+import { applyTheme, applyFavicon, applyBranding } from '../../utils/theme.js';
 
 const DEFAULT_GENERAL = {
   companyName: 'Beetloop', tagline: 'Marketing Platform', companyEmail: '', companyPhone: '', companyAddress: '', website: '',
@@ -56,6 +56,18 @@ async function authedFetch(path, options) {
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options && options.headers), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
+  // A misconfigured deployment (the /api/admin/* function not actually
+  // reachable — wrong host, missing serverless function, a catch-all
+  // rewrite serving index.html instead) answers with a 200 OK HTML page,
+  // not JSON. Coercing that parse failure to `{}` used to be silently
+  // read as "loaded defaults", which then got live-applied over whatever
+  // real branding/theme boot had already set correctly. Detect it here
+  // and fail loudly instead, so a broken endpoint shows an error banner
+  // instead of quietly reverting the whole app to default colors.
+  const contentType = resp.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Unexpected response from ${path} (not JSON) — the endpoint may not be deployed or reachable.`);
+  }
   const body = await resp.json().catch(() => ({}));
   if (!resp.ok) throw new Error(body.error || `Request failed (${resp.status})`);
   return body;
@@ -168,11 +180,18 @@ function SearchBox({ query, setQuery }) {
 }
 
 function GeneralTab({ canEdit }) {
-  const s = useSettingsSection('general', DEFAULT_GENERAL);
+  const s = useSettingsSection('general', DEFAULT_GENERAL, (v) => applyBranding(v));
   const [query, setQuery] = useState('');
   const set = (k) => (e) => s.setForm((f) => ({ ...f, [k]: e.target.value }));
   const q = query.trim().toLowerCase();
   const shows = (...labels) => !q || labels.some((l) => l.toLowerCase().includes(q));
+
+  // Live preview — Company Name/Tagline update the browser tab title as
+  // you type, same live-apply pattern ThemeTab uses for colors. Skipped
+  // when the load itself failed (s.err) — otherwise a broken /api/admin
+  // endpoint would silently stamp the hardcoded DEFAULT_GENERAL over the
+  // real, already-correct title that boot-time load applied.
+  useEffect(() => { if (s.loaded && !s.err) applyBranding(s.form); }, [s.form, s.loaded, s.err]);
 
   if (!s.loaded) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-500)' }}>Loading general settings…</div>;
   const dis = !canEdit;
@@ -279,7 +298,12 @@ function ThemeTab({ canEdit }) {
   const dis = !canEdit;
 
   // Live preview — every edit applies to the DOM immediately, before Save.
-  useEffect(() => { if (s.loaded) applyTheme(s.form); }, [s.form, s.loaded]);
+  // Skipped when the load itself failed (s.err) — otherwise a broken
+  // /api/admin endpoint would silently stamp DEFAULT_THEME's hardcoded
+  // colors over whatever real branded theme boot had already applied
+  // correctly, with no visible error (this was the actual cause of the
+  // app intermittently "losing" its custom colors).
+  useEffect(() => { if (s.loaded && !s.err) applyTheme(s.form); }, [s.form, s.loaded, s.err]);
 
   const set = (k) => (e) => s.setForm((f) => ({ ...f, [k]: e.target.value }));
   const setNum = (k) => (e) => s.setForm((f) => ({ ...f, [k]: parseInt(e.target.value, 10) || 0 }));

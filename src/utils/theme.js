@@ -63,6 +63,19 @@ export function applyCustomCss(css) {
   tag.textContent = css || '';
 }
 
+// Company Name/Tagline (General settings) only ever reached the login
+// page's on-screen text (loginPlatformName) — the browser tab itself kept
+// the hardcoded "Beetloop Marketing Platform" from index.html forever,
+// even after a Super Admin renamed the company. This is the one DOM hook
+// General settings actually needs, called both at boot and on every live
+// edit, same as applyTheme/applyFavicon.
+export function applyBranding(general) {
+  if (!general) return;
+  const name = general.companyName || 'Beetloop';
+  const tagline = general.tagline || '';
+  document.title = tagline ? `${name} — ${tagline}` : name;
+}
+
 export function applyFavicon(branding) {
   if (!branding || !branding.favicon) return;
   let link = document.querySelector("link[rel~='icon']");

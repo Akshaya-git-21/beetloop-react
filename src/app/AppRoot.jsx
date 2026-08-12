@@ -1,6 +1,6 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
-import { applyTheme, applyFavicon } from '../utils/theme.js';
+import { applyTheme, applyFavicon, applyBranding } from '../utils/theme.js';
 
 const LoginPage = React.lazy(() => import('../pages/LoginPage.jsx'));
 const ActivatePage = React.lazy(() => import('../pages/ActivatePage.jsx'));
@@ -7918,6 +7918,7 @@ class AppRoot extends React.Component {
     this.setState({ platformSettings:value });
     applyTheme(value.theme);
     applyFavicon(value.branding);
+    applyBranding(value.general);
   }
   async _loadCustomDivisions(){
     const { data, error } = await supabase.from('custom_divisions').select('*').order('created_at', { ascending:true });
