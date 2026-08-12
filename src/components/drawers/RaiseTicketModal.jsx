@@ -8,6 +8,7 @@ const select = { ...input, background: 'var(--paper)' };
 export default function RaiseTicketModal({ vm }) {
   const {
     tktFormOpen, tf, tktClose, tktStop,
+    tktIsEdit, tktFormTitle, tktSaveLabel,
     tktCatOptions, tktSetCat, tktCatHint, tktRouteNote,
     tktSetSubject, tktSetDesc,
     tktPriorityOptions, tktSetPriority, tktTaskOptions, tktSetTask,
@@ -24,7 +25,7 @@ export default function RaiseTicketModal({ vm }) {
             <div style={{ position: 'sticky', top: 0, background: 'var(--paper)', padding: '18px 22px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, zIndex: 2 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--orchid-500)' }}>Help &amp; support</div>
-                <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', margin: '4px 0 0' }}>Raise a ticket</h3>
+                <h3 style={{ fontFamily: "'Sora'", fontWeight: 700, fontSize: 19, color: 'var(--ink-900)', margin: '4px 0 0' }}>{tktFormTitle || 'Raise a ticket'}</h3>
               </div>
               <button onClick={tktClose} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid var(--line-300)', background: 'var(--paper)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon name="x" style={{ width: 16, height: 16, color: 'var(--ink-700)' }} />
@@ -54,27 +55,31 @@ export default function RaiseTicketModal({ vm }) {
                 <textarea value={f.desc || ''} onInput={tktSetDesc} rows={4} placeholder="What you did, what happened, what you expected. Include the record ID if relevant." style={{ ...input, resize: 'vertical' }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 12 }}>
-                <div>
-                  <label style={label}>Priority</label>
-                  <select value={f.priority || ''} onChange={tktSetPriority} style={select}>
-                    {(tktPriorityOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={label}>Related task</label>
-                  <select value={f.task || ''} onChange={tktSetTask} style={select}>
-                    {(tktTaskOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-              </div>
+              {!tktIsEdit && (
+                <React.Fragment>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 12 }}>
+                    <div>
+                      <label style={label}>Priority</label>
+                      <select value={f.priority || ''} onChange={tktSetPriority} style={select}>
+                        {(tktPriorityOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={label}>Related task</label>
+                      <select value={f.task || ''} onChange={tktSetTask} style={select}>
+                        {(tktTaskOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  </div>
 
-              <button onClick={tktToggleTraining} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderRadius: 12, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'left', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)' }}>
-                <Icon name="graduation-cap" style={{ width: 14, height: 14, color: 'var(--orchid-600)' }} />
-                I also need training on this
-                <span style={{ flex: 1 }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--orchid-700)' }}>{tktTraining}</span>
-              </button>
+                  <button onClick={tktToggleTraining} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 13px', borderRadius: 12, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'left', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)' }}>
+                    <Icon name="graduation-cap" style={{ width: 14, height: 14, color: 'var(--orchid-600)' }} />
+                    I also need training on this
+                    <span style={{ flex: 1 }} />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--orchid-700)' }}>{tktTraining}</span>
+                  </button>
+                </React.Fragment>
+              )}
 
               <div>
                 {Boolean(tktHasFiles) && (
@@ -98,7 +103,7 @@ export default function RaiseTicketModal({ vm }) {
             <div style={{ position: 'sticky', bottom: 0, background: 'var(--paper)', padding: '14px 22px', borderTop: '1px solid var(--line-200)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button onClick={tktClose} style={{ padding: '10px 17px', border: '1px solid var(--line-300)', background: 'var(--paper)', borderRadius: 11, fontSize: 13, fontWeight: 700, color: 'var(--ink-700)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={tktSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                <Icon name="send" style={{ width: 14, height: 14 }} />Submit ticket
+                <Icon name={tktIsEdit ? 'check' : 'send'} style={{ width: 14, height: 14 }} />{tktSaveLabel || 'Submit ticket'}
               </button>
             </div>
           </div>

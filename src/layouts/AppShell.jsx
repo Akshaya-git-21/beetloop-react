@@ -56,6 +56,7 @@ import BrandPlaybookSection from '../components/sections/BrandPlaybookSection.js
 import SupportSection from '../components/sections/SupportSection.jsx';
 import TicketDetailDrawer from '../components/drawers/TicketDetailDrawer.jsx';
 import RaiseTicketModal from '../components/drawers/RaiseTicketModal.jsx';
+import TicketAssignModal from '../components/drawers/TicketAssignModal.jsx';
 import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
 import ContentBulkUpdateModal from '../components/drawers/ContentBulkUpdateModal.jsx';
 import ContentImportModal from '../components/drawers/ContentImportModal.jsx';
@@ -413,6 +414,7 @@ export default function AppShell({ vm }) {
 
 <TicketDetailDrawer vm={vm} />
 <RaiseTicketModal vm={vm} />
+<TicketAssignModal vm={vm} />
 <CreateRepositoryModal vm={vm} />
 <ContentBulkUpdateModal vm={vm} />
 <ContentImportModal vm={vm} />

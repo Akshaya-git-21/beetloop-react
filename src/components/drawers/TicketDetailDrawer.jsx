@@ -6,10 +6,10 @@ export default function TicketDetailDrawer({ vm }) {
   const {
     tktDrawerOpen, tktD, tktDClose, tktDStop,
     tktOpenTask, tktFilesD,
-    tktCanTriage, tktAssignOptions, tktAssignVal, tktSetAssign,
-    tktStatusOptions, tktSetStatus, tktPriorityVal, tktSetPriorityD, tktPriorityOptionsD,
+    tktCanTriage, tktHasAssignee, tktOpenAssignBtn,
+    tktCanEdit, tktOpenEditBtn,
     tktToggleTrainingD, tktTrainingLabel, tktToTask, tktResolve,
-    tktThread, tktReply, tktSetReply, tktSend,
+    tktThread, tktHasConversation, tktReply, tktSetReply, tktSend,
     tktReplyFiles, tktHasReplyFiles, tktAddReplyFile,
     tktCanClose, tktConfirm, tktReopen,
     tktCanDelete, tktDelete,
@@ -35,6 +35,11 @@ export default function TicketDetailDrawer({ vm }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  {Boolean(tktCanEdit) && (
+                    <button onClick={tktOpenEditBtn} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', borderRadius: 10, padding: '9px 13px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <Icon name="pencil" style={{ width: 15, height: 15 }} />Edit
+                    </button>
+                  )}
                   {Boolean(tktCanDelete) && (
                     <button onClick={tktDelete} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--paper)', border: '1px solid var(--danger-300, #e5a3a3)', color: 'var(--danger-600)', borderRadius: 10, padding: '9px 13px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                       <Icon name="trash-2" style={{ width: 15, height: 15 }} />Delete
@@ -67,68 +72,79 @@ export default function TicketDetailDrawer({ vm }) {
               </div>
 
               {Boolean(tktCanTriage) && (
-                <div style={{ border: '1px solid var(--line-300)', borderRadius: 14, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 11 }}>Triage &amp; assign</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5 }}>Assign to</label>
-                      <select value={tktAssignVal} onChange={tktSetAssign} style={{ width: '100%', padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>
-                        {(tktAssignOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5 }}>Status</label>
-                      <select value={tktD.status} onChange={tktSetStatus} style={{ width: '100%', padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>
-                        {(tktStatusOptions || []).map(o => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--ink-700)', marginBottom: 5 }}>Priority</label>
-                      <select value={tktPriorityVal} onChange={tktSetPriorityD} style={{ width: '100%', padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>
-                        {(tktPriorityOptionsD || []).map(o => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                      <button onClick={tktToggleTrainingD} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                        <Icon name="graduation-cap" style={{ width: 13, height: 13 }} />{tktTrainingLabel}
+                <div style={{ border: '1px solid var(--line-300)', borderRadius: 14, padding: '13px 16px' }}>
+                  {Boolean(tktHasAssignee) ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                        <div>
+                          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>Assignee</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>{tktD.assignee}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>Priority</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>{tktD.priority}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>Status</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>{tktD.status}</div>
+                        </div>
+                      </div>
+                      <button onClick={tktOpenAssignBtn} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                        <Icon name="user-cog" style={{ width: 13, height: 13 }} />Reassign
                       </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-700)' }}>Assignee: Unassigned</span>
+                      <button onClick={tktOpenAssignBtn} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 15px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                        <Icon name="user-plus" style={{ width: 13, height: 13 }} />Assign
+                      </button>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 9, marginTop: 12, flexWrap: 'wrap' }}>
-                    <button onClick={tktToTask} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={tktToTask} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                       <Icon name="list-plus" style={{ width: 13, height: 13 }} />Convert to task
                     </button>
-                    <button onClick={tktResolve} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', border: '1px solid #BFE3D0', background: 'var(--paper)', color: 'var(--verify-600)', borderRadius: 10, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={tktResolve} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px solid #BFE3D0', background: 'var(--paper)', color: 'var(--verify-600)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                       <Icon name="check-circle-2" style={{ width: 13, height: 13 }} />Mark resolved
+                    </button>
+                    <button onClick={tktToggleTrainingD} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 13px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      <Icon name="graduation-cap" style={{ width: 13, height: 13 }} />{tktTrainingLabel}
                     </button>
                   </div>
                 </div>
               )}
 
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 9 }}>Conversation</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                  {(tktThread || []).map((m, i) => (
-                    <div key={i} style={{ background: m.bg, border: '1px solid var(--line-200)', borderRadius: 12, padding: '11px 13px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)' }}>{m.who}</span>
-                        <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{m.when}</span>
-                      </div>
-                      <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{m.text}</div>
-                      {Boolean(m.hasFiles) && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                          {(m.files || []).map((f, fi) => (
-                            <button key={fi} onClick={f.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', cursor: 'pointer' }}>
-                              <Icon name="paperclip" style={{ width: 10, height: 10 }} />{f.name}
-                            </button>
-                          ))}
+                {Boolean(tktHasConversation) && (
+                  <React.Fragment>
+                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 9 }}>Conversation</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 11 }}>
+                      {(tktThread || []).map((m, i) => (
+                        <div key={i} style={{ background: m.bg, border: '1px solid var(--line-200)', borderRadius: 12, padding: '11px 13px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)' }}>{m.who}</span>
+                            {m.kind === 'requester' && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', padding: '1px 7px', borderRadius: 999, background: 'var(--info-100)', color: 'var(--info-600)' }}>Requester</span>}
+                            {m.kind === 'system' && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', padding: '1px 7px', borderRadius: 999, background: 'var(--surface-100, #ECE7EA)', color: 'var(--ink-500)' }}>Internal</span>}
+                            <span style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{m.when}</span>
+                          </div>
+                          <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{m.text}</div>
+                          {Boolean(m.hasFiles) && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                              {(m.files || []).map((f, fi) => (
+                                <button key={fi} onClick={f.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', cursor: 'pointer' }}>
+                                  <Icon name="paperclip" style={{ width: 10, height: 10 }} />{f.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </React.Fragment>
+                )}
                 {Boolean(tktHasReplyFiles) && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                     {(tktReplyFiles || []).map((f, fi) => (
                       <span key={fi} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: 'var(--orchid-100)', border: '1px solid var(--orchid-200)', color: 'var(--orchid-700)' }}>
                         <Icon name="paperclip" style={{ width: 10, height: 10 }} />{f.name}
@@ -139,7 +155,7 @@ export default function TicketDetailDrawer({ vm }) {
                     ))}
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: 9, marginTop: 11 }}>
+                <div style={{ display: 'flex', gap: 9 }}>
                   <button onClick={tktAddReplyFile} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, flexShrink: 0, border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--orchid-600)', borderRadius: 11, cursor: 'pointer' }} title="Attach a file">
                     <Icon name="paperclip" style={{ width: 15, height: 15 }} />
                   </button>

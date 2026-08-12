@@ -136,7 +136,11 @@ class AppRoot extends React.Component {
     // everywhere else — treated as an exact match, not a substring, so it
     // can't accidentally match some other label that merely contains "all".
     const isAll=l==='all';
-    const rw=isAll||/full|create|edit|assign|manage|team ticket|own ticket|leads & pipeline/.test(l);
+    // 'own ticket' deliberately excluded — a requester managing only their
+    // own submissions is not the same as being able to triage/edit others'
+    // tickets, but it used to match this regex and silently granted every
+    // "Own tickets" role (junior/senior/qc/dm/sales) the full triage panel.
+    const rw=isAll||/full|create|edit|assign|manage|team ticket|leads & pipeline/.test(l);
     const del=isAll||/full/.test(l);
     const approve=isAll||/full|review|qc|approv/.test(l);
     return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del, auditAll:false };
@@ -6614,6 +6618,7 @@ class AppRoot extends React.Component {
   ]; }
   ticketCat(key){ return this.TICKET_CATS().find(c=>c.key===key)||this.TICKET_CATS()[0]; }
   TICKET_STATES(){ return ['Open','Triaged','Assigned','In Progress','Waiting on requester','Resolved','Closed']; }
+  TICKET_PRIORITIES(){ return ['Critical','High','Medium','Low']; }
   ticketTone(s){ return { Open:{bg:'var(--warn-100)',c:'var(--warn-600)'}, Triaged:{bg:'var(--info-100)',c:'var(--info-600)'},
     Assigned:{bg:'var(--info-100)',c:'var(--info-600)'}, 'In Progress':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},
     'Waiting on requester':{bg:'var(--surface-50)',c:'var(--ink-500)'}, Resolved:{bg:'var(--verify-100)',c:'var(--verify-600)'},
@@ -6657,10 +6662,14 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] ticket delete failed:', error.message);
     });
   }
-  tktPatch(id,patch,note,files){
+  tktPatch(id,patch,note,files,internal){
     const upd={...(this.state.tktUpd||{})};
     const cur=this.allTickets().find(t=>t.id===id)||{};
-    const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr(),files||[]]]:(cur.thread||[]);
+    // 5th tuple slot is optional/additive — omitted (undefined) on every
+    // existing entry, so old threads render exactly as before. Only entries
+    // explicitly marked internal (assignment/priority/status housekeeping)
+    // get hidden from viewers without hasPerm('support','edit').
+    const thread=note?[...(cur.thread||[]),[this.currentPerson(),note,this.todayStr(),files||[],!!internal]]:(cur.thread||[]);
     upd[id]={ ...(upd[id]||{}), ...patch, thread };
     this.setState({ tktUpd:upd });
     const nx={ ...cur, ...patch, thread };
@@ -6668,24 +6677,69 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] ticket upsert failed:', error.message);
     });
   }
+  // A requester may edit their own submission only while it hasn't started
+  // moving through the workflow yet — once triage assigns it (or it's no
+  // longer Open), the record of what was originally asked must stay fixed.
+  tktCanEdit(t){
+    if(!t) return false;
+    return t.by===this.currentPerson() && t.status==='Open' && !t.assignee;
+  }
+  tktOpenEdit(id){
+    const t=this.allTickets().find(x=>x.id===id);
+    if(!t || !this.tktCanEdit(t)){ this.flash('This ticket can no longer be edited.'); return; }
+    this.setState({ tktEditId:id, tktForm:{ cat:t.cat, subject:t.subject, desc:t.desc, priority:t.priority, task:t.task, training:t.trainingNeeded, files:t.files||[] } });
+  }
+  // Hard-guarded again here — not just at the Edit button's visibility —
+  // so a stale open form (e.g. the ticket got assigned in another tab while
+  // this one sat open) can't slip an edit through after the fact.
+  tktSaveEdit(id, patch){
+    const t=this.allTickets().find(x=>x.id===id);
+    if(!t || !this.tktCanEdit(t)){ this.flash('This ticket can no longer be edited.'); this.setState({ tktEditId:null, tktForm:{} }); return; }
+    const allowed={};
+    ['cat','subject','desc','files'].forEach(k=>{ if(patch[k]!==undefined) allowed[k]=patch[k]; });
+    this.tktPatch(id, allowed, 'Ticket details updated by requester');
+    this.setState({ tktEditId:null, tktForm:{} });
+    this.flash(id+' updated.');
+  }
+  tktOpenAssign(){
+    const id=this.state.tktOpen; const t=this.allTickets().find(x=>x.id===id); if(!t) return;
+    if(!this.hasPerm('support','edit')){ this.flash('You do not have permission to assign tickets.'); return; }
+    this.setState({ showAssignTicket:true, tktAssignForm:{ assignee:t.assignee||'', priority:t.priority||'Medium', status:t.status||'Open' } });
+  }
+  tktCloseAssign(){ this.setState({ showAssignTicket:false, tktAssignForm:{} }); }
+  tktSaveAssign(){
+    const id=this.state.tktOpen; const t=this.allTickets().find(x=>x.id===id); if(!t) return;
+    if(!this.hasPerm('support','edit')){ this.flash('You do not have permission to assign tickets.'); return; }
+    const f=this.state.tktAssignForm||{};
+    const assignee=f.assignee||''; const priority=f.priority||t.priority; const status=f.status||t.status;
+    this.tktPatch(id, { assignee, priority, status },
+      'Assignment updated — Assignee: '+(assignee||'Unassigned')+', Priority: '+priority+', Status: '+status,
+      null, true);
+    this.setState({ showAssignTicket:false, tktAssignForm:{} });
+    this.flash(id+' assignment saved.');
+  }
   ticketAge(t){
     if(t.createdAt) return Math.max(0, Math.round((Date.now()-t.createdAt)/3600000));
     const iso=this.isoDate(t.created); if(!iso) return 0;
     // seeded rows carry no timestamp — assume a 10:00 raise time rather than midnight
     return Math.max(0, Math.round((Date.now()-new Date(iso+'T10:00:00').getTime())/3600000)); }
   ticketFormData(){
-    if(!this.state.tktNew) return { tktFormOpen:false };
+    const editId=this.state.tktEditId;
+    if(!this.state.tktNew && !editId) return { tktFormOpen:false };
     const f=this.state.tktForm||{};
     const set=(k)=>(e)=>this.setState({ tktForm:{...f,[k]:e.target.value} });
     const c=this.ticketCat(f.cat);
     const me=this.currentPerson();
     return { tktFormOpen:true, tf:f,
-      tktClose:()=>this.setState({ tktNew:false, tktForm:{} }),
+      tktIsEdit:!!editId,
+      tktFormTitle:editId?'Edit ticket':'Raise a ticket',
+      tktSaveLabel:editId?'Save changes':'Submit ticket',
+      tktClose:()=>this.setState({ tktNew:false, tktEditId:null, tktForm:{} }),
       tktStop:(e)=>e.stopPropagation(),
       tktCatOptions:this.TICKET_CATS().map(x=>({ v:x.key, label:x.label })),
       tktSetCat:set('cat'), tktSetSubject:set('subject'), tktSetDesc:set('desc'),
       tktSetPriority:set('priority'), tktSetTask:set('task'),
-      tktPriorityOptions:['Critical','High','Medium','Low'],
+      tktPriorityOptions:this.TICKET_PRIORITIES(),
       tktTaskOptions:['— None —'].concat(this.allTasks().filter(t=>t.assignee===me).map(t=>t.id+' — '+t.name)),
       tktRouteNote:'Routes to '+c.queue+' ('+c.owner+') · target response '+c.sla+' h',
       tktCatHint:c.hint,
@@ -6698,6 +6752,10 @@ class AppRoot extends React.Component {
       tktSave:()=>{
         if(!(f.subject&&f.subject.trim())){ this.flash('Describe the issue in one line.'); return; }
         if(!(f.desc&&f.desc.trim())){ this.flash('Add details so it can be actioned without a follow-up.'); return; }
+        if(editId){
+          this.tktSaveEdit(editId, { cat:f.cat||'software', subject:f.subject.trim(), desc:f.desc.trim(), files:f.files||[] });
+          return;
+        }
         const tktIds=this.TICKET_SEED().map(x=>x.id).concat((this.state.tktAdded||[]).map(x=>x.id)).concat(this.state.tktDeleted||[]);
         const tktNums=tktIds.map(id=>{ const m=String(id).match(/^TKT-(\d+)$/); return m?parseInt(m[1],10):0; });
         const rec={ id:'TKT-'+(Math.max(1040,...tktNums)+1), cat:f.cat||'software', subject:f.subject.trim(), desc:f.desc.trim(),
@@ -6815,9 +6873,16 @@ class AppRoot extends React.Component {
         task:t.task||'', hasTask:!!t.task, training:!!t.trainingNeeded },
       tktDClose:()=>this.setState({ tktOpen:null }),
       tktDStop:(e)=>e.stopPropagation(),
-      tktThread:(t.thread||[]).map(x=>({ who:x[0], text:x[1], when:x[2],
-        mine:x[0]===me, bg:x[0]===me?'var(--orchid-100)':'var(--surface-50)',
+      // Index 0 is always the original request text (seeded at creation) —
+      // the "Original request" card above already shows it, so the
+      // conversation list starts from index 1 to avoid showing it twice.
+      // Entries flagged internal (assignment/priority/status housekeeping
+      // from the Assign modal) are hidden from anyone who can't triage.
+      tktThread:(t.thread||[]).slice(1).filter(x=>!x[4]||isTriage).map(x=>({ who:x[0], text:x[1], when:x[2],
+        mine:x[0]===me, kind:x[4]?'system':(x[0]===t.by?'requester':'support'),
+        bg:x[4]?'var(--surface-50)':(x[0]===me?'var(--orchid-100)':'var(--surface-50)'),
         files:(x[3]||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(x[3]||[]).length>0 })),
+      tktHasConversation:(t.thread||[]).slice(1).some(x=>!x[4]||isTriage),
       tktFilesD:(t.files||[]).map(n=>({ name:n })),
       tktHasFilesD:(t.files||[]).length>0,
       tktOpenTask:()=>this.setState({ tktOpen:null, route:'tasks', tkTab:'list', tkOpen:t.task }),
@@ -6836,17 +6901,26 @@ class AppRoot extends React.Component {
       tktDelete:()=>{ if(!canDeleteTicket){ this.flash('You do not have permission to delete tickets.'); return; }
         this.confirmDelete('Delete Ticket?', 'Are you sure you want to delete "'+(t.subject||t.id)+'"? This action cannot be undone.', ()=>this._deleteTicket(t.id)); },
       tktCanClose:isRequester&&t.status==='Resolved',
-      tktAssignOptions:['Unassigned'].concat(people),
-      tktAssignVal:t.assignee||'Unassigned',
-      tktSetAssign:(e)=>{ const v=e.target.value==='Unassigned'?'':e.target.value;
-        this.tktPatch(t.id,{ assignee:v, status:v?'Assigned':'Open' }, v?('Assigned to '+v):'Unassigned');
-        this.flash(v?(t.id+' assigned to '+v+'.'):(t.id+' returned to the queue.')); },
-      tktStatusOptions:this.TICKET_STATES(),
-      tktSetStatus:(e)=>{ const v=e.target.value; this.tktPatch(t.id,{ status:v },'Status → '+v); this.flash(t.id+' → '+v+'.'); },
-      tktPriorityVal:t.priority,
-      tktSetPriorityD:(e)=>{ const v=e.target.value; this.tktPatch(t.id,{ priority:v },'Priority → '+v); },
-      tktPriorityOptionsD:['Critical','High','Medium','Low'],
-      tktToggleTrainingD:()=>{ this.tktPatch(t.id,{ trainingNeeded:!t.trainingNeeded }, t.trainingNeeded?'Training flag removed':'Flagged as training need');
+      // Ownership + workflow-state only — deliberately not permission-gated,
+      // matching the existing isRequester/tktCanClose precedent: a
+      // requester can always act on their own not-yet-triaged ticket
+      // regardless of role.
+      tktCanEdit:this.tktCanEdit(t),
+      tktOpenEditBtn:()=>this.tktOpenEdit(t.id),
+      tktHasAssignee:!!t.assignee,
+      tktOpenAssignBtn:()=>this.tktOpenAssign(),
+      showAssignTicket:!!this.state.showAssignTicket,
+      tktAmForm:this.state.tktAssignForm||{ assignee:t.assignee||'', priority:t.priority||'Medium', status:t.status||'Open' },
+      tktAmAssigneeOptions:['Unassigned'].concat(people),
+      tktAmPriorityOptions:this.TICKET_PRIORITIES(),
+      tktAmStatusOptions:this.TICKET_STATES(),
+      tktAmSetAssignee:(e)=>{ const v=e.target.value==='Unassigned'?'':e.target.value; this.setState({ tktAssignForm:{...(this.state.tktAssignForm||{}), assignee:v} }); },
+      tktAmSetPriority:(e)=>this.setState({ tktAssignForm:{...(this.state.tktAssignForm||{}), priority:e.target.value} }),
+      tktAmSetStatus:(e)=>this.setState({ tktAssignForm:{...(this.state.tktAssignForm||{}), status:e.target.value} }),
+      tktAmCancel:()=>this.tktCloseAssign(),
+      tktAmSave:()=>this.tktSaveAssign(),
+      tktAmStop:(e)=>e.stopPropagation(),
+      tktToggleTrainingD:()=>{ this.tktPatch(t.id,{ trainingNeeded:!t.trainingNeeded }, t.trainingNeeded?'Training flag removed':'Flagged as training need', null, true);
         this.flash(t.trainingNeeded?'Training flag removed.':'Flagged for training — visible to Manager / L&D.'); },
       tktTrainingLabel:t.trainingNeeded?'Remove training flag':'Flag as training need',
       tktResolve:()=>{ this.tktPatch(t.id,{ status:'Resolved' },'Resolved'); this.flash(t.id+' resolved — requester can confirm or reopen.'); },
