@@ -7873,7 +7873,15 @@ class AppRoot extends React.Component {
   async _loadDocumentRepo(){
     const { data, error } = await supabase.from('document_repo').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] document repo load failed:', error.message); return; }
-    this.setState({ repoAdded:(data||[]).map(r=>({ ...r.payload, key:r.id })) });
+    const custom=[], upd={}, hidden=[];
+    (data||[]).forEach(r=>{
+      if(String(r.id).startsWith('builtin:')){
+        const key=String(r.id).slice('builtin:'.length);
+        if(r.payload && r.payload.hidden) hidden.push(key);
+        else upd[key]=r.payload;
+      } else custom.push({ ...r.payload, key:r.id });
+    });
+    this.setState({ repoAdded:custom, repoUpd:upd, repoHiddenBuiltin:hidden });
   }
   // Real bytes for every device-picked attachment (task evidence, QC refs,
   // messages, tickets, comments, check-ins, idea references) — loaded once
@@ -9944,6 +9952,8 @@ class AppRoot extends React.Component {
   }
   REPO_REGISTRY(){
     const count=(n)=>n.toLocaleString('en-IN');
+    const upd=this.state.repoUpd||{};
+    const hidden=this.state.repoHiddenBuiltin||[];
     const built=[
       { key:'ideas', name:'Content Ideas', desc:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks.',
         cat:'Content', icon:'lightbulb', owner:'Platform',
@@ -9961,7 +9971,15 @@ class AppRoot extends React.Component {
         cat:'Performance', icon:'layout-template', owner:'Platform',
         n:(this.TASK_TEMPLATES?this.TASK_TEMPLATES().length:0)+(this.KPI_TEMPLATES?this.KPI_TEMPLATES().length:0),
         unit:'templates', go:()=>this.setState({ route:'templates' }) },
-    ];
+    ]
+      // A built-in repo's name/desc/category/owner can be edited (repoUpd
+      // overlay, same seed+overlay pattern used everywhere else in this
+      // app) without touching the hardcoded entry itself — the record
+      // count and its "go" navigation stay wired to the real module either
+      // way, since "editing" one of these is relabelling it, not replacing
+      // the module it points to.
+      .filter(r=>!hidden.includes(r.key))
+      .map(r=>upd[r.key] ? {...r, ...upd[r.key]} : r);
     const custom=(this.state.repoAdded||[]).map(r=>({ ...r, n:this.recordsFor(r.key).length, unit:'items', custom:true,
       go:()=>this.setState({ repoDetailKey:r.key }) }));
     return custom.concat(built).map(r=>({ ...r, items:count(r.n)+' '+r.unit }));
@@ -9976,6 +9994,26 @@ class AppRoot extends React.Component {
     supabase.from('document_repo').delete().eq('id', key).then(({error})=>{
       if(error) console.warn('[supabase] document repo delete failed:', error.message);
     });
+  }
+  REPO_BUILTIN_KEYS(){ return ['ideas','content','backlink','files','templates']; }
+  // Removing a built-in repo only hides it from this list — it's a
+  // navigation/labelling entry, not the module itself (Tasks, Content
+  // Repository etc. keep working and stay reachable through their own nav
+  // item either way), so there's nothing destructive to actually delete.
+  repoDeleteBuiltin(key){
+    if(!this.hasPerm('repositories','delete')){ this.flash('You do not have permission to delete repositories.'); return; }
+    const repo=this.REPO_REGISTRY().find(r=>r.key===key);
+    if(!repo) return;
+    const hidden=[...(this.state.repoHiddenBuiltin||[]), key];
+    this.setState({ repoHiddenBuiltin:hidden });
+    this.flash('"'+repo.name+'" removed from this list.');
+    supabase.from('document_repo').upsert({ id:'builtin:'+key, payload:{ hidden:true }, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+      if(error) console.warn('[supabase] built-in repo hide failed:', error.message);
+    });
+  }
+  repoDeleteAny(key){
+    if(this.REPO_BUILTIN_KEYS().includes(key)) this.repoDeleteBuiltin(key);
+    else this.repoDeleteCustom(key);
   }
   // Generic label for the create/edit-record modal — 'Project'/'Campaign' for
   // the two original demo kinds, the repository's own name for a custom
@@ -10001,10 +10039,18 @@ class AppRoot extends React.Component {
         action:r.go,
         actionStyle:'padding:6px 13px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;'+(canEdit
           ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)'),
-        canDelete: r.custom && canDelete,
-        delete: r.custom ? ()=>this.confirmDelete('Delete Repository?', 'Are you sure you want to delete "'+r.name+'"? This action cannot be undone.', ()=>this.repoDeleteCustom(r.key)) : null,
-        canEdit: r.custom && canCreate,
-        edit: r.custom ? ()=>this.repoOpenEdit(r.key) : null,
+        // Every repo can be relabelled/removed from this list now — a
+        // built-in one (Content Ideas, Website Content, …) isn't a plain
+        // record, so "delete" here only hides the list entry (see
+        // repoDeleteBuiltin); the module it points to keeps working and
+        // stays reachable from its own nav item.
+        canDelete: canDelete,
+        delete: ()=>this.confirmDelete('Delete Repository?', r.custom
+          ? 'Are you sure you want to delete "'+r.name+'"? This action cannot be undone.'
+          : '"'+r.name+'" is a built-in module (still reachable from its own nav item) — this only removes it from the Repositories list. Continue?',
+          ()=>this.repoDeleteAny(r.key)),
+        canEdit: canCreate,
+        edit: ()=>this.repoOpenEdit(r.key),
       })),
       repoCanCreate:canCreate,
       repoFormOpen:!!this.state.repoNew,
@@ -10020,6 +10066,21 @@ class AppRoot extends React.Component {
         const editKey=this.state.repoEditKey;
         if(!this.hasPerm('repositories', editKey?'edit':'create')){ this.flash('You do not have permission to '+(editKey?'edit':'create')+' repositories.'); return; }
         if(!(f.name&&f.name.trim())){ this.flash('Name the repository.'); return; }
+        if(editKey && this.REPO_BUILTIN_KEYS().includes(editKey)){
+          // Built-in repos aren't records in repoAdded — relabelling one
+          // is an overlay on the hardcoded entry (repoUpd), same
+          // seed+overlay shape as everything else in this app, so the
+          // module it actually points to (Tasks, Content Repository, …)
+          // is completely untouched.
+          const patch={ name:f.name.trim(), desc:f.desc||'', cat:f.cat||'Content', owner:f.owner||'Platform' };
+          const upd={...(this.state.repoUpd||{}), [editKey]:patch};
+          this.setState({ repoUpd:upd, repoNew:false, repoEditKey:null, repoForm:{} });
+          this.flash('“'+patch.name+'” updated.');
+          supabase.from('document_repo').upsert({ id:'builtin:'+editKey, payload:patch, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+            if(error) console.warn('[supabase] built-in repo relabel failed:', error.message);
+          });
+          return;
+        }
         if(editKey){
           const updated={ key:editKey, name:f.name.trim(), desc:f.desc||'Custom repository.', cat:f.cat||'Content', icon:'database', owner:f.owner||this.currentPerson() };
           this.setState({ repoAdded:(this.state.repoAdded||[]).map(r=>r.key===editKey?updated:r), repoNew:false, repoEditKey:null, repoForm:{} });
@@ -10041,7 +10102,7 @@ class AppRoot extends React.Component {
   }
   repoOpenEdit(key){
     if(!this.hasPerm('repositories','edit')){ this.flash('You do not have permission to edit repositories.'); return; }
-    const repo=(this.state.repoAdded||[]).find(r=>r.key===key); if(!repo) return;
+    const repo=this.REPO_REGISTRY().find(r=>r.key===key); if(!repo) return;
     this.setState({ repoNew:true, repoEditKey:key, repoForm:{ name:repo.name, desc:repo.desc, cat:repo.cat, owner:repo.owner } });
   }
 
