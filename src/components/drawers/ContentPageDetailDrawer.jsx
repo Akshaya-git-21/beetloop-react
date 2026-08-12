@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentPageDetailDrawer({ vm }) {
-  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cd_activity, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentOpen, stop, cdCanEdit, cdEdit,
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cdAddBlock, cdAddLink, cd_activity, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentOpen, stop, cdCanEdit, cdEdit,
     cwLinkedCount, cwModeBtns, cwCanRun, cwApprove, cwApproveLabel, cwGenerate, cwHasTasks, cwOpenTasks, cwProgressW, cwStages, cwOpenKpi, cwKpiNote,
     cd_liveHas, cd_liveNote, cd_live, cd_liveWarn, cd_liveWarnMsg } = vm;
   return (
@@ -220,16 +220,10 @@ Editor
 Preview
 </button>
 
-            
+
 </div>
 
-            
-<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--orchid-100)","color":"var(--orchid-700)","border":"1px solid var(--orchid-200)","borderRadius":"9px","padding":"6px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"sparkles"} style={{"width":"13px","height":"13px"}} />
-AI generate
-</button>
 
-          
 </div>
 
 
@@ -277,7 +271,7 @@ AI generate
 ))}
 
               
-<button onClick={contentAINote} style={{"display":"flex","alignItems":"center","gap":"7px","justifyContent":"center","padding":"10px","border":"1px dashed var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
+<button onClick={cdAddBlock} style={{"display":"flex","alignItems":"center","gap":"7px","justifyContent":"center","padding":"10px","border":"1px dashed var(--line-300)","background":"var(--paper)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-500)","cursor":"pointer"}}>
 <Icon name={"plus"} style={{"width":"14px","height":"14px"}} />
 Add block — Heading · Paragraph · Image · CTA · FAQ · Table · Accordion…
 </button>
@@ -441,7 +435,7 @@ Related {g.group}
 </span>
 </React.Fragment>
 ))}
-<button onClick={contentAINote} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-600)","background":"none","border":"1px dashed var(--orchid-200)","borderRadius":"999px","padding":"6px 12px","cursor":"pointer"}}>
+<button onClick={cdAddLink} style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-600)","background":"none","border":"1px dashed var(--orchid-200)","borderRadius":"999px","padding":"6px 12px","cursor":"pointer"}}>
 + Link
 </button>
 </div>

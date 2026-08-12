@@ -6,6 +6,7 @@ export default function TaskDetailDrawer({ vm }) {
   const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkCanDelete, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDelete, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
     clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
     clCanSubmit, clSubmit, clCanReopen, clReopen, clCanDelete, clDelete, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
+    ctQcHasType, ctQcMissingMsg, ctQcHasChecklist, ctQcContentType, ctQcChecklistName, ctQcItems, ctQcCoverage,
     tkStatusCanSet, tkStatusOptions, tkStatusVal, tkSetStatusSel, tkStatusHint,
     tkQcDigestHas, tkQcVerdictLine, tkQcOverall, tkQcLines, tkQcHasLines, tkQcCoverage, tkQcW,
     tmCanTrack, tmElapsed, tmDotStyle, tmStatus, tmToggle, tmBtnStyle, tmIcon, tmLabel, tmProgressW, tmTotalLabel, tmHasSessions, tmSessions } = vm;
@@ -587,6 +588,46 @@ Verify vs gold standard
 </div>
 )}
 
+
+{Boolean(ctQcMissingMsg) && (
+<div style={{"display":"flex","alignItems":"center","gap":"10px","border":"1px solid #F0DDBB","background":"var(--warn-100)","color":"var(--warn-600)","borderRadius":"14px","padding":"13px 16px","fontSize":"13px","fontWeight":"600"}}>
+<Icon name={"alert-triangle"} style={{"width":"16px","height":"16px","flexShrink":"0"}} />
+{ctQcMissingMsg}
+</div>
+)}
+
+{Boolean(ctQcHasType && !ctQcMissingMsg) && (
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","overflow":"hidden"}}>
+<div style={{"padding":"14px 18px","borderBottom":ctQcHasChecklist?"1px solid var(--line-200)":"none","display":"flex","alignItems":"center","justifyContent":"space-between","gap":"10px","flexWrap":"wrap"}}>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--ink-900)"}}>QC Checklist — {ctQcContentType}</div>
+{Boolean(ctQcHasChecklist) && (
+<div style={{"fontSize":"11.5px","color":"var(--ink-500)"}}>{ctQcCoverage}</div>
+)}
+</div>
+{Boolean(ctQcHasChecklist) ? (
+<div>
+{(ctQcItems || []).map((it, $index) => (
+<React.Fragment key={$index}>
+<div style={{"display":"grid","gridTemplateColumns":"32px 1fr 130px","gap":"10px","alignItems":"center","padding":"10px 18px","borderBottom":$index<ctQcItems.length-1?"1px solid var(--line-200)":"none"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","color":"var(--ink-400)"}}>{it.n}</span>
+<span style={{"fontSize":"13px","color":"var(--ink-800)"}}>{it.text}</span>
+<select value={it.status} onChange={it.setStatus} disabled={!it.canEdit} style={{"padding":"6px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"12px","background":"var(--paper)"}}>
+<option value="">—</option>
+<option value="Pass">Pass</option>
+<option value="Fail">Fail</option>
+<option value="N/A">N/A</option>
+</select>
+</div>
+</React.Fragment>
+))}
+</div>
+) : (
+<div style={{"padding":"14px 18px","fontSize":"12.5px","color":"var(--ink-500)"}}>
+No QC checklist is configured for the "{ctQcContentType}" Content Type yet — add one in Master Data → QC Checklist Master.
+</div>
+)}
+</div>
+)}
 
 <div>
 <div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"8px"}}>

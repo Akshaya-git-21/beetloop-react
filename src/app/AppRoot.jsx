@@ -18,7 +18,8 @@ class AppRoot extends React.Component {
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
-    clFill: {}, clQc: {}, clSubmitted: {},
+    clFill: {}, clQc: {}, clSubmitted: {}, clTypeQc: {},
+    tkDeletedIds: [],
     leadsTab: 'leads', leadAdded: [], contactAdded: [], contactUpd: {}, contactDeleted: [], cnOpen: null, cnNew: false, cnForm: {},
     ldFilters: {service:'All',source:'All',range:'This week'}, ldForm: {}, ldTarget: '10', ldPeriod: 'Weekly',
     pipeFilters: {stage:'All',service:'All',country:'All',owner:'All'},
@@ -537,8 +538,8 @@ class AppRoot extends React.Component {
         cols:[ {k:'CT_Code',l:'Code',mono:1}, {k:'Content_Type',l:'Type'}, {k:'Avg_Word_Count',l:'Avg words'}, {k:'Default_Owner',l:'Owner'}, {k:'Status',l:'Status',tag:1} ],
         fields:['CT_Code','Content_Type','Avg_Word_Count','Default_Owner','QC_Checklist','Status'],
         rows:[
-          {CT_Code:'CT-01',Content_Type:'Blog',Avg_Word_Count:1500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
-          {CT_Code:'CT-02',Content_Type:'Landing Page',Avg_Word_Count:800,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-01',Content_Type:'Blog',Avg_Word_Count:1500,Default_Owner:'Karan Shah',QC_Checklist:'Blog QC Checklist',Status:'Active'},
+          {CT_Code:'CT-02',Content_Type:'Landing Page',Avg_Word_Count:800,Default_Owner:'Karan Shah',QC_Checklist:'Landing Page QC Checklist',Status:'Active'},
           {CT_Code:'CT-03',Content_Type:'Case Study',Avg_Word_Count:2000,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-04',Content_Type:'Whitepaper',Avg_Word_Count:3500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-05',Content_Type:'Service Page',Avg_Word_Count:1200,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
@@ -550,12 +551,13 @@ class AppRoot extends React.Component {
           {CT_Code:'CT-11',Content_Type:'Video Script',Avg_Word_Count:600,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-12',Content_Type:'Infographic',Avg_Word_Count:300,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-13',Content_Type:'Webinar',Avg_Word_Count:400,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
-          {CT_Code:'CT-14',Content_Type:'Social Content',Avg_Word_Count:150,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
-          {CT_Code:'CT-15',Content_Type:'Email',Avg_Word_Count:350,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-14',Content_Type:'Social Content',Avg_Word_Count:150,Default_Owner:'Karan Shah',QC_Checklist:'Social Media QC Checklist',Status:'Active'},
+          {CT_Code:'CT-15',Content_Type:'Email',Avg_Word_Count:350,Default_Owner:'Karan Shah',QC_Checklist:'Email QC Checklist',Status:'Active'},
           {CT_Code:'CT-16',Content_Type:'Press Release',Avg_Word_Count:600,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-17',Content_Type:'Glossary',Avg_Word_Count:400,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-18',Content_Type:'Pillar Page',Avg_Word_Count:4000,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
           {CT_Code:'CT-19',Content_Type:'Cluster Page',Avg_Word_Count:1500,Default_Owner:'Karan Shah',QC_Checklist:'Content Audit',Status:'Active'},
+          {CT_Code:'CT-20',Content_Type:'Ad Campaign',Avg_Word_Count:100,Default_Owner:'Karan Shah',QC_Checklist:'Ad Campaign QC Checklist',Status:'Active'},
         ],
       },
       // Backs the "Repositories" category tabs in Content Repository. Every
@@ -645,16 +647,31 @@ class AppRoot extends React.Component {
           {LS_Code:'LS-09',Source_Name:'Trade Enquiry',Status:'Active'},
         ],
       },
+      // "Items" stays a plain display count (unchanged shape, so the
+      // existing generic Master Data table keeps rendering it as-is) —
+      // the actual checklist question text lives in the new "Item_List"
+      // field as a ';'-separated list, the same "encode a list as a
+      // delimited string" convention this master's own Applies_To field
+      // already used. contentType.QC_Checklist (a single value, already
+      // rendered as a dropdown of these rows' Checklist names via
+      // MASTER_FIELD_RELATIONS below) is what actually links a Content
+      // Type to one of these rows — Applies_To here is just a
+      // human-readable annotation, same as it always was.
       qcChecklist: {
         label:'QC Checklist Master', icon:'clipboard-check', group:'Marketing & Quality',
-        desc:'Reusable QC checklists applied during review.',
+        desc:'Reusable QC checklists applied during review — the Checklist name is what a Content Type\'s "QC_Checklist" field links to for dynamic QC.',
         cols:[ {k:'QC_Code',l:'Code',mono:1}, {k:'Checklist',l:'Checklist'}, {k:'Items',l:'Items'}, {k:'Applies_To',l:'Applies to'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['QC_Code','Checklist','Items','Applies_To','Severity_Default','Status'],
+        fields:['QC_Code','Checklist','Items','Item_List','Applies_To','Severity_Default','Status'],
         rows:[
-          {QC_Code:'QC-01',Checklist:'Content Audit',Items:18,Applies_To:'Blog, Landing Page',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-02',Checklist:'SEO Audit',Items:24,Applies_To:'On-page, Technical',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-03',Checklist:'Website Audit',Items:31,Applies_To:'Web builds',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-04',Checklist:'SMM Audit',Items:12,Applies_To:'Reels, Posts',Severity_Default:'Low',Status:'Active'},
+          {QC_Code:'QC-01',Checklist:'Content Audit',Items:18,Item_List:'Grammar & clarity checked;Plagiarism checked;Fact-checking complete;Formatting consistent',Applies_To:'Case Study, Whitepaper, Service Page, Product Page, FAQ, News, Resource, Checklist, Video Script, Infographic, Webinar, Press Release, Glossary, Pillar Page, Cluster Page',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-02',Checklist:'SEO Audit',Items:24,Item_List:'Title tag checked;Meta description checked;Header structure checked;Internal links checked',Applies_To:'On-page, Technical',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-03',Checklist:'Website Audit',Items:31,Item_List:'Page load speed checked;Mobile responsiveness checked;Broken links checked;Schema markup checked',Applies_To:'Web builds',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-04',Checklist:'SMM Audit',Items:12,Item_List:'Caption checked;Hashtags checked;Image spec checked;Posting schedule checked',Applies_To:'Reels, Posts',Severity_Default:'Low',Status:'Active'},
+          {QC_Code:'QC-05',Checklist:'Email QC Checklist',Items:5,Item_List:'Subject line checked;CTA checked;Links verified;Personalisation checked;Mobile rendering checked',Applies_To:'Email',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-06',Checklist:'Landing Page QC Checklist',Items:5,Item_List:'Headline checked;CTA checked;Form checked;Links checked;Mobile responsiveness checked',Applies_To:'Landing Page',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-07',Checklist:'Blog QC Checklist',Items:5,Item_List:'Grammar & clarity checked;SEO title & meta checked;Internal links checked;Plagiarism checked;Readability checked',Applies_To:'Blog',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-08',Checklist:'Social Media QC Checklist',Items:5,Item_List:'Caption checked;Hashtags checked;Image/video spec checked;Platform formatting checked;CTA checked',Applies_To:'Social Content',Severity_Default:'Low',Status:'Active'},
+          {QC_Code:'QC-09',Checklist:'Ad Campaign QC Checklist',Items:5,Item_List:'Ad copy checked;Targeting checked;Creative spec checked;Landing page link checked;Budget & schedule checked',Applies_To:'Ad Campaign',Severity_Default:'High',Status:'Active'},
         ],
       },
       kpi: {
@@ -2309,6 +2326,7 @@ class AppRoot extends React.Component {
     const list=this.allTasks().filter(t=>['Submitted','Rework','Approved'].includes(t.status)).sort((a,b)=>order[a.status]-order[b.status]);
     const qcRows=list.map(t=>{ const tn=this.tkTone(t.status); return {
       id:t.id, name:t.name, kpi:t.kpi, contribution:'+'+t.units+' '+t.unit, effortPlan:t.effortPlan||'', hasEffort:!!t.effortPlan,
+      contentType:t.contentType||'', hasContentType:!!t.contentType,
       module:'Task', moduleBg:'var(--info-100)', moduleColor:'var(--info-600)',
       priority:t.priority, priDot:pri(t.priority), assignee:t.assignee, dates:t.start+' → '+t.end, dueAlert:this.tkDueAlert(t),
       status:t.status==='Submitted'?'Awaiting QC':t.status, statusBg:tn.bg, statusColor:tn.c,
@@ -4284,9 +4302,16 @@ class AppRoot extends React.Component {
   // (self value/note per line, evidence add/remove, QC value/verdict/
   // comment per line, submit/reopen, accept-all) versus a differently-
   // shaped per-field endpoint for each.
-  _persistCompliance(taskId, fillObj, qcObj, submittedFlag){
+  // The Content-Type-driven QC checklist (Part C) reuses this SAME table
+  // and SAME upsert instead of a second one — its per-item state rides
+  // inside the existing `qc` jsonb column under a reserved `__ctQc` key
+  // that the division-based compliance checklist never writes to, so no
+  // schema migration is needed and old rows (which never have that key)
+  // load with an empty content-type-QC state, not an error.
+  _persistCompliance(taskId, fillObj, qcObj, submittedFlag, ctQcOverride){
+    const ctQc = ctQcOverride!==undefined ? ctQcOverride : ((this.state.clTypeQc||{})[taskId]||{});
     supabase.from('compliance_checklists').upsert({
-      task_id:taskId, fill:fillObj||{}, qc:qcObj||{}, submitted:!!submittedFlag,
+      task_id:taskId, fill:fillObj||{}, qc:{...(qcObj||{}), __ctQc:ctQc}, submitted:!!submittedFlag,
       created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] compliance checklist save failed:', error.message);
@@ -4295,9 +4320,69 @@ class AppRoot extends React.Component {
   async _loadComplianceChecklists(){
     const { data, error } = await supabase.from('compliance_checklists').select('*');
     if(error){ console.warn('[supabase] compliance checklists load failed:', error.message); return; }
-    const fill={}, qc={}, submitted={};
-    (data||[]).forEach(r=>{ if(r.deleted) return; fill[r.task_id]=r.fill||{}; qc[r.task_id]=r.qc||{}; if(r.submitted) submitted[r.task_id]=true; });
-    this.setState({ clFill:fill, clQc:qc, clSubmitted:submitted });
+    const fill={}, qc={}, submitted={}, ctQc={};
+    (data||[]).forEach(r=>{ if(r.deleted) return;
+      const rawQc=r.qc||{}; const { __ctQc, ...restQc } = rawQc;
+      fill[r.task_id]=r.fill||{}; qc[r.task_id]=restQc; if(__ctQc) ctQc[r.task_id]=__ctQc;
+      if(r.submitted) submitted[r.task_id]=true; });
+    this.setState({ clFill:fill, clQc:qc, clSubmitted:submitted, clTypeQc:ctQc });
+  }
+  // Resolves a Content Type name (e.g. task.contentType) to its QC
+  // checklist row — the same "select X, look up Y" shape as
+  // npPullFromService, just used at QC-render time instead of form-fill
+  // time. Falls back to 'Content Audit' if the type has no QC_Checklist
+  // set, and returns null (not a generic checklist) if that name doesn't
+  // match any qcChecklist row either — callers must show the "not
+  // configured" message rather than silently picking something else.
+  qcChecklistFor(contentType){
+    if(!contentType) return null;
+    const ctRow=this.MASTERS_REG().contentType.rows.find(r=>r.Content_Type===contentType);
+    const checklistName=(ctRow&&ctRow.QC_Checklist)||'Content Audit';
+    const row=this.MASTERS_REG().qcChecklist.rows.find(r=>r.Checklist===checklistName && r.Status!=='Inactive');
+    if(!row) return null;
+    const items=(row.Item_List||'').split(';').map(s=>s.trim()).filter(Boolean).map(text=>({text}));
+    return { Checklist:row.Checklist, Items:items };
+  }
+  tkSetTypeQcItem(taskId, idx, field, value){
+    const cur={...(this.state.clTypeQc||{})};
+    const forTask={...(cur[taskId]||{})};
+    forTask[idx]={...(forTask[idx]||{}), [field]:value};
+    cur[taskId]=forTask;
+    this.setState({ clTypeQc:cur });
+    const t=this.allTasks().find(x=>x.id===taskId)||{};
+    const fill=this.complianceFill(t);
+    const qc=(this.state.clQc||{})[taskId]||{};
+    const submitted=!!(this.state.clSubmitted||{})[taskId];
+    this._persistCompliance(taskId, fill, qc, submitted, forTask);
+  }
+  // New QC panel driven by task.contentType — sits alongside (not instead
+  // of) the existing division-based Compliance checklist, since division
+  // (a team categorization) and Content Type (a deliverable categorization)
+  // are different axes and both can matter for the same task.
+  contentTypeQcData(t, rk){
+    if(!t || !t.contentType){
+      return { ctQcHasType:false, ctQcMissingMsg:'Content Type has not been configured for this item. Please assign a Content Type before starting QC.' };
+    }
+    const checklist=this.qcChecklistFor(t.contentType);
+    if(!checklist){
+      return { ctQcHasType:true, ctQcMissingMsg:'', ctQcContentType:t.contentType, ctQcHasChecklist:false };
+    }
+    const canEdit=this.hasPerm('qc','edit');
+    const saved=((this.state.clTypeQc||{})[t.id])||{};
+    const items=(checklist.Items||[]).map((it,idx)=>{
+      const row=saved[idx]||{};
+      return { n:idx+1, text:it.text,
+        status:row.status||'', note:row.note||'',
+        setStatus:(e)=>this.tkSetTypeQcItem(t.id, idx, 'status', e.target.value),
+        setNote:(e)=>this.tkSetTypeQcItem(t.id, idx, 'note', e.target.value),
+        canEdit };
+    });
+    const done=items.filter(i=>i.status).length;
+    return {
+      ctQcHasType:true, ctQcMissingMsg:'', ctQcHasChecklist:true,
+      ctQcContentType:t.contentType, ctQcChecklistName:checklist.Checklist,
+      ctQcItems:items, ctQcCoverage:done+' of '+items.length+' checked',
+    };
   }
   complianceFill(t){
     // Never fabricate self-scores/evidence — a task reaching Submitted via
@@ -4892,6 +4977,7 @@ class AppRoot extends React.Component {
     }, { onConflict:'code' }).then(({error})=>{
       if(error) console.warn('[supabase] task upsert failed:', error.message);
     });
+    if(patch.contentType!==undefined) this._persistTaskContentType(code, patch.contentType);
   }
   // Start/end date+time on an existing task — previously set once at
   // creation with no way to change it afterward. Routed through tkPatch()/
@@ -4913,7 +4999,7 @@ class AppRoot extends React.Component {
   _deleteTask(id){
     if(!this.hasPerm('tasks','delete')){ this.flash('You do not have permission to delete tasks.'); return; }
     const t=this.allTasks().find(x=>x.id===id); if(!t) return;
-    this.setState({ tkAdded:(this.state.tkAdded||[]).filter(x=>x.id!==id), tkOpen:null }, ()=>{ if(t.kpiId) this._syncKrFromTasks(t.kpiId); });
+    this.setState({ tkAdded:(this.state.tkAdded||[]).filter(x=>x.id!==id), tkDeletedIds:[...(this.state.tkDeletedIds||[]), id], tkOpen:null }, ()=>{ if(t.kpiId) this._syncKrFromTasks(t.kpiId); });
     this.flash('Deleted task '+id+'.');
     supabase.from('tasks').update({ deleted:true }).eq('code', id).then(({error})=>{
       if(error) console.warn('[supabase] task delete failed:', error.message);
@@ -6929,8 +7015,7 @@ class AppRoot extends React.Component {
       tktConfirm:()=>{ this.tktPatch(t.id,{ status:'Closed' },'Confirmed & closed by requester'); this.flash(t.id+' closed. Thanks for confirming.'); },
       // convert a ticket into real work
       tktToTask:()=>{
-        const base=this.allTasks().length;
-        const nid='TSK-'+(3400+base);
+        const nid=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 3400);
         const div={software:'Web',technical:'SEO',training:'Content',access:'Web',data:'Analytics',process:'Content'}[t.cat]||'Content';
         const task={ id:nid, name:'['+t.id+'] '+t.subject, desc:t.desc, template:'Custom task', project:'',
           campaign:'—', start:this.todayStr(), end:this.relDate(2), priority:t.priority,
@@ -7132,6 +7217,7 @@ class AppRoot extends React.Component {
       tkDelete:()=>this.confirmDelete('Delete Task?', 'Are you sure you want to delete "'+(t.name||t.id)+'"? This action cannot be undone.', ()=>this._deleteTask(t.id)),
       tkKpiNote: t.status==='Approved' ? 'Counted toward KPI on approval.' : 'Counts toward the KPI once QC approves.',
       ...this.complianceData(t, rk),
+      ...this.contentTypeQcData(t, rk),
     };
   }
 
@@ -7143,7 +7229,7 @@ class AppRoot extends React.Component {
       this.setState({ tkForm:nf });
     };
     const kpiPool=this.epKpiPool();
-    const nextCode='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
+    const nextCode=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'));
     return {
       tkNew:this.state.tkNew, tkf:f, tkCode:nextCode,
@@ -7208,7 +7294,7 @@ class AppRoot extends React.Component {
     const kpiPool=this.epKpiPool();
     const k=kpiPool.find(x=>x.id===f.kpiId);
     const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
-    const id='TSK-'+(2060+(this.state.tkAdded||[]).length+1);
+    const id=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const who=this.currentPerson();
     const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
@@ -7240,6 +7326,20 @@ class AppRoot extends React.Component {
     }).then(({error})=>{
       if(error) console.warn('[supabase] task insert failed:', error.message);
     });
+    this._persistTaskContentType(task.id, task.contentType);
+  }
+  // content_type is a separate, best-effort write (schema_v24.sql) rather
+  // than a field in the main insert/upsert above — those two calls carry
+  // EVERY task field and run for every single task create/edit, so if
+  // content_type were baked into them, a database that hasn't run that
+  // migration yet would fail to create or update ANY task at all (unknown
+  // column). Isolating it here means it silently no-ops (with a console
+  // warning) until the migration lands, instead of breaking task CRUD.
+  _persistTaskContentType(code, contentType){
+    if(contentType===undefined) return;
+    supabase.from('tasks').update({ content_type:contentType||null }).eq('code', code).then(({error})=>{
+      if(error) console.warn('[supabase] task content_type save failed — has schema_v24.sql (content_type column) been applied?', error.message);
+    });
   }
   _linkMessageToTask(msgId, taskId){
     const th=this.allThreads().find(t=>t.msgs.some(x=>x.id===msgId));
@@ -7250,9 +7350,19 @@ class AppRoot extends React.Component {
 
   // Loads every Supabase-backed task and replaces tkAdded with the persisted
   // set, so created/edited tasks survive reloads and are shared across users.
+  // Every task code ever issued, including soft-deleted ones — mirrors
+  // _allContentPageIdsEver()'s reasoning exactly: a deleted task's row
+  // still exists (deleted:true) in Supabase, so a new task reusing that
+  // same code would collide with it on insert. Length-based id generation
+  // (this.state.tkAdded.length) doesn't see deleted rows at all, which is
+  // exactly how a real collision happened during Phase C verification.
+  _allTaskIdsEver(){
+    return this.allTasks().map(t=>t.id).concat(this.state.tkDeletedIds||[]);
+  }
   async _loadTasks(){
     const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending:true });
     if(error){ console.warn('[supabase] task load failed:', error.message); return; }
+    this.setState({ tkDeletedIds:(data||[]).filter(r=>r.deleted).map(r=>r.code) });
     const mapped=(data||[]).filter(r=>!r.deleted).map(r=>({
       id:r.code, name:r.name, desc:r.description||'—', template:'Custom task',
       project:r.project||'—', campaign:r.campaign||'—',
@@ -7266,6 +7376,7 @@ class AppRoot extends React.Component {
       checklist:r.checklist||[], dep:r.dependency||'—', evidence:r.evidence||[],
       comments:r.comments||[], status:r.status||'Assigned', activity:r.activity||[],
       qcFeedback:r.qc_feedback||'', reworkCount:r.rework_count||0,
+      contentType:r.content_type||'',
     }));
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
@@ -8855,6 +8966,7 @@ class AppRoot extends React.Component {
       }),
       cdPreview: !!this.state.cdPreview, cdEditorMode: !this.state.cdPreview,
       cdSetEditor:()=>this.setState({cdPreview:false}), cdSetPreview:()=>this.setState({cdPreview:true}),
+      cdAddBlock:()=>this.editContentPage(p.id, 3), cdAddLink:()=>this.editContentPage(p.id, 4),
       cdEditorStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(!this.state.cdPreview?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
       cdPreviewStyle:'display:flex;align-items:center;gap:6px;padding:6px 13px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;'+(this.state.cdPreview?'background:var(--paper);color:var(--ink-900);box-shadow:var(--shadow-xs)':'background:none;color:var(--ink-500)'),
       cd_rel:Object.entries(p.rel||{}).map(([k,v])=>({ group:k, items:v })),
@@ -8889,7 +9001,7 @@ class AppRoot extends React.Component {
       cdEdit:()=>this.editContentPage(p.id),
     };
   }
-  editContentPage(id){
+  editContentPage(id, startTab){
     const p=this.allContentPages().find(x=>x.id===id); if(!p) return;
     const clsGet=(label)=>{ const row=(p.cls||[]).find(x=>x[0]===label); return row?row[1]:''; };
     const seoGet=(label)=>{ const row=(p.seoMeta||[]).find(x=>x[0]===label); return row?row[1]:''; };
@@ -8903,7 +9015,7 @@ class AppRoot extends React.Component {
     const svcMatch=this.allContentPages().find(x=>svc.indexOf(x.name)===0);
     const insight=(p.rel&&p.rel.Insights&&p.rel.Insights[0])||'';
     const insightMatch=this.allContentPages().find(x=>insight.indexOf(x.name)===0);
-    this.setState({ showNewPage:true, npTab:0, npEditId:id,
+    this.setState({ showNewPage:true, npTab:startTab||0, npEditId:id,
       npLinks:(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})).length?(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})):[{anchor:'',target:'',ltype:'Internal'}],
       npMedia:(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})).length?(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})):[{name:'',alt:'',type:'Image'}],
       npForm:{ repo:p.repo, brand:p.brand||'Beetloop', type:p.type, name:p.name, slug:p.slug, isIndex:!!p.isIndex, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
