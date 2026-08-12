@@ -7325,8 +7325,12 @@ class AppRoot extends React.Component {
       created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] task insert failed:', error.message);
+      // Only fires once the row actually exists — content_type is a
+      // separate UPDATE (schema_v24.sql column, see _persistTaskContentType),
+      // and firing it in parallel with the INSERT let it race ahead and
+      // match zero rows, silently dropping the value on every new task.
+      else this._persistTaskContentType(task.id, task.contentType);
     });
-    this._persistTaskContentType(task.id, task.contentType);
   }
   // content_type is a separate, best-effort write (schema_v24.sql) rather
   // than a field in the main insert/upsert above — those two calls carry
