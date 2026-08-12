@@ -145,6 +145,11 @@ Filters
 <button onClick={row.action} style={cssTextToObject(row.actionStyle)}>
 {row.actionLabel}
 </button>
+{Boolean(row.canEdit) && (
+<button onClick={row.edit} title="Edit" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"30px","height":"30px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","cursor":"pointer"}}>
+<Icon name={"pencil"} style={{"width":"14px","height":"14px"}} />
+</button>
+)}
 {Boolean(row.canDelete) && (
 <button onClick={row.delete} title="Delete" style={{"display":"flex","alignItems":"center","justifyContent":"center","width":"30px","height":"30px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"9px","cursor":"pointer"}}>
 <Icon name={"trash-2"} style={{"width":"14px","height":"14px"}} />

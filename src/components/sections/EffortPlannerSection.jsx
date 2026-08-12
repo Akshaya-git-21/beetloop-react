@@ -825,7 +825,12 @@ Daily (avg)
 Unit
 </th>
 
-                  
+
+<th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)"}} title="Estimated hours for one task delivering this effort — feeds Task creation's auto-fill">
+Task hours
+</th>
+
+
 <th style={{"textAlign":"left","padding":"11px 14px","fontSize":"10.5px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)"}}>
 Priority
 </th>
@@ -892,6 +897,10 @@ Weight %
                       
 <td style={{"padding":"11px 14px","borderBottom":"1px solid var(--line-200)"}}>
 <input value={r.unit} onInput={r.setUnit} style={{"width":"88px","padding":"7px 9px","border":"1px solid transparent","borderRadius":"8px","fontSize":"12.5px","color":"var(--ink-500)","outline":"none","background":"none"}} style-focus="border-color:var(--orchid-300);background:var(--paper)" />
+</td>
+
+<td style={{"padding":"11px 14px","borderBottom":"1px solid var(--line-200)"}}>
+<input value={r.hours} onInput={r.setHours} style={{"width":"56px","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"13px","outline":"none"}} />
 </td>
 
                       

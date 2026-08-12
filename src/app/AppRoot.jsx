@@ -357,10 +357,10 @@ class AppRoot extends React.Component {
         cols:[ {k:'Service_ID',l:'ID',mono:1}, {k:'Service_Name',l:'Service'}, {k:'Brand',l:'Brand'}, {k:'Page_Status',l:'Status',tag:1}, {k:'Hierarchy_Level',l:'Level'}, {k:'SEO_Score',l:'SEO'}, {k:'Content_Owner',l:'Owner'} ],
         fields:['Service_ID','Service_Name','Brand','Slug','Parent_Service_ID','Hierarchy_Level','Breadcrumb_Path','Primary_URL','Page_Status','Title_Tag','Meta_Description','H1','Target_Industries','Target_Countries','Primary_Keywords','SEO_Score','Language_Score','Content_Owner','Tech_Owner','Last_Updated'],
         rows:[
-          {Service_ID:'SRV001',Service_Name:'Cloud Migration Services',Slug:'cloud-migration',Parent_Service_ID:'—',Hierarchy_Level:0,Breadcrumb_Path:'Services > Cloud Migration',Primary_URL:'/services/cloud-migration',Page_Status:'Live',Title_Tag:'Enterprise Cloud Migration Services | Beetloop',Meta_Description:'Seamless cloud migration services for enterprises',H1:'Cloud Migration Services',Target_Industries:'Technology, Finance, Healthcare',Target_Countries:'USA, UK, Canada',Primary_Keywords:'cloud migration, enterprise cloud, cloud transformation',SEO_Score:87,Language_Score:92,Content_Owner:'John Doe',Tech_Owner:'Tech Team',Last_Updated:'2024-10-28'},
-          {Service_ID:'SRV001-1',Service_Name:'AWS Migration',Slug:'cloud-migration/aws',Parent_Service_ID:'SRV001',Hierarchy_Level:1,Breadcrumb_Path:'Services > Cloud Migration > AWS Migration',Primary_URL:'/services/cloud-migration/aws',Page_Status:'Live',Title_Tag:'AWS Cloud Migration Services | Beetloop',Meta_Description:'Expert AWS migration and optimization services',H1:'AWS Migration Services',Target_Industries:'Technology, Finance',Target_Countries:'USA, UK',Primary_Keywords:'aws migration, aws cloud, migrate to aws',SEO_Score:85,Language_Score:90,Content_Owner:'Jane Smith',Tech_Owner:'Tech Team',Last_Updated:'2024-10-25'},
-          {Service_ID:'SRV001-2',Service_Name:'Azure Migration',Slug:'cloud-migration/azure',Parent_Service_ID:'SRV001',Hierarchy_Level:1,Breadcrumb_Path:'Services > Cloud Migration > Azure Migration',Primary_URL:'/services/cloud-migration/azure',Page_Status:'Live',Title_Tag:'Azure Cloud Migration Services | Beetloop',Meta_Description:'Professional Azure migration and modernization',H1:'Azure Migration Services',Target_Industries:'Technology, Enterprise',Target_Countries:'USA, UK, Germany',Primary_Keywords:'azure migration, azure cloud, migrate to azure',SEO_Score:83,Language_Score:88,Content_Owner:'Jane Smith',Tech_Owner:'Tech Team',Last_Updated:'2024-10-26'},
-          {Service_ID:'SRV002',Service_Name:'AI Implementation',Slug:'ai-implementation',Parent_Service_ID:'—',Hierarchy_Level:0,Breadcrumb_Path:'Services > AI Implementation',Primary_URL:'/services/ai-implementation',Page_Status:'Live',Title_Tag:'AI Implementation Services | Beetloop',Meta_Description:'End-to-end AI implementation and integration services',H1:'AI Implementation Services',Target_Industries:'Technology, Retail, Manufacturing',Target_Countries:'USA, UK, Singapore',Primary_Keywords:'ai implementation, artificial intelligence, ai integration',SEO_Score:78,Language_Score:85,Content_Owner:'Bob Johnson',Tech_Owner:'Tech Team',Last_Updated:'2024-10-20'},
+          {Service_ID:'SRV001',Service_Name:'Cloud Migration Services',Brand:'Beetloop',Slug:'cloud-migration',Parent_Service_ID:'—',Hierarchy_Level:0,Breadcrumb_Path:'Services > Cloud Migration',Primary_URL:'/services/cloud-migration',Page_Status:'Live',Title_Tag:'Enterprise Cloud Migration Services | Beetloop',Meta_Description:'Seamless cloud migration services for enterprises',H1:'Cloud Migration Services',Target_Industries:'Technology, Finance, Healthcare',Target_Countries:'USA, UK, Canada',Primary_Keywords:'cloud migration, enterprise cloud, cloud transformation',SEO_Score:87,Language_Score:92,Content_Owner:'John Doe',Tech_Owner:'Tech Team',Last_Updated:'2024-10-28'},
+          {Service_ID:'SRV001-1',Service_Name:'AWS Migration',Brand:'Beetloop',Slug:'cloud-migration/aws',Parent_Service_ID:'SRV001',Hierarchy_Level:1,Breadcrumb_Path:'Services > Cloud Migration > AWS Migration',Primary_URL:'/services/cloud-migration/aws',Page_Status:'Live',Title_Tag:'AWS Cloud Migration Services | Beetloop',Meta_Description:'Expert AWS migration and optimization services',H1:'AWS Migration Services',Target_Industries:'Technology, Finance',Target_Countries:'USA, UK',Primary_Keywords:'aws migration, aws cloud, migrate to aws',SEO_Score:85,Language_Score:90,Content_Owner:'Jane Smith',Tech_Owner:'Tech Team',Last_Updated:'2024-10-25'},
+          {Service_ID:'SRV001-2',Service_Name:'Azure Migration',Brand:'Beetloop',Slug:'cloud-migration/azure',Parent_Service_ID:'SRV001',Hierarchy_Level:1,Breadcrumb_Path:'Services > Cloud Migration > Azure Migration',Primary_URL:'/services/cloud-migration/azure',Page_Status:'Live',Title_Tag:'Azure Cloud Migration Services | Beetloop',Meta_Description:'Professional Azure migration and modernization',H1:'Azure Migration Services',Target_Industries:'Technology, Enterprise',Target_Countries:'USA, UK, Germany',Primary_Keywords:'azure migration, azure cloud, migrate to azure',SEO_Score:83,Language_Score:88,Content_Owner:'Jane Smith',Tech_Owner:'Tech Team',Last_Updated:'2024-10-26'},
+          {Service_ID:'SRV002',Service_Name:'AI Implementation',Brand:'Beetloop',Slug:'ai-implementation',Parent_Service_ID:'—',Hierarchy_Level:0,Breadcrumb_Path:'Services > AI Implementation',Primary_URL:'/services/ai-implementation',Page_Status:'Live',Title_Tag:'AI Implementation Services | Beetloop',Meta_Description:'End-to-end AI implementation and integration services',H1:'AI Implementation Services',Target_Industries:'Technology, Retail, Manufacturing',Target_Countries:'USA, UK, Singapore',Primary_Keywords:'ai implementation, artificial intelligence, ai integration',SEO_Score:78,Language_Score:85,Content_Owner:'Bob Johnson',Tech_Owner:'Tech Team',Last_Updated:'2024-10-20'},
         ],
         tabs:['Service details','Service URLs','Linked keywords'],
         urls:[
@@ -659,19 +659,19 @@ class AppRoot extends React.Component {
       // human-readable annotation, same as it always was.
       qcChecklist: {
         label:'QC Checklist Master', icon:'clipboard-check', group:'Marketing & Quality',
-        desc:'Reusable QC checklists applied during review — the Checklist name is what a Content Type\'s "QC_Checklist" field links to for dynamic QC.',
-        cols:[ {k:'QC_Code',l:'Code',mono:1}, {k:'Checklist',l:'Checklist'}, {k:'Items',l:'Items'}, {k:'Applies_To',l:'Applies to'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['QC_Code','Checklist','Items','Item_List','Applies_To','Severity_Default','Status'],
+        desc:'Reusable QC checklists applied during review — the Checklist name is what a Content Type\'s "QC_Checklist" field links to for dynamic QC, and Campaign_Type maps it into the Task → Campaign → Campaign Type → matching QC Checklists flow.',
+        cols:[ {k:'QC_Code',l:'Code',mono:1}, {k:'Checklist',l:'Checklist'}, {k:'Items',l:'Items'}, {k:'Campaign_Type',l:'Campaign type'}, {k:'No_of_Checklists',l:'No. of checklists'}, {k:'Applies_To',l:'Applies to'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['QC_Code','Checklist','Items','Item_List','Campaign_Type','No_of_Checklists','Applies_To','Severity_Default','Status'],
         rows:[
-          {QC_Code:'QC-01',Checklist:'Content Audit',Items:18,Item_List:'Grammar & clarity checked;Plagiarism checked;Fact-checking complete;Formatting consistent',Applies_To:'Case Study, Whitepaper, Service Page, Product Page, FAQ, News, Resource, Checklist, Video Script, Infographic, Webinar, Press Release, Glossary, Pillar Page, Cluster Page',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-02',Checklist:'SEO Audit',Items:24,Item_List:'Title tag checked;Meta description checked;Header structure checked;Internal links checked',Applies_To:'On-page, Technical',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-03',Checklist:'Website Audit',Items:31,Item_List:'Page load speed checked;Mobile responsiveness checked;Broken links checked;Schema markup checked',Applies_To:'Web builds',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-04',Checklist:'SMM Audit',Items:12,Item_List:'Caption checked;Hashtags checked;Image spec checked;Posting schedule checked',Applies_To:'Reels, Posts',Severity_Default:'Low',Status:'Active'},
-          {QC_Code:'QC-05',Checklist:'Email QC Checklist',Items:5,Item_List:'Subject line checked;CTA checked;Links verified;Personalisation checked;Mobile rendering checked',Applies_To:'Email',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-06',Checklist:'Landing Page QC Checklist',Items:5,Item_List:'Headline checked;CTA checked;Form checked;Links checked;Mobile responsiveness checked',Applies_To:'Landing Page',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-07',Checklist:'Blog QC Checklist',Items:5,Item_List:'Grammar & clarity checked;SEO title & meta checked;Internal links checked;Plagiarism checked;Readability checked',Applies_To:'Blog',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-08',Checklist:'Social Media QC Checklist',Items:5,Item_List:'Caption checked;Hashtags checked;Image/video spec checked;Platform formatting checked;CTA checked',Applies_To:'Social Content',Severity_Default:'Low',Status:'Active'},
-          {QC_Code:'QC-09',Checklist:'Ad Campaign QC Checklist',Items:5,Item_List:'Ad copy checked;Targeting checked;Creative spec checked;Landing page link checked;Budget & schedule checked',Applies_To:'Ad Campaign',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-01',Checklist:'Content Audit',Items:18,Item_List:'Grammar & clarity checked;Plagiarism checked;Fact-checking complete;Formatting consistent',Campaign_Type:'Content Campaign',No_of_Checklists:2,Applies_To:'Case Study, Whitepaper, Service Page, Product Page, FAQ, News, Resource, Checklist, Video Script, Infographic, Webinar, Press Release, Glossary, Pillar Page, Cluster Page',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-02',Checklist:'SEO Audit',Items:24,Item_List:'Title tag checked;Meta description checked;Header structure checked;Internal links checked',Campaign_Type:'SEO Campaign',No_of_Checklists:1,Applies_To:'On-page, Technical',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-03',Checklist:'Website Audit',Items:31,Item_List:'Page load speed checked;Mobile responsiveness checked;Broken links checked;Schema markup checked',Campaign_Type:'Website Campaign',No_of_Checklists:2,Applies_To:'Web builds',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-04',Checklist:'SMM Audit',Items:12,Item_List:'Caption checked;Hashtags checked;Image spec checked;Posting schedule checked',Campaign_Type:'SMM Campaign',No_of_Checklists:2,Applies_To:'Reels, Posts',Severity_Default:'Low',Status:'Active'},
+          {QC_Code:'QC-05',Checklist:'Email QC Checklist',Items:5,Item_List:'Subject line checked;CTA checked;Links verified;Personalisation checked;Mobile rendering checked',Campaign_Type:'Email Campaign',No_of_Checklists:1,Applies_To:'Email',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-06',Checklist:'Landing Page QC Checklist',Items:5,Item_List:'Headline checked;CTA checked;Form checked;Links checked;Mobile responsiveness checked',Campaign_Type:'Website Campaign',No_of_Checklists:2,Applies_To:'Landing Page',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-07',Checklist:'Blog QC Checklist',Items:5,Item_List:'Grammar & clarity checked;SEO title & meta checked;Internal links checked;Plagiarism checked;Readability checked',Campaign_Type:'Content Campaign',No_of_Checklists:2,Applies_To:'Blog',Severity_Default:'Medium',Status:'Active'},
+          {QC_Code:'QC-08',Checklist:'Social Media QC Checklist',Items:5,Item_List:'Caption checked;Hashtags checked;Image/video spec checked;Platform formatting checked;CTA checked',Campaign_Type:'SMM Campaign',No_of_Checklists:2,Applies_To:'Social Content',Severity_Default:'Low',Status:'Active'},
+          {QC_Code:'QC-09',Checklist:'Ad Campaign QC Checklist',Items:5,Item_List:'Ad copy checked;Targeting checked;Creative spec checked;Landing page link checked;Budget & schedule checked',Campaign_Type:'Analytics Campaign',No_of_Checklists:1,Applies_To:'Ad Campaign',Severity_Default:'High',Status:'Active'},
         ],
       },
       kpi: {
@@ -726,6 +726,12 @@ class AppRoot extends React.Component {
       Default_Owner:{ toUsers:true },
       QC_Checklist:{ toMaster:'qcChecklist', valueField:'Checklist', labelField:'Checklist' },
     },
+    qcChecklist: {
+      // Not a master-to-master link (Campaign Type isn't its own master,
+      // it's Campaigns' own `type` field — CAMPAIGN_TYPES()) — a static
+      // option list, same shared vocabulary the Campaign create form uses.
+      Campaign_Type:{ toStatic:true, none:'—' },
+    },
     contentCategory: { Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name', none:'All Brands' } },
     industry: { Brand:{ toMaster:'brand', valueField:'Brand_Name', labelField:'Brand_Name', none:'All Brands' } },
     kpi: { Department:{ toMaster:'department', valueField:'Department', labelField:'Department' } },
@@ -736,6 +742,10 @@ class AppRoot extends React.Component {
     const rel = this.MASTER_FIELD_RELATIONS[masterKey] && this.MASTER_FIELD_RELATIONS[masterKey][fieldKey];
     if(!rel) return null;
     if(rel.toUsers) return (this.state.users||[]).map(u=>({ value:u.name, label:u.name }));
+    if(rel.toStatic){
+      const opts=this.CAMPAIGN_TYPES().map(v=>({ value:v, label:v }));
+      return rel.none!=null ? [{ value:rel.none, label:rel.none }].concat(opts) : opts;
+    }
     const reg = this.MASTERS_REG();
     const target = reg[rel.toMaster];
     if(!target) return null;
@@ -868,7 +878,7 @@ class AppRoot extends React.Component {
     const out={ cmpStats:stats, cmpRows:pg.rows, cmpPg:pg, cmpCanEdit:canEdit, cmpEmpty:list.length===0, cmpOwnNote:own,
       cmpFilterDefs:[
         {label:'Status',value:F.status,onChange:setF('status'),options:['All','Draft','Planning','Live','Paused','Completed']},
-        {label:'Type',value:F.type,onChange:setF('type'),options:['All','SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']},
+        {label:'Type',value:F.type,onChange:setF('type'),options:['All'].concat(this.CAMPAIGN_TYPES())},
         {label:'Department',value:F.dept,onChange:setF('dept'),options:['All'].concat(this.liveDeptOptions())},
       ],
       cmpReset:()=>this.setState({ cmpFilters:{status:'All',type:'All',dept:'All'} }),
@@ -1025,7 +1035,7 @@ class AppRoot extends React.Component {
             let sc=el.parentElement; while(sc && !(sc.scrollHeight>sc.clientHeight+4 && /auto|scroll/.test(getComputedStyle(sc).overflowY))) sc=sc.parentElement;
             if(sc) sc.scrollTo({ top:Math.max(0, el.offsetTop-20), behavior:'smooth' }); },0); },
         badgeBg:sec===id?'var(--beet-700)':'var(--surface-50)', badgeColor:sec===id?'#fff':'var(--ink-500)' })),
-      cmpSetName:set('name'), cmpSetType:set('type'), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
+      cmpSetName:set('name'), cmpSetType:set('type'), cmpTypeOptions:this.CAMPAIGN_TYPES(), cmpSetObjective:set('objective'), cmpSetStatus:set('status'), cmpSetBrand:set('brand'), cmpSetDept:set('dept'), cmpSetCycle:set('cycle'), cmpSetStart:set('start'), cmpSetEnd:set('end'), cmpSetOwner:set('owner'), cmpSetBudget:set('budget'), cmpSetGoal:set('goal'),
       cmpDeptOptions:this.liveDeptOptions(), cmpBrandOptions:this.BRAND_LIST(),
       cmpSetCountries:set('countries'), cmpSetIndustries:set('industries'), cmpSetAudience:set('audience'), cmpSetPersona:set('persona'), cmpSetCompanySize:set('companySize'),
       // Target countries/industries as Master-Data-backed pill toggles —
@@ -1044,6 +1054,23 @@ class AppRoot extends React.Component {
       cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
       cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortOptions:effOptions,
       cmpEffortEmpty:effArr.length===0,
+      // Multi-select bulk-add: lets a user pick several Effort Planner lines
+      // under a KPI in one control instead of repeating "Add effort line"
+      // once per effort. Each picked key still becomes its own row (a row's
+      // qty/unit/division/owner/tasks are all per-single-effort data, so
+      // "select many" means "add many rows", not one row holding several
+      // efforts) — this only changes how many rows get added per click.
+      cmpEffortMultiOptions:effPool.filter(e=>(!linkedKpis.length||!e.kpi||linkedKpis.includes(e.kpi)) && !effArr.some(r=>r.srcKey===e.key)).map(e=>({key:e.key,label:e.label})),
+      cmpEffortMultiVal:this.state.cmpEffortMultiSel||[],
+      cmpEffortMultiChange:(e)=>{ const vals=Array.from(e.target.selectedOptions).map(o=>o.value); this.setState({ cmpEffortMultiSel:vals }); },
+      cmpEffortMultiAdd:()=>{
+        const sel=this.state.cmpEffortMultiSel||[]; if(!sel.length){ this.flash('Select one or more efforts first.'); return; }
+        const picked=sel.map(k=>effPool.find(e=>e.key===k)).filter(Boolean)
+          .map(s=>({ srcKey:s.key, name:s.name, qty:s.qty, unit:s.unit, cadence:s.cadence, division:s.division, owner:s.owner, kpi:s.kpi, planId:s.planId, tasks:s.tasks, tasksDone:s.tasksDone, mode:'direct' }));
+        const base=effArr.filter(r=>r.name||r.srcKey);
+        this.setState({ cmpForm:{...f, efforts:[...base, ...picked]}, cmpEffortMultiSel:[] });
+        this.flash(picked.length+' effort line'+(picked.length===1?'':'s')+' added.');
+      },
       ...(()=>{ const ne=this.state.cmpNewEffort; if(!ne) return { cmpNewEffortOpen:false };
         const setNe=(k)=>(e)=>this.setState({ cmpNewEffort:{...ne,[k]:e.target.value} });
         return { cmpNewEffortOpen:true, cmpNe:ne,
@@ -1620,6 +1647,16 @@ class AppRoot extends React.Component {
     const pct=(now-start)/(due-start)*100;
     return Math.round(Math.max(0, pct));
   }
+  // Recomputed live from o.due, same as cycleElapsedOf — a stored daysLeft
+  // number would drift stale the moment the calendar moves on, which is
+  // exactly how every DB-loaded OKR ended up permanently showing "90 days
+  // left" regardless of its real due date.
+  daysLeftOf(o){
+    const due=new Date(o.due);
+    if(isNaN(due)) return o.daysLeft||0;
+    const now=new Date(); now.setHours(0,0,0,0); due.setHours(0,0,0,0);
+    return Math.round((due-now)/86400000);
+  }
   allOkrs(){
     const upd=this.state.okrUpd||{};
     // Dedupe by `code`, not `id` — a seed OKR's id ('1'), a locally-created
@@ -1635,7 +1672,7 @@ class AppRoot extends React.Component {
       .map(o=>upd[o.id]?{...o,...upd[o.id]}:o)
       .map(o=>{
         const p=Math.min(100,this.okrProgress(o));
-        return { ...o, progress:p, progressRaw:this.okrProgress(o), cycleElapsed:this.cycleElapsedOf(o) };
+        return { ...o, progress:p, progressRaw:this.okrProgress(o), cycleElapsed:this.cycleElapsedOf(o), daysLeft:this.daysLeftOf(o) };
       });
   }
   _persistOkr(code, fields){
@@ -3214,13 +3251,17 @@ class AppRoot extends React.Component {
     // assignee defaults to '' (falls back to the plan's overall owner in
     // epGenerate) — seed rows have no individual assignee, only plans
     // created/edited through the real UI set one per effort.
-    const R=(type,icon,monthly,days,unit,priority,weight,kpiId,assignee)=>({type,icon,monthly,days,unit,priority,weight,kpiId,assignee:assignee||''});
+    // hours: estimated hours for ONE task delivering this effort — the
+    // figure item 58's Task-creation "Estimated Hours" auto-fill reads,
+    // distinct from `monthly`/`days` which describe the effort's overall
+    // period target, not a single task's workload.
+    const R=(type,icon,monthly,days,unit,priority,weight,kpiId,assignee,hours)=>({type,icon,monthly,days,unit,priority,weight,kpiId,assignee:assignee||'',hours:hours||1});
     return {
-      'Content Writer':[ R('Long-form content','file-text',25000,25,'words','High',40,'sr3'), R('Blog posts','newspaper',12,25,'articles','High',30,'sr3'), R('Case studies','file-check',4,20,'case studies','Medium',20,''), R('Proofreading passes','spell-check',20,25,'documents','Low',10,'') ],
-      'Graphics':[ R('Social creatives','image',30,25,'designs','High',40,'jr3'), R('Reels / video edits','clapperboard',12,25,'reels','High',30,''), R('Infographics','bar-chart-3',6,20,'infographics','Medium',20,''), R('Thumbnails & banners','panels-top-left',20,25,'assets','Low',10,'') ],
-      'Web Developers':[ R('Landing pages built','code',8,25,'pages','High',40,''), R('Bug fixes','bug',40,25,'fixes','High',25,''), R('Core Web Vitals fixes','gauge',20,20,'fixes','Medium',20,'tl3'), R('Broken link fixes','link',60,25,'links','Low',15,'jr2') ],
-      'SMM':[ R('Platform posts','share-2',60,25,'posts','High',40,''), R('Community responses','messages-square',200,25,'replies','Medium',25,''), R('Stories / reels','clapperboard',20,25,'stories','High',25,''), R('Influencer outreach','users',10,20,'contacts','Low',10,'') ],
-      'SEO':[ R('Backlinks','link',200,25,'backlinks','High',30,'jr2'), R('On-page optimizations','search',120,25,'pages','Medium',25,'jr1'), R('Technical SEO fixes','settings-2',40,20,'fixes','Medium',20,'tl3'), R('Keyword research','key-round',80,25,'keywords','High',25,'sr2') ],
+      'Content Writer':[ R('Long-form content','file-text',25000,25,'words','High',40,'sr3','',6), R('Blog posts','newspaper',12,25,'articles','High',30,'sr3','',3), R('Case studies','file-check',4,20,'case studies','Medium',20,'','',8), R('Proofreading passes','spell-check',20,25,'documents','Low',10,'','',2) ],
+      'Graphics':[ R('Social creatives','image',30,25,'designs','High',40,'jr3','',2), R('Reels / video edits','clapperboard',12,25,'reels','High',30,'','',4), R('Infographics','bar-chart-3',6,20,'infographics','Medium',20,'','',5), R('Thumbnails & banners','panels-top-left',20,25,'assets','Low',10,'','',1) ],
+      'Web Developers':[ R('Landing pages built','code',8,25,'pages','High',40,'','',8), R('Bug fixes','bug',40,25,'fixes','High',25,'','',2), R('Core Web Vitals fixes','gauge',20,20,'fixes','Medium',20,'tl3','',4), R('Broken link fixes','link',60,25,'links','Low',15,'jr2','',1) ],
+      'SMM':[ R('Platform posts','share-2',60,25,'posts','High',40,'','',1), R('Community responses','messages-square',200,25,'replies','Medium',25,'','',1), R('Stories / reels','clapperboard',20,25,'stories','High',25,'','',2), R('Influencer outreach','users',10,20,'contacts','Low',10,'','',3) ],
+      'SEO':[ R('Backlinks','link',200,25,'backlinks','High',30,'jr2','',2), R('On-page optimizations','search',120,25,'pages','Medium',25,'jr1','',3), R('Technical SEO fixes','settings-2',40,20,'fixes','Medium',20,'tl3','',4), R('Keyword research','key-round',80,25,'keywords','High',25,'sr2','',4) ],
     }[d]||[];
   }
   EP_PLANS(){ return [
@@ -3380,6 +3421,7 @@ class AppRoot extends React.Component {
       const ts=this.allTasks().filter(t=>t.effortType===r.type||t.template===r.type||t.name===r.type||(t.kpiId&&kids.includes(t.kpiId)));
       const expTasks=(this.state.epRowExpanded||[]).includes(r.type);
       return { ...r, i, monthly:String(r.monthly||0), weekly:weekly.toLocaleString('en-US'), daily:daily.toLocaleString('en-US'), weightStr:String(r.weight||0),
+        hours:String(r.hours||0), setHours:setRow(i,'hours'),
         kpiLabel:k?k.kpi:'—', hasKpi:!!k,
         kpiChips:kobjs.map(o=>({ label:o.kpi, sub:o.baseline+' → '+o.target+' '+o.unit,
           remove:()=>{ const nk=kids.filter(x=>x!==o.id); this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]||''}:x) }); } })),
@@ -3488,9 +3530,22 @@ class AppRoot extends React.Component {
         }); },
       epNew:()=>{ const d=this.state.epDivision||'Content Writer'; const deptMap={'Content Writer':'Content','Graphics':'Design','Web Developers':'Web Development','SMM':'SMM','SEO':'SEO'}; this.setState({ epView:'create', epPlanId:null, epForm:{ ...this.EP_FORM(), name:'Jul '+d+' Effort Plan', dept:deptMap[d]||d }, epRows:this.EP_DIV_ROWS(d).map(r=>({...r})) }); },
       epBack:()=>this.setState({ epView:'list' }),
-      epAddRow:()=>this.setState({ epRows:[...rows,{ type:'Custom effort — name it', icon:'plus', monthly:0, days:25, unit:'units', priority:'Medium', weight:0, kpiId:'', custom:true }] }),
+      epAddRow:()=>this.setState({ epRows:[...rows,{ type:'Custom effort — name it', icon:'plus', monthly:0, days:25, unit:'units', priority:'Medium', weight:0, kpiId:'', hours:1, custom:true }] }),
       epSave:()=>{ if(!canEdit){ this.flash('You do not have permission to create or edit effort plans.'); return; }
         const totalW=rows.reduce((s,r)=>s+(r.weight||0),0); if(!f.name.trim()){ this.flash('Name the plan.'); return; }
+        // Mirrors _saveCampaign's OKR-window check (AppRoot.jsx ~1089) — an
+        // effort plan can't run outside the objective it delivers either.
+        // f.okr stores the OKR's title (see okrTitleOpt/okrSetOkr), not its
+        // code, since that's what the picker's own options list is built from.
+        if(f.okr && f.okr!=='— None —'){
+          const okr=this.allOkrs().find(o=>o.title===f.okr);
+          if(okr){
+            const okrStart=new Date(okr.start), okrDue=new Date(okr.due);
+            const pStart=f.start?new Date(f.start):null, pEnd=f.end?new Date(f.end):null;
+            if(pStart && !isNaN(okrStart) && (pStart<okrStart||pStart>okrDue)){ this.flash('Effort plan start date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
+            if(pEnd && !isNaN(okrDue) && (pEnd<okrStart||pEnd>okrDue)){ this.flash('Effort plan end date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
+          }
+        }
         // Check against every plan (seed + added), not just epAdded — editing
         // a seed plan (EP-001 etc.) must replace it, not create a duplicate
         // id when it later gets upserted into epAdded.
@@ -4343,6 +4398,25 @@ class AppRoot extends React.Component {
     const items=(row.Item_List||'').split(';').map(s=>s.trim()).filter(Boolean).map(text=>({text}));
     return { Checklist:row.Checklist, Items:items };
   }
+  // Item 60's second, complementary QC-checklist route: Task → its linked
+  // Campaign → that Campaign's own `type` (SEO/Content/SMM/Website/Email/
+  // Analytics Campaign — CAMPAIGN_TYPES(), unrelated to the Content Type
+  // used by qcChecklistFor above) → every qcChecklist row mapped to that
+  // Campaign Type via the new Campaign_Type field. Returns an array (a
+  // Campaign Type can have several checklists, per the new No_of_Checklists
+  // field) rather than qcChecklistFor's single row — "do not display all QC
+  // checklists for every task" means filtering by Campaign_Type, not
+  // collapsing to just one.
+  qcChecklistsForCampaign(t){
+    if(!t || !t.campaign || t.campaign==='—') return { campaignType:'', checklists:[] };
+    const camp=this.allCampaigns().find(c=>c.name===t.campaign);
+    if(!camp || !camp.type) return { campaignType:'', checklists:[] };
+    const rows=this.MASTERS_REG().qcChecklist.rows.filter(r=>r.Campaign_Type===camp.type && r.Status!=='Inactive');
+    return { campaignType:camp.type, checklists:rows.map(row=>({
+      Checklist:row.Checklist,
+      Items:(row.Item_List||'').split(';').map(s=>s.trim()).filter(Boolean),
+    })) };
+  }
   tkSetTypeQcItem(taskId, idx, field, value){
     const cur={...(this.state.clTypeQc||{})};
     const forTask={...(cur[taskId]||{})};
@@ -4382,6 +4456,21 @@ class AppRoot extends React.Component {
       ctQcHasType:true, ctQcMissingMsg:'', ctQcHasChecklist:true,
       ctQcContentType:t.contentType, ctQcChecklistName:checklist.Checklist,
       ctQcItems:items, ctQcCoverage:done+' of '+items.length+' checked',
+    };
+  }
+  // Read-only companion to contentTypeQcData — sits alongside it (Part D.1's
+  // "never break existing workflows" applies here too), surfacing item 60's
+  // Campaign-Type-mapped checklists as reference material for whoever's
+  // doing QC, without opening a second parallel pass/fail/note recording
+  // surface that could drift out of sync with the Content-Type one above.
+  campaignTypeQcData(t){
+    if(!t || !t.campaign || t.campaign==='—') return { cmpQcHasCampaign:false };
+    const { campaignType, checklists }=this.qcChecklistsForCampaign(t);
+    if(!campaignType) return { cmpQcHasCampaign:true, cmpQcHasType:false, cmpQcCampaign:t.campaign };
+    return {
+      cmpQcHasCampaign:true, cmpQcHasType:true, cmpQcCampaign:t.campaign, cmpQcCampaignType:campaignType,
+      cmpQcChecklists:checklists.map(c=>({ name:c.Checklist, items:c.Items })),
+      cmpQcEmpty:checklists.length===0,
     };
   }
   complianceFill(t){
@@ -6765,11 +6854,13 @@ class AppRoot extends React.Component {
     });
   }
   // A requester may edit their own submission only while it hasn't started
-  // moving through the workflow yet — once triage assigns it (or it's no
-  // longer Open), the record of what was originally asked must stay fixed.
+  // moving through the workflow yet — once it's assigned or moved to In
+  // Progress, the record of what was originally asked must stay fixed.
+  // 'Triaged' (categorized but still unassigned) is still editable — only
+  // assignment or work starting locks it, per spec item 61.
   tktCanEdit(t){
     if(!t) return false;
-    return t.by===this.currentPerson() && t.status==='Open' && !t.assignee;
+    return t.by===this.currentPerson() && ['Open','Triaged'].includes(t.status) && !t.assignee;
   }
   tktOpenEdit(id){
     const t=this.allTickets().find(x=>x.id===id);
@@ -7237,6 +7328,7 @@ class AppRoot extends React.Component {
       tkKpiNote: t.status==='Approved' ? 'Counted toward KPI on approval.' : 'Counts toward the KPI once QC approves.',
       ...this.complianceData(t, rk),
       ...this.contentTypeQcData(t, rk),
+      ...this.campaignTypeQcData(t),
     };
   }
 
@@ -7298,8 +7390,12 @@ class AppRoot extends React.Component {
           tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>({ v:r.type, label:r.type+' — '+(r.monthly||0).toLocaleString('en-US')+' '+r.unit+' / month' }))) : [],
           tkEffortRowVal:f.effortRow||'',
           tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v); const nf={...f, effortRow:v};
-            if(r){ nf.kpiId=r.kpiId||''; nf.priority=r.priority; nf.units=(r.monthly<=31)?'1':String(Math.ceil((r.monthly||0)/4)); if(!f.name){ nf.name=r.type+' — '+plan.name; } }
-            this.setState({ tkForm:nf }); this.flash(r?'KPI, priority & contribution auto-filled from the effort.':''); },
+            // Item 58: Contribution Units and Estimated Hours both come from
+            // the single Effort row picked here — units already did; hours
+            // is the effort row's own per-task estimate (r.hours, set in
+            // Effort Planner), not derived from the monthly/period target.
+            if(r){ nf.kpiId=r.kpiId||''; nf.priority=r.priority; nf.units=(r.monthly<=31)?'1':String(Math.ceil((r.monthly||0)/4)); nf.estH=String(r.hours||1); if(!f.name){ nf.name=r.type+' — '+plan.name; } }
+            this.setState({ tkForm:nf }); this.flash(r?'KPI, priority, contribution units & estimated hours auto-filled from the effort.':''); },
         };
       })(),
       tkTplChecklist:(tpl?tpl.checklist:[]).join(' · '),
@@ -7430,6 +7526,7 @@ class AppRoot extends React.Component {
   _saveOkr(activate, wOk, wTotal, rk){
     const f=this.state.okrForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter an objective title.'); return; }
+    if(!f.end){ this.flash('Select a Due Date.'); return; }
     if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
     const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
       t:k.kr&&k.kr.trim()?k.kr.trim():'Key result '+(i+1), kpi:k.kpiSel||'KPI '+(i+1),
@@ -7441,7 +7538,7 @@ class AppRoot extends React.Component {
     const editId=this.state.okrEditId;
     const shared={ title:f.title.trim(), desc:f.desc||'', owner:f.owner, dept:f.dept, brand:f.brand, businessUnit:f.businessUnit||'', websiteDomain:f.websiteDomain||'', campaign:f.campaign||'—', category:f.category||f.dept,
       scope:f.scope||'Department', priority:f.priority||'Medium', cycle:f.cycle||'Q1 2026', reviewFreq:f.reviewFreq||'Weekly',
-      start:this.fmtDate(f.start)||this.todayStr(), due:this.fmtDate(f.end)||'Mar 31, 2026',
+      start:this.fmtDate(f.start)||this.todayStr(), due:this.fmtDate(f.end),
       parent:f.parent||'None (top level)', dependsOn:f.dependsOn||'', effortTargets:f.effortTargets||'',
       progressCalc:f.progressCalc||'Automatic (from KPI logs)', dataSource:f.dataSource||'GA4',
       reviewer:f.reviewer||this.currentPerson(), risks:f.risks||'', krs, status: activate?(f.status&&f.status!=='Draft'?f.status:'Active'):'Draft',
@@ -7456,6 +7553,7 @@ class AppRoot extends React.Component {
         title:shared.title, description:shared.desc, category:shared.category,
         scope:shared.scope, division:shared.dept, status:shared.status, key_results:krs,
         business_unit:shared.businessUnit, website_domain:shared.websiteDomain, contributors:shared.contributors, owner:shared.owner,
+        start_date:f.start||null, due_date:f.end||null,
       });
       return;
     }
@@ -7468,7 +7566,7 @@ class AppRoot extends React.Component {
     const nums=allCodes.filter(c=>c&&c.indexOf(prefix)===0).map(c=>parseInt(c.slice(prefix.length),10)||0);
     const code=prefix+String(Math.max(0,...nums)+1).padStart(3,'0');
     const okr={
-      id:'okr-local-'+Date.now(), code, v:'v1.0', team:'', campaign:'', daysLeft:90, cycleElapsed:0,
+      id:'okr-local-'+Date.now(), code, v:'v1.0', team:'', campaign:'', daysLeft:0, cycleElapsed:0,
       weight:100, approver:this.currentPerson(), ...shared,
     };
     this.setState({ okrAdded:[...(this.state.okrAdded||[]), okr], showOkrPanel:false,
@@ -7477,7 +7575,8 @@ class AppRoot extends React.Component {
     supabase.from('okrs').insert({
       code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
       status:okr.status, key_results:krs, business_unit:okr.businessUnit, website_domain:okr.websiteDomain,
-      contributors:okr.contributors, owner:okr.owner, created_by:this.state.authUser?this.state.authUser.id:null,
+      contributors:okr.contributors, owner:okr.owner, start_date:f.start||null, due_date:f.end||null,
+      created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] okr insert failed:', error.message);
     });
@@ -7511,7 +7610,7 @@ class AppRoot extends React.Component {
       owner:r.owner||(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—',
       contributors:r.contributors||[], team:(r.contributors&&r.contributors.length)?('+'+r.contributors.length):'', cycle:'Q1 2026',
       brand:'', businessUnit:r.business_unit||'', websiteDomain:r.website_domain||'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
-      progress:0, due:'Mar 31, 2026', start:this.todayStr(), daysLeft:90, cycleElapsed:0,
+      progress:0, due:this.fmtDate(r.due_date)||'—', start:this.fmtDate(r.start_date)||this.todayStr(), daysLeft:0, cycleElapsed:0,
       status:r.status||'Draft', weight:100, reviewer:'', approver:'',
       krs:r.key_results||[],
     }));
@@ -8338,14 +8437,24 @@ class AppRoot extends React.Component {
     return {
       showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
-      npBrandOptions:this.BRAND_LIST(), npSetBrand:set('brand'),
+      npBrandOptions:this.BRAND_LIST(),
+      // Changing Brand invalidates whatever Service was picked under the
+      // old brand — a Service Page's Service must belong to its own Brand,
+      // never a mismatched leftover from before the switch.
+      npSetBrand:(e)=>this.setState({ npForm:{...this.state.npForm, brand:e.target.value, linkService:'', linkSubService:'' } }),
       npObjectCategoryOptions:this.MASTERS_REG().objectCategory.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Category_Name), npSetObjectCategory:set('objectCategory'),
       npTypeOptions:this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type),
       // Service Master already carries real SEO metadata (Title_Tag,
       // Meta_Description, Primary_Keywords, Target_Industries/Countries) for
       // every service — picking one here pulls it straight in instead of
       // making the author retype what Master Data already has on file.
-      npServiceMasterOptions:this.MASTERS_REG().service.rows.filter(r=>r.Page_Status!=='Archived').map(r=>r.Service_Name),
+      // Scoped to the page's own Brand (item 55) — a Food Research Lab page
+      // has no business offering a Beetloop service.
+      // Hierarchy_Level compared loosely — Master Data's generic record
+      // editor writes it as a string ("0"/"1") from a plain text input,
+      // while the seed rows use real numbers; a strict === would silently
+      // exclude every admin-created service record.
+      npServiceMasterOptions:this.MASTERS_REG().service.rows.filter(r=>r.Page_Status!=='Archived' && String(r.Hierarchy_Level)==='0' && (!f.brand||r.Brand===f.brand)).map(r=>r.Service_Name),
       npIndustryOptions:this.MASTERS_REG().industry.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Industry),
       npLinkServiceVal:f.linkService||'',
       npPullFromService:(e)=>{
@@ -8358,14 +8467,39 @@ class AppRoot extends React.Component {
         // the service's SEO metadata.
         const curName=(this.state.npForm.name||'').trim();
         this.setState({ npForm:{...this.state.npForm,
-          linkService:name,
+          linkService:name, linkSubService:'',
           name: curName?curName:name,
+          // Service Master's own canonical Slug (item 56) rather than
+          // re-deriving one from the name — the two can differ (e.g. a
+          // service renamed after its slug was already indexed).
+          slug:row.Slug||slugify(name),
           metaTitle:row.Title_Tag||'',
           metaDesc:row.Meta_Description||'',
           primaryKw:row.Primary_Keywords||'',
           keyword:(row.Primary_Keywords||'').split(',')[0].trim(),
           industry:(row.Target_Industries||'').split(',')[0].trim(),
           countries:row.Target_Countries||'',
+        } });
+        this.flash('Pulled SEO details from Service Master — '+name+'.');
+      },
+      // Sub-Service was a free-text field (item 57) — now the same
+      // Brand-scoped, Master-backed dropdown pattern as the parent Service
+      // field above, sourced from Service Master's own child rows
+      // (Hierarchy_Level 1). Picking one auto-fills the URL slug from that
+      // row's own canonical Slug (already the full nested path, e.g.
+      // 'cloud-migration/aws' — matches its Primary_URL) instead of the
+      // page slugifying just its name.
+      npSubServiceMasterOptions:this.MASTERS_REG().service.rows.filter(r=>r.Page_Status!=='Archived' && String(r.Hierarchy_Level)==='1' && (!f.brand||r.Brand===f.brand)).map(r=>r.Service_Name),
+      npLinkSubServiceVal:f.linkSubService||f.subService||'',
+      npPullFromSubService:(e)=>{
+        const name=e.target.value;
+        const row=this.MASTERS_REG().service.rows.find(r=>r.Service_Name===name && String(r.Hierarchy_Level)==='1');
+        if(!row){ this.setState({ npForm:{...this.state.npForm, linkSubService:'', subService:''} }); return; }
+        this.setState({ npForm:{...this.state.npForm,
+          linkSubService:name, subService:name,
+          slug:row.Slug||slugify(name),
+          metaTitle:row.Title_Tag||this.state.npForm.metaTitle,
+          metaDesc:row.Meta_Description||this.state.npForm.metaDesc,
         } });
         this.flash('Pulled SEO details from Service Master — '+name+'.');
       },
@@ -8572,6 +8706,12 @@ class AppRoot extends React.Component {
   // filters, Campaign/OKR forms, Brand Playbook. Inactive brands drop out
   // of every dropdown but stay in Master Data (soft-disable, not delete).
   BRAND_LIST(){ return this.MASTERS_REG().brand.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Brand_Name); }
+  // Single source for "Campaign Type" — was duplicated as a hardcoded array
+  // in the Campaigns filter dropdown and the Create Campaign form; now also
+  // the same vocabulary the QC Checklist master's Campaign Type field maps
+  // against (item 60's Task → Campaign → Campaign Type → matching QC
+  // Checklists flow needs both sides speaking the same values).
+  CAMPAIGN_TYPES(){ return ['SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']; }
   liveDeptOptions(){ return this.MASTERS_REG().department.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Department).filter(Boolean); }
   ROLE_LIST(){ return this.MASTERS_REG().role.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Role); }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
@@ -9806,17 +9946,32 @@ class AppRoot extends React.Component {
           ?'border:none;background:#7A1C46;color:#fff':'border:1px solid var(--line-300);background:var(--paper);color:var(--ink-700)'),
         canDelete: r.custom && canDelete,
         delete: r.custom ? ()=>this.confirmDelete('Delete Repository?', 'Are you sure you want to delete "'+r.name+'"? This action cannot be undone.', ()=>this.repoDeleteCustom(r.key)) : null,
+        canEdit: r.custom && canCreate,
+        edit: r.custom ? ()=>this.repoOpenEdit(r.key) : null,
       })),
       repoCanCreate:canCreate,
       repoFormOpen:!!this.state.repoNew,
-      repoClose:()=>this.setState({ repoNew:false, repoForm:{} }),
+      repoIsEdit:!!this.state.repoEditKey,
+      repoFormTitle:this.state.repoEditKey?'Edit repository':'New repository',
+      repoSaveLabel:this.state.repoEditKey?'Save changes':'Create repository',
+      repoClose:()=>this.setState({ repoNew:false, repoEditKey:null, repoForm:{} }),
       repoStop:(e)=>e.stopPropagation(),
       rf:f, repoSetName:setR('name'), repoSetDesc:setR('desc'), repoSetCat:setR('cat'), repoSetOwner:setR('owner'),
       repoCatOptions:['Content','SEO','Assets','Promotions','Performance','Quality','Research'],
       repoOwnerOptions:(this.state.users||[]).map(u=>u.name),
       repoSave:()=>{
-        if(!canCreate){ this.flash('You do not have permission to create repositories.'); return; }
+        const editKey=this.state.repoEditKey;
+        if(!this.hasPerm('repositories', editKey?'edit':'create')){ this.flash('You do not have permission to '+(editKey?'edit':'create')+' repositories.'); return; }
         if(!(f.name&&f.name.trim())){ this.flash('Name the repository.'); return; }
+        if(editKey){
+          const updated={ key:editKey, name:f.name.trim(), desc:f.desc||'Custom repository.', cat:f.cat||'Content', icon:'database', owner:f.owner||this.currentPerson() };
+          this.setState({ repoAdded:(this.state.repoAdded||[]).map(r=>r.key===editKey?updated:r), repoNew:false, repoEditKey:null, repoForm:{} });
+          this.flash('“'+updated.name+'” updated.');
+          supabase.from('document_repo').update({ payload:updated }).eq('id', editKey).then(({error})=>{
+            if(error) console.warn('[supabase] document repo update failed:', error.message);
+          });
+          return;
+        }
         const rec={ key:'r'+Date.now(), name:f.name.trim(), desc:f.desc||'Custom repository.',
           cat:f.cat||'Content', icon:'database', owner:f.owner||this.currentPerson() };
         this.setState({ repoAdded:[rec,...(this.state.repoAdded||[])], repoNew:false, repoForm:{} });
@@ -9826,6 +9981,11 @@ class AppRoot extends React.Component {
         });
       },
     };
+  }
+  repoOpenEdit(key){
+    if(!this.hasPerm('repositories','edit')){ this.flash('You do not have permission to edit repositories.'); return; }
+    const repo=(this.state.repoAdded||[]).find(r=>r.key===key); if(!repo) return;
+    this.setState({ repoNew:true, repoEditKey:key, repoForm:{ name:repo.name, desc:repo.desc, cat:repo.cat, owner:repo.owner } });
   }
 
   uf(k,e){ this.setState({ uf:{...this.state.uf,[k]:e.target.value} }); }

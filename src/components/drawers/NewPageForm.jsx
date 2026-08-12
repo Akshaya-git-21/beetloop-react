@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory, npTypeOptions, npIndustryOptions, npServiceMasterOptions, npLinkServiceVal, npPullFromService } = vm;
+  const { closeNewPage, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory, npTypeOptions, npIndustryOptions, npServiceMasterOptions, npLinkServiceVal, npPullFromService, npSubServiceMasterOptions, npLinkSubServiceVal, npPullFromSubService } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -121,26 +121,6 @@ Repository *
 </select>
 </div>
 
-{Boolean(npServiceMasterOptions && npServiceMasterOptions.length) && (
-<React.Fragment>
-<div style={{"gridColumn":"1 / -1","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 12px"}}>
-<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-700)","marginBottom":"6px"}}>
-Pull SEO details from Service Master
-</label>
-<select value={npLinkServiceVal} onChange={npPullFromService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
-<option value="">— Select a service to auto-fill meta title, description, keywords, industry & countries —</option>
-{(npServiceMasterOptions || []).map((s, $index) => (
-<React.Fragment key={$index}>
-<option value={s}>
-{s}
-</option>
-</React.Fragment>
-))}
-</select>
-</div>
-</React.Fragment>
-)}
-
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Brand
@@ -155,6 +135,46 @@ Brand
 ))}
 </select>
 </div>
+
+{Boolean(npServiceMasterOptions && npServiceMasterOptions.length) && (
+<React.Fragment>
+<div style={{"gridColumn":"1 / -1","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 12px"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-700)","marginBottom":"6px"}}>
+Service — pulls SEO details + URL slug from Service Master
+</label>
+<select value={npLinkServiceVal} onChange={npPullFromService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+<option value="">— Select a service to auto-fill meta title, description, keywords, industry, countries &amp; URL slug —</option>
+{(npServiceMasterOptions || []).map((s, $index) => (
+<React.Fragment key={$index}>
+<option value={s}>
+{s}
+</option>
+</React.Fragment>
+))}
+</select>
+</div>
+</React.Fragment>
+)}
+
+{Boolean(npSubServiceMasterOptions && npSubServiceMasterOptions.length) && (
+<React.Fragment>
+<div style={{"gridColumn":"1 / -1","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","borderRadius":"11px","padding":"10px 12px"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--orchid-700)","marginBottom":"6px"}}>
+Sub-Service — pulls SEO details + URL slug from Service Master
+</label>
+<select value={npLinkSubServiceVal} onChange={npPullFromSubService} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+<option value="">— Select a sub-service to auto-fill meta title, description &amp; URL slug —</option>
+{(npSubServiceMasterOptions || []).map((s, $index) => (
+<React.Fragment key={$index}>
+<option value={s}>
+{s}
+</option>
+</React.Fragment>
+))}
+</select>
+</div>
+</React.Fragment>
+)}
 
 
 <div>

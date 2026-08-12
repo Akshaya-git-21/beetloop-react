@@ -413,9 +413,9 @@ Start date
 
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
-End date
+End date *
 </label>
-<input type="date" value={okrForm.end||''} onChange={okrSetEnd} style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
+<input type="date" value={okrForm.end||''} onChange={okrSetEnd} required style={{"width":"100%","padding":"9px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","color":"var(--ink-700)"}} />
 </div>
 
 

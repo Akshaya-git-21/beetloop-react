@@ -18,10 +18,11 @@ const smallSelect = { ...smallInput };
 export default function CreateCampaignModal({ vm }) {
   const {
     cmpFormOpen, cmpf, cmpFormTitle, cmpFormCode, cmpFormSaveLabel, cmpFormClose, cmpFormSave, cmpCanDelete, cmpFormDelete,
-    cmpSections, cmpSetName, cmpSetType, cmpSetObjective, cmpSetStatus, cmpSetBrand, cmpSetDept, cmpSetCycle, cmpSetStart, cmpSetEnd,
+    cmpSections, cmpSetName, cmpSetType, cmpTypeOptions, cmpSetObjective, cmpSetStatus, cmpSetBrand, cmpSetDept, cmpSetCycle, cmpSetStart, cmpSetEnd,
     cmpSetOwner, cmpSetBudget, cmpSetGoal, cmpSetAudience, cmpSetPersona, cmpSetCompanySize, cmpCountryRows, cmpIndustryRows,
     cmpPeopleNames, cmpKpiForm, cmpAddKpi, cmpKpiPoolOptions,
     cmpEffortForm, cmpAddEffort, cmpEffortEmpty, cmpEffortOptions,
+    cmpEffortMultiOptions, cmpEffortMultiVal, cmpEffortMultiChange, cmpEffortMultiAdd,
     cmpNewEffortOpen, cmpNe, cmpNeSetName, cmpNeSetQty, cmpNeSetUnit, cmpNeSetCadence, cmpNeSetDivision, cmpNeSetKpi,
     cmpNeKpiOptions, cmpNeDivisions, cmpNeCancel, cmpNeSave,
     cmpTeamForm, cmpAddTeam, cmpRoleNames, cmpDeptOptions, cmpBrandOptions,
@@ -71,7 +72,7 @@ export default function CreateCampaignModal({ vm }) {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div><label style={label}>Campaign type</label>
                         <select value={f.type || ''} onChange={cmpSetType} style={select}>
-                          {['SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign'].map(o => <option key={o}>{o}</option>)}
+                          {(cmpTypeOptions || []).map(o => <option key={o}>{o}</option>)}
                         </select>
                       </div>
                       <div><label style={label}>Campaign objective</label>
@@ -213,6 +214,14 @@ export default function CreateCampaignModal({ vm }) {
                     <button onClick={cmpAddEffort} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 12, height: 12 }} />Add effort line</button>
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Auto-filled from the KPIs you linked in section D. Add extra lines only if a KPI has no effort plan yet — quantity, unit, cadence, division, owner and tasks come from Effort Planner.</div>
+                  {Boolean((cmpEffortMultiOptions || []).length) && (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginBottom: 11 }}>
+                      <select multiple value={cmpEffortMultiVal || []} onChange={cmpEffortMultiChange} style={{ flex: 1, minWidth: 0, height: 84, padding: '6px 8px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>
+                        {(cmpEffortMultiOptions || []).map((o, oi) => <option key={oi} value={o.key}>{o.label}</option>)}
+                      </select>
+                      <button onClick={cmpEffortMultiAdd} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 13px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0, alignSelf: 'flex-start' }}><Icon name="plus" style={{ width: 12, height: 12 }} />Add selected</button>
+                    </div>
+                  )}
                   {Boolean(cmpEffortEmpty) && (
                     <div style={{ border: '1.5px dashed var(--line-300)', borderRadius: 12, padding: 22, textAlign: 'center', color: 'var(--ink-500)', marginBottom: 11 }}>
                       <Icon name="git-branch" style={{ width: 20, height: 20, color: 'var(--ink-400)' }} />
