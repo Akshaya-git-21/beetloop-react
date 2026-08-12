@@ -7185,10 +7185,29 @@ class AppRoot extends React.Component {
           k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
           onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
         };
-        if(m[0]==='Campaign Type'&&canEditDates) return {
-          k:m[0], v:m[1], isSelect:true, options:['—'].concat(this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
-          onChange:e=>{ const nv=e.target.value==='—'?'':e.target.value; this.tkPatch(t.id,{contentType:nv},'Campaign Type → '+(nv||'—')); },
-        };
+        if(m[0]==='Campaign Type'&&canEditDates){
+          // Once QC has recorded any result against the Content-Type checklist,
+          // or the task has reached a terminal state, switching Campaign Type
+          // would silently swap the checklist under those results without
+          // touching them (Part D.1: historical QC data is never rewritten or
+          // deleted) — so require an explicit confirm rather than blocking or
+          // silently allowing it.
+          const ctQcNow=this.contentTypeQcData(t, rk);
+          const hasQcResults=!!(ctQcNow.ctQcItems||[]).some(it=>it.status);
+          const locked=hasQcResults || ['Approved','Closed'].includes(t.status);
+          return {
+            k:m[0], v:m[1], isSelect:true, options:['—'].concat(this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
+            onChange:e=>{
+              const nv=e.target.value==='—'?'':e.target.value;
+              const apply=()=>this.tkPatch(t.id,{contentType:nv},'Campaign Type → '+(nv||'—'));
+              if(locked){
+                this.confirmDelete('Change Campaign Type?',
+                  'This task already has QC results recorded (or is Approved/Closed). Changing the Campaign Type will switch which QC checklist shows going forward — the existing results are kept, not deleted, but they belong to the previous type. Continue?',
+                  apply, 'Change anyway');
+              } else apply();
+            },
+          };
+        }
         if((m[0]==='Start date'||m[0]==='End date')&&canEditDates){
           const isStart=m[0]==='Start date';
           return { k:m[0], v:m[1], isDateTime:true,
