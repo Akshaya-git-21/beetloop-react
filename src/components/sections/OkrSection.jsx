@@ -286,8 +286,8 @@ Health
 <span style={cssTextToObject(`font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:${o.scopeBg};color:${o.scopeColor}`)}>
 {o.scope}
 </span>
-<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","color":"var(--ink-400)"}}>
-{o.code}
+<span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
+{o.kpiLabel}
 </span>
 <span style={{"fontSize":"10.5px","color":"var(--ink-400)"}}>
 {o.ver} · {o.krCount}

@@ -908,7 +908,7 @@ class AppRoot extends React.Component {
         const src=this.cmpKpiPool().find(x=>x.kpi===k.kpi&&x.okrCode);
         const okrCode=k.okrCode||(src?src.okrCode:''), okrTitle=k.okrTitle||(src?src.okrTitle:'');
         return { ...k, pct:pc+'%', pctW:pc+'%', pctColor:pc>=70?'var(--verify-500)':pc>=40?'var(--warn-500)':'var(--danger-500)',
-          okrLabel:okrCode?(okrCode+' · '+okrTitle):'No linked OKR', okrCode:okrCode,
+          okrLabel:okrCode?okrTitle:'No linked OKR', okrCode:okrCode,
           pages:(k.pages||[]).filter(p=>p.url).map(p=>({ ...p, isExternal:p.kind==='External',
             label:(p.title||p.url), sub:p.url+(p.contrib?(' · expected '+p.contrib):''),
             icon:p.kind==='External'?'external-link':'file-text',
@@ -943,7 +943,7 @@ class AppRoot extends React.Component {
     const kpiArr=f.kpis||[{kpi:'',target:'',current:'0',unit:''}];
     const kpis={ rows:kpiArr.map((r,i)=>({ i, ...r,
         srcKey:r.srcKey||'',
-        okrLabel:r.okrCode?(r.okrCode+' · '+(r.okrTitle||'')):'Not linked to an OKR',
+        okrLabel:r.okrCode?(r.okrTitle||'Linked OKR'):'Not linked to an OKR',
         okrLinked:!!r.okrCode,
         autoLabel:(()=>{ const m=this.cmpEffortPool().filter(p=>p.kpi===r.kpi); if(!m.length) return r.kpi?'No effort line drives this KPI yet':'';
           return m.length+' effort line'+(m.length===1?'':'s')+' · '+m.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0)+' tasks auto-linked — '+m.map(x=>x.name).join(', '); })(),
@@ -1103,7 +1103,10 @@ class AppRoot extends React.Component {
       cmpTeamForm:team.rows, cmpAddTeam:team.add,
       cmpPeopleNames:(this.state.users||[]).map(u=>u.name),
       cmpRoleNames:['Campaign owner','Content lead','SEO lead','Graphics lead','Web developer','Social media exec','QC reviewer','Analyst'],
-      cmpKpiPoolOptions:[{key:'',label:'— Select a KPI from an existing OKR —'}].concat(kpiPool.map(k=>({key:k.key,label:(k.label)||(k.kpi+' — '+k.okrCode)}))),
+      // Label by the OKR's title, not its internal code (e.g.
+      // "OKR-GEN-Q1-015") — a reader picking a KPI here needs to know
+      // which objective it belongs to, not the objective's system id.
+      cmpKpiPoolOptions:[{key:'',label:'— Select a KPI from an existing OKR —'}].concat(kpiPool.map(k=>({key:k.key,label:(k.label)||(k.kpi+' — '+k.okrTitle)}))),
     };
   }
   _saveCampaign(){
@@ -3428,7 +3431,13 @@ class AppRoot extends React.Component {
           this.confirmDelete('Delete Effort Plan?', 'Are you sure you want to delete "'+(p.name||p.id)+'"? This action cannot be undone.', ()=>this._deleteEpPlan(p.id)); },
       };
     });
-    const kpiOpts=[{id:'',label:'None — effort only'}].concat(this.epKpiPool().map(k=>({ id:k.id, label:k.kpi+' — '+k.who })));
+    // Linked KPI options are scoped to the plan's own Linked OKR — an
+    // effort should only be able to drive a KR that actually belongs to
+    // the OKR it's planned against. With no OKR selected yet, show the
+    // full pool (nothing to scope against).
+    const selectedOkrTitle=(f.okr && f.okr!=='— None —') ? f.okr : '';
+    const kpiPoolScoped=selectedOkrTitle ? this.epKpiPool().filter(k=>k.okr===selectedOkrTitle) : this.epKpiPool();
+    const kpiOpts=[{id:'',label:'None — effort only'}].concat(kpiPoolScoped.map(k=>({ id:k.id, label:k.kpi+' — '+k.who })));
     const assigneeOpts=[{v:'',label:'(plan owner)'}].concat((this.state.users||[]).filter(u=>u.status==='Active').map(u=>({v:u.name,label:u.name})));
     const totalW=rows.reduce((s,r)=>s+(r.weight||0),0);
     const epRows=rows.map((r,i)=>{
@@ -3448,7 +3457,7 @@ class AppRoot extends React.Component {
         addKpi:(e)=>{ const v=e.target.value; if(!v||kids.includes(v)) return; const nk=[...kids,v];
           this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]}:x) });
           const kk=this.epKpiPool().find(x=>x.id===v); this.flash((kk?kk.kpi:'KPI')+' linked to “'+r.type+'” — one effort can drive several KPIs.'); },
-        kpiAddOptions:[{id:'',label:'+ Link another KPI…'}].concat(this.epKpiPool().filter(x=>!kids.includes(x.id)).map(x=>({id:x.id,label:x.kpi+' — '+x.who}))),
+        kpiAddOptions:[{id:'',label:'+ Link another KPI…'}].concat(kpiPoolScoped.filter(x=>!kids.includes(x.id)).map(x=>({id:x.id,label:x.kpi+' — '+x.who}))),
         kpiChain:kobjs.length?kobjs.map(o=>o.kpi+' · '+o.baseline+' → '+o.target+' '+o.unit).join('   |   '):'Effort only — no KPI linked',
         taskCount:String(ts.length), taskDone:String(ts.filter(t=>['Approved','Closed'].includes(t.status)).length),
         taskToggle:(expTasks?'Hide':'Show')+' '+ts.length+' task'+(ts.length===1?'':'s'),
@@ -3586,7 +3595,22 @@ class AppRoot extends React.Component {
       epEditTitle:this.state.epPlanId?('Edit effort plan · '+this.state.epPlanId):'Create effort plan',
       epEditSub:this.state.epPlanId?'Saved plan — every effort shows its linked KPI and the tasks generated from it.':'Define effort targets, convert them to KPIs and auto-generate tasks for the period.',
       epSaveLabel:this.state.epPlanId?'Save changes':'Save plan',
-      epSetName:setF('name'), epSetQuarter:setF('quarter'), epSetDept:setF('dept'), epSetOwner:setF('owner'), epSetOkr:setF('okr'), epSetStart:setF('start'), epSetEnd:setF('end'), epSetType:setF('type'),
+      epSetName:setF('name'), epSetQuarter:setF('quarter'), epSetDept:setF('dept'), epSetOwner:setF('owner'), epSetStart:setF('start'), epSetEnd:setF('end'), epSetType:setF('type'),
+      // Changing the Linked OKR re-scopes every row's KPI options to the
+      // new OKR's KRs — any row still pointing at a KPI from the old OKR
+      // (now off the list) gets unlinked rather than silently keeping an
+      // invalid reference the dropdown can no longer show as selected.
+      epSetOkr:(e)=>{
+        const newOkr=e.target.value;
+        const pool=(newOkr && newOkr!=='— None —') ? this.epKpiPool().filter(k=>k.okr===newOkr) : this.epKpiPool();
+        const validIds=new Set(pool.map(k=>k.id));
+        const nextRows=rows.map(r=>{
+          const kids=(r.kpiIds&&r.kpiIds.length)?r.kpiIds:(r.kpiId?[r.kpiId]:[]);
+          const keep=kids.filter(id=>validIds.has(id));
+          return keep.length===kids.length ? r : { ...r, kpiIds:keep, kpiId:keep[0]||'' };
+        });
+        this.setState({ epForm:{...f, okr:newOkr}, epRows:nextRows });
+      },
       epTotalW:totalW+'%', epTotalWColor: totalW===100?'var(--verify-600)':'var(--danger-600)',
       epBalanced: totalW===100,
       epBalanceMsg: totalW===100?'All targets balanced — ready for task generation.':'Weightages must total 100% (currently '+totalW+'%).',
@@ -9293,8 +9317,14 @@ class AppRoot extends React.Component {
       const health = this.okrHealth(o);
       const due = this.okrDue(o);
       const checked = sel.includes(o.id);
+      // The row used to surface the OKR's internal code (e.g.
+      // "OKR-GEN-Q1-015") next to the version — meaningless to anyone but
+      // the system. Showing the linked KPI name(s) instead tells a reader
+      // what this objective is actually measured by, at a glance.
+      const kpiNames=(o.krs||[]).map(k=>k.kpi).filter(Boolean);
+      const kpiLabel=kpiNames.length?('KPI · '+kpiNames.join(', ')):'No KPI linked';
       return {
-        id:o.id, title:o.title, code:o.code, ver:o.v, krCount:o.krs.length+' KRs', owner:o.owner, team:o.team, cycle:o.cycle, due:o.due,
+        id:o.id, title:o.title, code:o.code, kpiLabel, ver:o.v, krCount:o.krs.length+' KRs', owner:o.owner, team:o.team, cycle:o.cycle, due:o.due,
         brand:o.brand, dept:o.dept, campaign:o.campaign, reviewer:o.reviewer,
         scope:o.scope||'Department', scopeBg:scopeTone(o.scope).bg, scopeColor:scopeTone(o.scope).c,
         openDetail:()=>this.setState({ okrOpen:o.id }),
