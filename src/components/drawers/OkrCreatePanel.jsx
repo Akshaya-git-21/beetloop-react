@@ -511,7 +511,7 @@ Key result (custom)
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
 KPI (from KPI Master, or custom)
 </label>
-<input value={k.kpiSel} onInput={k.setKpiSel} list="okr-kpi-list" placeholder="Pick from KPI Master / templates" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
+<input value={k.kpiSel} onInput={k.setKpiSel} list="okr-kpi-list" placeholder="Type a custom KPI name…" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
 <datalist id="okr-kpi-list">
 {(kpiOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
@@ -519,6 +519,13 @@ KPI (from KPI Master, or custom)
 </React.Fragment>
 ))}
 </datalist>
+<select value="" onChange={k.setKpiPick} style={{"width":"100%","marginTop":"6px","padding":"8px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12px","background":"var(--paper)","color":"var(--ink-500)"}}>
+{(k.kpiPickOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.value}>{o.label}</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
 

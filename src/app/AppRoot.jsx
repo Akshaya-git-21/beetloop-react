@@ -9454,6 +9454,12 @@ class AppRoot extends React.Component {
         if(!t&&!e) return 'Auto — every task tagged with this KPI counts toward it';
         return t+' task'+(t===1?'':'s')+' · '+e+' effort line'+(e===1?'':'s')+(divs.length?(' across '+divs.join(', ')):''); })(),
       setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'),
+      // The KPI field's datalist already offers Master/Template suggestions
+      // as you type, but that's easy to miss — this explicit dropdown is
+      // the same source, discoverable without typing first. Either path
+      // (type your own, or pick here) writes the same kpiSel field.
+      kpiPickOptions:[{value:'',label:'— Pick from KPI Master / Templates —'}].concat(kpiOptions.map(o=>({value:o.label,label:o.label}))),
+      setKpiPick:(e)=>{ const v=e.target.value; if(!v) return; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x,kpiSel:v}:x) }); },
       who:k.who||'', freq:k.freq||'Monthly', due:k.due||'',
       setWho:setDraft(k.id,'who'), setFreq:setDraft(k.id,'freq'), setDue:setDraft(k.id,'due'),
       tool:k.tool||'', method:k.method||'', mfreq:k.mfreq||'', evidence:k.evidence||'',
