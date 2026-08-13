@@ -7,7 +7,7 @@ export default function TaskDetailDrawer({ vm }) {
     clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
     clCanSubmit, clSubmit, clCanReopen, clReopen, clCanDelete, clDelete, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
     ctQcHasType, ctQcMissingMsg, ctQcHasChecklist, ctQcContentType, ctQcChecklistName, ctQcItems, ctQcCoverage,
-    cmpQcHasCampaign, cmpQcHasType, cmpQcCampaign, cmpQcCampaignType, cmpQcChecklists, cmpQcEmpty,
+    cmpQcHasCampaign, cmpQcHasType, cmpQcCampaign, cmpQcCampaignType, cmpQcChecklists, cmpQcEmpty, cmpQcMissingMsg,
     tkStatusCanSet, tkStatusOptions, tkStatusVal, tkSetStatusSel, tkStatusHint,
     tkQcDigestHas, tkQcVerdictLine, tkQcOverall, tkQcLines, tkQcHasLines, tkQcCoverage, tkQcW,
     tmCanTrack, tmElapsed, tmDotStyle, tmStatus, tmToggle, tmBtnStyle, tmIcon, tmLabel, tmProgressW, tmTotalLabel, tmHasSessions, tmSessions } = vm;
@@ -630,24 +630,34 @@ No QC checklist is configured for the "{ctQcContentType}" Content Type yet — a
 </div>
 )}
 
-{Boolean(cmpQcHasCampaign && cmpQcHasType && !cmpQcEmpty) && (
+{Boolean(cmpQcHasType && !cmpQcEmpty) && (
 <div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","overflow":"hidden"}}>
 <div style={{"padding":"14px 18px","borderBottom":"1px solid var(--line-200)"}}>
-<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--ink-900)"}}>QC Checklists mapped to "{cmpQcCampaignType}"</div>
-<div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"3px"}}>Via linked Campaign "{cmpQcCampaign}" — reference only, record results in the checklist above.</div>
+<div style={{"fontFamily":"'Sora'","fontWeight":"700","fontSize":"14.5px","color":"var(--ink-900)"}}>QC Checklists — {cmpQcCampaignType}</div>
+<div style={{"fontSize":"11.5px","color":"var(--ink-500)","marginTop":"3px"}}>Auto-inherited from Campaign Type{Boolean(cmpQcCampaign) && (' via linked Campaign "'+cmpQcCampaign+'"')} — every active checklist mapped to it, no manual selection.</div>
 </div>
 <div>
 {(cmpQcChecklists || []).map((c, $index) => (
 <React.Fragment key={$index}>
-<div style={{"padding":"12px 18px","borderBottom":$index<cmpQcChecklists.length-1?"1px solid var(--line-200)":"none"}}>
-<div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-800)","marginBottom":"6px"}}>{c.name}</div>
-<div style={{"display":"flex","flexWrap":"wrap","gap":"6px"}}>
+<div style={{"borderBottom":$index<cmpQcChecklists.length-1?"1px solid var(--line-200)":"none"}}>
+<div style={{"padding":"10px 18px 0","display":"flex","alignItems":"center","justifyContent":"space-between","gap":"10px","flexWrap":"wrap"}}>
+<div style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-800)"}}>{c.name}</div>
+<div style={{"fontSize":"11px","color":"var(--ink-500)"}}>{c.coverage}</div>
+</div>
 {(c.items || []).map((it, $i2) => (
 <React.Fragment key={$i2}>
-<span style={{"fontSize":"11.5px","color":"var(--ink-600)","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"999px","padding":"4px 10px"}}>{it}</span>
+<div style={{"display":"grid","gridTemplateColumns":"32px 1fr 130px","gap":"10px","alignItems":"center","padding":"10px 18px"}}>
+<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","color":"var(--ink-400)"}}>{it.n}</span>
+<span style={{"fontSize":"13px","color":"var(--ink-800)"}}>{it.text}</span>
+<select value={it.status} onChange={it.setStatus} disabled={!it.canEdit} style={{"padding":"6px 9px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"12px","background":"var(--paper)"}}>
+<option value="">—</option>
+<option value="Pass">Pass</option>
+<option value="Fail">Fail</option>
+<option value="N/A">N/A</option>
+</select>
+</div>
 </React.Fragment>
 ))}
-</div>
 </div>
 </React.Fragment>
 ))}
@@ -655,10 +665,17 @@ No QC checklist is configured for the "{ctQcContentType}" Content Type yet — a
 </div>
 )}
 
-{Boolean(cmpQcHasCampaign && !cmpQcHasType) && (
+{Boolean(cmpQcHasType && cmpQcEmpty) && (
 <div style={{"display":"flex","alignItems":"center","gap":"10px","border":"1px solid var(--line-200)","background":"var(--surface-50)","color":"var(--ink-500)","borderRadius":"14px","padding":"12px 16px","fontSize":"12.5px"}}>
 <Icon name={"info"} style={{"width":"14px","height":"14px","flexShrink":"0"}} />
-Linked Campaign "{cmpQcCampaign}" has no Campaign Type set, so no Campaign-Type-mapped checklist applies here.
+No active QC checklist is mapped to "{cmpQcCampaignType}" yet — add one in Master Data → QC Checklist Master.
+</div>
+)}
+
+{Boolean(!cmpQcHasType && cmpQcMissingMsg) && (
+<div style={{"display":"flex","alignItems":"center","gap":"10px","border":"1px solid var(--line-200)","background":"var(--surface-50)","color":"var(--ink-500)","borderRadius":"14px","padding":"12px 16px","fontSize":"12.5px"}}>
+<Icon name={"info"} style={{"width":"14px","height":"14px","flexShrink":"0"}} />
+{cmpQcMissingMsg}
 </div>
 )}
 

@@ -18,7 +18,7 @@ class AppRoot extends React.Component {
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
-    clFill: {}, clQc: {}, clSubmitted: {}, clTypeQc: {},
+    clFill: {}, clQc: {}, clSubmitted: {}, clTypeQc: {}, clCampaignQc: {},
     tkDeletedIds: [],
     leadsTab: 'leads', leadAdded: [], contactAdded: [], contactUpd: {}, contactDeleted: [], cnOpen: null, cnNew: false, cnForm: {},
     ldFilters: {service:'All',source:'All',range:'This week'}, ldForm: {}, ldTarget: '10', ldPeriod: 'Weekly',
@@ -4626,10 +4626,15 @@ class AppRoot extends React.Component {
   // that the division-based compliance checklist never writes to, so no
   // schema migration is needed and old rows (which never have that key)
   // load with an empty content-type-QC state, not an error.
-  _persistCompliance(taskId, fillObj, qcObj, submittedFlag, ctQcOverride){
+  _persistCompliance(taskId, fillObj, qcObj, submittedFlag, ctQcOverride, cmpQcOverride){
     const ctQc = ctQcOverride!==undefined ? ctQcOverride : ((this.state.clTypeQc||{})[taskId]||{});
+    // Campaign-Type-mapped checklist state rides the same reserved-key
+    // trick as __ctQc above — __cmpQc — so the auto-inherited, Campaign-
+    // Type-driven QC checklists (one task can have several, one per
+    // matching qcChecklist row) persist without a second table either.
+    const cmpQc = cmpQcOverride!==undefined ? cmpQcOverride : ((this.state.clCampaignQc||{})[taskId]||{});
     supabase.from('compliance_checklists').upsert({
-      task_id:taskId, fill:fillObj||{}, qc:{...(qcObj||{}), __ctQc:ctQc}, submitted:!!submittedFlag,
+      task_id:taskId, fill:fillObj||{}, qc:{...(qcObj||{}), __ctQc:ctQc, __cmpQc:cmpQc}, submitted:!!submittedFlag,
       created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] compliance checklist save failed:', error.message);
@@ -4638,12 +4643,12 @@ class AppRoot extends React.Component {
   async _loadComplianceChecklists(){
     const { data, error } = await supabase.from('compliance_checklists').select('*');
     if(error){ console.warn('[supabase] compliance checklists load failed:', error.message); return; }
-    const fill={}, qc={}, submitted={}, ctQc={};
+    const fill={}, qc={}, submitted={}, ctQc={}, cmpQc={};
     (data||[]).forEach(r=>{ if(r.deleted) return;
-      const rawQc=r.qc||{}; const { __ctQc, ...restQc } = rawQc;
-      fill[r.task_id]=r.fill||{}; qc[r.task_id]=restQc; if(__ctQc) ctQc[r.task_id]=__ctQc;
+      const rawQc=r.qc||{}; const { __ctQc, __cmpQc, ...restQc } = rawQc;
+      fill[r.task_id]=r.fill||{}; qc[r.task_id]=restQc; if(__ctQc) ctQc[r.task_id]=__ctQc; if(__cmpQc) cmpQc[r.task_id]=__cmpQc;
       if(r.submitted) submitted[r.task_id]=true; });
-    this.setState({ clFill:fill, clQc:qc, clSubmitted:submitted, clTypeQc:ctQc });
+    this.setState({ clFill:fill, clQc:qc, clSubmitted:submitted, clTypeQc:ctQc, clCampaignQc:cmpQc });
   }
   // Resolves a Content Type name (e.g. task.contentType) to its QC
   // checklist row — the same "select X, look up Y" shape as
@@ -4661,21 +4666,24 @@ class AppRoot extends React.Component {
     const items=this.qcmItemsArray(row.Items).map(it=>({text:it.text}));
     return { Checklist:row.Checklist, Items:items };
   }
-  // Item 60's second, complementary QC-checklist route: Task → its linked
-  // Campaign → that Campaign's own `type` (SEO/Content/SMM/Website/Email/
-  // Analytics Campaign — CAMPAIGN_TYPES(), unrelated to the Content Type
-  // used by qcChecklistFor above) → every qcChecklist row mapped to that
-  // Campaign Type via the new Campaign_Type field. Returns an array (a
-  // Campaign Type can have several checklists, per the new No_of_Checklists
-  // field) rather than qcChecklistFor's single row — "do not display all QC
-  // checklists for every task" means filtering by Campaign_Type, not
-  // collapsing to just one.
+  // Task → Campaign Type resolution: a task's Campaign Type is either
+  // picked directly on the task (task.campaignType, set at creation or
+  // inherited from its linked Campaign) or, for tasks created before that
+  // field existed, falls back to whatever its linked Campaign's own
+  // `type` currently is. Every qcChecklist row mapped to that Campaign
+  // Type via its Campaign_Type field comes back — one Campaign Type can
+  // have several active checklists (No_of_Checklists) — and ONLY those;
+  // a task never sees checklists belonging to a different Campaign Type.
   qcChecklistsForCampaign(t){
-    if(!t || !t.campaign || t.campaign==='—') return { campaignType:'', checklists:[] };
-    const camp=this.allCampaigns().find(c=>c.name===t.campaign);
-    if(!camp || !camp.type) return { campaignType:'', checklists:[] };
-    const rows=this.MASTERS_REG().qcChecklist.rows.filter(r=>r.Campaign_Type===camp.type && r.Status!=='Inactive');
-    return { campaignType:camp.type, checklists:rows.map(row=>({
+    if(!t) return { campaignType:'', checklists:[] };
+    let campaignType=t.campaignType||'';
+    if(!campaignType && t.campaign && t.campaign!=='—'){
+      const camp=this.allCampaigns().find(c=>c.name===t.campaign);
+      campaignType=(camp&&camp.type)||'';
+    }
+    if(!campaignType) return { campaignType:'', checklists:[] };
+    const rows=this.MASTERS_REG().qcChecklist.rows.filter(r=>r.Campaign_Type===campaignType && r.Status!=='Inactive');
+    return { campaignType, checklists:rows.map(row=>({
       Checklist:row.Checklist,
       Items:this.qcmItemsArray(row.Items).map(it=>it.text),
     })) };
@@ -4691,6 +4699,24 @@ class AppRoot extends React.Component {
     const qc=(this.state.clQc||{})[taskId]||{};
     const submitted=!!(this.state.clSubmitted||{})[taskId];
     this._persistCompliance(taskId, fill, qc, submitted, forTask);
+  }
+  // Per-item state for the Campaign-Type-mapped checklist(s) — keyed by
+  // checklist name (not just index) since a Campaign Type can map to
+  // several checklists at once, each with its own item list.
+  tkSetCampaignQcItem(taskId, checklistName, idx, field, value){
+    const cur={...(this.state.clCampaignQc||{})};
+    const forTask={...(cur[taskId]||{})};
+    const forList={...(forTask[checklistName]||{})};
+    forList[idx]={...(forList[idx]||{}), [field]:value};
+    forTask[checklistName]=forList;
+    cur[taskId]=forTask;
+    this.setState({ clCampaignQc:cur });
+    const t=this.allTasks().find(x=>x.id===taskId)||{};
+    const fill=this.complianceFill(t);
+    const qc=(this.state.clQc||{})[taskId]||{};
+    const submitted=!!(this.state.clSubmitted||{})[taskId];
+    const ctQc=(this.state.clTypeQc||{})[taskId]||{};
+    this._persistCompliance(taskId, fill, qc, submitted, ctQc, forTask);
   }
   // New QC panel driven by task.contentType — sits alongside (not instead
   // of) the existing division-based Compliance checklist, since division
@@ -4721,19 +4747,40 @@ class AppRoot extends React.Component {
       ctQcItems:items, ctQcCoverage:done+' of '+items.length+' checked',
     };
   }
-  // Read-only companion to contentTypeQcData — sits alongside it (Part D.1's
-  // "never break existing workflows" applies here too), surfacing item 60's
-  // Campaign-Type-mapped checklists as reference material for whoever's
-  // doing QC, without opening a second parallel pass/fail/note recording
-  // surface that could drift out of sync with the Content-Type one above.
+  // Every active QC Checklist mapped to the task's Campaign Type,
+  // auto-inherited and used for the actual QC review — no manual
+  // checklist selection. Fully driven off the current Campaign Type on
+  // every render (never cached in form state), so if the Campaign Type
+  // changes the previously loaded checklists simply stop being computed
+  // and the newly-matching ones take their place automatically.
   campaignTypeQcData(t){
-    if(!t || !t.campaign || t.campaign==='—') return { cmpQcHasCampaign:false };
+    if(!t) return { cmpQcHasCampaign:false, cmpQcHasType:false };
+    const hasCampaign=!!(t.campaign && t.campaign!=='—');
     const { campaignType, checklists }=this.qcChecklistsForCampaign(t);
-    if(!campaignType) return { cmpQcHasCampaign:true, cmpQcHasType:false, cmpQcCampaign:t.campaign };
+    if(!campaignType){
+      return { cmpQcHasCampaign:hasCampaign, cmpQcHasType:false, cmpQcCampaign:t.campaign||'',
+        cmpQcMissingMsg: hasCampaign
+          ? 'Linked Campaign "'+t.campaign+'" has no Campaign Type set, so no QC checklist can be loaded.'
+          : 'No Campaign Type has been set for this task yet — QC checklists will load automatically once one is selected.' };
+    }
+    const canEdit=this.hasPerm('qc','edit');
+    const saved=(this.state.clCampaignQc||{})[t.id]||{};
+    const checklistVms=checklists.map(c=>{
+      const savedForList=saved[c.Checklist]||{};
+      const items=(c.Items||[]).map((text,idx)=>{
+        const row=savedForList[idx]||{};
+        return { n:idx+1, text,
+          status:row.status||'', note:row.note||'',
+          setStatus:(e)=>this.tkSetCampaignQcItem(t.id, c.Checklist, idx, 'status', e.target.value),
+          setNote:(e)=>this.tkSetCampaignQcItem(t.id, c.Checklist, idx, 'note', e.target.value),
+          canEdit };
+      });
+      const done=items.filter(i=>i.status).length;
+      return { name:c.Checklist, items, coverage:done+' of '+items.length+' checked' };
+    });
     return {
-      cmpQcHasCampaign:true, cmpQcHasType:true, cmpQcCampaign:t.campaign, cmpQcCampaignType:campaignType,
-      cmpQcChecklists:checklists.map(c=>({ name:c.Checklist, items:c.Items })),
-      cmpQcEmpty:checklists.length===0,
+      cmpQcHasCampaign:hasCampaign, cmpQcHasType:true, cmpQcCampaign:t.campaign||'', cmpQcCampaignType:campaignType,
+      cmpQcChecklists:checklistVms, cmpQcEmpty:checklistVms.length===0, cmpQcMissingMsg:'',
     };
   }
   complianceFill(t){
@@ -5343,6 +5390,7 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] task upsert failed:', error.message);
     });
     if(patch.contentType!==undefined) this._persistTaskContentType(code, patch.contentType);
+    if(patch.campaignType!==undefined) this._persistTaskCampaignType(code, patch.campaignType);
   }
   // Start/end date+time on an existing task — previously set once at
   // creation with no way to change it afterward. Routed through tkPatch()/
@@ -7413,7 +7461,15 @@ class AppRoot extends React.Component {
     const canReassign=['manager','team_lead','admin','ceo'].includes(rk) && !isAssignee;
     const canEditDates=this.hasPerm('tasks','edit');
     const tn=this.tkTone(t.status);
-    const meta=[['Campaign',t.campaign],['Campaign Type',t.contentType||'—'],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
+    // t.contentType (the Content Type Master value) used to be shown here
+    // mislabeled "Campaign Type" — same mislabel CreateTaskModal.jsx's
+    // create form already had fixed. Corrected to its real name, "Content
+    // type", and a genuine "Campaign Type" entry added alongside it for
+    // t.campaignType (falling back to the linked Campaign's own type for
+    // tasks created before this field existed) — the value that actually
+    // drives which QC checklists get auto-inherited (campaignTypeQcData).
+    const displayCampaignType = t.campaignType || (()=>{ if(!t.campaign||t.campaign==='—') return ''; const c=this.allCampaigns().find(x=>x.name===t.campaign); return c&&c.type?c.type:''; })();
+    const meta=[['Campaign',t.campaign],['Campaign Type',displayCampaignType||'—'],['Content type',t.contentType||'—'],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
@@ -7553,9 +7609,9 @@ class AppRoot extends React.Component {
           k:m[0], v:m[1], isSelect:true, options:(this.state.users||[]).map(u=>u.name),
           onChange:e=>{ const na=e.target.value; this.tkPatch(t.id,{assignee:na},'Reassigned to '+na); this.flash('Task '+t.id+' reassigned to '+na+'.'); },
         };
-        if(m[0]==='Campaign Type'&&canEditDates){
+        if(m[0]==='Content type'&&canEditDates){
           // Once QC has recorded any result against the Content-Type checklist,
-          // or the task has reached a terminal state, switching Campaign Type
+          // or the task has reached a terminal state, switching Content Type
           // would silently swap the checklist under those results without
           // touching them (Part D.1: historical QC data is never rewritten or
           // deleted) — so require an explicit confirm rather than blocking or
@@ -7567,10 +7623,34 @@ class AppRoot extends React.Component {
             k:m[0], v:m[1], isSelect:true, options:['—'].concat(this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
             onChange:e=>{
               const nv=e.target.value==='—'?'':e.target.value;
-              const apply=()=>this.tkPatch(t.id,{contentType:nv},'Campaign Type → '+(nv||'—'));
+              const apply=()=>this.tkPatch(t.id,{contentType:nv},'Content type → '+(nv||'—'));
+              if(locked){
+                this.confirmDelete('Change Content Type?',
+                  'This task already has QC results recorded (or is Approved/Closed). Changing the Content Type will switch which QC checklist shows going forward — the existing results are kept, not deleted, but they belong to the previous type. Continue?',
+                  apply, 'Change anyway');
+              } else apply();
+            },
+          };
+        }
+        if(m[0]==='Campaign Type'&&canEditDates){
+          // Changing Campaign Type re-derives the auto-inherited QC
+          // checklist(s) live from the new value (campaignTypeQcData reads
+          // t.campaignType fresh on every render) — nothing to manually
+          // clear. Once any of those checklist items has a recorded result,
+          // or the task is terminal, require the same explicit confirm as
+          // Content Type above rather than silently swapping the checklist
+          // set under existing results.
+          const cmpQcNow=this.campaignTypeQcData(t);
+          const hasQcResults=(cmpQcNow.cmpQcChecklists||[]).some(c=>(c.items||[]).some(it=>it.status));
+          const locked=hasQcResults || ['Approved','Closed'].includes(t.status);
+          return {
+            k:m[0], v:m[1], isSelect:true, options:['—'].concat(this.CAMPAIGN_TYPES()),
+            onChange:e=>{
+              const nv=e.target.value==='—'?'':e.target.value;
+              const apply=()=>this.tkPatch(t.id,{campaignType:nv},'Campaign Type → '+(nv||'—'));
               if(locked){
                 this.confirmDelete('Change Campaign Type?',
-                  'This task already has QC results recorded (or is Approved/Closed). Changing the Campaign Type will switch which QC checklist shows going forward — the existing results are kept, not deleted, but they belong to the previous type. Continue?',
+                  'This task already has QC results recorded against its Campaign-Type checklist(s) (or is Approved/Closed). Changing the Campaign Type will load a different checklist set going forward — the existing results are kept, not deleted, but they belong to the previous type. Continue?',
                   apply, 'Change anyway');
               } else apply();
             },
@@ -7627,6 +7707,16 @@ class AppRoot extends React.Component {
           if(tpl.kpiId) nf.kpiId=tpl.kpiId;
         }
       }
+      // Picking a Campaign auto-fetches its Campaign Type — the other of
+      // the two entry paths the user can use (pick Campaign Type directly,
+      // below, is the first). Overwrites any previously-picked Campaign
+      // Type so the two never sit out of sync; the QC checklist panel
+      // reads campaignType live, so this alone clears/reloads whichever
+      // checklists were showing.
+      if(k==='campaign'){
+        const camp=v&&v!=='—'?this.allCampaigns().find(x=>x.name===v):null;
+        nf.campaignType=camp&&camp.type?camp.type:(nf.campaignType||'');
+      }
       this.setState({ tkForm:nf });
     };
     const kpiPool=this.epKpiPool();
@@ -7657,12 +7747,20 @@ class AppRoot extends React.Component {
             .concat(pool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
           tkKpiScoped:scoped, tkKpiNote:note }; })(),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
-      // Campaign Type isn't a separate pick here — a task's Campaign Type
-      // is whatever its linked Campaign's own Type is, same resolution
-      // campaignTypeQcData() already uses for QC checklist matching. Shown
-      // read-only so picking a Campaign doesn't leave two independent,
-      // possibly-conflicting "campaign type" values on one task.
-      tkCampaignTypeHint:(()=>{ const c=this.allCampaigns().find(x=>x.name===f.campaign); return c&&c.type?c.type:''; })(),
+      // Campaign Type: selectable directly, OR auto-filled from the chosen
+      // Campaign (see the 'campaign' branch in set() above) — either entry
+      // path lands on the same f.campaignType. Whichever active QC
+      // Checklists map to it (qcChecklistsForCampaign) are previewed here
+      // and auto-inherited into the task on save, with no separate
+      // checklist-picking step.
+      tkCampaignTypeOptions:['—'].concat(this.CAMPAIGN_TYPES()),
+      tkSetCampaignType:set('campaignType'),
+      tkCampaignTypeChecklists:(()=>{
+        if(!f.campaignType) return [];
+        return this.MASTERS_REG().qcChecklist.rows
+          .filter(r=>r.Campaign_Type===f.campaignType && r.Status!=='Inactive')
+          .map(r=>r.Checklist);
+      })(),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
@@ -7707,7 +7805,7 @@ class AppRoot extends React.Component {
     const tpl=(f.template?this.allTaskTemplates().find(x=>x.name===f.template):null)||{checklist:[]};
     const id=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', campaignType:(f.campaignType&&f.campaignType!=='—')?f.campaignType:'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
@@ -7736,11 +7834,12 @@ class AppRoot extends React.Component {
       created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] task insert failed:', error.message);
-      // Only fires once the row actually exists — content_type is a
-      // separate UPDATE (schema_v24.sql column, see _persistTaskContentType),
-      // and firing it in parallel with the INSERT let it race ahead and
-      // match zero rows, silently dropping the value on every new task.
-      else this._persistTaskContentType(task.id, task.contentType);
+      // Only fires once the row actually exists — content_type/campaign_type
+      // are separate UPDATEs (schema_v24.sql / schema_v29.sql, see
+      // _persistTaskContentType/_persistTaskCampaignType), and firing them in
+      // parallel with the INSERT let them race ahead and match zero rows,
+      // silently dropping the value on every new task.
+      else { this._persistTaskContentType(task.id, task.contentType); this._persistTaskCampaignType(task.id, task.campaignType); }
     });
   }
   // content_type is a separate, best-effort write (schema_v24.sql) rather
@@ -7754,6 +7853,15 @@ class AppRoot extends React.Component {
     if(contentType===undefined) return;
     supabase.from('tasks').update({ content_type:contentType||null }).eq('code', code).then(({error})=>{
       if(error) console.warn('[supabase] task content_type save failed — has schema_v24.sql (content_type column) been applied?', error.message);
+    });
+  }
+  // Same best-effort, separate-write pattern as _persistTaskContentType
+  // above (schema_v29.sql), for the Campaign Type that drives the
+  // auto-inherited QC checklist(s).
+  _persistTaskCampaignType(code, campaignType){
+    if(campaignType===undefined) return;
+    supabase.from('tasks').update({ campaign_type:campaignType||null }).eq('code', code).then(({error})=>{
+      if(error) console.warn('[supabase] task campaign_type save failed — has schema_v29.sql (campaign_type column) been applied?', error.message);
     });
   }
   _linkMessageToTask(msgId, taskId){
@@ -7791,7 +7899,7 @@ class AppRoot extends React.Component {
       checklist:r.checklist||[], dep:r.dependency||'—', evidence:r.evidence||[],
       comments:r.comments||[], status:r.status||'Assigned', activity:r.activity||[],
       qcFeedback:r.qc_feedback||'', reworkCount:r.rework_count||0,
-      contentType:r.content_type||'',
+      contentType:r.content_type||'', campaignType:r.campaign_type||'',
     }));
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
