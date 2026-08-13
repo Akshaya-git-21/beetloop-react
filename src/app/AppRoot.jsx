@@ -3525,6 +3525,25 @@ class AppRoot extends React.Component {
       if(error) console.warn('[supabase] effort plan upsert failed:', error.message);
     });
   }
+  // Deducts Contribution Units (and records Estimated Hours) against ONE
+  // Effort row when a task is created against it — never the row's own
+  // `monthly` target, so "remaining" (target - usedUnits) stays derivable
+  // and every OTHER row on the same plan is left completely untouched.
+  // Same "clone full plan, upsert into epAdded, persist" path the Effort
+  // Planner's own save button uses (see epForm's save handler) — a seed
+  // plan (EP-001 etc.) that's never been edited yet gets replaced, not
+  // duplicated, the first time this fires.
+  _deductEffort(planName, effortType, units, hours){
+    const plan=this.allEpPlans().find(p=>p.name===planName); if(!plan) return;
+    const rows=plan.rows.map(r=>r.type===effortType
+      ? { ...r, usedUnits:(r.usedUnits||0)+(units||0), usedHours:(r.usedHours||0)+(hours||0) }
+      : r);
+    const updated={ ...plan, rows };
+    const already=(this.state.epAdded||[]).some(p=>p.id===plan.id);
+    const added= already ? (this.state.epAdded||[]).map(p=>p.id===plan.id?updated:p) : [...(this.state.epAdded||[]),updated];
+    this.setState({ epAdded:added });
+    this._persistEpPlan(updated);
+  }
   _deleteEpPlan(id){
     if(!this.hasPerm('effort','delete')){ this.flash('You do not have permission to delete effort plans.'); return; }
     const p=this.allEpPlans().find(x=>x.id===id); if(!p) return;
@@ -7782,19 +7801,27 @@ class AppRoot extends React.Component {
       tkEffortOptions:[{v:'',label:'None — standalone task'}].concat(this.allEpPlans().map(p=>({ v:p.name, label:p.name+' · '+p.division }))),
       ...(()=>{
         const plan=this.allEpPlans().find(p=>p.name===f.effortPlan);
+        const selectedRow=plan&&plan.rows.find(x=>x.type===f.effortRow);
+        // Target/Remaining: usedUnits accumulates every task's Contribution
+        // Units against this ONE row (see tkSubmitNew's deduction) — the
+        // row's own `monthly` target is never mutated, so "remaining" is
+        // always derivable and other rows in the same plan are untouched.
+        const remainingFor=(r)=>Math.max(0,(r.monthly||0)-(r.usedUnits||0));
         return {
-          tkSetEffort:(e)=>this.setState({ tkForm:{...f, effortPlan:e.target.value, effortRow:''} }),
+          tkSetEffort:(e)=>this.setState({ tkForm:{...f, effortPlan:e.target.value, effortRow:'', units:'', estH:''} }),
           tkHasPlan:!!plan,
           tkPlanInfo: plan ? (plan.division+' · '+plan.period+' · owner: '+plan.owner) : '',
-          tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>({ v:r.type, label:r.type+' — '+(r.monthly||0).toLocaleString('en-US')+' '+r.unit+' / month' }))) : [],
+          tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>({ v:r.type, label:r.type+' — '+remainingFor(r).toLocaleString('en-US')+' '+r.unit+' remaining (of '+(r.monthly||0).toLocaleString('en-US')+' target)' }))) : [],
           tkEffortRowVal:f.effortRow||'',
-          tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v); const nf={...f, effortRow:v};
-            // Item 58: Contribution Units and Estimated Hours both come from
-            // the single Effort row picked here — units already did; hours
-            // is the effort row's own per-task estimate (r.hours, set in
-            // Effort Planner), not derived from the monthly/period target.
-            if(r){ nf.kpiId=r.kpiId||''; nf.priority=r.priority; nf.units=(r.monthly<=31)?'1':String(Math.ceil((r.monthly||0)/4)); nf.estH=String(r.hours||1); if(!f.name){ nf.name=r.type+' — '+plan.name; } }
-            this.setState({ tkForm:nf }); this.flash(r?'KPI, priority, contribution units & estimated hours auto-filled from the effort.':''); },
+          // Contribution Units / Estimated Hours are no longer guessed from
+          // the monthly target — the user enters both manually, and
+          // tkSubmitNew validates the units against this row's remaining
+          // target before deducting. KPI/priority/name still auto-fill
+          // since those aren't part of the manual-entry requirement.
+          tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v); const nf={...f, effortRow:v, units:'', estH:''};
+            if(r){ nf.kpiId=r.kpiId||''; nf.priority=r.priority; if(!f.name){ nf.name=r.type+' — '+plan.name; } }
+            this.setState({ tkForm:nf }); this.flash(r?'KPI & priority auto-filled — enter Contribution Units and Estimated Hours for this task.':''); },
+          tkEffortRemainingHint: selectedRow ? (remainingFor(selectedRow).toLocaleString('en-US')+' '+selectedRow.unit+' remaining of '+(selectedRow.monthly||0).toLocaleString('en-US')+' target for “'+selectedRow.type+'”') : '',
         };
       })(),
       tkTplChecklist:(tpl?tpl.checklist:[]).join(' · '),
@@ -7805,15 +7832,28 @@ class AppRoot extends React.Component {
     const f=this.state.tkForm||{};
     if(!f.name||!f.name.trim()){ this.flash('Enter a task name.'); return; }
     if(!(parseFloat(f.estH)>0)){ this.flash('Enter estimated hours — capacity planning and utilisation depend on it.'); return; }
+    // When a single Effort is selected, Contribution Units is the amount
+    // of that effort's remaining target THIS task will consume — must be
+    // entered (manually, not guessed) and can't exceed what's left, since
+    // it gets deducted from that one Effort row (and only that row) below.
+    const plan0=f.effortPlan?this.allEpPlans().find(p=>p.name===f.effortPlan):null;
+    const row0=(plan0&&f.effortRow)?plan0.rows.find(r=>r.type===f.effortRow):null;
+    if(row0){
+      const units0=parseFloat(f.units);
+      if(!(units0>0)){ this.flash('Enter Contribution Units for “'+row0.type+'”.'); return; }
+      const remaining0=Math.max(0,(row0.monthly||0)-(row0.usedUnits||0));
+      if(units0>remaining0){ this.flash('Contribution Units ('+units0+') exceeds the '+remaining0.toLocaleString('en-US')+' '+row0.unit+' remaining on “'+row0.type+'”.'); return; }
+    }
     const kpiPool=this.epKpiPool();
     const k=kpiPool.find(x=>x.id===f.kpiId);
     const tpl=(f.template?this.allTaskTemplates().find(x=>x.name===f.template):null)||{checklist:[]};
     const id=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', campaignType:(f.campaignType&&f.campaignType!=='—')?f.campaignType:'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:(row0?row0.unit:''), estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', campaignType:(f.campaignType&&f.campaignType!=='—')?f.campaignType:'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
+    if(row0) this._deductEffort(plan0.name, row0.type, task.units, task.estH);
     this.flash('Task '+id+' created and assigned to '+task.assignee+(fromMsg?' — linked back to the message.':'.'));
     this._persistNewTask(task, f.start||null, f.end||null, f.startTime||null, f.endTime||null);
   }

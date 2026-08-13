@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -314,6 +314,11 @@ Effort (from this plan)
 </React.Fragment>
 ))}
 </select>
+{Boolean(tkEffortRemainingHint) && (
+<div style={{"marginTop":"6px","fontSize":"11.5px","color":"var(--ink-500)"}}>
+{tkEffortRemainingHint}
+</div>
+)}
 </div>
 
             
