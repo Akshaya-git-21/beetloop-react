@@ -61,7 +61,7 @@ Task template (Task Master)
 {(tkTplOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
 <option value={o.name}>
-{o.name}
+{o.name || 'None — enter details manually'}
 </option>
 </React.Fragment>
 ))}

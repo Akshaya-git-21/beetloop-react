@@ -212,10 +212,7 @@ Status
 Active
 </option>
 <option>
-Draft
-</option>
-<option>
-Archived
+Disabled
 </option>
 </select>
 </div>

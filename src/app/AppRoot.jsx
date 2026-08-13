@@ -739,6 +739,12 @@ class AppRoot extends React.Component {
   // Returns null for a plain text/number field, or an array of {value,label}
   // options when the field is a relation into another master or Users.
   masterFieldOptions(masterKey, fieldKey){
+    // Any Master Data table's Status field gets the same Active/Inactive
+    // dropdown, not a free-text box a typo could desync from every filter
+    // that checks r.Status==='Active'/'Inactive' elsewhere in the app —
+    // regardless of whether that field also happens to have a cross-master
+    // relation registered below.
+    if(fieldKey==='Status') return [{ value:'Active', label:'Active' }, { value:'Inactive', label:'Inactive' }];
     const rel = this.MASTER_FIELD_RELATIONS[masterKey] && this.MASTER_FIELD_RELATIONS[masterKey][fieldKey];
     if(!rel) return null;
     if(rel.toUsers) return (this.state.users||[]).map(u=>({ value:u.name, label:u.name }));
@@ -871,7 +877,11 @@ class AppRoot extends React.Component {
         teamNames:(c.team||[]).map(x=>x.who).join(', '), teamSize:String((c.team||[]).length),
         dates:c.start+' → '+c.end,
         open:()=>this.setState({ cmpOpen:c.id, cmpTab:'overview' }),
-        edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('You do not have permission to edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
+        // start/end are stored as fmtDate() display strings (e.g. "Jul 1,
+        // 2026") — the <input type="date"> fields need ISO back or they
+        // render blank, which is why reopening a saved campaign looked
+        // like the dates had vanished.
+        edit:(e)=>{ if(e)e.stopPropagation(); if(!canEdit){ this.flash('You do not have permission to edit campaigns.'); return; } this.setState({ cmpNew:true, cmpEditId:c.id, cmpSection:'cmpA', cmpForm:{...c, start:this.isoDate(c.start), end:this.isoDate(c.end), team:(c.team||[]).map(x=>({...x})), kpis:(c.kpis||[]).map(x=>({...x})), efforts:(c.efforts||[]).map(x=>({...x}))} }); },
       }; }),6);
     const K=(label,value,color)=>({label,value,color});
     const stats=[K('Campaigns',String(all.length),'var(--ink-900)'),K('Live',String(all.filter(c=>c.status==='Live').length),'var(--verify-600)'),K('In planning',String(all.filter(c=>c.status==='Planning').length),'var(--info-600)'),K('Linked KPIs',String(all.reduce((s,c)=>s+(c.kpis||[]).length,0)),'var(--orchid-600)'),K('Tasks generated',String(all.reduce((s,c)=>s+(c.taskCount||0),0)),'var(--warn-600)')];
@@ -1761,7 +1771,7 @@ class AppRoot extends React.Component {
 
     const primaryAction = ()=>{
       if(route==='users') this.setState({ showUserModal:true });
-      else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
+      else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
       else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
       else if(route==='okr') this.setState({ showOkrPanel:true, okrEditId:null,
@@ -3342,7 +3352,7 @@ class AppRoot extends React.Component {
     { id:'kt5', name:'Avg. Engagement Rate', category:'Social', division:'SMM', unit:'%', direction:'Increase', defTarget:'4.5', freq:'Weekly', source:'Platform APIs', desc:'Average engagement across social platforms.', status:'Active', owner:'Aditi Rao', updated:'Jun 5, 2026' },
     { id:'kt6', name:'Page Load Time', category:'Technical', division:'Web Developers', unit:'seconds', direction:'Decrease', defTarget:'2.0', freq:'Weekly', source:'Lighthouse', desc:'Median LCP across key templates.', status:'Active', owner:'Priya Nair', updated:'Jun 1, 2026' },
     { id:'kt7', name:'Conversion Rate', category:'Conversion', division:'All', unit:'%', direction:'Increase', defTarget:'4.5', freq:'Monthly', source:'GA4', desc:'Sitewide goal conversion rate.', status:'Active', owner:'Priya Nair', updated:'May 20, 2026' },
-    { id:'kt8', name:'Creatives Delivered', category:'Design', division:'Graphics', unit:'assets', direction:'Increase', defTarget:'40', freq:'Monthly', source:'KPI Log', desc:'QC-approved design assets delivered.', status:'Draft', owner:'Aditi Rao', updated:'Jun 22, 2026' },
+    { id:'kt8', name:'Creatives Delivered', category:'Design', division:'Graphics', unit:'assets', direction:'Increase', defTarget:'40', freq:'Monthly', source:'KPI Log', desc:'QC-approved design assets delivered.', status:'Disabled', owner:'Aditi Rao', updated:'Jun 22, 2026' },
   ]; }
   allKpiTemplates(){ const upd=this.state.ktUpd||{}; const added=this.state.ktAdded||[]; const addedIds=new Set(added.map(t=>t.id));
     const del=this.state.ktDeleted||[];
@@ -3426,7 +3436,12 @@ class AppRoot extends React.Component {
           if(c) this.setState({ route:'campaigns', cmpOpen:c.id, cmpTab:'chain' }); else this.flash('No campaign matches "'+p.campaign+'" yet.'); },
         openOkr:(e)=>{ if(e)e.stopPropagation(); const o=this.allOkrs().find(x=>x.title===p.okr);
           if(o) this.setState({ route:'okr', okrOpen:o.id }); else this.flash('No OKR matches "'+p.okr+'" yet.'); },
-        edit:()=>this.setState({ epView:'create', epPlanId:p.id, epDivision:p.division, epForm:{ name:p.name, quarter:p.period, campaign:p.campaign, dept:p.dept, owner:p.owner, okr:p.okr, start:p.start, end:p.end, type:p.type }, epRows:p.rows.map(r=>({...r})) }),
+        // quarter/start/end are stored as fmtMonth()/fmtDate() display
+        // strings (e.g. "Jul 2026", "Jul 1, 2026") — the <input
+        // type="month"/"date"> fields need ISO back or they render blank,
+        // which is why reopening a saved plan looked like the dates had
+        // vanished.
+        edit:()=>this.setState({ epView:'create', epPlanId:p.id, epDivision:p.division, epForm:{ name:p.name, quarter:this.isoMonth(p.period), campaign:p.campaign, dept:p.dept, owner:p.owner, okr:p.okr, start:this.isoDate(p.start), end:this.isoDate(p.end), type:p.type }, epRows:p.rows.map(r=>({...r})) }),
         delete:(e)=>{ if(e)e.stopPropagation(); if(!canDelete){ this.flash('You do not have permission to delete effort plans.'); return; }
           this.confirmDelete('Delete Effort Plan?', 'Are you sure you want to delete "'+(p.name||p.id)+'"? This action cannot be undone.', ()=>this._deleteEpPlan(p.id)); },
       };
@@ -4143,17 +4158,17 @@ class AppRoot extends React.Component {
       duplicate:()=>{ const dupIds=this.KPI_TEMPLATES().map(x=>x.id).concat((this.state.ktAdded||[]).map(x=>x.id)).concat(this.state.ktDeleted||[]);
         const dupNums=dupIds.map(id=>{ const m=String(id).match(/^kt(\d+)c$/); return m?parseInt(m[1],10):0; });
         const nid='kt'+(Math.max(0,...dupNums)+1)+'c';
-        const copy={...t,id:nid,name:t.name+' (copy)',status:'Draft',owner:this.currentPerson(),updated:this.todayStr()};
-        this.setState({ ktAdded:[...(this.state.ktAdded||[]),copy] }); this.flash('KPI template duplicated (Draft).');
+        const copy={...t,id:nid,name:t.name+' (copy)',status:'Disabled',owner:this.currentPerson(),updated:this.todayStr()};
+        this.setState({ ktAdded:[...(this.state.ktAdded||[]),copy] }); this.flash('KPI template duplicated (Disabled).');
         supabase.from('templates').insert({ id:nid, kind:'kpi', payload:copy, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
           if(error) console.warn('[supabase] kpi template insert failed:', error.message);
         }); },
-      toggleStatus:()=>{ const ns=t.status==='Active'?'Archived':'Active'; const nx={...t,status:ns,updated:this.todayStr()};
-        this.setState({ ktUpd:{...(this.state.ktUpd||{}),[t.id]:{...(this.state.ktUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'archived')+'.');
+      toggleStatus:()=>{ const ns=t.status==='Active'?'Disabled':'Active'; const nx={...t,status:ns,updated:this.todayStr()};
+        this.setState({ ktUpd:{...(this.state.ktUpd||{}),[t.id]:{...(this.state.ktUpd||{})[t.id],status:ns,updated:this.todayStr()}} }); this.flash(t.name+' '+(ns==='Active'?'activated':'disabled')+'.');
         supabase.from('templates').upsert({ id:t.id, kind:'kpi', payload:nx, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
           if(error) console.warn('[supabase] kpi template upsert failed:', error.message);
         }); },
-      statusAction:t.status==='Active'?'Archive':'Activate',
+      statusAction:t.status==='Active'?'Disable':'Activate',
       delete:()=>this.confirmDelete('Delete Template?', 'Are you sure you want to delete "'+t.name+'"? This action cannot be undone.', ()=>this._deleteTemplate(t.id,'kpi')),
     })),8);
     const ktStats=[K('KPI templates',String(allK.length),'var(--ink-900)'),K('Active',String(allK.filter(t=>t.status==='Active').length),'var(--verify-600)'),K('Auto-tracked (API source)',String(allK.filter(t=>t.source!=='KPI Log'&&t.source!=='Manual').length),'var(--info-600)'),K('Pulled into tasks / KRs',String(allK.reduce((s,t)=>s+ktUsage(t),0)),'var(--orchid-600)')];
@@ -4689,6 +4704,19 @@ class AppRoot extends React.Component {
     if(isNaN(d)) return null;
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
+  // Reverses fmtMonth() ("2026-07" -> "Jul 2026") back to "2026-07" — an
+  // <input type="month"> needs that ISO form or it silently renders
+  // blank, which is why editing a saved Effort Plan showed an empty
+  // Period field. If it's already ISO (or unrecognized), pass it through.
+  isoMonth(s){
+    if(!s||s==='—') return null;
+    const iso=String(s).match(/^(\d{4})-(\d{2})$/); if(iso) return s;
+    const m=String(s).match(/^([A-Za-z]{3})\w*\s+(\d{4})$/); if(!m) return null;
+    const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const idx=M.indexOf(m[1].slice(0,1).toUpperCase()+m[1].slice(1,3).toLowerCase());
+    if(idx<0) return null;
+    return m[2]+'-'+String(idx+1).padStart(2,'0');
+  }
   DEPT_MASTER(){ return [
     { key:'seo',     label:'SEO',             aliases:['seo','search'] },
     { key:'content', label:'Content',         aliases:['content','content writing','editorial','copy'] },
@@ -5139,21 +5167,22 @@ class AppRoot extends React.Component {
   tkTone(s){ return {Assigned:{bg:'var(--info-100)',c:'var(--info-600)'},'In Progress':{bg:'var(--warn-100)',c:'var(--warn-600)'},Submitted:{bg:'var(--orchid-100)',c:'var(--orchid-700)'},Approved:{bg:'var(--verify-100)',c:'var(--verify-600)'},Rework:{bg:'var(--danger-100)',c:'var(--danger-600)'},Closed:{bg:'#EAE4E8',c:'var(--beet-700)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
   // Differentiates comment bubbles by the individual person who wrote them,
   // not their role — two people who happen to share a role (e.g. two Admin
-  // accounts) must still look visually distinct from each other. Hashing the
-  // name into a small, distinguishable palette keeps each person's color
-  // stable across reloads without needing to persist a color assignment.
+  // accounts) must still look visually distinct — but by ROLE, not by
+  // individual person: every QC Reviewer's comment shares one color, every
+  // Manager's another, so a reader can tell at a glance who's speaking in
+  // what capacity. Reuses each role's own brand color (this.ROLES[key].color
+  // — already used for that role's avatar/badge elsewhere) rather than a
+  // second, disconnected palette.
+  _hexToRgba(hex, a){
+    const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex||'');
+    if(!m) return 'rgba(138,138,138,'+a+')';
+    return 'rgba('+parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)+','+a+')';
+  }
   _commentColor(who){
-    const palette=[
-      {bg:'var(--orchid-100)', border:'var(--orchid-200)'},
-      {bg:'var(--info-100)', border:'#CBE3EC'},
-      {bg:'var(--verify-100)', border:'#BFE3D0'},
-      {bg:'var(--warn-100)', border:'#F0DBA0'},
-      {bg:'var(--danger-100, #F7E3E6)', border:'#F1C9CF'},
-      {bg:'#EAE4E8', border:'var(--line-300)'},
-    ];
-    const s=String(who||'');
-    let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
-    return palette[h%palette.length];
+    const u=(this.state.users||[]).find(x=>x.name===who);
+    const role=u&&u.roleKey&&this.ROLES[u.roleKey];
+    const hex=role?role.color:'#8A8A8A';
+    return { bg:this._hexToRgba(hex,.12), border:this._hexToRgba(hex,.35) };
   }
   relDate(n){ const d=new Date(Date.now()+n*86400000); const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]; return m+' '+d.getDate()+', '+d.getFullYear(); }
   dayDiff(t){ const s=String(t.end||''); if(!s||s==='—') return null; const d=Date.parse(/\d{4}/.test(s)?s:(s+', 2026')); if(isNaN(d)) return null; const a=new Date(); a.setHours(0,0,0,0); const b=new Date(d); b.setHours(0,0,0,0); return Math.round((b-a)/86400000); }
@@ -5336,7 +5365,7 @@ class AppRoot extends React.Component {
       tkPrevDisabled:page===0, tkNextDisabled:page>=pageCount-1,
       tkPrevStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--paper);color:'+(page===0?'var(--ink-300)':'var(--ink-700)'),
       tkNextStyle:'display:flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--line-300);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--paper);color:'+(page>=pageCount-1?'var(--ink-300)':'var(--ink-700)'),
-      tkNewOpen:()=>this.setState({ tkNew:true, tkForm:{ template:'Custom task', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } }),
+      tkNewOpen:()=>this.setState({ tkNew:true, tkForm:{ template:'', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } }),
       ...this.tkDetailData(), ...this.tkFormData() };
   }
 
@@ -7378,16 +7407,29 @@ class AppRoot extends React.Component {
     const f=this.state.tkForm||{};
     const set=(k)=>(e)=>{
       const v=e.target.value; const nf={...this.state.tkForm,[k]:v};
-      if(k==='template'){ const tpl=this.TASK_TEMPLATES().find(x=>x.name===v); if(tpl&&tpl.kpiId){ nf.kpiId=tpl.kpiId; } }
+      // "None" (v==='') leaves every field exactly as the user typed it —
+      // no template to pull from. Picking a real template auto-fills
+      // every field/variable it defines (name, description, unit,
+      // estimated hours, priority, recurrence, linked KPI), the same way
+      // it'll display once saved in Task Details/Task List.
+      if(k==='template'){
+        const tpl=v?this.allTaskTemplates().find(x=>x.name===v):null;
+        if(tpl){
+          nf.name=tpl.name; nf.desc=tpl.desc||''; nf.division=tpl.division||nf.division;
+          nf.priority=tpl.priority||'Medium'; nf.recurrence=tpl.recurrence||'None';
+          nf.units=nf.units||'1'; nf.estH=String(tpl.estH||1);
+          if(tpl.kpiId) nf.kpiId=tpl.kpiId;
+        }
+      }
       this.setState({ tkForm:nf });
     };
     const kpiPool=this.epKpiPool();
     const nextCode=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
-    const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'));
+    const tpl=f.template?this.allTaskTemplates().find(x=>x.name===f.template):null;
     return {
       tkNew:this.state.tkNew, tkf:f, tkCode:nextCode,
       tkCloseNew:()=>this.setState({ tkNew:false, msgConvert:null }),
-      tkTplOptions:this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name})),
+      tkTplOptions:[{name:''}].concat(this.allTaskTemplates().filter(x=>x.status!=='Archived').map(x=>({name:x.name}))),
       ...(()=>{
         const plan0=this.allEpPlans().find(p=>p.name===f.effortPlan);
         const row0=plan0&&plan0.rows.find(r=>r.type===f.effortRow);
@@ -7450,10 +7492,10 @@ class AppRoot extends React.Component {
     if(!(parseFloat(f.estH)>0)){ this.flash('Enter estimated hours — capacity planning and utilisation depend on it.'); return; }
     const kpiPool=this.epKpiPool();
     const k=kpiPool.find(x=>x.id===f.kpiId);
-    const tpl=this.TASK_TEMPLATES().find(x=>x.name===(f.template||'Custom task'))||{checklist:[]};
+    const tpl=(f.template?this.allTaskTemplates().find(x=>x.name===f.template):null)||{checklist:[]};
     const id=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'Custom task', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:'', estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
@@ -7570,6 +7612,14 @@ class AppRoot extends React.Component {
     if(!f.title||!f.title.trim()){ this.flash('Enter an objective title.'); return; }
     if(!f.end){ this.flash('Select a Due Date.'); return; }
     if(activate && !wOk){ this.flash('Key-result weights must total 100% (now '+wTotal+'%).'); return; }
+    // Leaving "Linked KPI name" blank on a KR used to silently fall back
+    // to "KPI 1"/"KPI 2" placeholders — meaningless everywhere that KR's
+    // KPI gets shown (Effort Planner, Campaigns, checklists). Same
+    // draft-lenient/activate-strict pattern as the weight check above.
+    if(activate){
+      const missing=(this.state.okrDraftKRs||[]).findIndex(k=>!k.kpiSel||!k.kpiSel.trim());
+      if(missing>=0){ this.flash('Key result '+(missing+1)+' needs a Linked KPI name before this OKR can be activated.'); return; }
+    }
     const krs=(this.state.okrDraftKRs||[]).map((k,i)=>({
       t:k.kr&&k.kr.trim()?k.kr.trim():'Key result '+(i+1), kpi:k.kpiSel||'KPI '+(i+1),
       baseline:k.baseline||'0', target:k.target||'100', current:k.current||'0', unit:k.unit||'units',
@@ -7595,7 +7645,7 @@ class AppRoot extends React.Component {
         title:shared.title, description:shared.desc, category:shared.category,
         scope:shared.scope, division:shared.dept, status:shared.status, key_results:krs,
         business_unit:shared.businessUnit, website_domain:shared.websiteDomain, contributors:shared.contributors, owner:shared.owner,
-        start_date:f.start||null, due_date:f.end||null,
+        brand:shared.brand||null, reviewer:shared.reviewer||null, start_date:f.start||null, due_date:f.end||null,
       });
       return;
     }
@@ -7617,7 +7667,8 @@ class AppRoot extends React.Component {
     supabase.from('okrs').insert({
       code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
       status:okr.status, key_results:krs, business_unit:okr.businessUnit, website_domain:okr.websiteDomain,
-      contributors:okr.contributors, owner:okr.owner, start_date:f.start||null, due_date:f.end||null,
+      contributors:okr.contributors, owner:okr.owner, brand:okr.brand||null, reviewer:okr.reviewer||null, approver:okr.approver||null,
+      start_date:f.start||null, due_date:f.end||null,
       created_by:this.state.authUser?this.state.authUser.id:null,
     }).then(({error})=>{
       if(error) console.warn('[supabase] okr insert failed:', error.message);
@@ -7651,9 +7702,9 @@ class AppRoot extends React.Component {
       id:'okr-'+r.id, code:r.code, v:'v1.0', scope:r.scope||'Department', title:r.title, desc:r.description||'',
       owner:r.owner||(r.key_results&&r.key_results[0]&&r.key_results[0].who)||'—',
       contributors:r.contributors||[], team:(r.contributors&&r.contributors.length)?('+'+r.contributors.length):'', cycle:'Q1 2026',
-      brand:'', businessUnit:r.business_unit||'', websiteDomain:r.website_domain||'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
+      brand:r.brand||'', businessUnit:r.business_unit||'', websiteDomain:r.website_domain||'', dept:r.division||'', campaign:'', category:r.category||r.division||'',
       progress:0, due:this.fmtDate(r.due_date)||'—', start:this.fmtDate(r.start_date)||this.todayStr(), daysLeft:0, cycleElapsed:0,
-      status:r.status||'Draft', weight:100, reviewer:'', approver:'',
+      status:r.status||'Draft', weight:100, reviewer:r.reviewer||'', approver:r.approver||'',
       krs:r.key_results||[],
     }));
     this.setState({ okrAdded:mapped, okrDeleted:rows.filter(r=>r.deleted).map(r=>r.code) });
@@ -10445,6 +10496,16 @@ class AppRoot extends React.Component {
         else if(canManageOkrs()) push('OKR '+o.code+' updated — status: '+o.status, nav);
         this._loadOkrs();
       })
+      // KPI/Task/OKR Templates and Master Data (incl. the Campaign Type /
+      // Content Type master) drive dropdowns across Effort Planner, Task
+      // creation and Campaigns — reload on any change so a KPI or Campaign
+      // Type another session just created/edited shows up without a manual
+      // refresh, the same live-refresh guarantee tasks/okrs/campaigns
+      // already had.
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'templates' }, ()=>{ this._loadTemplates(); })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'templates' }, ()=>{ this._loadTemplates(); })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'master_records' }, ()=>{ this._loadMasterRecords(); })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'master_records' }, ()=>{ this._loadMasterRecords(); })
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'profiles' }, (payload)=>{
         if(canManageUsers()) push('New team member: '+(payload.new.full_name||payload.new.email), { route:'users', umOpen:payload.new.full_name });
         this._loadTeam();
