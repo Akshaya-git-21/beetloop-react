@@ -814,6 +814,11 @@ class AppRoot extends React.Component {
   // Returns null for a plain text/number field, or an array of {value,label}
   // options when the field is a relation into another master or Users.
   masterFieldOptions(masterKey, fieldKey){
+    // KPI Master's Status uses Active/Disabled (not Active/Inactive) — the
+    // same off-state wording KPI Templates already uses (toggleStatus in
+    // KpiTemplateFormDrawer), since both are "reusable KPI definition"
+    // masters gating which KPIs can be picked for a NEW OKR Key Result.
+    if(masterKey==='kpi' && fieldKey==='Status') return [{ value:'Active', label:'Active' }, { value:'Disabled', label:'Disabled' }];
     // Any Master Data table's Status field gets the same Active/Inactive
     // dropdown, not a free-text box a typo could desync from every filter
     // that checks r.Status==='Active'/'Inactive' elsewhere in the app —
@@ -9750,7 +9755,12 @@ class AppRoot extends React.Component {
       navStyle:'display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:2px;border-radius:10px;font-size:13px;font-weight:'+(active?'700':'600')+';text-decoration:none;'+(active?'background:var(--orchid-100);color:var(--ink-900)':'color:var(--ink-500)'),
       badgeBg: active?'var(--beet-700)':'var(--surface-50)', badgeColor: active?'#fff':'var(--ink-500)' }; });
     const reg = this.MASTERS_REG();
-    const kpiOptions = reg.kpi.rows.map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
+    // Disabled KPI Master rows (and Disabled KPI Templates, already
+    // filtered) never appear as pickable options for a NEW Key Result —
+    // once a KPI is actually linked to a live KR it flows into Campaigns/
+    // Effort Planner regardless of a later Status change here, matching
+    // every other "Status gates new selections, not existing links" master.
+    const kpiOptions = reg.kpi.rows.filter(r=>r.Status!=='Disabled').map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
     const drafts = this.state.okrDraftKRs;
     const wTotal = drafts.reduce((s,k)=>s+(parseInt(k.weight,10)||0),0);
     const wOk = wTotal===100;
