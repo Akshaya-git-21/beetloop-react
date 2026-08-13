@@ -3,7 +3,8 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function MasterDetailSection({ vm }) {
-  const { bd_activity, bd_addBrand, bd_addService, bd_back, bd_brands, bd_canDelete, bd_dates, bd_delete, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_newBrand, bd_newService, bd_notes, bd_setNewBrand, bd_setNewService, bd_setNotes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail } = vm;
+  const { bd_activity, bd_addBrand, bd_addService, bd_back, bd_brands, bd_canDelete, bd_dates, bd_delete, bd_features, bd_hasTags, bd_ident, bd_linkStats, bd_name, bd_newBrand, bd_newService, bd_notes, bd_setNewBrand, bd_setNewService, bd_setNotes, bd_qmeta, bd_quality, bd_save, bd_services, bd_status, bd_statusBg, bd_statusColor, bd_sub, bd_tab0, bd_tab1, bd_tab2, bd_tab3, bd_tab4, bd_tab5, bd_tabs, bd_tags, blActivity, blDaDist, blExport, blFPlatform, blFStatus, blImport, blIsBacklink, blKpis, blOnFPlatform, blOnFStatus, blOnQuery, blPlatformOptions, blPlatforms, blQuery, blRepoCount, blRepoEmpty, blRepoRows, blSegs, blShowDash, blShowDetail, blShowRepo, blVerify, mdAdd, mdBack, mdCols, mdCount, mdDesc, mdIcon, mdLabel, mdOnQuery, mdPg, mdQuery, mdRows, mdShowTable, showMasterDetail,
+    qcmRows, qcmEmpty, qcmQuery, qcmOnQuery, qcmTypeFilter, qcmOnTypeFilter, qcmTypeFilterOptions, qcmOpen, qcmIsEdit, qcmForm, qcmFormCode, qcmSetName, qcmSetType, qcmSetStatus, qcmTypeOptions, qcmClose, qcmSave, qcmAddItem, qcmItemRows, qcmItemCount, qcmTotalItems, qcmRequiredItems, qcmCanCreate } = vm;
   const fieldInputStyle = { width: '100%', padding: '6px 9px', border: '1px solid var(--line-300)', borderRadius: 8, fontSize: 13.5, outline: 'none', color: 'var(--ink-900)' };
   return (
     <React.Fragment>
@@ -60,11 +61,13 @@ Master Data
             
 </div>
 
-            
+
+{!qcmRows && (
 <button onClick={mdAdd} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#7A1C46","color":"#fff","border":"none","padding":"10px 16px","borderRadius":"12px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 18px -8px rgba(122,28,70,.55)"}}>
 <Icon name={"plus"} style={{"width":"15px","height":"15px"}} />
 Add entry
 </button>
+)}
 
           
 </div>
@@ -1015,6 +1018,169 @@ Activity log
 
 
           
+{Boolean(qcmRows) && (
+<React.Fragment>
+<div style={{ background:'var(--paper)', border:'1px solid var(--line-300)', borderRadius:20, boxShadow:'var(--shadow-sm)', overflow:'hidden', marginBottom: qcmOpen ? 18 : 0 }}>
+  <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 18px', borderBottom:'1px solid var(--line-200)', flexWrap:'wrap' }}>
+    <div style={{ position:'relative', flex:1, maxWidth:320 }}>
+      <Icon name="search" style={{ width:15, height:15, color:'var(--ink-400)', position:'absolute', left:11, top:9 }} />
+      <input value={qcmQuery} onInput={qcmOnQuery} placeholder="Search checklist…" style={{ width:'100%', padding:'8px 12px 8px 34px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13, outline:'none' }} />
+    </div>
+    <select value={qcmTypeFilter} onChange={qcmOnTypeFilter} style={{ padding:'8px 12px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13, background:'var(--paper)' }}>
+      {(qcmTypeFilterOptions || []).map((t,i)=>(<option key={i} value={t}>{t==='All'?'All Campaign Types':t}</option>))}
+    </select>
+    <span style={{ fontSize:12.5, fontWeight:700, color:'var(--ink-400)' }}>{(qcmRows||[]).length} record{(qcmRows||[]).length===1?'':'s'}</span>
+    {Boolean(qcmCanCreate) && (
+      <button onClick={mdAdd} style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:7, padding:'9px 16px', border:'none', background:'#7A1C46', color:'#fff', borderRadius:11, fontSize:13, fontWeight:700, cursor:'pointer' }}>
+        <Icon name="plus" style={{ width:14, height:14 }} />New QC Checklist
+      </button>
+    )}
+  </div>
+  <div style={{ overflowX:'auto' }}>
+    <table style={{ width:'100%', borderCollapse:'collapse', minWidth:760 }}>
+      <thead>
+        <tr>
+          {['Code','Checklist Name','No. of Checklist Items','Campaign Type','Status','Actions'].map((h,i)=>(
+            <th key={i} style={{ textAlign:'left', padding:'10px 16px', fontSize:10.5, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase', color:'var(--ink-500)', background:'var(--surface-50)', borderBottom:'1px solid var(--line-200)' }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Boolean(qcmEmpty) && (
+          <tr><td colSpan={6} style={{ padding:'30px 16px', textAlign:'center', color:'var(--ink-500)', fontSize:13 }}>No QC checklists match these filters.</td></tr>
+        )}
+        {(qcmRows || []).map((r,i)=>(
+          <tr key={i}>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)', fontFamily:"'Space Mono', monospace", fontSize:12.5, color:'var(--ink-700)' }}>{r.code}</td>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)', fontSize:13, fontWeight:700, color:'var(--ink-900)' }}>{r.name}</td>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)', fontSize:13, color:'var(--ink-700)' }}>{r.itemCount} Items</td>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)' }}>
+              <span style={{ fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:999, background:r.typeBg, color:r.typeColor }}>{r.type}</span>
+            </td>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)' }}>
+              <span style={{ fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:999, background:r.statusBg, color:r.statusColor }}>{r.status}</span>
+            </td>
+            <td style={{ padding:'11px 16px', borderBottom:'1px solid var(--line-200)' }}>
+              <div style={{ display:'flex', gap:6 }}>
+                {Boolean(r.canEdit) && (
+                  <button onClick={r.edit} title="Edit" style={{ width:30, height:30, border:'1px solid var(--line-300)', background:'var(--paper)', borderRadius:9, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <Icon name="pencil" style={{ width:14, height:14, color:'var(--ink-600)' }} />
+                  </button>
+                )}
+                {Boolean(r.canDelete) && (
+                  <button onClick={r.delete} title="Delete" style={{ width:30, height:30, border:'1px solid var(--line-300)', background:'var(--paper)', borderRadius:9, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <Icon name="trash-2" style={{ width:14, height:14, color:'var(--danger-600)' }} />
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{Boolean(qcmOpen) && (
+<div style={{ background:'var(--paper)', border:'1px solid var(--line-300)', borderRadius:20, boxShadow:'var(--shadow-sm)', padding:22 }}>
+  <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
+    <button onClick={qcmClose} style={{ width:34, height:34, border:'1px solid var(--line-300)', background:'var(--paper)', borderRadius:10, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <Icon name="arrow-left" style={{ width:16, height:16 }} />
+    </button>
+    <h3 style={{ fontFamily:"'Sora'", fontWeight:700, fontSize:18, color:'var(--ink-900)', margin:0 }}>QC Checklist Details</h3>
+  </div>
+  <div style={{ display:'grid', gridTemplateColumns:'2.4fr 3fr', gap:20 }}>
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
+        <div>
+          <label style={{ display:'block', fontSize:11.5, fontWeight:700, color:'var(--ink-700)', marginBottom:5 }}>Checklist Code *</label>
+          <input value={qcmFormCode} readOnly style={{ width:'100%', padding:'9px 11px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13, background:'var(--surface-50)', color:'var(--ink-500)' }} />
+        </div>
+        <div>
+          <label style={{ display:'block', fontSize:11.5, fontWeight:700, color:'var(--ink-700)', marginBottom:5 }}>Checklist Name *</label>
+          <input value={(qcmForm||{}).Checklist||''} onChange={qcmSetName} style={{ width:'100%', padding:'9px 11px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13 }} />
+        </div>
+        <div>
+          <label style={{ display:'block', fontSize:11.5, fontWeight:700, color:'var(--ink-700)', marginBottom:5 }}>Campaign Type *</label>
+          <select value={(qcmForm||{}).Campaign_Type||''} onChange={qcmSetType} style={{ width:'100%', padding:'9px 11px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13, background:'var(--paper)' }}>
+            <option value="">Select…</option>
+            {(qcmTypeOptions || []).map((t,i)=>(<option key={i} value={t}>{t}</option>))}
+          </select>
+        </div>
+        <div>
+          <label style={{ display:'block', fontSize:11.5, fontWeight:700, color:'var(--ink-700)', marginBottom:5 }}>Status</label>
+          <select value={(qcmForm||{}).Status||'Active'} onChange={qcmSetStatus} style={{ width:'100%', padding:'9px 11px', border:'1px solid var(--line-300)', borderRadius:10, fontSize:13, background:'var(--paper)' }}>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+        <h4 style={{ fontFamily:"'Sora'", fontWeight:700, fontSize:14.5, color:'var(--ink-900)', margin:0 }}>Checklist Items ({qcmItemCount||0})</h4>
+        <button onClick={qcmAddItem} style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 13px', border:'none', background:'#1F8A4C', color:'#fff', borderRadius:9, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+          <Icon name="plus" style={{ width:13, height:13 }} />Add Checklist Item
+        </button>
+      </div>
+      <div style={{ fontSize:11.5, color:'var(--ink-500)', marginBottom:10 }}>Add and manage checklist items for this campaign type</div>
+
+      <div style={{ border:'1px solid var(--line-200)', borderRadius:12, overflow:'hidden' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'46px 1fr 130px 100px 46px', gap:8, padding:'8px 12px', background:'var(--surface-50)', fontSize:10, fontWeight:700, letterSpacing:'.04em', textTransform:'uppercase', color:'var(--ink-400)' }}>
+          <span>Sl No.</span><span>Checklist Item</span><span>Item Type</span><span>Required</span><span />
+        </div>
+        {(qcmItemRows||[]).length===0 && (
+          <div style={{ padding:'18px 12px', textAlign:'center', color:'var(--ink-500)', fontSize:12.5 }}>No items yet — click "Add Checklist Item" to start.</div>
+        )}
+        {(qcmItemRows||[]).map((it,i)=>(
+          <div key={i} style={{ display:'grid', gridTemplateColumns:'46px 1fr 130px 100px 46px', gap:8, padding:'8px 12px', borderTop:'1px solid var(--line-200)', alignItems:'center' }}>
+            <span style={{ fontSize:12.5, color:'var(--ink-500)' }}>{it.n}</span>
+            <input value={it.text} onChange={it.setText} placeholder="Checklist item text…" style={{ padding:'7px 9px', border:'1px solid var(--line-300)', borderRadius:8, fontSize:12.5, outline:'none' }} />
+            <select value={it.type} onChange={it.setType} style={{ padding:'7px 9px', border:'1px solid var(--line-300)', borderRadius:8, fontSize:12, background:'var(--paper)' }}>
+              <option value="Text">Text</option>
+              <option value="Checkbox">Checkbox</option>
+            </select>
+            <select value={it.required} onChange={it.setRequired} style={{ padding:'7px 9px', border:'1px solid var(--line-300)', borderRadius:8, fontSize:12, background:'var(--paper)' }}>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <button onClick={it.remove} title="Remove" style={{ width:28, height:28, border:'1px solid var(--line-300)', background:'var(--paper)', borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Icon name="trash-2" style={{ width:13, height:13, color:'var(--danger-600)' }} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display:'flex', justifyContent:'flex-end', gap:10, marginTop:20 }}>
+        <button onClick={qcmClose} style={{ padding:'10px 18px', border:'1px solid var(--line-300)', background:'var(--paper)', borderRadius:11, fontSize:13, fontWeight:700, color:'var(--ink-700)', cursor:'pointer' }}>Cancel</button>
+        <button onClick={qcmSave} style={{ padding:'10px 22px', border:'none', background:'#7A1C46', color:'#fff', borderRadius:11, fontSize:13, fontWeight:700, cursor:'pointer' }}>Save</button>
+      </div>
+    </div>
+
+    <div style={{ background:'var(--verify-100, #E7F5EC)', border:'1px solid #BFE3D0', borderRadius:14, padding:18, height:'fit-content' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+        <Icon name="info" style={{ width:15, height:15, color:'var(--verify-600)' }} />
+        <span style={{ fontSize:13.5, fontWeight:700, color:'var(--ink-900)' }}>About Campaign Types</span>
+      </div>
+      <p style={{ fontSize:12.5, color:'var(--ink-700)', lineHeight:1.6, margin:'0 0 14px' }}>
+        QC Checklists are mapped to Campaign Types. When creating tasks for a campaign, only relevant checklists will be shown based on the campaign type.
+      </p>
+      <div style={{ borderTop:'1px solid #BFE3D0', paddingTop:12, display:'flex', flexDirection:'column', gap:6 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', fontSize:12.5 }}>
+          <span style={{ color:'var(--ink-600)' }}>Total Items:</span>
+          <span style={{ fontWeight:700, color:'var(--ink-900)' }}>{qcmTotalItems||0}</span>
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', fontSize:12.5 }}>
+          <span style={{ color:'var(--ink-600)' }}>Required Items:</span>
+          <span style={{ fontWeight:700, color:'var(--ink-900)' }}>{qcmRequiredItems||0}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+)}
+</React.Fragment>
+)}
+
 {Boolean(mdShowTable) && (
 <React.Fragment>
 

@@ -657,21 +657,76 @@ class AppRoot extends React.Component {
       // MASTER_FIELD_RELATIONS below) is what actually links a Content
       // Type to one of these rows — Applies_To here is just a
       // human-readable annotation, same as it always was.
+      // Items used to be a semicolon-delimited string (Item_List) plus a
+      // separately hand-typed count (Items) that could drift out of sync
+      // with the real list. Items is now the real array of structured
+      // {text,type,required} rows — "No. of Checklist Items" everywhere
+      // (list column, detail header) is just Items.length, always correct.
       qcChecklist: {
         label:'QC Checklist Master', icon:'clipboard-check', group:'Marketing & Quality',
-        desc:'Reusable QC checklists applied during review — the Checklist name is what a Content Type\'s "QC_Checklist" field links to for dynamic QC, and Campaign_Type maps it into the Task → Campaign → Campaign Type → matching QC Checklists flow.',
-        cols:[ {k:'QC_Code',l:'Code',mono:1}, {k:'Checklist',l:'Checklist'}, {k:'Items',l:'Items'}, {k:'Campaign_Type',l:'Campaign type'}, {k:'No_of_Checklists',l:'No. of checklists'}, {k:'Applies_To',l:'Applies to'}, {k:'Status',l:'Status',tag:1} ],
-        fields:['QC_Code','Checklist','Items','Item_List','Campaign_Type','No_of_Checklists','Applies_To','Severity_Default','Status'],
+        desc:'Reusable QC checklists mapped to Campaign Types — a Task\'s linked Campaign resolves its Campaign Type, which determines which checklists apply. Also linked from Content Type via the "QC_Checklist" field for content-type-driven QC.',
+        cols:[ {k:'QC_Code',l:'Code',mono:1}, {k:'Checklist',l:'Checklist Name'}, {k:'Campaign_Type',l:'Campaign Type'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['QC_Code','Checklist','Campaign_Type','Status'],
         rows:[
-          {QC_Code:'QC-01',Checklist:'Content Audit',Items:18,Item_List:'Grammar & clarity checked;Plagiarism checked;Fact-checking complete;Formatting consistent',Campaign_Type:'Content Campaign',No_of_Checklists:2,Applies_To:'Case Study, Whitepaper, Service Page, Product Page, FAQ, News, Resource, Checklist, Video Script, Infographic, Webinar, Press Release, Glossary, Pillar Page, Cluster Page',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-02',Checklist:'SEO Audit',Items:24,Item_List:'Title tag checked;Meta description checked;Header structure checked;Internal links checked',Campaign_Type:'SEO Campaign',No_of_Checklists:1,Applies_To:'On-page, Technical',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-03',Checklist:'Website Audit',Items:31,Item_List:'Page load speed checked;Mobile responsiveness checked;Broken links checked;Schema markup checked',Campaign_Type:'Website Campaign',No_of_Checklists:2,Applies_To:'Web builds',Severity_Default:'High',Status:'Active'},
-          {QC_Code:'QC-04',Checklist:'SMM Audit',Items:12,Item_List:'Caption checked;Hashtags checked;Image spec checked;Posting schedule checked',Campaign_Type:'SMM Campaign',No_of_Checklists:2,Applies_To:'Reels, Posts',Severity_Default:'Low',Status:'Active'},
-          {QC_Code:'QC-05',Checklist:'Email QC Checklist',Items:5,Item_List:'Subject line checked;CTA checked;Links verified;Personalisation checked;Mobile rendering checked',Campaign_Type:'Email Campaign',No_of_Checklists:1,Applies_To:'Email',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-06',Checklist:'Landing Page QC Checklist',Items:5,Item_List:'Headline checked;CTA checked;Form checked;Links checked;Mobile responsiveness checked',Campaign_Type:'Website Campaign',No_of_Checklists:2,Applies_To:'Landing Page',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-07',Checklist:'Blog QC Checklist',Items:5,Item_List:'Grammar & clarity checked;SEO title & meta checked;Internal links checked;Plagiarism checked;Readability checked',Campaign_Type:'Content Campaign',No_of_Checklists:2,Applies_To:'Blog',Severity_Default:'Medium',Status:'Active'},
-          {QC_Code:'QC-08',Checklist:'Social Media QC Checklist',Items:5,Item_List:'Caption checked;Hashtags checked;Image/video spec checked;Platform formatting checked;CTA checked',Campaign_Type:'SMM Campaign',No_of_Checklists:2,Applies_To:'Social Content',Severity_Default:'Low',Status:'Active'},
-          {QC_Code:'QC-09',Checklist:'Ad Campaign QC Checklist',Items:5,Item_List:'Ad copy checked;Targeting checked;Creative spec checked;Landing page link checked;Budget & schedule checked',Campaign_Type:'Analytics Campaign',No_of_Checklists:1,Applies_To:'Ad Campaign',Severity_Default:'High',Status:'Active'},
+          {QC_Code:'QC-01',Checklist:'Content Audit',Campaign_Type:'Content Campaign',Status:'Active',Items:[
+            {text:'Grammar & clarity checked',type:'Checkbox',required:true},
+            {text:'Plagiarism checked',type:'Checkbox',required:true},
+            {text:'Fact-checking complete',type:'Checkbox',required:true},
+            {text:'Formatting consistent',type:'Checkbox',required:false},
+          ]},
+          {QC_Code:'QC-02',Checklist:'SEO Audit',Campaign_Type:'SEO Campaign',Status:'Active',Items:[
+            {text:'Title tag checked',type:'Checkbox',required:true},
+            {text:'Meta description checked',type:'Checkbox',required:true},
+            {text:'Header structure checked',type:'Checkbox',required:true},
+            {text:'Internal links checked',type:'Checkbox',required:false},
+          ]},
+          {QC_Code:'QC-03',Checklist:'Website Audit',Campaign_Type:'Website Campaign',Status:'Active',Items:[
+            {text:'Page load speed checked',type:'Checkbox',required:true},
+            {text:'Mobile responsiveness checked',type:'Checkbox',required:true},
+            {text:'Broken links checked',type:'Checkbox',required:true},
+            {text:'Schema markup checked',type:'Checkbox',required:false},
+          ]},
+          {QC_Code:'QC-04',Checklist:'SMM Audit',Campaign_Type:'SMM Campaign',Status:'Active',Items:[
+            {text:'Caption checked',type:'Text',required:true},
+            {text:'Hashtags checked',type:'Checkbox',required:true},
+            {text:'Image spec checked',type:'Checkbox',required:true},
+            {text:'Posting schedule checked',type:'Checkbox',required:false},
+          ]},
+          {QC_Code:'QC-05',Checklist:'Email QC Checklist',Campaign_Type:'Email Campaign',Status:'Active',Items:[
+            {text:'Subject line is relevant and error-free',type:'Text',required:true},
+            {text:'Email body content is accurate and complete',type:'Text',required:true},
+            {text:'Links are working correctly',type:'Checkbox',required:true},
+            {text:'Images are appropriate and optimized',type:'Checkbox',required:false},
+            {text:'Mobile rendering checked',type:'Checkbox',required:true},
+          ]},
+          {QC_Code:'QC-06',Checklist:'Landing Page QC Checklist',Campaign_Type:'Website Campaign',Status:'Active',Items:[
+            {text:'Headline checked',type:'Text',required:true},
+            {text:'CTA checked',type:'Checkbox',required:true},
+            {text:'Form checked',type:'Checkbox',required:true},
+            {text:'Links checked',type:'Checkbox',required:false},
+            {text:'Mobile responsiveness checked',type:'Checkbox',required:true},
+          ]},
+          {QC_Code:'QC-07',Checklist:'Blog QC Checklist',Campaign_Type:'Content Campaign',Status:'Active',Items:[
+            {text:'Grammar & clarity checked',type:'Checkbox',required:true},
+            {text:'SEO title & meta checked',type:'Checkbox',required:true},
+            {text:'Internal links checked',type:'Checkbox',required:false},
+            {text:'Plagiarism checked',type:'Checkbox',required:true},
+            {text:'Readability checked',type:'Checkbox',required:false},
+          ]},
+          {QC_Code:'QC-08',Checklist:'Social Media QC Checklist',Campaign_Type:'SMM Campaign',Status:'Active',Items:[
+            {text:'Caption checked',type:'Text',required:true},
+            {text:'Hashtags checked',type:'Checkbox',required:true},
+            {text:'Image/video spec checked',type:'Checkbox',required:true},
+            {text:'Platform formatting checked',type:'Checkbox',required:false},
+            {text:'CTA checked',type:'Checkbox',required:true},
+          ]},
+          {QC_Code:'QC-09',Checklist:'Ad Campaign QC Checklist',Campaign_Type:'Analytics Campaign',Status:'Active',Items:[
+            {text:'Ad copy checked',type:'Text',required:true},
+            {text:'Targeting checked',type:'Checkbox',required:true},
+            {text:'Creative spec checked',type:'Checkbox',required:true},
+            {text:'Landing page link checked',type:'Checkbox',required:true},
+            {text:'Budget & schedule checked',type:'Checkbox',required:false},
+          ]},
         ],
       },
       kpi: {
@@ -2800,6 +2855,132 @@ class AppRoot extends React.Component {
     }
   }
 
+  // ============ QC Checklist Master — bespoke UI ============
+  // Every other master goes through the generic field-grid modal
+  // (openMasterRecordEdit/EditMasterRecordModal), which has no concept of
+  // a nested array of structured sub-rows. QC Checklist's Items (each with
+  // its own text/type/required) needs that, so this master gets its own
+  // inline list+detail flow instead — same underlying masterAdded/
+  // masterDeleted overlay + master_records table every other master uses,
+  // just a bespoke view and its own save/delete that know about Items.
+  // Rows saved before this master's Items became a structured array (the
+  // old shape had a hand-typed count number here instead) would otherwise
+  // crash every .map/.length call below — coerce anything non-array to [].
+  qcmItemsArray(x){ return Array.isArray(x) ? x : []; }
+  qcmCampaignTypeTone(t){
+    return { 'SEO Campaign':{bg:'var(--info-100)',color:'var(--info-600)'}, 'Content Campaign':{bg:'var(--orchid-100)',color:'var(--orchid-700)'},
+      'SMM Campaign':{bg:'#F0E6F6',color:'#7A3FA0'}, 'Website Campaign':{bg:'var(--verify-100)',color:'var(--verify-600)'},
+      'Email Campaign':{bg:'var(--warn-100)',color:'#8A5A00'}, 'Analytics Campaign':{bg:'var(--danger-100, #F7E3E6)',color:'var(--danger-600)'} }[t]
+      || {bg:'var(--surface-50)',color:'var(--ink-500)'};
+  }
+  qcmOpenNew(){
+    if(!this.hasPerm('masters','create')){ this.flash('You do not have permission to create master records.'); return; }
+    this.setState({ qcmOpen:true, qcmEditCode:null, qcmForm:{ Checklist:'', Campaign_Type:'', Status:'Active', Items:[] } });
+  }
+  qcmOpenEdit(code){
+    if(!this.hasPerm('masters','edit')){ this.flash('You do not have permission to edit master records.'); return; }
+    const row=this.MASTERS_REG().qcChecklist.rows.find(r=>r.QC_Code===code);
+    if(!row) return;
+    this.setState({ qcmOpen:true, qcmEditCode:code, qcmForm:{ Checklist:row.Checklist, Campaign_Type:row.Campaign_Type||'', Status:row.Status||'Active', Items:this.qcmItemsArray(row.Items).map(it=>({...it})) } });
+  }
+  qcmClose(){ this.setState({ qcmOpen:false, qcmEditCode:null, qcmForm:null }); }
+  qcmSetField(k){ return (e)=>this.setState({ qcmForm:{...this.state.qcmForm, [k]:e.target.value} }); }
+  qcmAddItem(){
+    const items=[...(this.state.qcmForm.Items||[]), { text:'', type:'Checkbox', required:true }];
+    this.setState({ qcmForm:{...this.state.qcmForm, Items:items} });
+  }
+  qcmSetItem(i, k, v){
+    const items=(this.state.qcmForm.Items||[]).map((it,j)=>j===i?{...it,[k]:v}:it);
+    this.setState({ qcmForm:{...this.state.qcmForm, Items:items} });
+  }
+  qcmRemoveItem(i){
+    const items=(this.state.qcmForm.Items||[]).filter((_,j)=>j!==i);
+    this.setState({ qcmForm:{...this.state.qcmForm, Items:items} });
+  }
+  qcmSave(){
+    const editCode=this.state.qcmEditCode;
+    if(!this.hasPerm('masters', editCode?'edit':'create')){ this.flash('You do not have permission to '+(editCode?'edit':'create')+' master records.'); return; }
+    const f=this.state.qcmForm||{};
+    if(!String(f.Checklist||'').trim()){ this.flash('Enter a Checklist Name to save.'); return; }
+    if(!f.Campaign_Type){ this.flash('Select a Campaign Type to save.'); return; }
+    const items=(f.Items||[]).filter(it=>String(it.text||'').trim()).map(it=>({ text:it.text.trim(), type:it.type||'Checkbox', required:!!it.required }));
+    let code=editCode;
+    if(!code){
+      const reg=this.MASTERS_REG().qcChecklist;
+      const everIssued=reg.rows.map(r=>r.QC_Code).concat((this.state.masterDeleted||{}).qcChecklist||[]);
+      const nums=everIssued.map(c=>{ const m=/^QC-(\d+)$/.exec(c||''); return m?parseInt(m[1],10):0; });
+      code='QC-'+String(Math.max(0,...nums)+1).padStart(2,'0');
+    }
+    const row={ QC_Code:code, Checklist:f.Checklist.trim(), Campaign_Type:f.Campaign_Type, Status:f.Status||'Active', Items:items };
+    const added={...(this.state.masterAdded||{})};
+    added.qcChecklist={...(added.qcChecklist||{}), [code]:row};
+    this.setState({ masterAdded:added, qcmOpen:false, qcmEditCode:null, qcmForm:null });
+    this.flash((editCode?'Updated ':'Added ')+'QC Checklist: '+row.Checklist+'.');
+    supabase.from('master_records').upsert({
+      id:'qcChecklist:'+code, master_key:'qcChecklist', payload:row,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] qc checklist upsert failed:', error.message);
+    });
+  }
+  qcmDelete(code){
+    if(!this.hasPerm('masters','delete')){ this.flash('You do not have permission to delete master records.'); return; }
+    const row=this.MASTERS_REG().qcChecklist.rows.find(r=>r.QC_Code===code);
+    if(!row) return;
+    this.confirmDelete('Delete QC Checklist?', 'Are you sure you want to delete "'+row.Checklist+'"? This action cannot be undone.', ()=>{
+      const del={...(this.state.masterDeleted||{})};
+      del.qcChecklist=[...(del.qcChecklist||[]), code];
+      this.setState({ masterDeleted:del, qcmOpen:false, qcmEditCode:null, qcmForm:null });
+      this.flash('Deleted QC Checklist: '+row.Checklist+'.');
+      supabase.from('master_records').upsert({
+        id:'qcChecklist:'+code, master_key:'qcChecklist', payload:row, deleted:true,
+        created_by:this.state.authUser?this.state.authUser.id:null,
+      }).then(({error})=>{
+        if(error) console.warn('[supabase] qc checklist delete failed:', error.message);
+      });
+    });
+  }
+  qcChecklistMasterData(){
+    const reg=this.MASTERS_REG().qcChecklist;
+    const q=(this.state.qcmQuery||'').toLowerCase();
+    const typeFilter=this.state.qcmTypeFilter||'All';
+    const rows=reg.rows.filter(r=>(typeFilter==='All'||r.Campaign_Type===typeFilter) && (!q || JSON.stringify(r).toLowerCase().includes(q)));
+    const canEdit=this.hasPerm('masters','edit'), canCreate=this.hasPerm('masters','create'), canDelete=this.hasPerm('masters','delete');
+    const out={
+      qcmRows: rows.map(r=>{ const tone=this.qcmCampaignTypeTone(r.Campaign_Type);
+        return { code:r.QC_Code, name:r.Checklist, itemCount:this.qcmItemsArray(r.Items).length,
+          type:r.Campaign_Type||'—', typeBg:tone.bg, typeColor:tone.color,
+          status:r.Status||'Active', statusBg:r.Status==='Inactive'?'var(--surface-50)':'var(--verify-100)', statusColor:r.Status==='Inactive'?'var(--ink-500)':'var(--verify-600)',
+          canEdit, canDelete, edit:()=>this.qcmOpenEdit(r.QC_Code), delete:()=>this.qcmDelete(r.QC_Code) }; }),
+      qcmEmpty: rows.length===0,
+      qcmQuery:this.state.qcmQuery||'', qcmOnQuery:(e)=>this.setState({ qcmQuery:e.target.value }),
+      qcmTypeFilter:typeFilter, qcmOnTypeFilter:(e)=>this.setState({ qcmTypeFilter:e.target.value }),
+      qcmTypeFilterOptions:['All'].concat(this.CAMPAIGN_TYPES()),
+      qcmCanCreate:canCreate, qcmNewOpen:()=>this.qcmOpenNew(),
+      qcmOpen: !!this.state.qcmOpen,
+      qcmIsEdit: !!this.state.qcmEditCode,
+    };
+    if(this.state.qcmOpen){
+      const f=this.state.qcmForm||{ Items:[] };
+      const items=f.Items||[];
+      out.qcmForm=f;
+      out.qcmFormCode=this.state.qcmEditCode||'Assigned automatically on save';
+      out.qcmSetName=this.qcmSetField('Checklist'); out.qcmSetType=this.qcmSetField('Campaign_Type'); out.qcmSetStatus=this.qcmSetField('Status');
+      out.qcmTypeOptions=this.CAMPAIGN_TYPES();
+      out.qcmClose=()=>this.qcmClose(); out.qcmSave=()=>this.qcmSave();
+      out.qcmAddItem=()=>this.qcmAddItem();
+      out.qcmItemRows=items.map((it,i)=>({ n:i+1, text:it.text, type:it.type||'Checkbox', required:it.required?'Yes':'No',
+        setText:(e)=>this.qcmSetItem(i,'text',e.target.value),
+        setType:(e)=>this.qcmSetItem(i,'type',e.target.value),
+        setRequired:(e)=>this.qcmSetItem(i,'required',e.target.value==='Yes'),
+        remove:()=>this.qcmRemoveItem(i) }));
+      out.qcmItemCount=items.length;
+      out.qcmTotalItems=items.length;
+      out.qcmRequiredItems=items.filter(it=>it.required).length;
+    }
+    return out;
+  }
+
   masterDetailData(){
     const reg = this.MASTERS_REG();
     const key = this.state.masterKey;
@@ -2837,6 +3018,11 @@ class AppRoot extends React.Component {
       if(out.blShowDash) Object.assign(out, this.backlinkDashData());
       if(out.blShowRepo) Object.assign(out, this.backlinkRepoData());
       if(rec) Object.assign(out, this.backlinkDetailData(rec, recIdx==='new'));
+    }
+    if(key==='qcChecklist'){
+      out.mdShowTable=false;
+      out.mdAdd=()=>this.qcmOpenNew();
+      Object.assign(out, this.qcChecklistMasterData());
     }
     if(this.state.masterRecord!==null){
       const rec = m.rows[this.state.masterRecord];
@@ -4452,7 +4638,7 @@ class AppRoot extends React.Component {
     const checklistName=(ctRow&&ctRow.QC_Checklist)||'Content Audit';
     const row=this.MASTERS_REG().qcChecklist.rows.find(r=>r.Checklist===checklistName && r.Status!=='Inactive');
     if(!row) return null;
-    const items=(row.Item_List||'').split(';').map(s=>s.trim()).filter(Boolean).map(text=>({text}));
+    const items=this.qcmItemsArray(row.Items).map(it=>({text:it.text}));
     return { Checklist:row.Checklist, Items:items };
   }
   // Item 60's second, complementary QC-checklist route: Task → its linked
@@ -4471,7 +4657,7 @@ class AppRoot extends React.Component {
     const rows=this.MASTERS_REG().qcChecklist.rows.filter(r=>r.Campaign_Type===camp.type && r.Status!=='Inactive');
     return { campaignType:camp.type, checklists:rows.map(row=>({
       Checklist:row.Checklist,
-      Items:(row.Item_List||'').split(';').map(s=>s.trim()).filter(Boolean),
+      Items:this.qcmItemsArray(row.Items).map(it=>it.text),
     })) };
   }
   tkSetTypeQcItem(taskId, idx, field, value){
