@@ -729,6 +729,26 @@ class AppRoot extends React.Component {
           ]},
         ],
       },
+      // The vocabulary every "Campaign Type" dropdown in the app shares
+      // (Campaigns' own Type field, QC Checklist's Campaign Type, filters,
+      // and Task creation's Campaign Type — see below). Used to be a
+      // hardcoded array (CAMPAIGN_TYPES()) nobody could add to; that method
+      // now reads these rows instead, so editing them here immediately
+      // updates every dropdown that calls it — no per-screen changes needed.
+      campaignType: {
+        label:'Campaign Type Master', icon:'megaphone', group:'Marketing & Quality',
+        desc:'The shared Campaign Type vocabulary used by Campaigns, Task creation, QC Checklist mapping and filters everywhere.',
+        cols:[ {k:'Type_Code',l:'Code',mono:1}, {k:'Campaign_Type',l:'Campaign Type'}, {k:'Status',l:'Status',tag:1} ],
+        fields:['Type_Code','Campaign_Type','Status'],
+        rows:[
+          {Type_Code:'CTY-01',Campaign_Type:'SEO Campaign',Status:'Active'},
+          {Type_Code:'CTY-02',Campaign_Type:'Content Campaign',Status:'Active'},
+          {Type_Code:'CTY-03',Campaign_Type:'SMM Campaign',Status:'Active'},
+          {Type_Code:'CTY-04',Campaign_Type:'Website Campaign',Status:'Active'},
+          {Type_Code:'CTY-05',Campaign_Type:'Email Campaign',Status:'Active'},
+          {Type_Code:'CTY-06',Campaign_Type:'Analytics Campaign',Status:'Active'},
+        ],
+      },
       kpi: {
         label:'KPI Master', icon:'target', group:'Marketing & Quality',
         desc:'KPI definitions, units and target directions.',
@@ -7637,6 +7657,12 @@ class AppRoot extends React.Component {
             .concat(pool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
           tkKpiScoped:scoped, tkKpiNote:note }; })(),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
+      // Campaign Type isn't a separate pick here — a task's Campaign Type
+      // is whatever its linked Campaign's own Type is, same resolution
+      // campaignTypeQcData() already uses for QC checklist matching. Shown
+      // read-only so picking a Campaign doesn't leave two independent,
+      // possibly-conflicting "campaign type" values on one task.
+      tkCampaignTypeHint:(()=>{ const c=this.allCampaigns().find(x=>x.name===f.campaign); return c&&c.type?c.type:''; })(),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
       tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
@@ -9038,7 +9064,7 @@ class AppRoot extends React.Component {
   // the same vocabulary the QC Checklist master's Campaign Type field maps
   // against (item 60's Task → Campaign → Campaign Type → matching QC
   // Checklists flow needs both sides speaking the same values).
-  CAMPAIGN_TYPES(){ return ['SEO Campaign','Content Campaign','SMM Campaign','Website Campaign','Email Campaign','Analytics Campaign']; }
+  CAMPAIGN_TYPES(){ return this.MASTERS_REG().campaignType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Campaign_Type); }
   liveDeptOptions(){ return this.MASTERS_REG().department.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Department).filter(Boolean); }
   ROLE_LIST(){ return this.MASTERS_REG().role.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Role); }
   stageTone(s){ return { New:{bg:'var(--surface-50)',c:'var(--ink-500)'}, UQL:{bg:'var(--surface-50)',c:'var(--ink-700)'},
