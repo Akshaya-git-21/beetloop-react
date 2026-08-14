@@ -149,7 +149,7 @@ export default function CreateCampaignModal({ vm }) {
                     {sectionHead('D', 'Linked KPIs')}
                     <button onClick={cmpAddKpi} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 12, height: 12 }} />Add KPI</button>
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Select a key result from an existing OKR — its KPI, unit, target and current value are pulled in, <strong>and every Effort Planner line driving that KPI is auto-attached in section E with its tasks</strong>. KPI templates are listed too for KPIs not yet on an OKR.</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Select a key result from an existing OKR — its KPI, unit, target and current value are pulled in, <strong>and every Effort Planner line driving that KPI becomes selectable in section E</strong>. KPI templates are listed too for KPIs not yet on an OKR.</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                     {(cmpKpiForm || []).map(k => (
                       <div key={k.i} style={{ background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 12, padding: 11 }}>
@@ -213,7 +213,7 @@ export default function CreateCampaignModal({ vm }) {
                     {sectionHead('E', 'Effort lines')}
                     <button onClick={cmpAddEffort} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 12, height: 12 }} />Add effort line</button>
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Auto-filled from the KPIs you linked in section D. Add extra lines only if a KPI has no effort plan yet — quantity, unit, cadence, division, owner and tasks come from Effort Planner.</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Effort lines matching the KPIs you linked in section D are listed below — select the ones this campaign uses. Add a custom line only if a KPI has no effort plan yet — quantity, unit, cadence, division, owner and tasks come from Effort Planner.</div>
                   {Boolean((cmpEffortMultiOptions || []).length) && (
                     <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginBottom: 11 }}>
                       <select multiple value={cmpEffortMultiVal || []} onChange={cmpEffortMultiChange} style={{ flex: 1, minWidth: 0, height: 84, padding: '6px 8px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>
@@ -225,7 +225,7 @@ export default function CreateCampaignModal({ vm }) {
                   {Boolean(cmpEffortEmpty) && (
                     <div style={{ border: '1.5px dashed var(--line-300)', borderRadius: 12, padding: 22, textAlign: 'center', color: 'var(--ink-500)', marginBottom: 11 }}>
                       <Icon name="git-branch" style={{ width: 20, height: 20, color: 'var(--ink-400)' }} />
-                      <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 7 }}>Link a KPI in section D — its effort lines and tasks attach here automatically.</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 7 }}>Link a KPI in section D — its matching effort lines will be selectable here.</div>
                     </div>
                   )}
                   {Boolean(cmpNewEffortOpen) && (

@@ -1040,7 +1040,7 @@ class AppRoot extends React.Component {
         // KPI row (r.kpi also '') and get listed as "auto-linked" to a KPI
         // that was never selected.
         autoLabel:(()=>{ if(!r.kpi) return ''; const m=this.cmpEffortPool().filter(p=>p.kpi===r.kpi); if(!m.length) return 'No effort line drives this KPI yet';
-          return m.length+' effort line'+(m.length===1?'':'s')+' · '+m.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0)+' tasks auto-linked — '+m.map(x=>x.name).join(', '); })(),
+          return m.length+' effort line'+(m.length===1?'':'s')+' · '+m.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0)+' tasks available in section E — '+m.map(x=>x.name).join(', '); })(),
         ...(()=>{ const pages=r.pages||[];
           const upd=(a)=>{ const arr=kpiArr.map((x,j)=>j===i?{...x,pages:a}:x); this.setState({ cmpForm:{...f,kpis:arr}}); };
           return {
@@ -1058,18 +1058,18 @@ class AppRoot extends React.Component {
               if(!int&&!ext) return 'No landing pages linked — add the pages this KPI drives traffic to';
               return int+' internal page'+(int===1?'':'s')+' · '+ext+' external URL'+(ext===1?'':'s'); })(),
             repoPageOptions:[{v:'',label:'— Select a page from Website Content Repository —'}].concat(this.allContentPages().map(p=>({ v:p.url, label:(p.repo==='service'?'Service':p.repo==='insight'?'Insight':'Page')+' · '+p.name+' — '+p.url }))) }; })(),
+        // Picking a KPI here no longer force-adds every matching Effort
+        // Planner line — it only updates the KPI row. Which efforts drive
+        // it is a manual choice, made in section E's multi-select (already
+        // scoped to exactly this KPI's matches, nothing else) — picking a
+        // KPI just makes those matches available there, it doesn't decide
+        // for the user which ones belong in the campaign.
         pick:(e)=>{ const v=e.target.value; const src=kpiPool.find(x=>x.key===v);
           const a=kpiArr.map((x,j)=>j===i?(src?{...x, srcKey:v, kpi:src.kpi, unit:src.unit, target:src.target, current:src.current, okrId:src.okrId, okrCode:src.okrCode, okrTitle:src.okrTitle, freq:src.freq}:{...x,srcKey:'',okrId:'',okrCode:'',okrTitle:''}):x);
-          if(!src){ this.setState({ cmpForm:{...f,kpis:a} }); return; }
-          const pool=this.cmpEffortPool();
-          const existing=(f.efforts||[]).filter(x=>x.name&&x.name.trim());
-          const matches=pool.filter(p=>p.kpi===src.kpi && !existing.some(x=>x.srcKey===p.key));
-          const added=matches.map(p=>({ srcKey:p.key, name:p.name, qty:p.qty, unit:p.unit, cadence:p.cadence, division:p.division, owner:p.owner, kpi:p.kpi, planId:p.planId, tasks:p.tasks, tasksDone:p.tasksDone, mode:'direct', driverKpi:'', perUnit:'', conv:'' }));
-          const efforts=added.length?existing.concat(added):(f.efforts||[]);
-          this.setState({ cmpForm:{...f, kpis:a, efforts:efforts.length?efforts:[{name:'',qty:'',unit:'',cadence:'',mode:'direct'}]} });
-          if(added.length){ const t=added.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0);
-            this.flash(src.kpi+' linked — '+added.length+' effort line'+(added.length===1?'':'s')+' and '+t+' tasks auto-attached from Effort Planner.'); }
-          else this.flash(src.kpi+' linked — no Effort Planner line drives this KPI yet; add one in section E.'); },
+          this.setState({ cmpForm:{...f,kpis:a} });
+          if(!src) return;
+          const matchCount=this.cmpEffortPool().filter(p=>p.kpi===src.kpi).length;
+          this.flash(matchCount ? (src.kpi+' linked — '+matchCount+' matching effort line'+(matchCount===1?'':'s')+' ready to add in section E.') : (src.kpi+' linked — no Effort Planner line drives this KPI yet; add one in section E.')); },
         setB:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,target:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
         setC:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,current:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
         setD:(e)=>{ const a=kpiArr.map((x,j)=>j===i?{...x,unit:e.target.value}:x); this.setState({ cmpForm:{...f,kpis:a} }); },
