@@ -9805,6 +9805,13 @@ class AppRoot extends React.Component {
     // Effort Planner regardless of a later Status change here, matching
     // every other "Status gates new selections, not existing links" master.
     const kpiOptions = reg.kpi.rows.filter(r=>r.Status!=='Disabled').map(r=>({ label:r.KPI+' ('+r.Unit+')' })).concat(this.allKpiTemplates().filter(t=>t.status==='Active').map(t=>({ label:t.name+' ('+t.unit+') — Template' })));
+    // Same "type your own, or pick from an existing master" choice as the
+    // KPI field above, now for the Key Result title itself — sourced from
+    // every Active OKR Template's own KR phrasings (deduped), since there's
+    // no separate standalone "KR Master"; picking one is purely a
+    // convenience autofill, never required — the free-text box beside it
+    // always works standalone.
+    const krTitleOptions=[...new Set(this.allOkrTemplates().filter(t=>t.status==='Active').flatMap(t=>(t.krs||[]).map(k=>k.t)).filter(Boolean))];
     const drafts = this.state.okrDraftKRs;
     const wTotal = drafts.reduce((s,k)=>s+(parseInt(k.weight,10)||0),0);
     const wOk = wTotal===100;
@@ -9828,6 +9835,8 @@ class AppRoot extends React.Component {
         if(!t&&!e) return 'Auto — every task tagged with this KPI counts toward it';
         return t+' task'+(t===1?'':'s')+' · '+e+' effort line'+(e===1?'':'s')+(divs.length?(' across '+divs.join(', ')):''); })(),
       setKr:setDraft(k.id,'kr'), setKpiSel:setDraft(k.id,'kpiSel'), setUnit:setDraft(k.id,'unit'), setBaseline:setDraft(k.id,'baseline'), setTarget:setDraft(k.id,'target'), setCurrent:setDraft(k.id,'current'),
+      krPickOptions:[{value:'',label:'— Pick a Key Result from Templates —'}].concat(krTitleOptions.map(t=>({value:t,label:t}))),
+      setKrPick:(e)=>{ const v=e.target.value; if(!v) return; this.setState({ okrDraftKRs:this.state.okrDraftKRs.map(x=>x.id===k.id?{...x,kr:v}:x) }); },
       // The KPI field's datalist already offers Master/Template suggestions
       // as you type, but that's easy to miss — this explicit dropdown is
       // the same source, discoverable without typing first. Either path

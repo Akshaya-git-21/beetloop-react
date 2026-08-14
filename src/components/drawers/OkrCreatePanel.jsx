@@ -498,9 +498,23 @@ KR {k.n}
                   
 <div>
 <label style={{"display":"block","fontSize":"11px","fontWeight":"700","color":"var(--ink-500)","marginBottom":"4px"}}>
-Key result (custom)
+Key result (from Templates, or custom)
 </label>
-<input value={k.kr} onInput={k.setKr} placeholder="e.g. Increase organic visitors to 100K/month" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
+<input value={k.kr} onInput={k.setKr} list="okr-kr-list" placeholder="e.g. Increase organic visitors to 100K/month" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12.5px","outline":"none","background":"var(--paper)"}} />
+<datalist id="okr-kr-list">
+{(k.krPickOptions || []).filter(o=>o.value).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.value} />
+</React.Fragment>
+))}
+</datalist>
+<select value="" onChange={k.setKrPick} style={{"width":"100%","marginTop":"6px","padding":"8px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"12px","background":"var(--paper)","color":"var(--ink-500)"}}>
+{(k.krPickOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.value}>{o.label}</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
 
