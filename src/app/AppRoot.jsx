@@ -1035,7 +1035,11 @@ class AppRoot extends React.Component {
         srcKey:r.srcKey||'',
         okrLabel:r.okrCode?(r.okrTitle||'Linked OKR'):'Not linked to an OKR',
         okrLinked:!!r.okrCode,
-        autoLabel:(()=>{ const m=this.cmpEffortPool().filter(p=>p.kpi===r.kpi); if(!m.length) return r.kpi?'No effort line drives this KPI yet':'';
+        // Guard r.kpi truthy BEFORE filtering — cmpEffortPool() rows with no
+        // KPI of their own (kpi==='') would otherwise match a not-yet-picked
+        // KPI row (r.kpi also '') and get listed as "auto-linked" to a KPI
+        // that was never selected.
+        autoLabel:(()=>{ if(!r.kpi) return ''; const m=this.cmpEffortPool().filter(p=>p.kpi===r.kpi); if(!m.length) return 'No effort line drives this KPI yet';
           return m.length+' effort line'+(m.length===1?'':'s')+' · '+m.reduce((s,x)=>s+(parseInt(x.tasks,10)||0),0)+' tasks auto-linked — '+m.map(x=>x.name).join(', '); })(),
         ...(()=>{ const pages=r.pages||[];
           const upd=(a)=>{ const arr=kpiArr.map((x,j)=>j===i?{...x,pages:a}:x); this.setState({ cmpForm:{...f,kpis:arr}}); };
