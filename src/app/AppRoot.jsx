@@ -3823,23 +3823,9 @@ class AppRoot extends React.Component {
       epAddRow:()=>this.setState({ epRows:[...rows,{ type:'Custom effort — name it', icon:'plus', monthly:0, days:25, unit:'units', priority:'Medium', weight:0, kpiId:'', hours:1, custom:true }] }),
       epSave:()=>{ if(!canEdit){ this.flash('You do not have permission to create or edit effort plans.'); return; }
         const totalW=rows.reduce((s,r)=>s+(r.weight||0),0); if(!f.name.trim()){ this.flash('Name the plan.'); return; }
-        // Mirrors _saveCampaign's OKR-window check (AppRoot.jsx ~1089) — an
-        // effort plan can't run outside the objective it delivers either.
-        // f.okr stores the OKR's title (see okrTitleOpt/okrSetOkr), not its
-        // code, since that's what the picker's own options list is built from.
-        if(f.okr && f.okr!=='— None —'){
-          const okr=this.allOkrs().find(o=>o.title===f.okr);
-          if(okr){
-            // Compare as isoDate() 'YYYY-MM-DD' strings, not Date objects — see
-            // the matching note on _saveCampaign's OKR-window check above.
-            // Mixing a local-parsed display string with a UTC-parsed ISO input
-            // date made identical calendar dates compare unequal by timezone.
-            const okrStart=this.isoDate(okr.start), okrDue=this.isoDate(okr.due);
-            const pStart=f.start?this.isoDate(f.start):null, pEnd=f.end?this.isoDate(f.end):null;
-            if(pStart && okrStart && (pStart<okrStart||(okrDue&&pStart>okrDue))){ this.flash('Effort plan start date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
-            if(pEnd && okrDue && (pEnd<okrStart||pEnd>okrDue)){ this.flash('Effort plan end date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
-          }
-        }
+        // Plan start/end are free-entry — no requirement to fall inside the
+        // Linked OKR's own start/due window. The user sets whatever dates
+        // the plan actually needs, independent of the OKR's dates.
         // Check against every plan (seed + added), not just epAdded — editing
         // a seed plan (EP-001 etc.) must replace it, not create a duplicate
         // id when it later gets upserted into epAdded.
@@ -3867,10 +3853,9 @@ class AppRoot extends React.Component {
       // new OKR's KRs — any row still pointing at a KPI from the old OKR
       // (now off the list) gets unlinked rather than silently keeping an
       // invalid reference the dropdown can no longer show as selected.
-      // It also snaps the plan's own start/end to the OKR's start/due —
-      // the plan can't run outside that window (see the epSave check
-      // below), so rather than let the user pick dates that will only get
-      // rejected, follow whatever dates the OKR was actually given.
+      // Plan start/end stay whatever the user set — they're free to pick
+      // any dates, epSave just still requires them to fall within the
+      // linked OKR's own window.
       epSetOkr:(e)=>{
         const newOkr=e.target.value;
         const pool=(newOkr && newOkr!=='— None —') ? this.epKpiPool().filter(k=>k.okr===newOkr) : this.epKpiPool();
@@ -3880,9 +3865,7 @@ class AppRoot extends React.Component {
           const keep=kids.filter(id=>validIds.has(id));
           return keep.length===kids.length ? r : { ...r, kpiIds:keep, kpiId:keep[0]||'' };
         });
-        const okr=(newOkr && newOkr!=='— None —') ? this.allOkrs().find(o=>o.title===newOkr) : null;
-        const nextForm = okr ? {...f, okr:newOkr, start:this.isoDate(okr.start)||f.start, end:this.isoDate(okr.due)||f.end} : {...f, okr:newOkr};
-        this.setState({ epForm:nextForm, epRows:nextRows });
+        this.setState({ epForm:{...f, okr:newOkr}, epRows:nextRows });
       },
       epTotalW:totalW+'%', epTotalWColor: totalW===100?'var(--verify-600)':'var(--danger-600)',
       epBalanced: totalW===100,
