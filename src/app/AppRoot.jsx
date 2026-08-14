@@ -1078,15 +1078,13 @@ class AppRoot extends React.Component {
       add:()=>this.setState({ cmpForm:{...f,kpis:[...kpiArr,{kpi:'',target:'',current:'0',unit:''}]} }) };
     const effPool=this.cmpEffortPool();
     const linkedKpis=(f.kpis||[]).map(k=>k.kpi).filter(Boolean);
-    // Once at least one KPI is linked, an effort-only line (no KPI of its
-    // own) is no more "linked to that KPI" than one driving a different
-    // KPI — neither belongs in the primary list. Both still reachable via
-    // their own clearly-labelled secondary group, for the rare manual
-    // override, but never presented as if auto-matched.
+    // Once at least one KPI is linked, only efforts actually driving one of
+    // those KPIs are offered at all — no "(other KPI)"/"(no KPI)" fallback
+    // groups. If nothing matches, the dropdown is just the placeholder:
+    // nothing to pick, nothing shown, matching the bulk multi-select box
+    // (which disappears entirely under the same condition).
     const effOptions=[{key:'',label:'— Select an effort line from Effort Planner —'}]
-      .concat(effPool.filter(e=>!linkedKpis.length||linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:e.label})))
-      .concat(effPool.filter(e=>linkedKpis.length&&e.kpi&&!linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:'(other KPI) '+e.label})))
-      .concat(effPool.filter(e=>linkedKpis.length&&!e.kpi).map(e=>({key:e.key,label:'(no KPI) '+e.label})));
+      .concat(effPool.filter(e=>!linkedKpis.length||linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:e.label})));
     const effArr=f.efforts||[];
     const efforts={ rows:effArr.map((r,i)=>({ i, ...r,
         srcKey:r.srcKey||'',
