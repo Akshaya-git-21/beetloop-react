@@ -1224,10 +1224,17 @@ class AppRoot extends React.Component {
     const linkedOkrCodes=Array.from(new Set(kp.map(k=>k.okrCode).filter(Boolean)));
     for(const code of linkedOkrCodes){
       const okr=this.OKR_DATA().find(x=>x.code===code); if(!okr) continue;
-      const okrStart=new Date(okr.start), okrDue=new Date(okr.due);
-      const cStart=f.start?new Date(f.start):null, cEnd=f.end?new Date(f.end):null;
-      if(cStart && (cStart<okrStart||cStart>okrDue)){ this.flash('Campaign start date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
-      if(cEnd && (cEnd<okrStart||cEnd>okrDue)){ this.flash('Campaign due date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
+      // Compare as isoDate() 'YYYY-MM-DD' strings, not Date objects — okr.start/
+      // okr.due are display strings ("Aug 14, 2026", parsed as local time) while
+      // f.start/f.end come from a date input as ISO ("2026-08-14", parsed as
+      // UTC by the Date constructor). Comparing raw `new Date(...)` of the two
+      // mixed formats made identical calendar dates compare unequal depending
+      // on timezone offset, false-failing plans/campaigns whose dates exactly
+      // matched their linked OKR's window.
+      const okrStart=this.isoDate(okr.start), okrDue=this.isoDate(okr.due);
+      const cStart=f.start?this.isoDate(f.start):null, cEnd=f.end?this.isoDate(f.end):null;
+      if(cStart && okrStart && (cStart<okrStart||(okrDue&&cStart>okrDue))){ this.flash('Campaign start date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
+      if(cEnd && okrDue && (cEnd<okrStart||cEnd>okrDue)){ this.flash('Campaign due date must fall within '+code+'’s duration ('+okr.start+' – '+okr.due+').'); return; }
     }
     const ef=(f.efforts||[]).filter(e=>e.name&&e.name.trim()).map(e=>({...e, mode:e.mode||'direct', tasks:e.tasks||e.qty, tasksDone:e.tasksDone||'0'}));
     const tm=(f.team||[]).filter(t=>t.who&&t.who.trim());
@@ -3823,10 +3830,14 @@ class AppRoot extends React.Component {
         if(f.okr && f.okr!=='— None —'){
           const okr=this.allOkrs().find(o=>o.title===f.okr);
           if(okr){
-            const okrStart=new Date(okr.start), okrDue=new Date(okr.due);
-            const pStart=f.start?new Date(f.start):null, pEnd=f.end?new Date(f.end):null;
-            if(pStart && !isNaN(okrStart) && (pStart<okrStart||pStart>okrDue)){ this.flash('Effort plan start date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
-            if(pEnd && !isNaN(okrDue) && (pEnd<okrStart||pEnd>okrDue)){ this.flash('Effort plan end date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
+            // Compare as isoDate() 'YYYY-MM-DD' strings, not Date objects — see
+            // the matching note on _saveCampaign's OKR-window check above.
+            // Mixing a local-parsed display string with a UTC-parsed ISO input
+            // date made identical calendar dates compare unequal by timezone.
+            const okrStart=this.isoDate(okr.start), okrDue=this.isoDate(okr.due);
+            const pStart=f.start?this.isoDate(f.start):null, pEnd=f.end?this.isoDate(f.end):null;
+            if(pStart && okrStart && (pStart<okrStart||(okrDue&&pStart>okrDue))){ this.flash('Effort plan start date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
+            if(pEnd && okrDue && (pEnd<okrStart||pEnd>okrDue)){ this.flash('Effort plan end date must fall within "'+okr.title+'"’s duration ('+okr.start+' – '+okr.due+').'); return; }
           }
         }
         // Check against every plan (seed + added), not just epAdded — editing
@@ -3856,6 +3867,10 @@ class AppRoot extends React.Component {
       // new OKR's KRs — any row still pointing at a KPI from the old OKR
       // (now off the list) gets unlinked rather than silently keeping an
       // invalid reference the dropdown can no longer show as selected.
+      // It also snaps the plan's own start/end to the OKR's start/due —
+      // the plan can't run outside that window (see the epSave check
+      // below), so rather than let the user pick dates that will only get
+      // rejected, follow whatever dates the OKR was actually given.
       epSetOkr:(e)=>{
         const newOkr=e.target.value;
         const pool=(newOkr && newOkr!=='— None —') ? this.epKpiPool().filter(k=>k.okr===newOkr) : this.epKpiPool();
@@ -3865,7 +3880,9 @@ class AppRoot extends React.Component {
           const keep=kids.filter(id=>validIds.has(id));
           return keep.length===kids.length ? r : { ...r, kpiIds:keep, kpiId:keep[0]||'' };
         });
-        this.setState({ epForm:{...f, okr:newOkr}, epRows:nextRows });
+        const okr=(newOkr && newOkr!=='— None —') ? this.allOkrs().find(o=>o.title===newOkr) : null;
+        const nextForm = okr ? {...f, okr:newOkr, start:this.isoDate(okr.start)||f.start, end:this.isoDate(okr.due)||f.end} : {...f, okr:newOkr};
+        this.setState({ epForm:nextForm, epRows:nextRows });
       },
       epTotalW:totalW+'%', epTotalWColor: totalW===100?'var(--verify-600)':'var(--danger-600)',
       epBalanced: totalW===100,
