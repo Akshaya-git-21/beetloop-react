@@ -1078,9 +1078,15 @@ class AppRoot extends React.Component {
       add:()=>this.setState({ cmpForm:{...f,kpis:[...kpiArr,{kpi:'',target:'',current:'0',unit:''}]} }) };
     const effPool=this.cmpEffortPool();
     const linkedKpis=(f.kpis||[]).map(k=>k.kpi).filter(Boolean);
+    // Once at least one KPI is linked, an effort-only line (no KPI of its
+    // own) is no more "linked to that KPI" than one driving a different
+    // KPI — neither belongs in the primary list. Both still reachable via
+    // their own clearly-labelled secondary group, for the rare manual
+    // override, but never presented as if auto-matched.
     const effOptions=[{key:'',label:'— Select an effort line from Effort Planner —'}]
-      .concat(effPool.filter(e=>!linkedKpis.length||!e.kpi||linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:e.label})))
-      .concat(effPool.filter(e=>linkedKpis.length&&e.kpi&&!linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:'(other KPI) '+e.label})));
+      .concat(effPool.filter(e=>!linkedKpis.length||linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:e.label})))
+      .concat(effPool.filter(e=>linkedKpis.length&&e.kpi&&!linkedKpis.includes(e.kpi)).map(e=>({key:e.key,label:'(other KPI) '+e.label})))
+      .concat(effPool.filter(e=>linkedKpis.length&&!e.kpi).map(e=>({key:e.key,label:'(no KPI) '+e.label})));
     const effArr=f.efforts||[];
     const efforts={ rows:effArr.map((r,i)=>({ i, ...r,
         srcKey:r.srcKey||'',
@@ -1154,7 +1160,10 @@ class AppRoot extends React.Component {
       // qty/unit/division/owner/tasks are all per-single-effort data, so
       // "select many" means "add many rows", not one row holding several
       // efforts) — this only changes how many rows get added per click.
-      cmpEffortMultiOptions:effPool.filter(e=>(!linkedKpis.length||!e.kpi||linkedKpis.includes(e.kpi)) && !effArr.some(r=>r.srcKey===e.key)).map(e=>({key:e.key,label:e.label})),
+      // Same fix as effOptions above — an effort-only line is not "linked
+      // to" any of the selected KPIs either, so once a KPI is linked this
+      // bulk box only offers efforts that actually match one.
+      cmpEffortMultiOptions:effPool.filter(e=>(!linkedKpis.length||linkedKpis.includes(e.kpi)) && !effArr.some(r=>r.srcKey===e.key)).map(e=>({key:e.key,label:e.label})),
       cmpEffortMultiVal:this.state.cmpEffortMultiSel||[],
       cmpEffortMultiChange:(e)=>{ const vals=Array.from(e.target.selectedOptions).map(o=>o.value); this.setState({ cmpEffortMultiSel:vals }); },
       cmpEffortMultiAdd:()=>{
