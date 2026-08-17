@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCampaignPageOptions, tkHasCampaignPages, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPage, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -153,7 +153,28 @@ No active QC checklist is mapped to this Campaign Type yet.
 )}
 </div>
 
-          
+
+{Boolean(tkHasCampaignPages) && (
+<div style={{"gridColumn":"1 / -1"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Linked page (from Campaign)
+</label>
+<select value={tkf.pageUrl||''} onChange={tkSetPage} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","background":"var(--paper)"}}>
+{(tkCampaignPageOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.v}>
+{o.label}
+</option>
+</React.Fragment>
+))}
+</select>
+<div style={{"marginTop":"6px","fontSize":"11.5px","color":"var(--ink-500)"}}>
+Internal service pages and other URLs linked to this campaign's KPIs — pick one to assign the task to that page.
+</div>
+</div>
+)}
+
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Start date

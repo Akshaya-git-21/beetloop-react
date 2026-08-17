@@ -7504,7 +7504,7 @@ class AppRoot extends React.Component {
     // tasks created before this field existed) — the value that actually
     // drives which QC checklists get auto-inherited (campaignTypeQcData).
     const displayCampaignType = t.campaignType || (()=>{ if(!t.campaign||t.campaign==='—') return ''; const c=this.allCampaigns().find(x=>x.name===t.campaign); return c&&c.type?c.type:''; })();
-    const meta=[['Campaign',t.campaign],['Campaign Type',displayCampaignType||'—'],['Content type',t.contentType||'—'],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
+    const meta=[['Campaign',t.campaign],['Campaign Type',displayCampaignType||'—'],['Content type',t.contentType||'—'],['Linked page',t.pageUrl?(t.pageTitle||t.pageUrl):'—'],['Start date',t.start+(t.startTime?(' · '+t.startTime):'')],['End date',t.end+(t.endTime?(' · '+t.endTime):'')],['Priority',t.priority],['Assignee',t.assignee],['Reviewer / QC',t.reviewer],['Effort (est / actual)',t.estH+'h / '+t.actH+'h'],['Recurrence',t.recurrence],['Template',t.template],['Dependency',(t.dep||'—')+(t.dep&&t.dep!=='—'?(' · '+(t.depMode||'Parallel')):'')],['Effort plan',t.effortPlan||'—'],['Task ID',t.id]];
     const chain=this.tkChain(t);
     const stage=(x,role)=>x?{ id:x.id, name:x.name, division:x.division||'—', status:x.status, statusBg:this.tkTone(x.status).bg, statusColor:this.tkTone(x.status).c, role, open:()=>this.setState({ tkOpen:x.id }) }:null;
     const tkStages=[stage(chain.prev,'Previous stage'), stage({...t, division:t.division||'—'},'This task'), ...chain.next.map(n=>stage(n,'Next stage'))].filter(Boolean).map(s=>({ ...s, isThis:s.id===t.id }));
@@ -7751,6 +7751,11 @@ class AppRoot extends React.Component {
       if(k==='campaign'){
         const camp=v&&v!=='—'?this.allCampaigns().find(x=>x.name===v):null;
         nf.campaignType=camp&&camp.type?camp.type:(nf.campaignType||'');
+        // The linked-page picker's options are scoped to whichever campaign
+        // is selected (see tkCampaignPageOptions below) — a page chosen
+        // under the previous campaign won't be a valid option under the
+        // new one, so clear it rather than leave a stale selection.
+        nf.pageUrl='';
       }
       this.setState({ tkForm:nf });
     };
@@ -7782,6 +7787,24 @@ class AppRoot extends React.Component {
             .concat(pool.map(k=>({ id:k.id, label:k.kpi+' ('+k.unit+') — '+k.who }))),
           tkKpiScoped:scoped, tkKpiNote:note }; })(),
       tkCampaignOptions:['—'].concat(this.allCampaigns().map(c=>c.name)),
+      // Internal/external pages linked to the selected Campaign's KPIs
+      // (Create Campaign → section D → "landing pages this KPI drives
+      // traffic to", cmpFormData ~line 1044) — surfaced here so a task can
+      // be assigned straight to one of those pages instead of the assignee
+      // having to go find it in Content Repository separately. Flattened
+      // across every linked KPI and de-duped by URL since the same page
+      // can be attached to more than one KPI row.
+      ...(()=>{
+        const camp=f.campaign&&f.campaign!=='—'?this.allCampaigns().find(x=>x.name===f.campaign):null;
+        const seen=new Set();
+        const pages=(camp?(camp.kpis||[]):[]).flatMap(k=>k.pages||[]).filter(p=>p.url&&!seen.has(p.url)&&seen.add(p.url));
+        return {
+          tkCampaignPageOptions:[{v:'',label:pages.length?'None — not linked to a page':'None — this campaign has no linked pages yet'}]
+            .concat(pages.map(p=>({ v:p.url, label:(p.kind==='External'?'External · ':'Internal · ')+(p.title||p.url)+' — '+p.url }))),
+          tkHasCampaignPages:pages.length>0,
+          tkSetPage:set('pageUrl'),
+        };
+      })(),
       // Campaign Type: selectable directly, OR auto-filled from the chosen
       // Campaign (see the 'campaign' branch in set() above) — either entry
       // path lands on the same f.campaignType. Whichever active QC
@@ -7860,7 +7883,13 @@ class AppRoot extends React.Component {
     const tpl=(f.template?this.allTaskTemplates().find(x=>x.name===f.template):null)||{checklist:[]};
     const id=this._nextSeqCode('TSK-', this._allTaskIdsEver(), 2060);
     const who=this.currentPerson();
-    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:(row0?row0.unit:''), estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', campaignType:(f.campaignType&&f.campaignType!=='—')?f.campaignType:'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
+    // Resolve the picked page's title from the campaign it was picked from
+    // (tkCampaignPageOptions, built off camp.kpis[].pages[]) — only the url
+    // is stored on tkForm, so look the title back up at submit time rather
+    // than carrying a redundant title field through form state.
+    const campForPage=f.campaign&&f.campaign!=='—'?this.allCampaigns().find(x=>x.name===f.campaign):null;
+    const pickedPage=(f.pageUrl&&campForPage)?(campForPage.kpis||[]).flatMap(x=>x.pages||[]).find(p=>p.url===f.pageUrl):null;
+    const task={ id, name:f.name.trim(), desc:f.desc||'—', template:f.template||'', project:f.project||'—', campaign:f.campaign||'—', start:this.fmtDate(f.start)||this.todayStr(), end:this.fmtDate(f.end)||'—', startDate:f.start||'', endDate:f.end||'', startTime:f.startTime||'', endTime:f.endTime||'', priority:f.priority||'Medium', assignee:f.assignee||'Neha Verma', kpiId:f.kpiId||'', kpi:k?k.kpi:'Not linked', units:parseInt(f.units,10)||0, unit:k?k.unit:(row0?row0.unit:''), estH:parseInt(f.estH,10)||0, actH:0, recurrence:f.recurrence||'None', reviewer:f.reviewer||who, effortPlan:f.effortPlan||'', effortType:f.effortRow||'', depMode:f.depMode||'Parallel', division:f.division||'Content', contentType:f.contentType||'', campaignType:(f.campaignType&&f.campaignType!=='—')?f.campaignType:'', pageUrl:f.pageUrl||'', pageTitle:pickedPage?(pickedPage.title||pickedPage.url):'', checklist:tpl.checklist.map(t=>({t,done:false})), dep:f.dep||'—', evidence:[], status:'Assigned', activity:[[who,'Created & assigned','' +this.todayStr()]] };
     const fromMsg=this.state.msgConvert;
     this.setState({ tkAdded:[...(this.state.tkAdded||[]),task], tkNew:false, tkOpen:fromMsg?null:id, msgConvert:null });
     if(fromMsg) this._linkMessageToTask(fromMsg, id);
@@ -7895,7 +7924,16 @@ class AppRoot extends React.Component {
       // _persistTaskContentType/_persistTaskCampaignType), and firing them in
       // parallel with the INSERT let them race ahead and match zero rows,
       // silently dropping the value on every new task.
-      else { this._persistTaskContentType(task.id, task.contentType); this._persistTaskCampaignType(task.id, task.campaignType); }
+      else { this._persistTaskContentType(task.id, task.contentType); this._persistTaskCampaignType(task.id, task.campaignType); this._persistTaskPage(task.id, task.pageUrl, task.pageTitle); }
+    });
+  }
+  // Same best-effort, separate-write pattern as _persistTaskContentType/
+  // _persistTaskCampaignType (schema_v30.sql), for the Campaign-linked page
+  // a task can be assigned to.
+  _persistTaskPage(code, pageUrl, pageTitle){
+    if(pageUrl===undefined) return;
+    supabase.from('tasks').update({ page_url:pageUrl||null, page_title:pageTitle||null }).eq('code', code).then(({error})=>{
+      if(error) console.warn('[supabase] task page_url save failed — has schema_v30.sql (page_url/page_title columns) been applied?', error.message);
     });
   }
   // content_type is a separate, best-effort write (schema_v24.sql) rather
@@ -7956,6 +7994,7 @@ class AppRoot extends React.Component {
       comments:r.comments||[], status:r.status||'Assigned', activity:r.activity||[],
       qcFeedback:r.qc_feedback||'', reworkCount:r.rework_count||0,
       contentType:r.content_type||'', campaignType:r.campaign_type||'',
+      pageUrl:r.page_url||'', pageTitle:r.page_title||'',
     }));
     this.setState({ tkAdded:mapped, tkUpd:{} });
   }
