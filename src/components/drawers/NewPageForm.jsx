@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function NewPageForm({ vm }) {
-  const { closeNewPage, npAddAttachment, npAttachments, npHasAttachments, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory, npTypeOptions, npIndustryOptions, npServiceMasterOptions, npLinkServiceVal, npPullFromService, npSubServiceMasterOptions, npLinkSubServiceVal, npPullFromSubService } = vm;
+  const { closeNewPage, npAddAttachment, npAttachments, npHasAttachments, npAddLink, npAddMedia, npBack, npCode, npDescLen, npDescLenColor, npHasParent, npInsightOptions, npLinks, npMedia, npNext, npNotFirst, npNotLast, npOwnerName, npParentOptions, npParentUrl, npRelInsightUrl, npRelServiceUrl, npRepos, npServiceOptions, npSetCountries, npSetCta, npSetH2, npSetH2Body, npSetH3, npSetH3Body, npSetIndustry, npSetIntent, npSetIntro, npSetKeyword, npSetMenuCat, npSetMenuOrder, npSetMetaDesc, npSetMetaTitle, npSetName, npSetOgDesc, npSetOgImage, npSetOgTitle, npSetOwner, npSetParentId, npSetPrimaryKw, npSetPublishDate, npSetRelInsightId, npSetRelServiceId, npSetRepo, npSetReviewer, npSetRobots, npSetSchema, npSetSecondaryKw, npSetSector, npSetSlug, npSetSubService, npSetType, npSlug, npTab0, npTab1, npTab2, npTab3, npTab4, npTab5, npTab6, npTab7, npTab8, npTab9, npTabs, npTitleLen, npTitleLenColor, npToday, npUrl, npf, showNewPage, stop, submitNewPageCreate, submitNewPageDraft, npIsEdit, npPanelTitle, npCanDelete, npDelete, npBrandOptions, npSetBrand, npIsIndex, npSetIsIndex, npObjectCategoryOptions, npSetObjectCategory, npTypeOptions, npIndustryOptions, npServiceMasterOptions, npLinkServiceVal, npPullFromService, npSubServiceMasterOptions, npLinkSubServiceVal, npPullFromSubService, npContentVersionNote } = vm;
   return (
     <React.Fragment>
 {Boolean(showNewPage) && (
@@ -645,6 +645,11 @@ Draft — set on publish
 Content — starter blocks
 </div>
 
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--verify-100)","border":"1px solid #BFE3D0","color":"var(--verify-600)","borderRadius":"10px","padding":"8px 12px","fontSize":"11.5px","fontWeight":"700","marginBottom":"12px"}}>
+<Icon name={"history"} style={{"width":"13px","height":"13px","flexShrink":"0"}} />
+{npContentVersionNote}
+</div>
+
           
 <div style={{"display":"flex","flexDirection":"column","gap":"14px"}}>
 
@@ -741,6 +746,12 @@ Attach file
 {a.name}
 </button>
 <input value={a.desc} onInput={a.setDesc} placeholder="Description — what this file contains" style={{"flex":"1","padding":"7px 10px","border":"1px solid var(--line-300)","borderRadius":"8px","fontSize":"12px","outline":"none"}} />
+<span title="Document version — bumps automatically when this attachment is replaced" style={{"fontSize":"10.5px","fontWeight":"700","padding":"3px 8px","borderRadius":"999px","background":"var(--verify-100)","color":"var(--verify-600)","flexShrink":"0"}}>
+{a.version}
+</span>
+<button onClick={a.replace} title="Replace with a new version" style={{"background":"none","border":"none","cursor":"pointer","color":"var(--orchid-600)","padding":"4px"}}>
+<Icon name={"replace"} style={{"width":"14px","height":"14px"}} />
+</button>
 <button onClick={a.download} title="Download" style={{"background":"none","border":"none","cursor":"pointer","color":"var(--ink-400)","padding":"4px"}}>
 <Icon name={"download"} style={{"width":"14px","height":"14px"}} />
 </button>

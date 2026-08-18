@@ -431,6 +431,9 @@ No files attached to this page yet.
 </span>
 )}
 </button>
+<span style={{"fontSize":"10.5px","fontWeight":"700","padding":"3px 8px","borderRadius":"999px","background":"var(--verify-100)","color":"var(--verify-600)","flexShrink":"0"}}>
+{a.version}
+</span>
 <button onClick={a.download} title="Download" style={{"background":"none","border":"none","cursor":"pointer","color":"var(--ink-400)","padding":"4px"}}>
 <Icon name={"download"} style={{"width":"14px","height":"14px"}} />
 </button>

@@ -8938,6 +8938,15 @@ class AppRoot extends React.Component {
     const nums=ids.map(id=>{ const m=String(id).match(new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\d+)$')); return m?parseInt(m[1],10):0; });
     return prefix+(Math.max(floor||0, ...nums)+1);
   }
+  // Shared document/content versioning — v0.1 on first save, then
+  // v0.2/v0.3/... each time that specific document's content changes.
+  // Used both by submitNewPage() (the page's own body content) and
+  // applyPickedFiles() (one counter per attachment) — each tracked and
+  // retained independently rather than sharing one number.
+  _nextVersion(v){
+    const m=String(v||'').match(/^v0\.(\d+)$/);
+    return m ? ('v0.'+(parseInt(m[1],10)+1)) : 'v0.1';
+  }
   allContentPages(){ const upd=this.state.cUpd||{};
     const added=(this.state.cAdded||[]).slice().reverse();
     const addedIds=new Set(added.map(p=>p.id));
@@ -9145,6 +9154,7 @@ class AppRoot extends React.Component {
     const repos=this.CONTENT_REPOS().filter(r=>r.key!=='all');
     const editId=this.state.npEditId;
     const code = editId||this._nextSeqCode('PG-', this._allContentPageIdsEver(), 1000);
+    const existingPage = editId ? this.allContentPages().find(p=>p.id===editId) : null;
     const slugify=(s)=> (s||'').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
     // "Index page" means this page IS the category/parent root — its URL
     // ends right at that folder (e.g. /retort-main/) with no extra slug
@@ -9166,6 +9176,14 @@ class AppRoot extends React.Component {
     const set=(k)=>(e)=>this.setState({ npForm:{...this.state.npForm,[k]:e.target.value} });
     return {
       showNewPage:this.state.showNewPage, npCode:code, npIsEdit:!!editId, npPanelTitle:editId?'Edit page':'Create new page',
+      // Read-only preview of the page's own content version — the actual
+      // increment happens on save (submitNewPage), compared against the
+      // last-saved blocks, so this always reflects what's currently on
+      // record rather than guessing ahead of a save that hasn't happened.
+      npContentVersion: existingPage ? (existingPage.version||'v0.1') : null,
+      npContentVersionNote: existingPage
+        ? ('Content version '+(existingPage.version||'v0.1')+' — saving with changed content bumps this automatically.')
+        : 'New page — its content will be saved as v0.1.',
       npRepos:repos.map(r=>({key:r.key,name:r.name})),
       npBrandOptions:this.BRAND_LIST(),
       // Changing Brand invalidates whatever Service was picked under the
@@ -9294,9 +9312,15 @@ class AppRoot extends React.Component {
       // so they stay linked to this specific page rather than floating in
       // a shared, unscoped file list.
       npAttachments:(this.state.npAttachments||[]).map((a,i)=>({ i, name:a.name, desc:a.desc||'', icon:this.fileKind(a.name).icon,
+        version:a.version||'v0.1',
         setDesc:(e)=>{ const arr=(this.state.npAttachments||[]).map((x,j)=>j===i?{...x,desc:e.target.value}:x); this.setState({ npAttachments:arr }); },
         open:()=>this.openFilePreview(a.name),
         download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(a.name); },
+        // Replace this SPECIFIC attachment with a picked file — bumps only
+        // this row's version (see applyPickedFiles' np-attachment-replace:
+        // branch), keeping its own retained version history separate from
+        // every other attachment's.
+        replace:()=>this.openFilePicker('np-attachment-replace:'+i, 'Replace '+a.name),
         remove:()=>{ const arr=(this.state.npAttachments||[]).slice(); arr.splice(i,1); this.setState({ npAttachments:arr }); } })),
       npHasAttachments:(this.state.npAttachments||[]).length>0,
       npAddAttachment:()=>this.openFilePicker('np-attachment', 'Attach file to '+(f.name||'this page')),
@@ -9339,6 +9363,18 @@ class AppRoot extends React.Component {
     const metaTitle=f.metaTitle||name; const metaDesc=f.metaDesc||'—';
     const seo = (f.metaTitle&&f.metaDesc)? (f.keyword?68:58) : (f.metaTitle||f.metaDesc?42:28);
     const today=this.todayStr();
+    // Content version — v0.1 the first time this page's own body content is
+    // saved, then bumped only when that content (the H1/intro/H2/H3/CTA
+    // blocks authored on the Content tab) actually differs from what's
+    // already on record. A save that only touches other tabs (SEO,
+    // Classification, etc.) leaves the version untouched — it tracks the
+    // content specifically, not the page record as a whole.
+    const blocks=[['Heading','H1',name],['Paragraph','',f.intro||'Draft introduction — start writing this page.'],
+      ['Heading','H2',f.h2||'Overview'],['Paragraph','',f.h2body||f.overview||('Add supporting content for '+(f.keyword||name)+'.')],
+      ...(f.h3||f.h3body ? [['Heading','H3',f.h3||'Details'],['Paragraph','',f.h3body||'Add supporting detail.']] : []),
+      ['CTA','',f.cta||'Add a call to action'],['FAQ','','Add frequently asked questions']];
+    const contentChanged = existing ? (JSON.stringify(existing.blocks||[])!==JSON.stringify(blocks)) : true;
+    const contentVersion = existing ? (contentChanged ? this._nextVersion(existing.version) : (existing.version||'v0.1')) : 'v0.1';
     const page={
       id:code, name, repo, brand:f.brand||(existing&&existing.brand)||'Beetloop', type:f.type||'Service Page', topic:f.keyword||'—', industry:f.industry||'—', keyword:f.keyword||'—',
       status: activate?'Under Review':'Draft', seo, updated:today, owner, reviewer,
@@ -9354,10 +9390,7 @@ class AppRoot extends React.Component {
         ? [['Service Category',f.industry||'General'],['Sub-Service',f.subService||'To be assigned'],['Primary Keyword',f.keyword||'—'],['Industry',f.industry||'—'],['Sector',f.sector||'—'],['Application Category',f.objectCategory||'—'],['Target Countries',f.countries||'—']]
         : [['Topic',f.keyword||name],['Author',owner],['Content Type',f.type||'Article'],['Object Category',f.objectCategory||'—'],['Sector',f.sector||'—'],['Tags',f.keyword||'—'],['Target Countries',f.countries||'—'],['Related Services',f.subService||'—']],
       seoMeta:[['Meta Title',metaTitle],['Meta Description',metaDesc],['Primary Keywords',f.primaryKw||f.keyword||'—'],['Secondary Keywords',f.secondaryKw||'—'],['Keyword Intent',f.intent||'—'],['Canonical URL',url],['Schema Type', f.schema||(repo==='service'?'Service':'WebPage')],['Robots',f.robots||'Index, Follow'],['Index Status', activate?'Pending':'Not indexed'],['Hreflang','en-US'],['OG Title',f.ogTitle||metaTitle],['OG Description',f.ogDesc||metaDesc],['OG Image',f.ogImage||'—'],['Twitter Card','summary_large_image']],
-      blocks:[['Heading','H1',name],['Paragraph','',f.intro||'Draft introduction — start writing this page.'],
-        ['Heading','H2',f.h2||'Overview'],['Paragraph','',f.h2body||f.overview||('Add supporting content for '+(f.keyword||name)+'.')],
-        ...(f.h3||f.h3body ? [['Heading','H3',f.h3||'Details'],['Paragraph','',f.h3body||'Add supporting detail.']] : []),
-        ['CTA','',f.cta||'Add a call to action'],['FAQ','','Add frequently asked questions']],
+      blocks,
       rel:(()=>{ const sv=this.allContentPages().find(p=>p.id===f.relServiceId); const iv=this.allContentPages().find(p=>p.id===f.relInsightId);
         return { Services:[sv?(sv.name+' ('+sv.url+')'):'Link a related service'], Insights:[iv?(iv.name+' ('+iv.url+')'):'Link a related article'] }; })(),
       internal: (()=>{ const ls=(this.state.npLinks||[]).filter(l=>l.anchor||l.target); return ls.length? ls.map(l=>[l.anchor||f.keyword||name.toLowerCase(), l.target||url, l.ltype||'Internal', '—']) : [[f.keyword||name.toLowerCase(), url, 'Internal', '—']]; })(),
@@ -9373,7 +9406,7 @@ class AppRoot extends React.Component {
       attachments:(this.state.npAttachments||[]).filter(a=>a.name&&a.name.trim()),
       workflow: existing?existing.workflow:(activate?'Under Review':'Draft'),
       publishDate:this.fmtDate(f.publishDate)||(existing?existing.publishDate:'—'),
-      expiry:existing?existing.expiry:'—', version:existing?existing.version:'v0.1',
+      expiry:existing?existing.expiry:'—', version:contentVersion,
       analytics:existing?existing.analytics:{traffic:'—',ctr:'—',pos:'—',bounce:'—',time:'—',conv:'—',backlinks:'0',speed:'—'},
       activity: existing
         ? [[owner,'Page updated',today], ...(existing.activity||[])]
@@ -9383,7 +9416,7 @@ class AppRoot extends React.Component {
       page.status=existing.status;
       const upd={...(this.state.cUpd||{}), [code]:page};
       this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npAttachments:[], npEditId:null, cOpen:code, cTab:0 });
-      this.flash('Page “'+name+'” updated.');
+      this.flash('Page “'+name+'” updated.'+(contentChanged?(' Content bumped to '+contentVersion+'.'):''));
       supabase.from('content_pages').upsert({ id:code, payload:{...existing,...page}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
         if(error) console.warn('[supabase] content page upsert failed:', error.message);
       });
@@ -9915,7 +9948,7 @@ class AppRoot extends React.Component {
       // Real uploaded files attached to this specific page (see
       // npAttachments in newPageData()) — distinct from cd_media above,
       // which is just descriptive metadata, not an actual downloadable file.
-      cd_attachments:(p.attachments||[]).map(a=>{ const k=this.fileKind(a.name); return { name:a.name, desc:a.desc||'', icon:k.icon,
+      cd_attachments:(p.attachments||[]).map(a=>{ const k=this.fileKind(a.name); return { name:a.name, desc:a.desc||'', icon:k.icon, version:a.version||'v0.1',
         open:()=>this.openFilePreview(a.name), download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(a.name); } }; }),
       cd_attachmentsEmpty:(p.attachments||[]).length===0,
       cd_wf:wf.map((w,i)=>({ label:w, done:i<activeWf, active:i===activeWf,
@@ -10520,7 +10553,32 @@ class AppRoot extends React.Component {
     // are appended to draft form state, not patched onto an existing
     // Supabase record. submitNewPage() folds this into the page's
     // `attachments` array on save; editContentPage() reads it back out.
-    else if(t==='np-attachment'){ this.setState({ npAttachments:[...(this.state.npAttachments||[]), ...names.map(n=>({ name:n, desc:'' }))] }); }
+    else if(t==='np-attachment'){
+      // Picking a name that already matches an attached file (re-uploading
+      // the same document) is treated as a new version of that SAME
+      // attachment, not a second, duplicate one — this is what lets
+      // "update/replace" bump the version automatically without the author
+      // having to use the explicit Replace button below.
+      let next=this.state.npAttachments||[];
+      names.forEach(n=>{
+        const idx=next.findIndex(a=>a.name===n);
+        next = idx>=0 ? next.map((a,i)=>i===idx?{...a, version:this._nextVersion(a.version)}:a)
+                       : [...next, { name:n, desc:'', version:'v0.1' }];
+      });
+      this.setState({ npAttachments:next });
+    }
+    // Explicit "Replace" on one existing attachment row (see newPageData's
+    // npAttachments.replace) — swaps in a picked file under the SAME row
+    // (keeping its description/identity) and bumps that one attachment's
+    // version, unlike the generic branch above which appends.
+    else if(t.indexOf('np-attachment-replace:')===0){
+      const idx=parseInt(t.split(':')[1],10);
+      const cur=this.state.npAttachments||[];
+      if(names[0] && cur[idx]){
+        const next=cur.map((a,i)=>i===idx?{...a, name:names[0], version:this._nextVersion(a.version)}:a);
+        this.setState({ npAttachments:next });
+      }
+    }
     this.flash(names.length+' file'+(names.length===1?'':'s')+' attached.');
   }
   filePickerData(){
