@@ -49,7 +49,7 @@ class AppRoot extends React.Component {
     ttAdded: [], ttUpd: {}, ttNew: false, ttEditId: null, ttForm: {}, ttFilters: {division:'All',status:'All'}, ttTab: 'task', ttDeleted: [],
     ktAdded: [], ktUpd: {}, ktNew: false, ktEditId: null, ktForm: {}, ktDeleted: [],
     otAdded: [], otUpd: {}, otNew: false, otEditId: null, otForm: {}, okrTpl: '', otDeleted: [],
-    ideaAdded: [], ideaUpd: {}, ideaForm: {}, showIdeaForm: false, ideaFilters: {status:'All', quarter:'All'}, ideaOpen: null, qcRef: {}, ideaStep: 1, ideaCmt: {}, ideaDeleted: [],
+    ideaAdded: [], ideaUpd: {}, ideaForm: {}, showIdeaForm: false, ideaFilters: {status:'All', quarter:'All'}, ideaGroupMode: 'flat', ideaOpen: null, qcRef: {}, ideaStep: 1, ideaCmt: {}, ideaDeleted: [],
     epForm: null, epRows: null, epGenerated: false, epView: 'list', epDivision: 'Content Writer', epPlanId: null, epAdded: [], epDeleted: [],
     epFilters: {year:'All', period:'All', role:'All'}, epCustomDivs: [], epAddingDiv: false, epNewDiv: '', epRowAdds: {},
     pg: {}, tblQuery: '', qcStatusF: 'All',
@@ -4007,11 +4007,47 @@ class AppRoot extends React.Component {
     });
   }
   ideaTone(s){ return {'Idea Captured':{bg:'var(--surface-50)',c:'var(--ink-500)'},'Submitted for QC':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},'Approved':{bg:'var(--verify-100)',c:'var(--verify-600)'},'Rework':{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  // Dependent-work types a Main Content item can fan out to — each maps to
+  // the Effort Planner division its generated task should land in (Move to
+  // Tasks reads this), so "SMM" work lands with the SMM team etc. without
+  // a human having to re-pick division per dependency.
+  DEP_TYPES(){ return [
+    { key:'SMM', label:'SMM — Social Media Post', division:'SMM' },
+    { key:'GD', label:'Graphic Design — Creative', division:'Graphics' },
+    { key:'SEO', label:'SEO', division:'SEO' },
+    { key:'Web', label:'Web Developer', division:'Web Developers' },
+    { key:'Other', label:'Other', division:'Content Writer' },
+  ]; }
+  ideaDepDivision(type){ const d=this.DEP_TYPES().find(x=>x.key===type); return d?d.division:'Content Writer'; }
+  ideaDepStatusTone(s){ return {'Pending':{bg:'var(--surface-50)',c:'var(--ink-500)'},'In Progress':{bg:'var(--info-100)',c:'var(--info-600)'},'Ready for QC':{bg:'var(--orchid-100)',c:'var(--orchid-700)'},'Done':{bg:'var(--verify-100)',c:'var(--verify-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  ideaDepQcTone(s){ return {'Approved':{bg:'var(--verify-100)',c:'var(--verify-600)'},'Rework':{bg:'var(--danger-100)',c:'var(--danger-600)'}}[s]||{bg:'var(--surface-50)',c:'var(--ink-500)'}; }
+  // Every mutation upserts the FULL dependencies array back through
+  // ideaPatch (same "read current, splice, write whole array back" shape
+  // ideaPatch already uses for comments/refs/etc.) — a dependency has no
+  // Supabase row of its own, it only exists inside the parent idea's
+  // jsonb payload.
+  ideaAddDependency(ideaId, dep){
+    const i=this.allIdeas().find(x=>x.id===ideaId); if(!i) return;
+    const nid='DEP-'+ideaId+'-'+((i.dependencies||[]).length+1);
+    const row={ id:nid, type:dep.type||'SMM', assignee:dep.assignee||'', notes:dep.notes||'', status:'Pending', qcStatus:'Pending', taskId:'' };
+    this.ideaPatch(ideaId, { dependencies:[...(i.dependencies||[]), row] });
+  }
+  ideaUpdateDependency(ideaId, depId, patch){
+    const i=this.allIdeas().find(x=>x.id===ideaId); if(!i) return;
+    this.ideaPatch(ideaId, { dependencies:(i.dependencies||[]).map(d=>d.id===depId?{...d,...patch}:d) });
+  }
+  ideaRemoveDependency(ideaId, depId){
+    const i=this.allIdeas().find(x=>x.id===ideaId); if(!i) return;
+    this.ideaPatch(ideaId, { dependencies:(i.dependencies||[]).filter(d=>d.id!==depId) });
+  }
   ideaToTask(i){
-    // open the convert step — effort line decides how many tasks are generated
+    // open the convert step — the task count is now decided by the idea's
+    // actual structure (1 Main Content task + 1 per dependency), never by
+    // an effort row's monthly target — that's what used to spray out up to
+    // 60 near-duplicate tasks from a single approved idea.
     const plan=this.allEpPlans().find(p=>p.name===i.effortPlan)||this.allEpPlans()[0];
     const qcUser=(this.state.users||[]).find(u=>u.roleKey==='qc');
-    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', count:'1', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
+    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
   }
   convertData(){
     const iid=this.state.cvIdea; if(!iid) return { cvOpen:false };
@@ -4023,17 +4059,18 @@ class AppRoot extends React.Component {
     const row=plan&&(plan.rows||[]).find(r=>r.type===f.rowType);
     const kpiPool=this.epKpiPool();
     const isNew=f.kpiMode==='new';
+    const deps=i.dependencies||[];
     return {
       cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f,
       cvClose:()=>this.setState({ cvIdea:null, cvForm:{} }),
       cvStop:(e)=>e.stopPropagation(),
       cvPlanOptions:[{v:'',label:'— Select an effort plan —'}].concat(plans.map(p=>({v:p.id,label:p.id+' · '+p.name+' — '+p.division}))),
-      cvSetPlan:(e)=>this.setState({ cvForm:{...f, planId:e.target.value, rowType:'', kpiId:'', count:'1'} }),
+      cvSetPlan:(e)=>this.setState({ cvForm:{...f, planId:e.target.value, rowType:'', kpiId:''} }),
       cvRowOptions:plan?[{v:'',label:'— Select the effort line this idea delivers —'}].concat((plan.rows||[]).map(r=>({v:r.type,label:r.type+' — '+(r.monthly||0)+' '+r.unit+' / month'}))):[{v:'',label:'Pick an effort plan first'}],
       cvSetRow:(e)=>{ const v=e.target.value; const r=plan&&(plan.rows||[]).find(x=>x.type===v);
         const kid=r?((r.kpiIds&&r.kpiIds[0])||r.kpiId||''):'';
-        this.setState({ cvForm:{...f, rowType:v, kpiId:kid, kpiMode:kid?'existing':f.kpiMode, count:r?String(r.monthly||1):'1'} });
-        if(r) this.flash('Effort "'+v+'" sets '+(r.monthly||1)+' task'+((r.monthly||1)===1?'':'s')+(kid?' and links its KPI.':'.')); },
+        this.setState({ cvForm:{...f, rowType:v, kpiId:kid, kpiMode:kid?'existing':f.kpiMode} });
+        if(r) this.flash('Effort "'+v+'" linked'+(kid?' — its KPI carries onto every generated task.':'.')); },
       cvEffortInfo:row?(row.monthly+' '+row.unit+' / month · priority '+row.priority):'',
       cvHasRow:!!row,
       cvKpiExisting:!isNew, cvKpiNew:isNew,
@@ -4042,40 +4079,59 @@ class AppRoot extends React.Component {
         set:()=>this.setState({ cvForm:{...f,kpiMode:m.k} }) })),
       cvKpiOptions:[{v:'',label:'— Select a KPI —'}].concat(kpiPool.map(k=>({v:k.id,label:k.kpi+' — '+k.who+' ('+k.target+' '+k.unit+')'}))),
       cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
-      cvSetCount:set('count'), cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
+      cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
       cvAssignees:(this.state.users||[]).map(u=>u.name),
       cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
-      cvCountNote:(()=>{ const n=parseInt(f.count,10)||0; return n+' task'+(n===1?'':'s')+' will be created'+(row?(' — from the effort target of '+row.monthly+' '+row.unit):'')+'.'; })(),
+      // Preview of exactly what will be generated — 1 Main Content task plus
+      // one task per dependency, each shown with its own type/assignee so
+      // there's no surprise between this screen and the task list it lands in.
+      cvPreview:[{ label:'Main Content', sub:i.title, who:f.assignee||i.owner||'—' }]
+        .concat(deps.map(d=>({ label:(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type, sub:d.notes||i.title, who:d.assignee||f.assignee||'—' }))),
+      cvCountNote:(deps.length+1)+' task'+(deps.length===0?'':'s')+' will be created — 1 main content task'+(deps.length?(' + '+deps.length+' dependency task'+(deps.length===1?'':'s')+' ('+deps.map(d=>(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).join(', ')+')'):'')+'.',
       cvSave:()=>{
-        if(!f.rowType){ this.flash('Select the effort line — it decides how many tasks are created.'); return; }
+        if(!f.rowType){ this.flash('Select the effort line this content delivers.'); return; }
         if(f.kpiMode==='existing'&&!f.kpiId){ this.flash('Link a KPI, or switch to Create new KPI.'); return; }
         if(f.kpiMode==='new'&&!(f.newKpiName||'').trim()){ this.flash('Name the new KPI.'); return; }
-        const n=Math.max(1,Math.min(60,parseInt(f.count,10)||1));
         const who=this.currentPerson();
         const k=kpiPool.find(x=>x.id===f.kpiId);
         const kpiName=f.kpiMode==='new'?f.newKpiName.trim():(k?k.kpi:'Not linked');
         const kpiUnit=f.kpiMode==='new'?(f.newKpiUnit||'units'):(k?k.unit:'');
+        const kpiIdVal=f.kpiMode==='new'?'':(f.kpiId||'');
         const existingIds=this.allTasks().map(t=>t.id);
-        const added=[];
-        for(let n2=0;n2<n;n2++){
-          const id=this._nextSeqCode('TSK-', existingIds, 3200);
-          existingIds.push(id);
-          added.push({ id, name:i.title+(n>1?(' — '+(n2+1)+'/'+n):''), desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
-            template:'Write Article', project:i.service||'Content', campaign:plan?plan.campaign:'—',
-            start:this.fmtDate(f.start)||this.relDate(0), end:this.fmtDate(f.end)||this.relDate(14),
-            startDate:f.start||'', endDate:f.end||'',
-            priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||who,
-            kpiId:f.kpiMode==='new'?'':(f.kpiId||''), kpi:kpiName, units:1, unit:kpiUnit||(row&&row.unit)||'articles',
-            estH:10, actH:0, recurrence:'None', reviewer:f.reviewer||who,
-            effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id,
-            checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
-            dep:'—', evidence:[], status:'Assigned', division:plan?plan.division:'Content',
-            activity:[[who,'Generated from approved idea '+i.id+' · effort "'+f.rowType+'"',this.todayStr()]] });
-        }
+        const nextId=()=>{ const id=this._nextSeqCode('TSK-', existingIds, 3200); existingIds.push(id); return id; };
+        const start=this.fmtDate(f.start)||this.relDate(0), end=this.fmtDate(f.end)||this.relDate(14);
+        // Every generated task — main and dependency alike — inherits the
+        // SAME Campaign → OKR (via KPI) → Effort links from the idea, so
+        // nothing has to be re-picked per task the way the old per-count
+        // generator required.
+        const shared={ campaign:plan?plan.campaign:'—', effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id, kpiId:kpiIdVal, kpi:kpiName, unit:kpiUnit||(row&&row.unit)||'articles', reviewer:f.reviewer||who, recurrence:'None', actH:0, evidence:[], status:'Assigned' };
+        const mainId=nextId();
+        const mainTask={ ...shared, id:mainId, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
+          template:'Write Article', project:i.service||'Content',
+          start, end, startDate:f.start||'', endDate:f.end||'',
+          priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||i.owner||who,
+          units:1, estH:10, division:plan?plan.division:'Content', dep:'—',
+          checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
+          activity:[[who,'Generated as Main Content from approved idea '+i.id,this.todayStr()]] };
+        const depTasks=(i.dependencies||[]).map(d=>{ const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+          return { ...shared, id:nextId(), name:typeLabel+' — '+i.title, desc:d.notes||('Dependent '+typeLabel+' work for "'+i.title+'".'),
+            template:'Custom task', project:i.service||'Content',
+            start, end, startDate:f.start||'', endDate:f.end||'',
+            priority:i.priority||'Medium', assignee:d.assignee||f.assignee||who,
+            units:0, estH:4, division:this.ideaDepDivision(d.type),
+            // Sequential (not Parallel) — reuses the existing dep/depMode
+            // blocking mechanism (tkBlockedBy) so SMM/GD/SEO work is
+            // actually held until the Main Content task it depends on is
+            // QC-approved, not just labelled as related to it.
+            dep:mainId, depMode:'Sequential', dependencyId:d.id,
+            checklist:[{t:typeLabel+' draft ready',done:false},{t:'Reviewed against main content',done:false}],
+            activity:[[who,'Generated as "'+typeLabel+'" dependency of '+mainId+' from approved idea '+i.id,this.todayStr()]] }; });
+        const added=[mainTask, ...depTasks];
         this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added], cvIdea:null, cvForm:{},
           tkFilter:'All', tkFilters:{status:'All',priority:'All',assignee:'All'} });
-        this.ideaPatch(i.id,{ taskId:added[0].id, taskIds:added.map(t=>t.id), effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName });
-        this.flash(n+' task'+(n===1?'':'s')+' generated from '+i.id+' — linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".');
+        this.ideaPatch(i.id,{ taskId:mainId, taskIds:added.map(t=>t.id), effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName,
+          dependencies:(i.dependencies||[]).map(d=>{ const dt=depTasks.find(x=>x.dependencyId===d.id); return dt?{...d, taskId:dt.id}:d; }) });
+        this.flash(added.length+' task'+(added.length===1?'':'s')+' generated from '+i.id+' — 1 main content task'+(depTasks.length?(' + '+depTasks.length+' dependency task'+(depTasks.length===1?'':'s')):'')+', linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".');
         added.forEach(t=>this._persistNewTask(t, f.start||null, f.end||null));
       },
     };
@@ -4107,8 +4163,24 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] idea insert failed:', error.message);
         }); },
       openTask:(e)=>{ if(e)e.stopPropagation(); if(i.taskId) this.setState({ route:'tasks', tkOpen:i.taskId }); },
+      // Main Content + its dependent SMM/GD/SEO work rendered together right
+      // in the row — a dependency is never a separate, unrelated-looking
+      // list item, whichever Group By mode is active below.
+      depChips:(i.dependencies||[]).map(d=>{ const st=this.ideaDepStatusTone(d.status);
+        return { label:((this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).replace(/ — .*/,''), bg:st.bg, color:st.c, assignee:d.assignee||'Unassigned' }; }),
+      hasDeps:(i.dependencies||[]).length>0,
+      depGroup:(()=>{ const p=this.allEpPlans().find(x=>x.name===i.effortPlan); return p?p.division:(i.service||'Ungrouped'); })(),
     };});
     const all=this.allIdeas();
+    const groupMode=this.state.ideaGroupMode||'flat';
+    // Group By keeps every dependency chip attached to its Main Content row
+    // (built into `depChips` above) no matter which grouping is active —
+    // "grouped" only changes how Main Content rows themselves are bucketed,
+    // never separates a dependency from its parent.
+    const groupedRows=(()=>{ if(groupMode==='flat') return null;
+      const buckets={};
+      rows.forEach(r=>{ const key=r.depGroup||'Ungrouped'; (buckets[key]=buckets[key]||[]).push(r); });
+      return Object.keys(buckets).sort().map(k=>({ label:k, rows:buckets[k] })); })();
     const pg=this.pgData('ideas',rows,7);
     const setF=(k)=>(e)=>this.setState({ ideaFilters:{...F,[k]:e.target.value}, pg:{...(this.state.pg||{}),ideas:0} });
     return {
@@ -4120,6 +4192,9 @@ class AppRoot extends React.Component {
         {label:'Reused',value:String(all.reduce((s,i)=>s+(i.reuse||0),0)),color:'var(--warn-600)',icon:'repeat'},
       ],
       ideaRows:pg.rows, ideaPg:pg, ideaEmpty:pg.rows.length===0, ideaCanEdit:canEdit,
+      ideaGroupMode:groupMode, ideaIsGrouped:groupMode!=='flat', ideaGroups:groupedRows||[],
+      ideaGroupOptions:[{v:'flat',label:'Flat list'},{v:'division',label:'Group by division / team'}],
+      ideaSetGroupMode:(e)=>this.setState({ ideaGroupMode:e.target.value }),
       ideaFiltersUI:[
         {label:'Status',value:F.status,onChange:setF('status'),options:['All','Idea Captured','Submitted for QC','Approved','Rework']},
         {label:'Quarter',value:F.quarter,onChange:setF('quarter'),options:['All'].concat(Array.from(new Set(all.map(i=>i.quarter))))},
@@ -4238,8 +4313,35 @@ class AppRoot extends React.Component {
       idFbBg: i.status==='Rework'?'var(--danger-100)':'var(--verify-100)', idFbBorder: i.status==='Rework'?'#F1C9CF':'#BFE3D0', idFbColor: i.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
       idCanAct: canAct && i.status==='Submitted for QC',
       idFbVal:fb, idOnFb:(e)=>this.setState({ qcFb:{...this.state.qcFb,[i.id]:e.target.value} }),
-      idApprove:()=>{ const note=(this.state.qcFb||{})[i.id]||''; this.ideaPatch(i.id,{status:'Approved', qcFeedback:note?('QC approved — '+note):'QC approved', comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Approved. '+note,when:this.todayStr()}]}); this.flash(i.id+' approved — move it to Tasks from the Content repository.'); },
-      idRework:()=>{ const note=(this.state.qcFb||{})[i.id]||''; if(!note.trim()){ this.flash('Enter QC feedback before requesting rework.'); return; } this.ideaPatch(i.id,{status:'Rework', qcFeedback:'Rework — '+note, comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Rework requested. '+note,when:this.todayStr()}]}); this.flash('Rework requested — feedback sent to '+i.owner+'.'); },
+      // QC Review is one gate for the whole bundle — approving/reworking the
+      // Main Content stamps every one of its dependencies (SMM/GD/SEO/...)
+      // with the same qcStatus, since a dependency isn't independently
+      // publishable ahead of the content it depends on.
+      idApprove:()=>{ const note=(this.state.qcFb||{})[i.id]||''; this.ideaPatch(i.id,{status:'Approved', qcFeedback:note?('QC approved — '+note):'QC approved', comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Approved. '+note,when:this.todayStr()}], dependencies:(i.dependencies||[]).map(d=>({...d, qcStatus:'Approved'}))}); this.flash(i.id+' approved — move it to Tasks from the Content repository.'); },
+      idRework:()=>{ const note=(this.state.qcFb||{})[i.id]||''; if(!note.trim()){ this.flash('Enter QC feedback before requesting rework.'); return; } this.ideaPatch(i.id,{status:'Rework', qcFeedback:'Rework — '+note, comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label+' (QC)',text:'Rework requested. '+note,when:this.todayStr()}], dependencies:(i.dependencies||[]).map(d=>({...d, qcStatus:'Rework'}))}); this.flash('Rework requested — feedback sent to '+i.owner+'.'); },
+      // Main Content → Dependent Work (SMM/GD/SEO/...). Kept as child rows
+      // on THIS idea (not separate Content Ideas) so they can never drift
+      // into unrelated-looking items — see ideaAddDependency.
+      idDepTypeOptions:this.DEP_TYPES().map(t=>({v:t.key,label:t.label})),
+      idDependencies:(i.dependencies||[]).map(d=>{ const st=this.ideaDepStatusTone(d.status); const qt=this.ideaDepQcTone(d.qcStatus);
+        const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+        return { id:d.id, typeLabel, assignee:d.assignee||'Unassigned', notes:d.notes||'',
+          status:d.status, statusBg:st.bg, statusColor:st.c,
+          qcStatus:d.qcStatus, qcBg:qt.bg, qcColor:qt.c,
+          taskId:d.taskId||'', hasTask:!!d.taskId,
+          statusOptions:['Pending','In Progress','Ready for QC','Done'],
+          setStatus:(e)=>this.ideaUpdateDependency(i.id, d.id, {status:e.target.value}),
+          remove:()=>this.ideaRemoveDependency(i.id, d.id) }; }),
+      idHasDependencies:(i.dependencies||[]).length>0,
+      idDepForm:this.state.ideaDepForm||{ type:'SMM', assignee:'', notes:'' },
+      idDepAssignees:(this.state.users||[]).map(u=>u.name),
+      idDepSetType:(e)=>this.setState({ ideaDepForm:{...(this.state.ideaDepForm||{}), type:e.target.value} }),
+      idDepSetAssignee:(e)=>this.setState({ ideaDepForm:{...(this.state.ideaDepForm||{}), assignee:e.target.value} }),
+      idDepSetNotes:(e)=>this.setState({ ideaDepForm:{...(this.state.ideaDepForm||{}), notes:e.target.value} }),
+      idDepAdd:()=>{ const df=this.state.ideaDepForm||{ type:'SMM', assignee:'', notes:'' };
+        this.ideaAddDependency(i.id, df);
+        this.setState({ ideaDepForm:{ type:'SMM', assignee:'', notes:'' } });
+        this.flash('Dependency added to '+i.id+'.'); },
       idComments:(i.comments||[]).map(c=>({ who:c.who, role:c.role, text:c.text, when:c.when, initial:(c.who||'?').charAt(0) })),
       idHasComments:(i.comments||[]).length>0,
       idCmtVal:(this.state.ideaCmt||{})[i.id]||'',
@@ -4292,7 +4394,12 @@ class AppRoot extends React.Component {
     const idea={ id, title:f.title.trim(), workingTitle:f.workingTitle||'', source:f.source||'Employee', type:f.type||'Blog', category:f.category||'—', subCategory:f.subCategory||'', priority:f.priority||'Medium', owner:f.owner||'Sameer Iyer', service:(f.service&&f.service.indexOf('—')!==0)?f.service:'Content Writing', campaign:(f.campaign&&f.campaign.indexOf('—')!==0)?f.campaign:'', effortPlan:f.effortPlan||(this.allEpPlans()[0]||{}).name||'', quarter:'Q3 2026', publishMonth:this.fmtMonth(f.publishMonth)||'Sep 2026', keyword:f.keyword||'', secondaryKw:f.secondaryKw||'', intent:f.intent||'Informational', cluster:f.cluster||'', pillar:f.pillar||'', audience:f.audience||'', journey:f.journey||'', goal:f.goal||'', wordCount:f.wordCount||'', internalLinks:f.internalLinks||'', extRefs:f.extRefs||'', competitorUrls:f.competitorUrls||'', reason:f.reason||'', notes:f.notes||'', objective:f.objective||'',
       wcMin:f.wcMin||'', wcMax:f.wcMax||'', recLength:f.recLength||'', readLevel:f.readLevel||'', metaTitle:f.metaTitle||'', metaDesc:f.metaDesc||'', slug:f.slug||'', featImg:f.featImg||'',
       refs:(f.refs||[]).filter(r=>r.title&&r.title.trim()), stats:(f.stats||[]).filter(r=>r.stat&&r.stat.trim()), extRes:(f.extRes||[]).filter(r=>r.name&&r.name.trim()), intRes:(f.intRes||[]).filter(r=>r.name&&r.name.trim()), attachments:(f.attachments||[]).filter(a=>a.name&&a.name.trim()),
-      pubDest:f.pubDest||'Internal', intType:f.intType||'', intUrl:f.intUrl||'', extUrl:f.extUrl||'', extCat:f.extCat||'', status: toQC?'Submitted for QC':'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
+      pubDest:f.pubDest||'Internal', intType:f.intType||'', intUrl:f.intUrl||'', extUrl:f.extUrl||'', extCat:f.extCat||'', status: toQC?'Submitted for QC':'Idea Captured', qcFeedback:'', taskId:'', taskIds:[], reuse:0,
+      // Main content → dependent work (SMM/GD/SEO/other). Each dependency
+      // stays a child record of THIS idea rather than its own Content Idea,
+      // so Repository views can keep the main content and every dependent
+      // piece grouped together instead of scattering them as unrelated rows.
+      dependencies:[] };
     this.setState({ ideaAdded:[...(this.state.ideaAdded||[]),idea], showIdeaForm:false, ideaForm:{}, ideaStep:1 });
     this.flash(id+' created'+(toQC?' — sent to QC Review for approval.':' — saved as captured idea.'));
     supabase.from('ideas').insert({ id, payload:idea, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{

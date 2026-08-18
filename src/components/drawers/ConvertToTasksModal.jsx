@@ -6,8 +6,8 @@ export default function ConvertToTasksModal({ vm }) {
   const { cvOpen, cvIdeaId, cvIdeaTitle, cvClose, cvStop, cvf,
     cvPlanOptions, cvSetPlan, cvRowOptions, cvSetRow, cvEffortInfo, cvHasRow,
     cvModeBtns, cvKpiExisting, cvKpiNew, cvKpiOptions, cvSetKpi,
-    cvSetNewKpiName, cvSetNewKpiUnit, cvSetNewKpiTarget,
-    cvSetCount, cvAssignees, cvSetAssignee, cvSetStart, cvSetEnd, cvReviewers, cvSetReviewer,
+    cvSetNewKpiName, cvSetNewKpiUnit, cvSetNewKpiTarget, cvPreview,
+    cvAssignees, cvSetAssignee, cvSetStart, cvSetEnd, cvReviewers, cvSetReviewer,
     cvCountNote, cvSave } = vm;
   const f = cvf || {};
   return (
@@ -30,7 +30,7 @@ export default function ConvertToTasksModal({ vm }) {
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--info-100)', border: '1px solid #CBE3EC', color: 'var(--info-600)', padding: '10px 13px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
                 <Icon name="workflow" style={{ width: 14, height: 14, flexShrink: 0 }} />
-                <span>Effort decides how many tasks are created. The KPI you link is what those tasks advance — and it rolls up to its OKR.</span>
+                <span>1 task per Main Content, plus 1 per dependency (SMM/GD/SEO/...) — never more. Every task inherits this idea's Campaign, Effort and KPI automatically.</span>
               </div>
               <div>
                 <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>1 · Effort plan &amp; line</div>
@@ -69,19 +69,25 @@ export default function ConvertToTasksModal({ vm }) {
               </div>
               <div>
                 <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>3 · Tasks to generate</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '.6fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <input value={f.count || ''} onChange={cvSetCount} placeholder="How many" style={{ minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                  {(cvPreview || []).map((p, pi) => (
+                    <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 10, padding: '8px 11px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: pi === 0 ? 'var(--verify-600)' : 'var(--orchid-700)', minWidth: 96 }}>{p.label}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink-700)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.sub}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-500)' }}>{p.who}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '.9fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
                   <select value={f.assignee || ''} onChange={cvSetAssignee} style={{ minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, background: 'var(--paper)' }}>
                     {(cvAssignees || []).map((a, ai) => <option key={ai} value={a}>{a}</option>)}
                   </select>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 8 }}>
                   <input type="date" value={f.start || ''} onChange={cvSetStart} style={{ minWidth: 0, padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none', color: 'var(--ink-700)' }} />
                   <input type="date" value={f.end || ''} onChange={cvSetEnd} style={{ minWidth: 0, padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none', color: 'var(--ink-700)' }} />
-                  <select value={f.reviewer || ''} onChange={cvSetReviewer} style={{ minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, background: 'var(--paper)' }}>
-                    {(cvReviewers || []).map((r, ri) => <option key={ri} value={r}>{r}</option>)}
-                  </select>
                 </div>
+                <select value={f.reviewer || ''} onChange={cvSetReviewer} style={{ width: '100%', minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, background: 'var(--paper)' }}>
+                  {(cvReviewers || []).map((r, ri) => <option key={ri} value={r}>{r}</option>)}
+                </select>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 11.5, fontWeight: 700, color: 'var(--ink-500)' }}>
                   <Icon name="list-checks" style={{ width: 12, height: 12 }} />
                   {cvCountNote}

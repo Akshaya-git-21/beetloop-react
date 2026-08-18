@@ -2,30 +2,145 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
+function IdeaRow({ i }) {
+  return (
+    <div onClick={i.openIdea} style={{"display":"grid","gridTemplateColumns":".6fr 2fr .9fr .8fr .8fr .8fr 1.5fr","gap":"11px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
+
+      <span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>
+        {i.id}
+      </span>
+
+      <div style={{"minWidth":"0"}}>
+
+        <div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
+          <span style={cssTextToObject(`width:7px;height:7px;border-radius:99px;background:${i.priDot};flex-shrink:0`)} />
+          <span style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
+            {i.title}
+          </span>
+        </div>
+
+        <div style={{"display":"flex","alignItems":"center","gap":"7px","marginTop":"4px","flexWrap":"wrap"}}>
+
+          <span style={{"fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
+            {i.type}
+          </span>
+
+          <span style={{"fontSize":"11px","color":"var(--ink-400)"}}>
+            {i.keyword} · via {i.source}
+          </span>
+
+          {Boolean(i.metaLine) && (
+            <span style={{"fontSize":"11px","color":"var(--ink-500)","fontWeight":"600"}}>
+              {i.metaLine}
+            </span>
+          )}
+
+          {Boolean(i.hasReuse) && (
+            <span style={{"display":"inline-flex","alignItems":"center","gap":"4px","fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--warn-100)","color":"var(--warn-600)"}}>
+              <Icon name={"repeat"} style={{"width":"10px","height":"10px"}} />
+              {i.reused}
+            </span>
+          )}
+
+          {Boolean(i.hasTask) && (
+            <span onClick={i.openTask} style={{"display":"inline-flex","alignItems":"center","gap":"4px","fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)","cursor":"pointer"}}>
+              <Icon name={"list-checks"} style={{"width":"10px","height":"10px"}} />
+              {i.taskId}
+            </span>
+          )}
+
+        </div>
+
+        {/* Main Content → Dependent Work — kept right under the parent row so a
+            reader always sees the SMM/GD/SEO pieces alongside the content that
+            spawned them, in every Group By mode. */}
+        {Boolean(i.hasDeps) && (
+          <div style={{"display":"flex","alignItems":"center","gap":"6px","marginTop":"6px","flexWrap":"wrap","paddingTop":"6px","borderTop":"1px dashed var(--line-200)"}}>
+            <Icon name={"git-branch"} style={{"width":"11px","height":"11px","color":"var(--ink-400)","flexShrink":"0"}} />
+            {(i.depChips || []).map((d, di) => (
+              <span key={di} style={cssTextToObject(`display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${d.bg};color:${d.color}`)}>
+                {d.label} · {d.assignee}
+              </span>
+            ))}
+          </div>
+        )}
+
+      </div>
+
+      <span style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-700)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
+        {i.effortPlan}
+      </span>
+
+      <span style={{"fontSize":"12px","color":"var(--ink-700)"}}>
+        {i.owner}
+      </span>
+
+      <span style={{"fontSize":"12px","color":"var(--ink-500)"}}>
+        {i.publishMonth}
+      </span>
+
+      <span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:${i.statusBg};color:${i.statusColor};justify-self:start`)}>
+        {i.status}
+      </span>
+
+      <div style={{"minWidth":"0","display":"flex","alignItems":"center","gap":"7px","flexWrap":"wrap"}}>
+
+        {Boolean(i.canSubmit) && (
+          <button onClick={i.submit} style={{"display":"flex","alignItems":"center","gap":"5px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+            <Icon name={"send"} style={{"width":"12px","height":"12px"}} />
+            Submit to QC
+          </button>
+        )}
+
+        {Boolean(i.canConvert) && (
+          <button onClick={i.convert} style={{"display":"flex","alignItems":"center","gap":"5px","background":"var(--verify-500)","color":"#fff","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+            <Icon name={"list-checks"} style={{"width":"12px","height":"12px"}} />
+            Move to Tasks
+          </button>
+        )}
+
+        <button onClick={i.reuseIdea} style={{"display":"flex","alignItems":"center","gap":"5px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"9px","padding":"7px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+          <Icon name={"repeat"} style={{"width":"12px","height":"12px"}} />
+          Reuse
+        </button>
+
+        {Boolean(i.hasFb) && (
+          <span style={{"display":"flex","alignItems":"flex-start","gap":"5px","fontSize":"11px","fontWeight":"600","color":"var(--ink-500)","width":"100%"}}>
+            <Icon name={"message-square-quote"} style={{"width":"11px","height":"11px","flexShrink":"0","marginTop":"2px"}} />
+            {i.fb}
+          </span>
+        )}
+
+      </div>
+
+    </div>
+  );
+}
+
 export default function IdeasRepositorySection({ vm }) {
-  const { ideaBack, ideaFiltersUI, ideaPg, ideaRows, ideaStats, showIdeas } = vm;
+  const { ideaBack, ideaFiltersUI, ideaGroupMode, ideaGroupOptions, ideaGroups, ideaIsGrouped, ideaPg, ideaRows, ideaSetGroupMode, ideaStats, showIdeas } = vm;
   return (
     <React.Fragment>
 {Boolean(showIdeas) && (
 <React.Fragment>
 
-          
+
 <button onClick={ideaBack} style={{"display":"flex","alignItems":"center","gap":"7px","background":"none","border":"none","color":"var(--ink-500)","fontSize":"13px","fontWeight":"600","marginBottom":"14px","padding":"0","cursor":"pointer"}}>
 <Icon name={"arrow-left"} style={{"width":"15px","height":"15px"}} />
 All repositories
 </button>
 
-          
+
 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(160px,1fr))","gap":"12px","marginBottom":"18px"}}>
 
-            
+
 {(ideaStats || []).map((s, $index) => (
 <React.Fragment key={$index}>
 
-              
+
 <div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","padding":"14px 16px"}}>
 
-                
+
 <div style={{"display":"flex","alignItems":"center","gap":"7px","marginBottom":"8px"}}>
 <Icon name={s.icon} style={cssTextToObject(`width:14px;height:14px;color:${s.color}`)} />
 <span style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-500)"}}>
@@ -33,22 +148,22 @@ All repositories
 </span>
 </div>
 
-                
+
 <div style={cssTextToObject(`font-family:'Sora';font-weight:800;font-size:24px;color:${s.color}`)}>
 {s.value}
 </div>
 
-              
+
 </div>
 
-            
+
 </React.Fragment>
 ))}
 
-          
+
 </div>
 
-          
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","background":"var(--info-100)","border":"1px solid #CBE3EC","color":"var(--info-600)","padding":"11px 15px","borderRadius":"14px","fontSize":"13px","fontWeight":"600","marginBottom":"16px"}}>
 <Icon name={"git-branch"} style={{"width":"16px","height":"16px","flexShrink":"0"}} />
 <span>
@@ -56,14 +171,14 @@ Flow: idea captured against the effort plan (e.g. 12 blogs/month) → submitted 
 </span>
 </div>
 
-          
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"14px","flexWrap":"wrap"}}>
 
-            
+
 {(ideaFiltersUI || []).map((f, $index) => (
 <React.Fragment key={$index}>
 
-              
+
 <div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
 {f.label}
@@ -79,20 +194,37 @@ Flow: idea captured against the effort plan (e.g. 12 blogs/month) → submitted 
 </select>
 </div>
 
-            
+
 </React.Fragment>
 ))}
 
-          
+
+<div style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"11px","padding":"6px 10px"}}>
+<Icon name={"layout-grid"} style={{"width":"13px","height":"13px","color":"var(--ink-500)"}} />
+<span style={{"fontSize":"11.5px","fontWeight":"700","color":"var(--ink-500)"}}>
+Group by
+</span>
+<select value={ideaGroupMode} onChange={ideaSetGroupMode} style={{"border":"none","background":"none","fontSize":"13px","fontWeight":"600","color":"var(--ink-900)","outline":"none","cursor":"pointer"}}>
+{(ideaGroupOptions || []).map((o, $index) => (
+<React.Fragment key={$index}>
+<option value={o.v}>
+{o.label}
+</option>
+</React.Fragment>
+))}
+</select>
 </div>
 
-          
+
+</div>
+
+
 <div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"20px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
 
-            
+
 <div style={{"display":"grid","gridTemplateColumns":".6fr 2fr .9fr .8fr .8fr .8fr 1.5fr","gap":"11px","padding":"12px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"700","letterSpacing":".05em","textTransform":"uppercase","color":"var(--ink-500)"}}>
 
-              
+
 <span>
 Idea ID
 </span>
@@ -115,154 +247,36 @@ Status
 Action / QC feedback
 </span>
 
-            
+
 </div>
 
-            
-{(ideaRows || []).map((i, $index) => (
-<React.Fragment key={$index}>
 
-              
-<div onClick={i.openIdea} style={{"display":"grid","gridTemplateColumns":".6fr 2fr .9fr .8fr .8fr .8fr 1.5fr","gap":"11px","padding":"13px 20px","borderBottom":"1px solid var(--line-200)","alignItems":"center","cursor":"pointer"}} style-hover="background:var(--surface-50)">
-
-                
-<span style={{"fontFamily":"'Space Mono'","fontSize":"11px","fontWeight":"700","color":"var(--ink-900)"}}>
-{i.id}
-</span>
-
-                
-<div style={{"minWidth":"0"}}>
-
-                  
-<div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
-<span style={cssTextToObject(`width:7px;height:7px;border-radius:99px;background:${i.priDot};flex-shrink:0`)} />
-<span style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-{i.title}
-</span>
+{ideaIsGrouped ? (
+<React.Fragment>
+{(ideaGroups || []).map((g, gi) => (
+<React.Fragment key={gi}>
+<div style={{"padding":"9px 20px","background":"var(--surface-50)","borderBottom":"1px solid var(--line-200)","fontSize":"11px","fontWeight":"800","letterSpacing":".05em","textTransform":"uppercase","color":"var(--orchid-700)"}}>
+{g.label} · {g.rows.length} content idea{g.rows.length===1?'':'s'}
 </div>
-
-                  
-<div style={{"display":"flex","alignItems":"center","gap":"7px","marginTop":"4px","flexWrap":"wrap"}}>
-
-                    
-<span style={{"fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
-{i.type}
-</span>
-
-                    
-<span style={{"fontSize":"11px","color":"var(--ink-400)"}}>
-{i.keyword} · via {i.source}
-</span>
-
-                    
-{Boolean(i.metaLine) && (
-<React.Fragment>
-<span style={{"fontSize":"11px","color":"var(--ink-500)","fontWeight":"600"}}>
-{i.metaLine}
-</span>
-</React.Fragment>
-)}
-
-                    
-{Boolean(i.hasReuse) && (
-<React.Fragment>
-<span style={{"display":"inline-flex","alignItems":"center","gap":"4px","fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--warn-100)","color":"var(--warn-600)"}}>
-<Icon name={"repeat"} style={{"width":"10px","height":"10px"}} />
-{i.reused}
-</span>
-</React.Fragment>
-)}
-
-                    
-{Boolean(i.hasTask) && (
-<React.Fragment>
-<span onClick={i.openTask} style={{"display":"inline-flex","alignItems":"center","gap":"4px","fontSize":"10.5px","fontWeight":"700","padding":"2px 8px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)","cursor":"pointer"}}>
-<Icon name={"list-checks"} style={{"width":"10px","height":"10px"}} />
-{i.taskId}
-</span>
-</React.Fragment>
-)}
-
-                  
-</div>
-
-                
-</div>
-
-                
-<span style={{"fontSize":"11.5px","fontWeight":"600","color":"var(--ink-700)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-{i.effortPlan}
-</span>
-
-                
-<span style={{"fontSize":"12px","color":"var(--ink-700)"}}>
-{i.owner}
-</span>
-
-                
-<span style={{"fontSize":"12px","color":"var(--ink-500)"}}>
-{i.publishMonth}
-</span>
-
-                
-<span style={cssTextToObject(`font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:${i.statusBg};color:${i.statusColor};justify-self:start`)}>
-{i.status}
-</span>
-
-                
-<div style={{"minWidth":"0","display":"flex","alignItems":"center","gap":"7px","flexWrap":"wrap"}}>
-
-                  
-{Boolean(i.canSubmit) && (
-<React.Fragment>
-<button onClick={i.submit} style={{"display":"flex","alignItems":"center","gap":"5px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"send"} style={{"width":"12px","height":"12px"}} />
-Submit to QC
-</button>
-</React.Fragment>
-)}
-
-                  
-{Boolean(i.canConvert) && (
-<React.Fragment>
-<button onClick={i.convert} style={{"display":"flex","alignItems":"center","gap":"5px","background":"var(--verify-500)","color":"#fff","border":"none","borderRadius":"9px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"list-checks"} style={{"width":"12px","height":"12px"}} />
-Move to Tasks
-</button>
-</React.Fragment>
-)}
-
-                  
-<button onClick={i.reuseIdea} style={{"display":"flex","alignItems":"center","gap":"5px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"9px","padding":"7px 11px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"repeat"} style={{"width":"12px","height":"12px"}} />
-Reuse
-</button>
-
-                  
-{Boolean(i.hasFb) && (
-<React.Fragment>
-<span style={{"display":"flex","alignItems":"flex-start","gap":"5px","fontSize":"11px","fontWeight":"600","color":"var(--ink-500)","width":"100%"}}>
-<Icon name={"message-square-quote"} style={{"width":"11px","height":"11px","flexShrink":"0","marginTop":"2px"}} />
-{i.fb}
-</span>
-</React.Fragment>
-)}
-
-                
-</div>
-
-              
-</div>
-
-            
+{g.rows.map((i, ii) => (
+<IdeaRow key={ii} i={i} />
+))}
 </React.Fragment>
 ))}
+</React.Fragment>
+) : (
+<React.Fragment>
+{(ideaRows || []).map((i, $index) => (
+<IdeaRow key={$index} i={i} />
+))}
+</React.Fragment>
+)}
 
-            
-{Boolean(ideaPg.show) && (
+
+{Boolean(ideaPg.show) && !ideaIsGrouped && (
 <React.Fragment>
 
-              
+
 <div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"12px 20px","background":"var(--surface-50)"}}>
 <span style={{"flex":"1","fontSize":"12px","fontWeight":"600","color":"var(--ink-500)"}}>
 {ideaPg.label}
@@ -277,14 +291,14 @@ Next
 </button>
 </div>
 
-            
+
 </React.Fragment>
 )}
 
-          
+
 </div>
 
-        
+
 </React.Fragment>
 )}
     </React.Fragment>
