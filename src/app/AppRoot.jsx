@@ -3506,6 +3506,24 @@ class AppRoot extends React.Component {
   // OKRs actually exist now, so the field starts unset and the user picks
   // from the live list instead.
   EP_FORM(){ return { name:'New effort plan', quarter:'Jul 2026', campaign:'', dept:'SEO', owner:this.currentPerson(), okr:'', start:'Jul 1, 2026', end:'Jul 31, 2026', type:'Monthly' }; }
+  // The configured Contribution Units + Estimated Hours for one specific
+  // Effort row × KPI combination — the single source of truth Task
+  // creation auto-fills from (see tkSetEffortRow/tkSetKpi) instead of the
+  // assignee guessing a number by hand. r.kpiAlloc is a { [kpiId]: {units,
+  // hours} } map set from the Effort Planner's per-KPI chip inputs; a KPI
+  // linked to a row but never explicitly configured (including every
+  // pre-existing/seed row, which predates this field) falls back to that
+  // row's existing per-task `hours` figure and a daily-rate estimate of
+  // units (monthly target ÷ working days) — a reasonable starting point
+  // the planner can then override per KPI.
+  epKpiAllocFor(r, kpiId){
+    const cfg=(r&&r.kpiAlloc||{})[kpiId];
+    const dailyDefault=Math.max(1, Math.ceil((r&&r.monthly||0)/(r&&r.days||25)));
+    return {
+      units: (cfg&&cfg.units!=null&&cfg.units!=='') ? cfg.units : dailyDefault,
+      hours: (cfg&&cfg.hours!=null&&cfg.hours!=='') ? cfg.hours : (r&&r.hours||1),
+    };
+  }
   EP_DIVISIONS(){ return ['Content Writer','Graphics','Web Developers','SMM','SEO'].concat(this.state.epCustomDivs||[]); }
   EP_DIV_ROWS(d){
     // assignee defaults to '' (falls back to the plan's overall owner in
@@ -3713,8 +3731,22 @@ class AppRoot extends React.Component {
       return { ...r, i, monthly:String(r.monthly||0), weekly:weekly.toLocaleString('en-US'), daily:daily.toLocaleString('en-US'), weightStr:String(r.weight||0),
         hours:String(r.hours||0), setHours:setRow(i,'hours'),
         kpiLabel:k?k.kpi:'—', hasKpi:!!k,
-        kpiChips:kobjs.map(o=>({ label:o.kpi, sub:o.baseline+' → '+o.target+' '+o.unit,
-          remove:()=>{ const nk=kids.filter(x=>x!==o.id); this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]||''}:x) }); } })),
+        // Per-KPI Contribution Units + Estimated Hours — what Task creation
+        // pulls from once both this Effort row and this KPI are selected
+        // (epKpiAllocFor). Editing either field here writes an override
+        // into r.kpiAlloc[o.id]; until edited, the inputs show the same
+        // computed default (daily rate / row hours) that Task creation
+        // would otherwise fall back to, so the planner sees exactly what
+        // gets auto-filled before ever touching it.
+        kpiChips:kobjs.map(o=>{ const alloc=this.epKpiAllocFor(r,o.id);
+          const writeAlloc=(patch)=>{ const cur=r.kpiAlloc||{}; const next={...cur,[o.id]:{...alloc,...(cur[o.id]||{}),...patch}};
+            this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiAlloc:next}:x) }); };
+          return { label:o.kpi, sub:o.baseline+' → '+o.target+' '+o.unit,
+            units:String(alloc.units), hours:String(alloc.hours),
+            setUnits:(e)=>writeAlloc({ units: parseInt(e.target.value,10)||0 }),
+            setHours:(e)=>writeAlloc({ hours: parseInt(e.target.value,10)||0 }),
+            remove:()=>{ const nk=kids.filter(x=>x!==o.id); const na={...(r.kpiAlloc||{})}; delete na[o.id];
+              this.setState({ epRows:rows.map((x,j)=>j===i?{...x,kpiIds:nk,kpiId:nk[0]||'',kpiAlloc:na}:x) }); } }; }),
         kpiCountLabel:kobjs.length?(kobjs.length+' KPI'+(kobjs.length===1?'':'s')+' linked'):'Effort only — no KPI linked',
         addKpiVal:'',
         addKpi:(e)=>{ const v=e.target.value; if(!v||kids.includes(v)) return; const nk=[...kids,v];
@@ -7821,7 +7853,7 @@ class AppRoot extends React.Component {
       })(),
       tkAssigneeOptions:(this.state.users||[]).map(u=>u.name),
       tkDepOptions:['—'].concat(this.allTasks().map(t=>t.id+' — '+t.name)),
-      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetKpi:set('kpiId'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
+      tkSetTemplate:set('template'), tkSetName:set('name'), tkSetDesc:set('desc'), tkSetCampaign:set('campaign'), tkSetStart:set('start'), tkSetEnd:set('end'), tkSetStartTime:set('startTime'), tkSetEndTime:set('endTime'), tkSetPriority:set('priority'), tkSetAssignee:set('assignee'), tkSetUnits:set('units'), tkSetEst:set('estH'), tkSetRecurrence:set('recurrence'), tkSetDep:set('dep'), tkSetDepMode:set('depMode'), tkSetReviewer:set('reviewer'), tkSetDivision:set('division'),
       tkDivisionOptions:this.liveDeptOptions(),
       // "Campaign Type" on Tasks is the same Content Type Master that backs
       // Content Repository's "Content Type" and (later) QC's checklist
@@ -7847,14 +7879,37 @@ class AppRoot extends React.Component {
           tkPlanInfo: plan ? (plan.division+' · '+plan.period+' · owner: '+plan.owner) : '',
           tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>({ v:r.type, label:r.type+' — '+remainingFor(r).toLocaleString('en-US')+' '+r.unit+' remaining (of '+(r.monthly||0).toLocaleString('en-US')+' target)' }))) : [],
           tkEffortRowVal:f.effortRow||'',
-          // Contribution Units / Estimated Hours are no longer guessed from
-          // the monthly target — the user enters both manually, and
-          // tkSubmitNew validates the units against this row's remaining
-          // target before deducting. KPI/priority/name still auto-fill
-          // since those aren't part of the manual-entry requirement.
+          // Contribution Units / Estimated Hours are pulled from the
+          // Effort Planner's configured value for this exact Effort ×
+          // KPI combination (epKpiAllocFor — set per-KPI on the Effort
+          // row, defaulting to a daily-rate estimate for rows no one has
+          // explicitly configured yet). Still an editable field, not
+          // locked, so an assignee can adjust for a specific task — but
+          // it starts from the planned figure instead of a blank one.
           tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v); const nf={...f, effortRow:v, units:'', estH:''};
-            if(r){ nf.kpiId=r.kpiId||''; nf.priority=r.priority; if(!f.name){ nf.name=r.type+' — '+plan.name; } }
-            this.setState({ tkForm:nf }); this.flash(r?'KPI & priority auto-filled — enter Contribution Units and Estimated Hours for this task.':''); },
+            if(r){
+              // A row's default `kpiId` mirrors kpiIds[0] at the time it was
+              // first linked — if a KPI later gets removed from the pool
+              // (deactivated template, deleted OKR) that first id can go
+              // stale while the row still lists other, still-valid linked
+              // KPIs. Walk kpiIds and pick the first one that's actually
+              // selectable, so the dropdown and the auto-filled values agree
+              // instead of silently holding an id no <option> matches.
+              const linkedIds=(r.kpiIds&&r.kpiIds.length?r.kpiIds:[r.kpiId]).filter(Boolean);
+              const validKpiId=linkedIds.find(id=>kpiPool.some(k=>k.id===id))||'';
+              nf.kpiId=validKpiId; nf.priority=r.priority; if(!f.name){ nf.name=r.type+' — '+plan.name; }
+              if(validKpiId){ const alloc=this.epKpiAllocFor(r, validKpiId); nf.units=String(alloc.units); nf.estH=String(alloc.hours); } }
+            this.setState({ tkForm:nf });
+            this.flash(r ? (nf.kpiId ? 'Contribution Units & Estimated Hours auto-filled from Effort Planner for “'+r.type+'”.' : 'KPI & priority auto-filled — link a KPI, or enter Contribution Units and Estimated Hours manually.') : ''); },
+          // Selecting a different KPI than the row's default (a row can
+          // drive several — see the KPI chips in Effort Planner) re-pulls
+          // the allocation configured for THAT KPI specifically, since the
+          // same effort can contribute a different amount to each one.
+          tkSetKpi:(e)=>{ const v=e.target.value; const nf={...f, kpiId:v};
+            if(selectedRow && v){ const alloc=this.epKpiAllocFor(selectedRow, v); nf.units=String(alloc.units); nf.estH=String(alloc.hours); }
+            else if(!v){ nf.units=''; nf.estH=''; }
+            this.setState({ tkForm:nf });
+            if(selectedRow && v) this.flash('Contribution Units & Estimated Hours auto-filled from Effort Planner for this KPI.'); },
           tkEffortRemainingHint: selectedRow ? (remainingFor(selectedRow).toLocaleString('en-US')+' '+selectedRow.unit+' remaining of '+(selectedRow.monthly||0).toLocaleString('en-US')+' target for “'+selectedRow.type+'”') : '',
         };
       })(),

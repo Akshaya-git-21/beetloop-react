@@ -405,9 +405,14 @@ Linked KPI
 Contribution units
 </label>
 <input value={tkf.units} onInput={tkSetUnits} placeholder="e.g. 40" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+{Boolean(tkf.effortRow && tkf.kpiId) && (
+<div style={{"marginTop":"5px","fontSize":"10.5px","color":"var(--ink-400)"}}>
+Auto-filled from Effort Planner — adjust if this task differs.
+</div>
+)}
 </div>
 
-            
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Est. hours

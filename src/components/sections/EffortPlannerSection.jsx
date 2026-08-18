@@ -942,12 +942,20 @@ Low
 <div style={{"display":"flex","flexDirection":"column","gap":"5px","maxWidth":"240px"}}>
 {(r.kpiChips || []).map((c, $index) => (
 <React.Fragment key={$index}>
-<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","padding":"4px 8px","borderRadius":"8px","background":"var(--orchid-100)","color":"var(--orchid-700)","fontSize":"11px","fontWeight":"700"}}>
+<span style={{"display":"flex","flexDirection":"column","gap":"4px","padding":"6px 8px","borderRadius":"8px","background":"var(--orchid-100)","color":"var(--orchid-700)"}}>
+<span style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11px","fontWeight":"700"}}>
 <Icon name={"target"} style={{"width":"11px","height":"11px","flexShrink":"0"}} />
 <span style={{"flex":"1","minWidth":"0"}}>{c.label}</span>
 <button onClick={c.remove} style={{"border":"none","background":"none","cursor":"pointer","display":"flex","padding":"0","color":"var(--orchid-700)"}}>
 <Icon name={"x"} style={{"width":"11px","height":"11px"}} />
 </button>
+</span>
+<span style={{"display":"flex","alignItems":"center","gap":"5px","fontSize":"10px","fontWeight":"600"}}>
+Units
+<input value={c.units} onInput={c.setUnits} title="Contribution Units — pulled into Task creation for this Effort × KPI" style={{"width":"38px","padding":"3px 5px","border":"1px solid var(--orchid-200)","borderRadius":"6px","fontSize":"10.5px","outline":"none","background":"var(--paper)","color":"var(--ink-800)"}} />
+Hrs
+<input value={c.hours} onInput={c.setHours} title="Estimated Hours — pulled into Task creation for this Effort × KPI" style={{"width":"32px","padding":"3px 5px","border":"1px solid var(--orchid-200)","borderRadius":"6px","fontSize":"10.5px","outline":"none","background":"var(--paper)","color":"var(--ink-800)"}} />
+</span>
 </span>
 </React.Fragment>
 ))}
