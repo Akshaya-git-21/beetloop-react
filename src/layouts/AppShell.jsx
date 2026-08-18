@@ -66,7 +66,7 @@ import FloatingChatWidget from '../components/drawers/FloatingChatWidget.jsx';
 import ConfigurationSection from '../components/sections/ConfigurationSection.jsx';
 
 export default function AppShell({ vm }) {
-  const { route } = vm;
+  const { route, sidebarCollapsed } = vm;
   return (
     <React.Fragment>
 
@@ -99,8 +99,8 @@ export default function AppShell({ vm }) {
     
 <main className="blscroll" style={{"flex":"1","overflowY":"auto","padding":"28px 32px"}}>
 
-      
-<div style={{"maxWidth":"1240px","margin":"0 auto"}} key={route}>
+
+<div style={{"maxWidth":sidebarCollapsed?"none":"1240px","margin":"0 auto"}} key={route}>
 
         
 {/* page head */}

@@ -3,13 +3,13 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function Sidebar({ vm }) {
-  const { adminNav, hasAdmin, logout, nav, openProfile, role, platformName, platformSub, platformLogoUrl } = vm;
+  const { adminNav, hasAdmin, logout, nav, openProfile, role, platformName, platformSub, platformLogoUrl, sidebarCollapsed, toggleSidebar } = vm;
   return (
     <React.Fragment>
-<aside style={{"width":"256px","flexShrink":"0","background":"var(--sidebar-bg, linear-gradient(180deg,#1F0814 0%,#3d1024 60%,#4E1631 100%))","color":"#fff","display":"flex","flexDirection":"column","position":"sticky","top":"0","height":"100vh"}}>
+<aside style={{"width":sidebarCollapsed?"72px":"256px","flexShrink":"0","background":"var(--sidebar-bg, linear-gradient(180deg,#1F0814 0%,#3d1024 60%,#4E1631 100%))","color":"#fff","display":"flex","flexDirection":"column","position":"sticky","top":"0","height":"100vh","transition":"width .18s ease"}}>
 
-    
-<div style={{"padding":"20px 20px 16px","display":"flex","alignItems":"center","gap":"11px","borderBottom":"1px solid rgba(255,255,255,.08)"}}>
+
+<div style={{"padding":sidebarCollapsed?"20px 12px 16px":"20px 20px 16px","display":"flex","alignItems":"center","gap":"11px","borderBottom":"1px solid rgba(255,255,255,.08)"}}>
 
 
 <div style={{"width":"36px","height":"36px","borderRadius":"11px","background":"rgba(255,255,255,.1)","border":"1px solid rgba(255,255,255,.16)","display":"flex","alignItems":"center","justifyContent":"center","overflow":"hidden","flexShrink":"0"}}>
@@ -20,8 +20,8 @@ export default function Sidebar({ vm }) {
 )}
 </div>
 
-
-<div style={{"minWidth":"0"}}>
+{!sidebarCollapsed && (
+<div style={{"minWidth":"0","flex":"1"}}>
 <div style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".13em","fontSize":"14px","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
 {platformName}
 </div>
@@ -29,36 +29,45 @@ export default function Sidebar({ vm }) {
 {platformSub}
 </div>
 </div>
+)}
 
-    
+<button onClick={toggleSidebar} title={sidebarCollapsed?"Expand sidebar":"Full width — collapse sidebar"} style={{"width":"26px","height":"26px","borderRadius":"8px","flexShrink":"0","background":"rgba(255,255,255,.08)","border":"1px solid rgba(255,255,255,.14)","color":"rgba(255,255,255,.75)","display":"flex","alignItems":"center","justifyContent":"center","cursor":"pointer"}}>
+<Icon name={sidebarCollapsed?"panel-left-open":"panel-left-close"} style={{"width":"14px","height":"14px"}} />
+</button>
+
+
 </div>
 
     
 <nav className="blscroll" style={{"flex":"1","overflowY":"auto","padding":"14px 12px"}}>
 
-      
+
+{!sidebarCollapsed && (
 <div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".13em","textTransform":"uppercase","color":"rgba(255,255,255,.38)","padding":"6px 12px 8px"}}>
 Workspace
 </div>
+)}
 
-      
+
 {(nav || []).map((n, $index) => (
 <React.Fragment key={$index}>
 
-        
-<button onClick={n.go} style={cssTextToObject(n.style)}>
+
+<button onClick={n.go} title={sidebarCollapsed?n.label:undefined} style={{...cssTextToObject(n.style), ...(sidebarCollapsed?{justifyContent:'center',padding:'10px 0',gap:'0'}:{})}}>
 <Icon name={n.icon} style={{"width":"18px","height":"18px","flexShrink":"0"}} />
+{!sidebarCollapsed && (
+<React.Fragment>
 <span style={{"flex":"1","textAlign":"left"}}>
 {n.label}
 </span>
 {Boolean(n.locked) && (
-<React.Fragment>
 <Icon name={"eye"} style={{"width":"13px","height":"13px","opacity":".55"}} />
+)}
 </React.Fragment>
 )}
 </button>
 
-      
+
 </React.Fragment>
 ))}
 
@@ -66,29 +75,33 @@ Workspace
 {Boolean(hasAdmin) && (
 <React.Fragment>
 
-        
+
+{!sidebarCollapsed && (
 <div style={{"fontSize":"10px","fontWeight":"700","letterSpacing":".13em","textTransform":"uppercase","color":"rgba(255,255,255,.38)","padding":"16px 12px 8px"}}>
 Administration
 </div>
+)}
 
-        
+
 {(adminNav || []).map((n, $index) => (
 <React.Fragment key={$index}>
 
-          
-<button onClick={n.go} style={cssTextToObject(n.style)}>
+
+<button onClick={n.go} title={sidebarCollapsed?n.label:undefined} style={{...cssTextToObject(n.style), ...(sidebarCollapsed?{justifyContent:'center',padding:'10px 0',gap:'0'}:{})}}>
 <Icon name={n.icon} style={{"width":"18px","height":"18px","flexShrink":"0"}} />
+{!sidebarCollapsed && (
+<React.Fragment>
 <span style={{"flex":"1","textAlign":"left"}}>
 {n.label}
 </span>
 {Boolean(n.locked) && (
-<React.Fragment>
 <Icon name={"eye"} style={{"width":"13px","height":"13px","opacity":".55"}} />
+)}
 </React.Fragment>
 )}
 </button>
 
-        
+
 </React.Fragment>
 ))}
 
@@ -103,7 +116,7 @@ Administration
 <div style={{"padding":"12px","borderTop":"1px solid rgba(255,255,255,.08)"}}>
 
 
-<div style={{"display":"flex","alignItems":"center","gap":"10px","padding":"8px 10px","borderRadius":"12px","background":"rgba(255,255,255,.05)"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"10px","padding":sidebarCollapsed?"8px":"8px 10px","borderRadius":"12px","background":"rgba(255,255,255,.05)","justifyContent":sidebarCollapsed?"center":"flex-start","flexWrap":sidebarCollapsed?"wrap":"nowrap"}}>
 
 
 {role.avatarUrl ? (
@@ -117,6 +130,7 @@ Administration
 )}
 
 
+{!sidebarCollapsed && (
 <button onClick={openProfile} style={{"flex":"1","minWidth":"0","background":"none","border":"none","cursor":"pointer","textAlign":"left","padding":"0"}}>
 <div style={{"fontSize":"13px","fontWeight":"700","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis","color":"#fff"}}>
 {role.person}
@@ -125,16 +139,17 @@ Administration
 {role.tag}
 </div>
 </button>
+)}
 
-        
+
 <button onClick={logout} title="Sign out" style={{"background":"none","border":"none","color":"rgba(255,255,255,.6)","cursor":"pointer","padding":"4px"}}>
 <Icon name={"log-out"} style={{"width":"16px","height":"16px"}} />
 </button>
 
-      
+
 </div>
 
-    
+
 </div>
 
   

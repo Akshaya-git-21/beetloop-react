@@ -11,6 +11,7 @@ class AppRoot extends React.Component {
     screen: 'login',
     roleKey: 'admin',
     route: 'dashboard',
+    sidebarCollapsed: false,
     authUser: null, authProfile: null, authBusy: false, authReady: false,
     notifications: [], showNotifications: false,
     email: '', password: '', loginError: '',
@@ -1972,6 +1973,8 @@ class AppRoot extends React.Component {
       },
       logout:()=>this.doLogout(),
       openProfile:()=>this.setState({ route:'profile' }),
+      sidebarCollapsed:!!this.state.sidebarCollapsed,
+      toggleSidebar:()=>this.setState({ sidebarCollapsed:!this.state.sidebarCollapsed }),
       route, page, primaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
