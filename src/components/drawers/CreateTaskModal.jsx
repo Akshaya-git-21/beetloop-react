@@ -334,7 +334,7 @@ Effort (from this plan)
 <select value={tkEffortRowVal} onChange={tkSetEffortRow} style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13px","background":"var(--paper)"}}>
 {(tkEffortRowOptions || []).map((o, $index) => (
 <React.Fragment key={$index}>
-<option value={o.v}>
+<option value={o.v} disabled={Boolean(o.disabled)}>
 {o.label}
 </option>
 </React.Fragment>

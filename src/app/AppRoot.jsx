@@ -7902,7 +7902,15 @@ class AppRoot extends React.Component {
           tkSetEffort:(e)=>this.setState({ tkForm:{...f, effortPlan:e.target.value, effortRow:'', units:'', estH:''} }),
           tkHasPlan:!!plan,
           tkPlanInfo: plan ? (plan.division+' · '+plan.period+' · owner: '+plan.owner) : '',
-          tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>({ v:r.type, label:r.type+' — '+remainingFor(r).toLocaleString('en-US')+' '+r.unit+' remaining (of '+(r.monthly||0).toLocaleString('en-US')+' target)' }))) : [],
+          // Fully-utilized rows (0 remaining against target) are listed but
+          // disabled rather than dropped — an assignee should still be able
+          // to see where the effort went, just not pick it for new work.
+          // Everything still open is labelled Pending so the two states read
+          // at a glance without opening Effort Planner to check.
+          tkEffortRowOptions: plan ? [{v:'',label:'Choose the effort this task delivers…'}].concat(plan.rows.map(r=>{
+            const rem=remainingFor(r); const used=rem<=0;
+            return { v:r.type, disabled:used,
+              label:r.type+' — '+(used?'Fully utilized':(rem.toLocaleString('en-US')+' '+r.unit+' remaining · Pending'))+' (of '+(r.monthly||0).toLocaleString('en-US')+' target)' }; })) : [],
           tkEffortRowVal:f.effortRow||'',
           // Contribution Units / Estimated Hours are pulled from the
           // Effort Planner's configured value for this exact Effort ×
@@ -7911,7 +7919,9 @@ class AppRoot extends React.Component {
           // explicitly configured yet). Still an editable field, not
           // locked, so an assignee can adjust for a specific task — but
           // it starts from the planned figure instead of a blank one.
-          tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v); const nf={...f, effortRow:v, units:'', estH:''};
+          tkSetEffortRow:(e)=>{ const v=e.target.value; const r=plan&&plan.rows.find(x=>x.type===v);
+            if(r && remainingFor(r)<=0){ this.flash('“'+r.type+'” is fully utilized — no remaining target left to assign.'); return; }
+            const nf={...f, effortRow:v, units:'', estH:''};
             if(r){
               // A row's default `kpiId` mirrors kpiIds[0] at the time it was
               // first linked — if a KPI later gets removed from the pool
