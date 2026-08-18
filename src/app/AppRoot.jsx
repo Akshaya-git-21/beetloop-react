@@ -8809,7 +8809,7 @@ class AppRoot extends React.Component {
       contentStatusFilter:this.state.cStatus||'All', contentOnStatus:e=>this.setState({cStatus:e.target.value}),
       contentQuery:this.state.cQuery||'', contentOnQuery:e=>this.setState({cQuery:e.target.value}),
       contentRepoLabel:repoName(cRepo), ...(()=>{ const pg=this.pgData('content',rows,8); return { contentRows:pg.rows, cPg:pg }; })(), contentEmpty:rows.length===0,
-      contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npForm:{ repo: cRepo==='all'?'service':cRepo, brand: cBrand!=='All'?cBrand:'Beetloop' } }):this.flash('View only for your role.'),
+      contentNew:()=>canEdit?this.setState({ showNewPage:true, npTab:0, npLinks:[{anchor:'',target:''}], npMedia:[{name:'',alt:'',type:'Image'}], npAttachments:[], npForm:{ repo: cRepo==='all'?'service':cRepo, brand: cBrand!=='All'?cBrand:'Beetloop' } }):this.flash('View only for your role.'),
       contentAI:()=>this.setState({ route:'ideas' }),
       contentExport:()=>this.exportCsv('content-repository-'+this._todayIso()+'.csv',
         ['ID','Name','Repository','Type','Topic','Keyword','Status','SEO score','Owner','Reviewer','Updated'],
@@ -9089,6 +9089,20 @@ class AppRoot extends React.Component {
         canRemove:(this.state.npMedia||[]).length>1,
       })),
       npAddMedia:()=>this.setState({ npMedia:[...(this.state.npMedia&&this.state.npMedia.length?this.state.npMedia:[{name:'',alt:'',type:'Image'}]),{name:'',alt:'',type:'Image'}] }),
+      // Real, working file attachments for the page (distinct from npMedia
+      // above, which is just a metadata table describing images/videos the
+      // page USES — these are actual uploaded files, stored via the same
+      // file_blobs + openFilePicker pipeline every other "Attach file"
+      // button in the app uses, and saved as part of the page's own record
+      // so they stay linked to this specific page rather than floating in
+      // a shared, unscoped file list.
+      npAttachments:(this.state.npAttachments||[]).map((a,i)=>({ i, name:a.name, desc:a.desc||'', icon:this.fileKind(a.name).icon,
+        setDesc:(e)=>{ const arr=(this.state.npAttachments||[]).map((x,j)=>j===i?{...x,desc:e.target.value}:x); this.setState({ npAttachments:arr }); },
+        open:()=>this.openFilePreview(a.name),
+        download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(a.name); },
+        remove:()=>{ const arr=(this.state.npAttachments||[]).slice(); arr.splice(i,1); this.setState({ npAttachments:arr }); } })),
+      npHasAttachments:(this.state.npAttachments||[]).length>0,
+      npAddAttachment:()=>this.openFilePicker('np-attachment', 'Attach file to '+(f.name||'this page')),
       npTabs:['Page Info','Classification','SEO','Content','Relationships','Links','Media','Publishing','Analytics','Activity'].map((t,i)=>({ label:t, go:()=>this.setState({npTab:i}), style:'flex:none;padding:9px 13px;border:none;background:none;border-bottom:2px solid '+(i===(this.state.npTab||0)?'var(--orchid-500)':'transparent')+';font-size:13px;font-weight:700;cursor:pointer;color:'+(i===(this.state.npTab||0)?'var(--ink-900)':'var(--ink-500)')+';margin-bottom:-1px;white-space:nowrap' })),
       npTab0:(this.state.npTab||0)===0, npTab1:this.state.npTab===1, npTab2:this.state.npTab===2, npTab3:this.state.npTab===3, npTab4:this.state.npTab===4, npTab5:this.state.npTab===5, npTab6:this.state.npTab===6, npTab7:this.state.npTab===7, npTab8:this.state.npTab===8, npTab9:this.state.npTab===9,
       npOwnerName: f.owner||this.currentPerson(), npToday:this.todayStr(),
@@ -9151,6 +9165,15 @@ class AppRoot extends React.Component {
         return { Services:[sv?(sv.name+' ('+sv.url+')'):'Link a related service'], Insights:[iv?(iv.name+' ('+iv.url+')'):'Link a related article'] }; })(),
       internal: (()=>{ const ls=(this.state.npLinks||[]).filter(l=>l.anchor||l.target); return ls.length? ls.map(l=>[l.anchor||f.keyword||name.toLowerCase(), l.target||url, l.ltype||'Internal', '—']) : [[f.keyword||name.toLowerCase(), url, 'Internal', '—']]; })(),
       media:(()=>{ const ms=(this.state.npMedia||[]).filter(m=>m.name||m.alt); return ms.length? ms.map(m=>[m.type||'Image', m.name||'untitled', m.alt||'—','—','0']) : [['Image','hero-placeholder.jpg','Add a hero image · alt text','—','0']]; })(),
+      // Real uploaded files (see npAttachments/np-attachment above) — kept
+      // as its own array, separate from the `media` metadata table above,
+      // since these are actual file_blobs-backed attachments with working
+      // preview/download, not just a description of images the page uses.
+      // editContentPage() rehydrates npAttachments from the existing page
+      // before this form opens, so state already reflects existing +
+      // newly-added minus anything removed — no merge with `existing`
+      // needed here.
+      attachments:(this.state.npAttachments||[]).filter(a=>a.name&&a.name.trim()),
       workflow: existing?existing.workflow:(activate?'Under Review':'Draft'),
       publishDate:this.fmtDate(f.publishDate)||(existing?existing.publishDate:'—'),
       expiry:existing?existing.expiry:'—', version:existing?existing.version:'v0.1',
@@ -9162,7 +9185,7 @@ class AppRoot extends React.Component {
     if(existing){
       page.status=existing.status;
       const upd={...(this.state.cUpd||{}), [code]:page};
-      this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npEditId:null, cOpen:code, cTab:0 });
+      this.setState({ cUpd:upd, showNewPage:false, npForm:{}, npAttachments:[], npEditId:null, cOpen:code, cTab:0 });
       this.flash('Page “'+name+'” updated.');
       supabase.from('content_pages').upsert({ id:code, payload:{...existing,...page}, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
         if(error) console.warn('[supabase] content page upsert failed:', error.message);
@@ -9170,7 +9193,7 @@ class AppRoot extends React.Component {
       return;
     }
     const next=[...(this.state.cAdded||[]), page];
-    this.setState({ cAdded:next, showNewPage:false, npForm:{}, cRepo:repo, cStatus:'All', cQuery:'', cOpen:code, cTab:0 });
+    this.setState({ cAdded:next, showNewPage:false, npForm:{}, npAttachments:[], cRepo:repo, cStatus:'All', cQuery:'', cOpen:code, cTab:0 });
     this.flash('Page “'+name+'” created as '+code+' — added to '+repoName+' (top of list).');
     supabase.from('content_pages').insert({ id:code, payload:page, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
       if(error) console.warn('[supabase] content page insert failed:', error.message);
@@ -9692,6 +9715,12 @@ class AppRoot extends React.Component {
       cd_internal:(p.internal||[]).map(l=>({ anchor:l[0], target:l[1], strength:l[2], score:l[3] })),
       cd_media:(p.media||[]).map(m=>({ type:m[0], name:m[1], alt:m[2], size:m[3], usage:m[4] })),
       cd_mediaEmpty:(p.media||[]).length===0,
+      // Real uploaded files attached to this specific page (see
+      // npAttachments in newPageData()) — distinct from cd_media above,
+      // which is just descriptive metadata, not an actual downloadable file.
+      cd_attachments:(p.attachments||[]).map(a=>{ const k=this.fileKind(a.name); return { name:a.name, desc:a.desc||'', icon:k.icon,
+        open:()=>this.openFilePreview(a.name), download:(e)=>{ if(e)e.stopPropagation(); this.downloadFile(a.name); } }; }),
+      cd_attachmentsEmpty:(p.attachments||[]).length===0,
       cd_wf:wf.map((w,i)=>({ label:w, done:i<activeWf, active:i===activeWf,
         dotBg: i<activeWf?'var(--verify-500)':(i===activeWf?'var(--orchid-500)':'var(--line-300)'),
         color: i<=activeWf?'var(--ink-900)':'var(--ink-400)' })),
@@ -9737,6 +9766,7 @@ class AppRoot extends React.Component {
     this.setState({ showNewPage:true, npTab:startTab||0, npEditId:id,
       npLinks:(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})).length?(p.internal||[]).map(l=>({anchor:l[0],target:l[1],ltype:l[2]||'Internal'})):[{anchor:'',target:'',ltype:'Internal'}],
       npMedia:(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})).length?(p.media||[]).map(m=>({name:m[1],alt:m[2],type:m[0]})):[{name:'',alt:'',type:'Image'}],
+      npAttachments:(p.attachments||[]).map(a=>({...a})),
       npForm:{ repo:p.repo, brand:p.brand||'Beetloop', type:p.type, name:p.name, slug:p.slug, isIndex:!!p.isIndex, keyword:p.keyword!=='—'?p.keyword:'', industry:p.industry!=='—'?p.industry:'',
         metaTitle:seoGet('Meta Title'), metaDesc:p.description, owner:p.owner, reviewer:p.reviewer!=='—'?p.reviewer:'',
         subService:clsGet('Sub-Service')!=='To be assigned'?clsGet('Sub-Service'):'', sector:clsGet('Sector')!=='—'?clsGet('Sector'):'',
@@ -10244,6 +10274,8 @@ class AppRoot extends React.Component {
     Object.entries(this.state.clFill||{}).forEach(([tid,rows])=>{ const t=this.allTasks().find(x=>x.id===tid);
       Object.values(rows||{}).forEach(r=>(r.files||[]).forEach(n=>add(n,'Compliance evidence','—',tid,
         t||{ id:tid, name:'Compliance — '+tid, status:'—', start:'—', end:'—', assignee:'—' }))); });
+    this.allContentPages().forEach(p=>(p.attachments||[]).forEach(a=>add(a.name,'Content page attachment',p.owner,p.id,
+      { id:p.id, name:p.name, status:p.status||p.workflow||'—', start:p.updated||'—', end:'—', assignee:p.owner||'—' })));
     return out;
   }
   // One real file picker used by every "Attach" point in the app: Browse lists
@@ -10286,6 +10318,12 @@ class AppRoot extends React.Component {
     else if(t.indexOf('idea:')===0){ const kind=t.slice(5); const f=this.state.ideaForm||{};
       const atts=(f.attachments||[]).concat(names.map(n=>({ kind, name:n, category:kind==='Image'?'Image':'Reference', desc:'' })));
       this.setState({ ideaForm:{...f, attachments:atts} }); }
+    // New page hasn't been saved yet (may not even have a code assigned),
+    // so — same reasoning as the 'idea:' branch above — the picked files
+    // are appended to draft form state, not patched onto an existing
+    // Supabase record. submitNewPage() folds this into the page's
+    // `attachments` array on save; editContentPage() reads it back out.
+    else if(t==='np-attachment'){ this.setState({ npAttachments:[...(this.state.npAttachments||[]), ...names.map(n=>({ name:n, desc:'' }))] }); }
     this.flash(names.length+' file'+(names.length===1?'':'s')+' attached.');
   }
   filePickerData(){

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentPageDetailDrawer({ vm }) {
-  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cdAddBlock, cdAddLink, cd_activity, cd_analytics, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentOpen, stop, cdCanEdit, cdEdit,
+  const { cdEditorMode, cdEditorStyle, cdPreview, cdPreviewStyle, cdSetEditor, cdSetPreview, cdAddBlock, cdAddLink, cd_activity, cd_analytics, cd_attachments, cd_attachmentsEmpty, cd_blocks, cd_cls, cd_id, cd_info, cd_internal, cd_isService, cd_media, cd_mediaEmpty, cd_name, cd_pub, cd_rel, cd_seo, cd_seoColor, cd_seoScore, cd_status, cd_statusBg, cd_statusColor, cd_tab0, cd_tab1, cd_tab2, cd_tab3, cd_tab4, cd_tab5, cd_tab6, cd_tab7, cd_tab8, cd_tab9, cd_tabs, cd_url, cd_wf, closeContent, contentOpen, stop, cdCanEdit, cdEdit,
     cwLinkedCount, cwModeBtns, cwCanRun, cwApprove, cwApproveLabel, cwGenerate, cwHasTasks, cwOpenTasks, cwProgressW, cwStages, cwOpenKpi, cwKpiNote,
     cd_liveHas, cd_liveNote, cd_live, cd_liveWarn, cd_liveWarnMsg } = vm;
   return (
@@ -398,19 +398,54 @@ Col C
 </React.Fragment>
 ))}
 
-            
+
 </div>
 
-          
-</React.Fragment>
-)}
 
-        
 </React.Fragment>
 )}
 
 
-        
+
+<div style={{"marginTop":"22px"}}>
+<div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"10px"}}>
+Attachments
+</div>
+{Boolean(cd_attachmentsEmpty) && (
+<div style={{"fontSize":"12.5px","color":"var(--ink-400)"}}>
+No files attached to this page yet.
+</div>
+)}
+{Boolean(!cd_attachmentsEmpty) && (
+<div style={{"display":"flex","flexDirection":"column","gap":"8px"}}>
+{(cd_attachments || []).map((a, $index) => (
+<div key={$index} style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"10px","display":"flex","gap":"8px","alignItems":"center"}}>
+<span style={{"width":"28px","height":"28px","borderRadius":"8px","background":"var(--orchid-100)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={a.icon} style={{"width":"14px","height":"14px","color":"var(--orchid-600)"}} />
+</span>
+<button onClick={a.open} title="Preview" style={{"flex":"1","textAlign":"left","background":"none","border":"none","padding":"0","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-800)","cursor":"pointer"}}>
+{a.name}
+{Boolean(a.desc) && (
+<span style={{"fontWeight":"500","color":"var(--ink-500)"}}>
+{" — " + a.desc}
+</span>
+)}
+</button>
+<button onClick={a.download} title="Download" style={{"background":"none","border":"none","cursor":"pointer","color":"var(--ink-400)","padding":"4px"}}>
+<Icon name={"download"} style={{"width":"14px","height":"14px"}} />
+</button>
+</div>
+))}
+</div>
+)}
+</div>
+
+
+</React.Fragment>
+)}
+
+
+
 {Boolean(cd_tab4) && (
 <React.Fragment>
 
