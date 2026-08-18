@@ -7791,6 +7791,19 @@ class AppRoot extends React.Component {
         // under the previous campaign won't be a valid option under the
         // new one, so clear it rather than leave a stale selection.
         nf.pageUrl='';
+        // The Effort Plan picker (tkEffortOptions below) is scoped to plans
+        // linked to this campaign (plan.campaign === campaign name, set
+        // when the plan was created from the campaign's Effort lines
+        // section). A previously-picked plan that doesn't belong to the
+        // new campaign is no longer a valid option, so drop it; if the
+        // campaign has exactly one linked plan, fetch and pre-select it
+        // instead of leaving the assignee to find it in a now-filtered list.
+        const linkedPlans=v&&v!=='—'?this.allEpPlans().filter(p=>p.campaign===v):[];
+        const keepPlan=linkedPlans.some(p=>p.name===nf.effortPlan);
+        if(!keepPlan){
+          nf.effortPlan=linkedPlans.length===1?linkedPlans[0].name:'';
+          nf.effortRow=''; nf.units=''; nf.estH=''; nf.kpiId='';
+        }
       }
       this.setState({ tkForm:nf });
     };
@@ -7867,7 +7880,16 @@ class AppRoot extends React.Component {
       tkReviewerOptions:(this.state.users||[])
         .filter(u=>['Team Lead','Manager','QC Reviewer','COO','CEO','Admin'].some(r=>(u.role||'').includes(r)))
         .map(u=>u.name+' ('+u.role+')'),
-      tkEffortOptions:[{v:'',label:'None — standalone task'}].concat(this.allEpPlans().map(p=>({ v:p.name, label:p.name+' · '+p.division }))),
+      // Scoped to the selected Campaign's own linked Effort Plans (plan.campaign
+      // === the campaign name) once a Campaign is picked — a standalone task
+      // (no campaign) still sees every plan, since it isn't scoped to any one
+      // campaign's effort lines.
+      tkEffortOptions:(()=>{
+        const camp=f.campaign&&f.campaign!=='—'?f.campaign:'';
+        const plans=camp?this.allEpPlans().filter(p=>p.campaign===camp):this.allEpPlans();
+        return [{v:'',label:'None — standalone task'}].concat(plans.map(p=>({ v:p.name, label:p.name+' · '+p.division })));
+      })(),
+      tkEffortScopedToCampaign:!!(f.campaign&&f.campaign!=='—'),
       ...(()=>{
         const plan=this.allEpPlans().find(p=>p.name===f.effortPlan);
         const selectedRow=plan&&plan.rows.find(x=>x.type===f.effortRow);

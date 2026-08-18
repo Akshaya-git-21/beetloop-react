@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCampaignPageOptions, tkHasCampaignPages, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPage, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCampaignPageOptions, tkHasCampaignPages, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortScopedToCampaign, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPage, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -315,13 +315,18 @@ Effort plan
 </React.Fragment>
 ))}
 </select>
+{Boolean(tkEffortScopedToCampaign) && (
+<div style={{"marginTop":"6px","fontSize":"11.5px","color":"var(--ink-500)"}}>
+Scoped to Effort Plans linked to the selected campaign.
+</div>
+)}
 </div>
 
-            
+
 {Boolean(tkHasPlan) && (
 <React.Fragment>
 
-              
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Effort (from this plan)
