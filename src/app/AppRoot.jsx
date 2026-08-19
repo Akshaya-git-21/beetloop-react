@@ -254,7 +254,7 @@ class AppRoot extends React.Component {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body:JSON.stringify({ email:em }),
       });
-      const body=await resp.json();
+      const body=await this._safeJson(resp);
       if(!resp.ok) throw new Error(body.error||'Reset failed');
       if(body.emailSent) this.flash('Password reset link sent to '+em+'.');
       else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
@@ -5453,7 +5453,7 @@ class AppRoot extends React.Component {
             method:'POST', headers:{ 'Content-Type':'application/json' },
             body:JSON.stringify({ email:u.email }),
           });
-          const body=await resp.json();
+          const body=await this._safeJson(resp);
           if(!resp.ok) throw new Error(body.error||'Reset failed');
           if(body.emailSent) this.flash('Password reset link sent to '+u.email+'.');
           else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
