@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function ActivatePage({ vm }) {
-  const { activateEmail, activateRoleLabel, activateIsRecovery, backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa } = vm;
+  const { activateEmail, activateRoleLabel, activateIsRecovery, authBusy, backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa } = vm;
   return (
     <React.Fragment>
 
@@ -123,8 +123,8 @@ Recommended for your account
 
 
     
-<button onClick={doActivate} style={{"width":"100%","padding":"13px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":"pointer"}}>
-{activateIsRecovery ? 'Set new password & sign in' : 'Activate & sign in'}
+<button onClick={doActivate} disabled={Boolean(authBusy)} style={{"width":"100%","padding":"13px","background":"#7A1C46","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":authBusy?"default":"pointer","opacity":authBusy?"0.7":"1"}}>
+{authBusy ? 'Activating…' : (activateIsRecovery ? 'Set new password & sign in' : 'Activate & sign in')}
 </button>
 
     

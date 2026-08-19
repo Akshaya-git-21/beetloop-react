@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../components/Icon.jsx';
 
 export default function LoginPage({ vm }) {
-  const { doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginTagline, loginLogoUrl, loginBackgroundUrl } = vm;
+  const { authBusy, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginTagline, loginLogoUrl, loginBackgroundUrl } = vm;
   return (
     <React.Fragment>
 
@@ -163,8 +163,8 @@ Forgot password?
 
 
       
-<button onClick={doLogin} style={{"width":"100%","padding":"13px","background":"var(--orchid-500,#7A1C46)","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 20px -8px rgba(122,28,70,.6)"}}>
-Sign in
+<button onClick={doLogin} disabled={Boolean(authBusy)} style={{"width":"100%","padding":"13px","background":"var(--orchid-500,#7A1C46)","color":"#fff","border":"none","borderRadius":"14px","fontSize":"15px","fontWeight":"700","cursor":authBusy?"default":"pointer","boxShadow":"0 8px 20px -8px rgba(122,28,70,.6)","opacity":authBusy?"0.7":"1"}}>
+{authBusy ? 'Signing in…' : 'Sign in'}
 </button>
 
 

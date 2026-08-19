@@ -1962,6 +1962,13 @@ class AppRoot extends React.Component {
       loginBackgroundUrl:((this.state.platformSettings||{}).branding||{}).loginBackground||'',
       email:this.state.email, password:this.state.password, loginError:this.state.loginError,
       onEmail:e=>this.setState({email:e.target.value}), onPassword:e=>this.setState({password:e.target.value}),
+      // authBusy was tracked in state and correctly set/reset around every
+      // auth call, but never actually reached LoginPage/ActivatePage — their
+      // Sign in / Activate buttons gave zero feedback while a request was in
+      // flight, or after a slow-to-notice error flash. A stuck-looking
+      // button with a silent failure reads as "nothing happens when I click
+      // it", not as the actual error underneath.
+      authBusy:!!this.state.authBusy,
       doLogin:()=>this.doLogin(), goActivate:e=>{e&&e.preventDefault();this.setState({screen:'activate'});},
       oauthGoogle:e=>{e&&e.preventDefault();this._oauthLogin('google');},
       oauthMicrosoft:e=>{e&&e.preventDefault();this._oauthLogin('azure');},
