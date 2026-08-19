@@ -1338,20 +1338,41 @@ class AppRoot extends React.Component {
     this._patchThread(threadId, { deleted:true });
     this.flash('Conversation deleted.');
   }
-  // Private-by-default, like WhatsApp: a group channel only shows to its
-  // actual members (DM threads store only the OTHER party in `members` —
-  // see thSave() — so every DM is implicitly the viewer's own and always
-  // stays visible; only channels need a real membership check). Nobody,
-  // not even Admin, sees every conversation by default — that requires the
-  // explicit "Audit all conversations" permission (User Management ->
-  // Permissions -> Messages), which is off for every role until someone
-  // deliberately turns it on. This is the one place in the app where Admin
-  // does NOT get automatic full access — conversation privacy comes first.
+  // Private-by-default, like WhatsApp: every thread (channel AND dm) only
+  // shows to its actual members. Nobody, not even Admin, sees every
+  // conversation by default — that requires the explicit "Audit all
+  // conversations" permission (User Management -> Permissions -> Messages),
+  // which is off for every role until someone deliberately turns it on.
+  // This is the one place in the app where Admin does NOT get automatic
+  // full access — conversation privacy comes first.
+  //
+  // FIXED: this used to read `t.kind!=='channel' || (t.members||[]).includes(me)`
+  // — for a DM, `t.kind!=='channel'` is always true, so the membership
+  // check never ran at all and every DM was visible to every user
+  // (_loadThreads() has no server-side/RLS scoping either — it fetches
+  // every thread and message unconditionally, so this client-side filter
+  // was the ONLY thing standing between a private DM and every other user).
   myThreads(){
     const all=this.allThreads();
     if(this.hasPerm('messages','auditAll')) return all;
     const me=this.currentPerson();
-    return all.filter(t=>t.kind!=='channel' || (t.members||[]).includes(me));
+    // thSave() now stores both parties in a DM's `members` going forward,
+    // but a thread created before this fix only has the recipient there
+    // (see the old comment above) — falling back to "I've actually sent a
+    // message in this thread" keeps those still visible to their original
+    // sender without needing a data migration.
+    const mine=t=>(t.members||[]).includes(me) || (t.kind==='dm' && t.msgs.some(m=>m.who===me));
+    return all.filter(mine).map(t=>{
+      if(t.kind!=='dm') return t;
+      // A DM's stored `name` was fixed at creation to "the other party AS
+      // SEEN BY THE CREATOR" (mem[0] in thSave()) — so the recipient would
+      // see their OWN name as the thread title instead of the sender's.
+      // Resolve it per-viewer instead: whoever in `members` isn't me,
+      // falling back to whoever else's messages appear in it (covers a
+      // legacy thread whose `members` still only has one name).
+      const other=(t.members||[]).find(m=>m!==me) || (t.msgs.find(m=>m.who!==me)||{}).who;
+      return other ? {...t, name:other} : t;
+    });
   }
   // Shared write path for both a brand-new message and an edit to an
   // existing one (e.g. task-linking) — same overlay, same upsert, so a
@@ -1456,7 +1477,11 @@ class AppRoot extends React.Component {
             msgs.push({ id:'M'+Date.now(), who:me, role:this.ROLES[rk].label,
               when:this.todayStr()+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
               text:nf.first.trim() }); }
-          const threadRec={ id, kind:k, name, members:k==='channel'?[me].concat(mem):mem };
+          // Both kinds now always store the creator too (a DM used to store
+          // only the recipient — see myThreads()'s privacy-filter fix) —
+          // `mem` never contains `me` (thPeople excludes the viewer from
+          // the picker), so this can't create a duplicate.
+          const threadRec={ id, kind:k, name, members:[me].concat(mem) };
           this.setState({ thNew:[{...threadRec, msgs}].concat(this.state.thNew||[]),
             thForm:null, thOpen:id });
           this.flash((k==='channel'?'Group ':'Conversation ')+name+' created.');
