@@ -83,8 +83,8 @@ Create password
 </div>
 
     
-<div style={{"fontSize":"12px","color":"var(--ink-500)","marginBottom":"16px"}}>
-{pwLabel} · 12+ chars, upper, lower, number & symbol
+<div style={{"fontSize":"12px","color":(newPass||'').length<12?"var(--danger-600)":"var(--ink-500)","marginBottom":"16px","fontWeight":(newPass||'').length<12?"700":"400"}}>
+{pwLabel} · {(newPass||'').length}/12 characters minimum{(newPass||'').length>0&&(newPass||'').length<12?' — too short to activate':''}
 </div>
 
 
