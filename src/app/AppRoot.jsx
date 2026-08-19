@@ -4026,6 +4026,24 @@ class AppRoot extends React.Component {
     const del=this.state.ideaDeleted||[];
     return this.IDEAS().filter(i=>!addedIds.has(i.id)).concat(added).filter(i=>!del.includes(i.id)).map(i=>({ ...i, ...((this.state.ideaUpd||{})[i.id]||{}) }));
   }
+  // Same "derive from the max numeric suffix across every id that has EVER
+  // existed (seed + added + deleted)" pattern as _allTaskIdsEver/
+  // _allEpIdsEver/_allContentPageIdsEver — allIdeas().length undercounts
+  // once anything's been deleted, so a length-based 'CI-'+(length+1) id
+  // regenerates an id that's already in ideaDeleted. allIdeas() then
+  // filters that id straight back out, so the "newly created" idea
+  // silently vanishes from every view (list, QC) even though idfSave()
+  // reported success.
+  _allIdeaIdsEver(){
+    return this.IDEAS().map(i=>i.id).concat((this.state.ideaAdded||[]).map(i=>i.id)).concat(this.state.ideaDeleted||[]);
+  }
+  // _nextSeqCode doesn't zero-pad (TSK-/PG-/EP- ids don't need it once past
+  // their 4-digit floors) but CI- ids are meant to stay 3-digit
+  // ("CI-006", not "CI-6") to match the seed's own format.
+  _nextIdeaId(){
+    const raw=this._nextSeqCode('CI-', this._allIdeaIdsEver(), 0);
+    return 'CI-'+String(parseInt(raw.slice(3),10)).padStart(3,'0');
+  }
   ideaPatch(id,patch){
     const u={...(this.state.ideaUpd||{})};
     const cur=this.allIdeas().find(x=>x.id===id)||{};
@@ -4197,7 +4215,7 @@ class AppRoot extends React.Component {
       canConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
       submit:(e)=>{ if(e)e.stopPropagation(); this.ideaPatch(i.id,{status:'Submitted for QC'}); this.flash(i.id+' sent to QC Review for approval.'); },
       convert:(e)=>{ if(e)e.stopPropagation(); this.ideaToTask(i); },
-      reuseIdea:(e)=>{ if(e)e.stopPropagation(); const nid='CI-'+String(this.allIdeas().length+1).padStart(3,'0'); const clone={...i, id:nid, title:i.title+' — reuse', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
+      reuseIdea:(e)=>{ if(e)e.stopPropagation(); const nid=this._nextIdeaId(); const clone={...i, id:nid, title:i.title+' — reuse', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
         this.setState({ ideaAdded:[...(this.state.ideaAdded||[]),clone] }); this.ideaPatch(i.id,{reuse:(i.reuse||0)+1}); this.flash('Idea duplicated as '+nid+' — stored for reuse.');
         supabase.from('ideas').insert({ id:nid, payload:clone, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
           if(error) console.warn('[supabase] idea insert failed:', error.message);
@@ -4253,7 +4271,7 @@ class AppRoot extends React.Component {
     const stepBtn=(n,label)=>({ n:String(n), label, active:step===n, style:'display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(step===n?'var(--beet-700)':'var(--line-300)')+';background:'+(step===n?'var(--beet-700)':'var(--paper)')+';color:'+(step===n?'#fff':'var(--ink-500)'), go:()=>this.setState({ ideaStep:n }) });
     return {
       showIdeaForm:this.state.showIdeaForm,
-      idf:f, idfCode:'CI-'+String(this.allIdeas().length+1).padStart(3,'0'),
+      idf:f, idfCode:this._nextIdeaId(),
       idfClose:()=>this.setState({ showIdeaForm:false, ideaStep:1 }),
       idfStep1:step===1, idfStep2:step===2, idfStep3:step===3,
       idfSteps:[stepBtn(1,'1 · Content Information'),stepBtn(2,'2 · SEO & Planning'),stepBtn(3,'3 · References & Resources')],
@@ -4430,7 +4448,7 @@ class AppRoot extends React.Component {
     if(!this.hasPerm('ideas','create')){ this.flash('You do not have permission to create content ideas.'); return; }
     const f=this.state.ideaForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter a content title.'); return; }
-    const id='CI-'+String(this.allIdeas().length+1).padStart(3,'0');
+    const id=this._nextIdeaId();
     const idea={ id, title:f.title.trim(), workingTitle:f.workingTitle||'', source:f.source||'Employee', type:f.type||'Blog', category:f.category||'—', subCategory:f.subCategory||'', priority:f.priority||'Medium', owner:f.owner||'Sameer Iyer', service:(f.service&&f.service.indexOf('—')!==0)?f.service:'Content Writing', campaign:(f.campaign&&f.campaign.indexOf('—')!==0)?f.campaign:'', effortPlan:f.effortPlan||(this.allEpPlans()[0]||{}).name||'', quarter:'Q3 2026', publishMonth:this.fmtMonth(f.publishMonth)||'Sep 2026', keyword:f.keyword||'', secondaryKw:f.secondaryKw||'', intent:f.intent||'Informational', cluster:f.cluster||'', pillar:f.pillar||'', audience:f.audience||'', journey:f.journey||'', goal:f.goal||'', wordCount:f.wordCount||'', internalLinks:f.internalLinks||'', extRefs:f.extRefs||'', competitorUrls:f.competitorUrls||'', reason:f.reason||'', notes:f.notes||'', objective:f.objective||'',
       wcMin:f.wcMin||'', wcMax:f.wcMax||'', recLength:f.recLength||'', readLevel:f.readLevel||'', metaTitle:f.metaTitle||'', metaDesc:f.metaDesc||'', slug:f.slug||'', featImg:f.featImg||'',
       refs:(f.refs||[]).filter(r=>r.title&&r.title.trim()), stats:(f.stats||[]).filter(r=>r.stat&&r.stat.trim()), extRes:(f.extRes||[]).filter(r=>r.name&&r.name.trim()), intRes:(f.intRes||[]).filter(r=>r.name&&r.name.trim()), attachments:(f.attachments||[]).filter(a=>a.name&&a.name.trim()),
