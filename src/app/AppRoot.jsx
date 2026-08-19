@@ -5476,7 +5476,7 @@ class AppRoot extends React.Component {
             body:JSON.stringify({ email:u.email, fullName:u.name, roleKey:u.roleKey, department:u.dept, designation:u.designation,
               brands:u.brands||[], reportingManager:u.reportingManager||'', teamLead:u.teamLead||'' }),
           });
-          const body=await resp.json();
+          const body=await this._safeJson(resp);
           if(!resp.ok) throw new Error(body.error||'Resend failed');
           if(body.emailSent) this.flash('Activation link re-sent to '+u.email+'.');
           else this.flash('Link regenerated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
@@ -11006,7 +11006,7 @@ class AppRoot extends React.Component {
         body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation,
           brands:f.brands||[], reportingManager:f.manager||'', teamLead:f.lead||'' }),
       });
-      const body=await resp.json();
+      const body=await this._safeJson(resp);
       if(!resp.ok) throw new Error(body.error||'Invite failed');
       if(body.emailSent) this.flash('User created — activation link sent to '+f.email+'.');
       else this.flash('User created, but the invite email failed to send'+(body.mailError?(': '+body.mailError):'')+'. Use "Resend invite" once you\'ve confirmed mail delivery is set up.');
@@ -11084,6 +11084,20 @@ class AppRoot extends React.Component {
     if(statusErr) console.warn('[supabase] profile activation status update failed:', statusErr.message);
     await this._loadProfile(session.user);
     this.flash('Account activated. Welcome to Beetloop.');
+  }
+  // fetch(...).json() throws an opaque "Unexpected end of JSON input" the
+  // moment a serverless function crashes, times out, or the platform
+  // returns its own error page instead of the function's response —
+  // exactly what happens when e.g. a required env var is missing on the
+  // deployment or the function throws before reaching a res.json() call.
+  // Reading the body as text first and only parsing if it looks like JSON
+  // means a failure here surfaces the ACTUAL server response (status code +
+  // whatever Vercel/the function actually sent back) instead of a generic
+  // parse error that gives no clue what went wrong.
+  async _safeJson(resp){
+    const text=await resp.text();
+    try{ return JSON.parse(text); }
+    catch(e){ throw new Error('Server returned a non-JSON response (HTTP '+resp.status+'): '+(text.trim().slice(0,200)||'(empty body)')); }
   }
   async doLogin(){
     const em=this.state.email.trim().toLowerCase();
