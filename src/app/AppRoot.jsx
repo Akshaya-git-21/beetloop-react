@@ -1912,7 +1912,7 @@ class AppRoot extends React.Component {
       if(route==='users') this.setState({ showUserModal:true });
       else if(route==='tasks') this.setState({ tkNew:true, tkForm:{ template:'', priority:'Medium', assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None' } });
       else if(route==='templates'){ const tb=this.state.ttTab||'task'; if(tb==='kpi') this.setState({ ktNew:true, ktEditId:null, ktForm:{ division:'SEO', category:'Traffic', direction:'Increase', freq:'Monthly', source:'GA4', status:'Active' } }); else if(tb==='okr') this.setState({ otNew:true, otEditId:null, otForm:{ category:'SEO', scope:'Department', division:'SEO', status:'Active', krs:[{t:'',kpi:'',unit:'',target:'',weight:'100',freq:'Monthly'}] } }); else this.setState({ ttNew:true, ttEditId:null, ttForm:{ division:'SEO', priority:'Medium', recurrence:'None', status:'Active', checklist:['',''] } }); }
-      else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{} });
+      else if(route==='ideas') this.setState({ showIdeaForm:true, ideaForm:{ owner:this.currentPerson() } });
       else if(route==='okr') this.setState({ showOkrPanel:true, okrEditId:null,
         okrForm:{ title:'', desc:'', owner:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), dept:'SEO', brand:'Beetloop', category:'SEO', scope:'Department', priority:'Medium', cycle:'Q1 2026', reviewFreq:'Weekly', start:'', end:'', parent:'None (top level)', dependsOn:'', effortTargets:'', progressCalc:'Automatic (from KPI logs)', dataSource:'GA4', reviewer:this.OKR_REVIEWERS()[0], status:'Draft', risks:'' },
         okrDraftKRs:[{id:1,weight:'50'},{id:2,weight:'50'}], okrKRSeq:3 });
@@ -4332,11 +4332,15 @@ class AppRoot extends React.Component {
       idfExtCatOptions:opts('extCat',['Guest post','News / PR site','Industry publication','Partner blog','Directory / listing','Social platform','Forum / community','Other']),
       idfSourceOptions:opts('source',['Employee','SEO Audit','Google Search Console','Competitor','Customer Question','Sales Team','Product Team','Research Team','AI Suggestion']),
       idfTypeOptions:opts('type',this.MASTERS_REG().contentType.rows.filter(r=>r.Status!=='Inactive').map(r=>r.Content_Type)),
-      idfCatOptions:opts('category',['Nutrition','Science','Compliance','Marketing','Health','Food Technology']),
+      idfCatOptions:opts('category',['— Optional —','Nutrition','Science','Compliance','Marketing','Health','Food Technology']),
       idfSubCatOptions:opts('subCategory',['— Optional —','Plant Proteins','Formulation','Regulatory','SEO','Branding','Clinical']),
       idfServiceOptions:opts('service',['— Optional —','Content Writing','SEO','Technical SEO','Web Development','Digital Marketing','Social Media','CRO']),
       idfCampaignOptions:opts('campaign',['— Optional —'].concat(this.campaignNames(false))),
-      idfOwnerOptions:['Sameer Iyer','Neha Verma'],
+      // Was a hardcoded 2-name seed list disconnected from the app's real
+      // team — every other "who's responsible" picker in the app (Task
+      // assignee/reviewer, OKR owner) sources from the real Users list;
+      // this one hadn't been wired the same way.
+      idfOwnerOptions:(this.state.users||[]).map(u=>u.name),
       idfEffortOptions:['— Optional —'].concat(this.allEpPlans().map(p=>p.name)),
       idfClusterOptions:opts('cluster',['Plant Based Nutrition','Protein Types & Benefits','Nutraceutical Compliance','Food Innovation']),
       idfPillarOptions:opts('pillar',['Plant Based Protein Hub','Compliance Hub','Formulation Hub']),
@@ -4449,7 +4453,7 @@ class AppRoot extends React.Component {
     const f=this.state.ideaForm||{};
     if(!f.title||!f.title.trim()){ this.flash('Enter a content title.'); return; }
     const id=this._nextIdeaId();
-    const idea={ id, title:f.title.trim(), workingTitle:f.workingTitle||'', source:f.source||'Employee', type:f.type||'Blog', category:f.category||'—', subCategory:f.subCategory||'', priority:f.priority||'Medium', owner:f.owner||'Sameer Iyer', service:(f.service&&f.service.indexOf('—')!==0)?f.service:'Content Writing', campaign:(f.campaign&&f.campaign.indexOf('—')!==0)?f.campaign:'', effortPlan:f.effortPlan||(this.allEpPlans()[0]||{}).name||'', quarter:'Q3 2026', publishMonth:this.fmtMonth(f.publishMonth)||'Sep 2026', keyword:f.keyword||'', secondaryKw:f.secondaryKw||'', intent:f.intent||'Informational', cluster:f.cluster||'', pillar:f.pillar||'', audience:f.audience||'', journey:f.journey||'', goal:f.goal||'', wordCount:f.wordCount||'', internalLinks:f.internalLinks||'', extRefs:f.extRefs||'', competitorUrls:f.competitorUrls||'', reason:f.reason||'', notes:f.notes||'', objective:f.objective||'',
+    const idea={ id, title:f.title.trim(), workingTitle:f.workingTitle||'', source:f.source||'Employee', type:f.type||'Blog', category:(f.category&&f.category.indexOf('—')!==0)?f.category:'—', subCategory:f.subCategory||'', priority:f.priority||'Medium', owner:f.owner||this.currentPerson(), service:(f.service&&f.service.indexOf('—')!==0)?f.service:'Content Writing', campaign:(f.campaign&&f.campaign.indexOf('—')!==0)?f.campaign:'', effortPlan:f.effortPlan||(this.allEpPlans()[0]||{}).name||'', quarter:'Q3 2026', publishMonth:this.fmtMonth(f.publishMonth)||'Sep 2026', keyword:f.keyword||'', secondaryKw:f.secondaryKw||'', intent:f.intent||'Informational', cluster:f.cluster||'', pillar:f.pillar||'', audience:f.audience||'', journey:f.journey||'', goal:f.goal||'', wordCount:f.wordCount||'', internalLinks:f.internalLinks||'', extRefs:f.extRefs||'', competitorUrls:f.competitorUrls||'', reason:f.reason||'', notes:f.notes||'', objective:f.objective||'',
       wcMin:f.wcMin||'', wcMax:f.wcMax||'', recLength:f.recLength||'', readLevel:f.readLevel||'', metaTitle:f.metaTitle||'', metaDesc:f.metaDesc||'', slug:f.slug||'', featImg:f.featImg||'',
       refs:(f.refs||[]).filter(r=>r.title&&r.title.trim()), stats:(f.stats||[]).filter(r=>r.stat&&r.stat.trim()), extRes:(f.extRes||[]).filter(r=>r.name&&r.name.trim()), intRes:(f.intRes||[]).filter(r=>r.name&&r.name.trim()), attachments:(f.attachments||[]).filter(a=>a.name&&a.name.trim()),
       pubDest:f.pubDest||'Internal', intType:f.intType||'', intUrl:f.intUrl||'', extUrl:f.extUrl||'', extCat:f.extCat||'', status: toQC?'Submitted for QC':'Idea Captured', qcFeedback:'', taskId:'', taskIds:[], reuse:0,
