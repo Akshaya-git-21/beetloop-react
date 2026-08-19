@@ -23,6 +23,7 @@ export default function CreateCampaignModal({ vm }) {
     cmpPeopleNames, cmpKpiForm, cmpAddKpi, cmpKpiPoolOptions,
     cmpEffortForm, cmpAddEffort, cmpEffortEmpty, cmpEffortOptions,
     cmpEffortMultiOptions, cmpEffortMultiVal, cmpEffortMultiChange, cmpEffortMultiAdd,
+    cmpLinkedPlans, cmpLinkPlanOptions, cmpLinkPlanSel, cmpSetLinkPlan, cmpLinkPlan,
     cmpNewEffortOpen, cmpNe, cmpNeSetName, cmpNeSetQty, cmpNeSetUnit, cmpNeSetCadence, cmpNeSetDivision, cmpNeSetKpi,
     cmpNeKpiOptions, cmpNeDivisions, cmpNeCancel, cmpNeSave,
     cmpTeamForm, cmpAddTeam, cmpRoleNames, cmpDeptOptions, cmpBrandOptions,
@@ -214,6 +215,32 @@ export default function CreateCampaignModal({ vm }) {
                     <button onClick={cmpAddEffort} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', border: '1px solid var(--line-300)', background: 'var(--paper)', color: 'var(--ink-700)', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><Icon name="plus" style={{ width: 12, height: 12 }} />Add effort line</button>
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 11 }}>Effort lines matching the KPIs you linked in section D are listed below — select the ones this campaign uses. Add a custom line only if a KPI has no effort plan yet — quantity, unit, cadence, division, owner and tasks come from Effort Planner.</div>
+                  <div style={{ background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 12, padding: 12, marginBottom: 11 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--ink-700)', marginBottom: 8 }}>Linked Effort Plans — what Task creation picks up for this campaign</div>
+                    {Boolean((cmpLinkedPlans || []).length) ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 9 }}>
+                        {(cmpLinkedPlans || []).map((p, pi) => (
+                          <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper)', border: '1px solid var(--line-200)', borderRadius: 9, padding: '7px 10px' }}>
+                            <Icon name="link" style={{ width: 12, height: 12, color: 'var(--verify-600)', flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-800)', flex: 1 }}>{p.label}</span>
+                            <button onClick={p.unlink} title="Unlink" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-500)', padding: 3 }}>
+                              <Icon name="x" style={{ width: 13, height: 13 }} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 9 }}>No Effort Plan linked yet — Task creation won't auto-fetch one for this campaign until you link one below.</div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <select value={cmpLinkPlanSel || ''} onChange={cmpSetLinkPlan} style={{ flex: 1, minWidth: 0, ...smallSelect }}>
+                        {(cmpLinkPlanOptions || []).map((o, oi) => <option key={oi} value={o.v}>{o.label}</option>)}
+                      </select>
+                      <button onClick={cmpLinkPlan} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 13px', border: 'none', background: 'var(--verify-500)', color: '#fff', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                        <Icon name="link" style={{ width: 12, height: 12 }} />Link
+                      </button>
+                    </div>
+                  </div>
                   {Boolean((cmpEffortMultiOptions || []).length) && (
                     <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginBottom: 11 }}>
                       <select multiple value={cmpEffortMultiVal || []} onChange={cmpEffortMultiChange} style={{ flex: 1, minWidth: 0, height: 84, padding: '6px 8px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, background: 'var(--paper)' }}>

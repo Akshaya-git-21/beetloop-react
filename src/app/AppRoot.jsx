@@ -1153,6 +1153,34 @@ class AppRoot extends React.Component {
       cmpKpiForm:kpis.rows, cmpAddKpi:kpis.add,
       cmpEffortForm:efforts.rows, cmpAddEffort:efforts.add, cmpEffortOptions:effOptions,
       cmpEffortEmpty:effArr.length===0,
+      // Direct plan-level link, separate from the effort-LINE picking above —
+      // Task creation's "selecting a Campaign auto-fetches its Effort Plan"
+      // (tkFormData's 'campaign' branch) matches on plan.campaign===this
+      // campaign's name, and the ONLY other place that string ever gets set
+      // is cmpNeSave's "brand new plan" path below — a plan built the normal
+      // way in Effort Planner (no Campaign field there, by design) or reused
+      // across effort lines never gets linked at all otherwise. This gives
+      // every campaign an explicit, visible way to link/unlink any existing
+      // plan regardless of how it was created.
+      cmpLinkedPlans:this.allEpPlans().filter(p=>p.campaign===f.name && f.name).map(p=>({
+        id:p.id, label:p.id+' · '+p.name+' — '+p.division,
+        unlink:()=>{ const updated={...p, campaign:''};
+          this.setState({ epAdded:(this.state.epAdded||[]).some(x=>x.id===p.id)?(this.state.epAdded||[]).map(x=>x.id===p.id?updated:x):[...(this.state.epAdded||[]),updated] });
+          this._persistEpPlan(updated);
+          this.flash('Unlinked '+p.name+' from this campaign.'); } })),
+      cmpLinkPlanOptions:[{v:'',label:'— Link an existing Effort Plan —'}].concat(
+        this.allEpPlans().filter(p=>p.campaign!==f.name).map(p=>({v:p.id, label:p.id+' · '+p.name+' — '+p.division+(p.campaign?(' (currently: '+p.campaign+')'):'')}))),
+      cmpLinkPlanSel:this.state.cmpLinkPlanSel||'',
+      cmpSetLinkPlan:(e)=>this.setState({ cmpLinkPlanSel:e.target.value }),
+      cmpLinkPlan:()=>{
+        if(!(f.name&&f.name.trim())){ this.flash('Name the campaign first — section A.'); return; }
+        const pid=this.state.cmpLinkPlanSel; if(!pid){ this.flash('Choose an Effort Plan to link.'); return; }
+        const plan=this.allEpPlans().find(p=>p.id===pid); if(!plan) return;
+        const updated={...plan, campaign:f.name};
+        this.setState({ epAdded:(this.state.epAdded||[]).some(p=>p.id===pid)?(this.state.epAdded||[]).map(p=>p.id===pid?updated:p):[...(this.state.epAdded||[]),updated], cmpLinkPlanSel:'' });
+        this._persistEpPlan(updated);
+        this.flash(plan.name+' linked to “'+f.name+'” — its Efforts and KPIs will show when creating a Task under this campaign.');
+      },
       // Multi-select bulk-add: lets a user pick several Effort Planner lines
       // under a KPI in one control instead of repeating "Add effort line"
       // once per effort. Each picked key still becomes its own row (a row's
@@ -1189,8 +1217,20 @@ class AppRoot extends React.Component {
             const row={ type:ne.name.trim(), icon:'gauge', monthly:qty, days:25, unit:ne.unit||'units', priority:'High', weight:0, kpiId:'', kpiName:ne.kpi&&ne.kpi.indexOf('—')!==0?ne.kpi:'' };
             let planId;
             if(plan){ planId=plan.id;
-              this.setState({ epRowAdds:{...(this.state.epRowAdds||{}), [plan.id]:[...((this.state.epRowAdds||{})[plan.id]||[]), row]} });
-              this._persistEpPlan({ ...plan, rows:[...(plan.rows||[]), row] });
+              // Reusing an existing division plan silently skipped linking it
+              // to THIS campaign — fine the first time a plan is touched, but
+              // a plan built the normal way in Effort Planner (no Campaign
+              // field there) or reused across several campaigns' effort
+              // lines never ended up linked to any of them. Only stamp it
+              // when the plan has no campaign yet — an already-linked plan
+              // (deliberately, via cmpLinkPlan above, or from an earlier
+              // campaign) keeps its existing link rather than being silently
+              // reassigned.
+              const stampCampaign = !plan.campaign && f.name;
+              const updatedPlan = { ...plan, rows:[...(plan.rows||[]), row], ...(stampCampaign?{campaign:f.name}:{}) };
+              this.setState({ epRowAdds:{...(this.state.epRowAdds||{}), [plan.id]:[...((this.state.epRowAdds||{})[plan.id]||[]), row]},
+                ...(stampCampaign?{ epAdded:(this.state.epAdded||[]).some(p=>p.id===plan.id)?(this.state.epAdded||[]).map(p=>p.id===plan.id?updatedPlan:p):[...(this.state.epAdded||[]),updatedPlan] }:{}) });
+              this._persistEpPlan(updatedPlan);
             } else {
               const epNums=this._allEpIdsEver().map(id=>{ const m=String(id).match(/^EP-(\d+)$/); return m?parseInt(m[1],10):0; });
               planId='EP-'+String(Math.max(0,...epNums)+1).padStart(3,'0');
