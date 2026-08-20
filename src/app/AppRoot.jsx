@@ -7948,6 +7948,22 @@ class AppRoot extends React.Component {
       tkQcHasFiles:(ref.files||[]).length>0,
       tkQcAddFile:()=>this.openFilePicker('qcref:'+t.id,'Attach QC reference'),
       tkStages, tkHasChain:tkStages.length>1,
+      // Subtasks — every task whose `dep` points at this one (tkChain's
+      // `next`, same underlying field the sequential-pipeline chain above
+      // already uses), shown as its own dedicated parent -> children list
+      // (like Service -> Sub-service in Master Data) rather than folded
+      // into the pipeline visualization. A subtask is still just a normal
+      // row in the Tasks list/queue for whoever it's assigned to — this
+      // grouped view only exists here, on the PARENT task's own detail
+      // page, not a restructuring of the task list itself.
+      tkSubtasks: chain.next.map(n=>({ id:n.id, name:n.name, assignee:n.assignee, status:n.status,
+        statusBg:this.tkTone(n.status).bg, statusColor:this.tkTone(n.status).c,
+        open:()=>this.setState({ tkOpen:n.id }) })),
+      tkHasSubtasks: chain.next.length>0,
+      tkAddSubtask:()=>this.setState({ tkNew:true, tkForm:{ template:'', priority:t.priority||'Medium',
+        assignee:(this.state.users&&this.state.users[0]?this.state.users[0].name:''), recurrence:'None',
+        dep:t.id+' — '+t.name, depMode:'Parallel',
+        campaign:t.campaign&&t.campaign!=='—'?t.campaign:'', effortPlan:t.effortPlan||'', division:t.division||'Content' } }),
       tkQcApprove:()=>qcFinish('Approved','QC approved — counted toward KPI'),
       tkQcRework:()=>qcFinish('Rework','Rework requested'),
       tkClose:()=>this.setState({ tkOpen:null }),

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function TaskDetailDrawer({ vm }) {
-  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAttach, tkCanAttach, tkCanComment, tkCanDelete, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDelete, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages,
+  const { stop, tkActions, tkActivity, tkAddCommentFile, tkAddSubtask, tkAttach, tkCanAttach, tkCanComment, tkCanDelete, tkChecklist, tkClose, tkCommentFiles, tkCommentVal, tkComments, tkD, tkDelete, tkDrawerOpen, tkEvidence, tkFb, tkFbBg, tkFbBorder, tkFbColor, tkHasActions, tkHasChain, tkHasCommentFiles, tkHasComments, tkHasEvidence, tkHasFb, tkHasSubtasks, tkKpiNote, tkMeta, tkOnComment, tkPostComment, tkQcAddFile, tkQcApprove, tkQcFbVal, tkQcFiles, tkQcHasFiles, tkQcOnFb, tkQcOnUrl, tkQcPanel, tkQcRework, tkQcUrl, tkStages, tkSubtasks,
     clHas, clKind, clStatusNote, clProgress, clProgressW, clSubmitted, clQcSummary, clSections, clVerdictOptions,
     clCanSubmit, clSubmit, clCanReopen, clReopen, clCanDelete, clDelete, clQcShowBulk, clQcCoverage, clQcCoverageW, clAcceptAll,
     ctQcHasType, ctQcMissingMsg, ctQcHasChecklist, ctQcContentType, ctQcChecklistName, ctQcItems, ctQcCoverage,
@@ -428,6 +428,48 @@ Workflow pipeline — stages unlock on QC approval
 
 </React.Fragment>
 )}
+
+<div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","padding":"15px 18px"}}>
+
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"11px"}}>
+<div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
+<Icon name={"list-tree"} style={{"width":"15px","height":"15px","color":"var(--orchid-600)"}} />
+<span style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)"}}>
+Subtasks
+</span>
+</div>
+<button onClick={tkAddSubtask} style={{"display":"flex","alignItems":"center","gap":"5px","padding":"6px 11px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"9px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"plus"} style={{"width":"12px","height":"12px"}} />
+Add subtask
+</button>
+</div>
+
+{Boolean(tkHasSubtasks) ? (
+<div style={{"display":"flex","flexDirection":"column","gap":"8px"}}>
+{(tkSubtasks || []).map((s, $index) => (
+<div key={$index} onClick={s.open} style={{"display":"flex","alignItems":"center","gap":"10px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"11px","padding":"9px 12px","cursor":"pointer"}} style-hover="border-color:var(--orchid-300)">
+<span style={{"fontFamily":"'Space Mono'","fontSize":"10.5px","color":"var(--ink-400)","flexShrink":"0"}}>
+{s.id}
+</span>
+<span style={{"fontSize":"12.5px","fontWeight":"700","color":"var(--ink-900)","flex":"1","minWidth":"0","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>
+{s.name}
+</span>
+<span style={{"fontSize":"11px","color":"var(--ink-500)","flexShrink":"0"}}>
+{s.assignee}
+</span>
+<span style={cssTextToObject(`font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;background:${s.statusBg};color:${s.statusColor};flex-shrink:0`)}>
+{s.status}
+</span>
+</div>
+))}
+</div>
+) : (
+<div style={{"fontSize":"12px","color":"var(--ink-400)"}}>
+No subtasks yet — break this task into smaller pieces of work with "Add subtask".
+</div>
+)}
+
+</div>
 
 {Boolean(clHas) && (
 <div style={{"background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"16px","boxShadow":"var(--shadow-sm)","overflow":"hidden"}}>
