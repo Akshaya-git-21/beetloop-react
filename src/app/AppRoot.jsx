@@ -3990,7 +3990,7 @@ class AppRoot extends React.Component {
     const division=this.state.epDivision||'SEO';
     const added=[...(this.state.tkAdded||[])];
     const baseLen=added.length;
-    const existingIds=this.allTasks().map(t=>t.id);
+    const existingIds=this._allTaskIdsEver();
     const startFmt=this.fmtDate(f.start)||'Jul 1, 2026';
     const monthWord=startFmt.split(' ')[0];
     const year=startFmt.split(', ')[1]||'2026';
@@ -4137,7 +4137,14 @@ class AppRoot extends React.Component {
     // 60 near-duplicate tasks from a single approved idea.
     const plan=this.allEpPlans().find(p=>p.name===i.effortPlan)||this.allEpPlans()[0];
     const qcUser=(this.state.users||[]).find(u=>u.roleKey==='qc');
-    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:'', kpiMode:'existing', kpiId:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
+    // Pre-fill the Effort row + KPI from whatever was already picked on a
+    // prior run (stored on the idea as effortRow/kpiName) — reopening this
+    // to top up a newly-added dependency shouldn't force re-deciding
+    // something already decided the first time; only a genuinely first-ever
+    // conversion starts these blank.
+    const row=plan&&i.effortRow?(plan.rows||[]).find(r=>r.type===i.effortRow):null;
+    const kpiMatch=i.kpiName&&i.kpiName!=='Not linked'?this.epKpiPool().find(k=>k.kpi===i.kpiName):null;
+    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:row?row.type:'', kpiMode:'existing', kpiId:kpiMatch?kpiMatch.id:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
   }
   convertData(){
     const iid=this.state.cvIdea; if(!iid) return { cvOpen:false };
@@ -4159,7 +4166,7 @@ class AppRoot extends React.Component {
     const hasMainAlready=!!i.taskId;
     const pendingDeps=deps.filter(d=>!d.taskId);
     return {
-      cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f,
+      cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f, cvIsTopUp:hasMainAlready,
       cvClose:()=>this.setState({ cvIdea:null, cvForm:{} }),
       cvStop:(e)=>e.stopPropagation(),
       cvPlanOptions:[{v:'',label:'— Select an effort plan —'}].concat(plans.map(p=>({v:p.id,label:p.id+' · '+p.name+' — '+p.division}))),
@@ -4205,7 +4212,7 @@ class AppRoot extends React.Component {
         const kpiName=f.kpiMode==='new'?f.newKpiName.trim():(k?k.kpi:'Not linked');
         const kpiUnit=f.kpiMode==='new'?(f.newKpiUnit||'units'):(k?k.unit:'');
         const kpiIdVal=f.kpiMode==='new'?'':(f.kpiId||'');
-        const existingIds=this.allTasks().map(t=>t.id);
+        const existingIds=this._allTaskIdsEver();
         const nextId=()=>{ const id=this._nextSeqCode('TSK-', existingIds, 3200); existingIds.push(id); return id; };
         const start=this.fmtDate(f.start)||this.relDate(0), end=this.fmtDate(f.end)||this.relDate(14);
         // Every generated task — main and dependency alike — inherits the

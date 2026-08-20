@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ConvertToTasksModal({ vm }) {
-  const { cvOpen, cvIdeaId, cvIdeaTitle, cvClose, cvStop, cvf,
+  const { cvOpen, cvIdeaId, cvIdeaTitle, cvIsTopUp, cvClose, cvStop, cvf,
     cvPlanOptions, cvSetPlan, cvRowOptions, cvSetRow, cvEffortInfo, cvHasRow,
     cvModeBtns, cvKpiExisting, cvKpiNew, cvKpiOptions, cvSetKpi,
     cvSetNewKpiName, cvSetNewKpiUnit, cvSetNewKpiTarget, cvPreview,
@@ -32,6 +32,12 @@ export default function ConvertToTasksModal({ vm }) {
                 <Icon name="workflow" style={{ width: 14, height: 14, flexShrink: 0 }} />
                 <span>1 task per Main Content, plus 1 per dependency (SMM/GD/SEO/...) — never more. Every task inherits this idea's Campaign, Effort and KPI automatically.</span>
               </div>
+              {Boolean(cvIsTopUp) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--verify-100)', border: '1px solid #BFE3D0', color: 'var(--verify-600)', padding: '10px 13px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
+                  <Icon name="check-circle-2" style={{ width: 14, height: 14, flexShrink: 0 }} />
+                  <span>Topping up — the Effort plan/line and KPI below are already pre-filled from when this idea was first converted. Nothing to re-pick unless you want to change it; just review and save.</span>
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>1 · Effort plan &amp; line</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
