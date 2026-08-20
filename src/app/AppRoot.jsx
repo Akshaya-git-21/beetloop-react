@@ -4150,6 +4150,14 @@ class AppRoot extends React.Component {
     const kpiPool=this.epKpiPool();
     const isNew=f.kpiMode==='new';
     const deps=i.dependencies||[];
+    // A dependency added AFTER the idea's first "Move to Tasks" run has no
+    // task of its own yet (i.taskId already set, but this one dependency's
+    // taskId is still blank) — reopening this same flow tops it up instead
+    // of only ever supporting one all-at-once conversion. pendingDeps is
+    // what THIS run will actually generate tasks for; already-generated
+    // dependencies are shown in the preview but skipped on save.
+    const hasMainAlready=!!i.taskId;
+    const pendingDeps=deps.filter(d=>!d.taskId);
     return {
       cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f,
       cvClose:()=>this.setState({ cvIdea:null, cvForm:{} }),
@@ -4172,13 +4180,23 @@ class AppRoot extends React.Component {
       cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
       cvAssignees:(this.state.users||[]).map(u=>u.name),
       cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
-      // Preview of exactly what will be generated — 1 Main Content task plus
-      // one task per dependency, each shown with its own type/assignee so
-      // there's no surprise between this screen and the task list it lands in.
-      cvPreview:[{ label:'Main Content', sub:i.title, who:f.assignee||i.owner||'—' }]
-        .concat(deps.map(d=>({ label:(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type, sub:d.notes||i.title, who:d.assignee||f.assignee||'—' }))),
-      cvCountNote:(deps.length+1)+' task'+(deps.length===0?'':'s')+' will be created — 1 main content task'+(deps.length?(' + '+deps.length+' dependency task'+(deps.length===1?'':'s')+' ('+deps.map(d=>(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).join(', ')+')'):'')+'.',
+      // Preview of exactly what THIS run will generate — 1 Main Content task
+      // plus one task per still-missing dependency, each shown with its own
+      // type/assignee. When the main task already exists (topping up a
+      // dependency added after the first conversion), it's shown as already
+      // linked instead of "to be created", and an already-generated
+      // dependency is shown but marked done rather than re-listed as new.
+      cvPreview:(hasMainAlready?[{ label:'Main Content', sub:i.title+' (already linked — '+i.taskId+')', who:'—' }]
+          :[{ label:'Main Content', sub:i.title, who:f.assignee||i.owner||'—' }])
+        .concat(deps.map(d=>({ label:(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type,
+          sub:(d.notes||i.title)+(d.taskId?(' — already linked, '+d.taskId):''), who:d.assignee||f.assignee||'—' }))),
+      cvCountNote: hasMainAlready
+        ? (pendingDeps.length
+          ? (pendingDeps.length+' new dependency task'+(pendingDeps.length===1?'':'s')+' will be created and linked to the existing main task '+i.taskId+' ('+pendingDeps.map(d=>(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).join(', ')+').')
+          : 'Every dependency already has its own task — nothing left to generate.')
+        : ((deps.length+1)+' task'+(deps.length===0?'':'s')+' will be created — 1 main content task'+(deps.length?(' + '+deps.length+' dependency task'+(deps.length===1?'':'s')+' ('+deps.map(d=>(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).join(', ')+')'):'')+'.'),
       cvSave:()=>{
+        if(hasMainAlready && !pendingDeps.length){ this.flash('Every dependency already has its own task — nothing to generate.'); return; }
         if(!f.rowType){ this.flash('Select the effort line this content delivers.'); return; }
         if(f.kpiMode==='existing'&&!f.kpiId){ this.flash('Link a KPI, or switch to Create new KPI.'); return; }
         if(f.kpiMode==='new'&&!(f.newKpiName||'').trim()){ this.flash('Name the new KPI.'); return; }
@@ -4195,15 +4213,20 @@ class AppRoot extends React.Component {
         // nothing has to be re-picked per task the way the old per-count
         // generator required.
         const shared={ campaign:plan?plan.campaign:'—', effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id, kpiId:kpiIdVal, kpi:kpiName, unit:kpiUnit||(row&&row.unit)||'articles', reviewer:f.reviewer||who, recurrence:'None', actH:0, evidence:[], status:'Assigned' };
-        const mainId=nextId();
-        const mainTask={ ...shared, id:mainId, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
+        // Topping up: the main task already exists, so reuse its id as the
+        // dep-link target instead of minting a second "Main Content" task
+        // for the same idea.
+        const mainId=hasMainAlready?i.taskId:nextId();
+        const mainTask=hasMainAlready?null:{ ...shared, id:mainId, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
           template:'Write Article', project:i.service||'Content',
           start, end, startDate:f.start||'', endDate:f.end||'',
           priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||i.owner||who,
           units:1, estH:10, division:plan?plan.division:'Content', dep:'—',
           checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
           activity:[[who,'Generated as Main Content from approved idea '+i.id,this.todayStr()]] };
-        const depTasks=(i.dependencies||[]).map(d=>{ const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+        // Only dependencies still missing their own task get one — an
+        // already-linked dependency (from a prior run) is left untouched.
+        const depTasks=pendingDeps.map(d=>{ const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
           return { ...shared, id:nextId(), name:typeLabel+' — '+i.title, desc:d.notes||('Dependent '+typeLabel+' work for "'+i.title+'".'),
             template:'Custom task', project:i.service||'Content',
             start, end, startDate:f.start||'', endDate:f.end||'',
@@ -4216,12 +4239,14 @@ class AppRoot extends React.Component {
             dep:mainId, depMode:'Sequential', dependencyId:d.id,
             checklist:[{t:typeLabel+' draft ready',done:false},{t:'Reviewed against main content',done:false}],
             activity:[[who,'Generated as "'+typeLabel+'" dependency of '+mainId+' from approved idea '+i.id,this.todayStr()]] }; });
-        const added=[mainTask, ...depTasks];
+        const added=mainTask?[mainTask, ...depTasks]:depTasks;
         this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added], cvIdea:null, cvForm:{},
           tkFilter:'All', tkFilters:{status:'All',priority:'All',assignee:'All'} });
-        this.ideaPatch(i.id,{ taskId:mainId, taskIds:added.map(t=>t.id), effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName,
+        this.ideaPatch(i.id,{ taskId:mainId, taskIds:[...(i.taskIds||[]),...added.map(t=>t.id)], effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName,
           dependencies:(i.dependencies||[]).map(d=>{ const dt=depTasks.find(x=>x.dependencyId===d.id); return dt?{...d, taskId:dt.id}:d; }) });
-        this.flash(added.length+' task'+(added.length===1?'':'s')+' generated from '+i.id+' — 1 main content task'+(depTasks.length?(' + '+depTasks.length+' dependency task'+(depTasks.length===1?'':'s')):'')+', linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".');
+        this.flash(hasMainAlready
+          ? (depTasks.length+' new dependency task'+(depTasks.length===1?'':'s')+' generated and linked to main task '+mainId+'.')
+          : (added.length+' task'+(added.length===1?'':'s')+' generated from '+i.id+' — 1 main content task'+(depTasks.length?(' + '+depTasks.length+' dependency task'+(depTasks.length===1?'':'s')):'')+', linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".'));
         added.forEach(t=>this._persistNewTask(t, f.start||null, f.end||null));
       },
     };
@@ -4244,7 +4269,10 @@ class AppRoot extends React.Component {
       taskId:i.taskId||'', hasTask:!!i.taskId,
       reused:i.reuse>0?('Reused ×'+i.reuse):'', hasReuse:i.reuse>0,
       canSubmit: canEdit && (i.status==='Idea Captured'||i.status==='Rework'),
-      canConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
+      // Stays available after the first conversion if a dependency added
+      // later (or QC-approved later) still has no task of its own — see
+      // convertData()'s hasMainAlready/pendingDeps.
+      canConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
       submit:(e)=>{ if(e)e.stopPropagation(); this.ideaPatch(i.id,{status:'Submitted for QC'}); this.flash(i.id+' sent to QC Review for approval.'); },
       convert:(e)=>{ if(e)e.stopPropagation(); this.ideaToTask(i); },
       reuseIdea:(e)=>{ if(e)e.stopPropagation(); const nid=this._nextIdeaId(); const clone={...i, id:nid, title:i.title+' — reuse', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
@@ -4443,7 +4471,7 @@ class AppRoot extends React.Component {
       idAddCmt:()=>{ const txt=((this.state.ideaCmt||{})[i.id]||'').trim(); if(!txt){ this.flash('Write a comment first.'); return; }
         this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label,text:txt,when:this.todayStr()}]});
         this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''} }); this.flash('Comment posted on '+i.id+'.'); },
-      idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && !i.taskId,
+      idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
       idConvert:()=>this.ideaToTask(i),
       idCanDelete: this.hasPerm('ideas','delete'),
       idDelete:()=>this.confirmDelete('Delete Idea?', 'Are you sure you want to delete "'+(i.title||i.id)+'"? This action cannot be undone.', ()=>this._deleteIdea(i.id)),
