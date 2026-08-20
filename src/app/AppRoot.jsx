@@ -4885,6 +4885,15 @@ class AppRoot extends React.Component {
   }
   complianceAtQc(t){ return ['Submitted','Rework','Approved','Closed'].includes(t.status); }
   complianceSubmitted(t){ return (!!(this.state.clSubmitted||{})[t.id]) || this.complianceAtQc(t); }
+  // Gate for moving a task to Completed/Submitted — checks the RAW
+  // clSubmitted flag directly, not complianceSubmitted() (which also
+  // reports true once status is already Submitted/Rework/Approved/Closed,
+  // so it can't be used as the gate for the transition INTO Submitted in
+  // the first place — that would make the check always pass). clSubmit()
+  // itself already refuses to set this flag until every line is filled AND
+  // has evidence attached, so this one flag is sufficient — no need to
+  // re-derive "every line filled" separately here.
+  clChecklistReady(t){ return !!(this.state.clSubmitted||{})[t.id]; }
   // Compliance checklist (self-scores, evidence, QC verdicts) is keyed by
   // task id and upserted whole each time any of the three pieces changes —
   // simplest correct fix given how many small mutation points there are
@@ -5813,6 +5822,7 @@ class AppRoot extends React.Component {
         return { statusCanSet:canSet, statusOptions:opts, statusVal:cur,
           setStatusSel:(e)=>{ if(e)e.stopPropagation(); const v=e.target.value;
             if(v==='Completed — send to QC'){
+              if(!this.clChecklistReady(t)){ this.flash('Complete and submit the Self-Compliance Checklist before marking '+t.id+' Completed — open the task to fill it in.'); return; }
               this.tkPatch(t.id,{ status:'Submitted' },'Marked complete — routed to QC ('+(t.reviewer||'QC team')+')');
               this.flash(t.id+' marked complete and sent to '+(t.reviewer||'the QC team')+' for review.');
             } else { this.tkPatch(t.id,{ status:v },'Status → '+v); this.flash(t.id+' → '+v+'.'); } } }; })(),
@@ -7785,7 +7795,7 @@ class AppRoot extends React.Component {
         btn('Locked — clear '+pend.length+' pending task'+(pend.length>1?'s':'')+' first','lock','var(--surface-50)','var(--ink-400)',()=>this.flash('Complete your pending (overdue) tasks before starting today’s.'),'1px solid var(--line-300)');
       }
       else if(t.status==='Assigned') btn('Start task','play','var(--verify-500)','#fff',()=>this.tkPatch(t.id,{status:'In Progress'},'Started task'));
-      if(t.status==='In Progress'||t.status==='Rework') btn(t.status==='Rework'?'Resubmit for QC':'Submit for QC','send','#7A1C46','#fff',()=>{ if(!(this.tkOv(t).evidence||[]).length){ this.flash('Attach evidence before submitting for QC.'); return; } this.tkPatch(t.id,{status:'Submitted'},'Submitted for QC with evidence'); this.flash('Submitted — awaiting QC approval.'); });
+      if(t.status==='In Progress'||t.status==='Rework') btn(t.status==='Rework'?'Resubmit for QC':'Submit for QC','send','#7A1C46','#fff',()=>{ if(!(this.tkOv(t).evidence||[]).length){ this.flash('Attach evidence before submitting for QC.'); return; } if(!this.clChecklistReady(t)){ this.flash('Complete and submit the Self-Compliance Checklist before marking this task Completed.'); return; } this.tkPatch(t.id,{status:'Submitted'},'Submitted for QC with evidence'); this.flash('Submitted — awaiting QC approval.'); });
     }
     // QC panel (approvers, submitted tasks) — feedback + reference attachments
     const qcPanel = isApprover && t.status==='Submitted';
@@ -7848,6 +7858,7 @@ class AppRoot extends React.Component {
           tkStatusOptions:opts, tkStatusVal:cur,
           tkSetStatusSel:(e)=>{ const v=e.target.value;
             if(v==='Completed — send to QC'){
+              if(!this.clChecklistReady(t)){ this.flash('Complete and submit the Self-Compliance Checklist below before marking this task Completed.'); return; }
               this.tkPatch(t.id,{ status:'Submitted' },'Marked complete — routed to QC ('+(t.reviewer||'QC team')+')');
               this.flash(t.id+' marked complete and sent to '+(t.reviewer||'the QC team')+' for review.');
             } else {
