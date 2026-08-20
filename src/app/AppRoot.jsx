@@ -5758,15 +5758,37 @@ class AppRoot extends React.Component {
     const dayF=F.day||'All';
     if(dayF!=='All') list=list.filter(t=>{ const df=this.dayDiff(t); if(df===null) return false;
       if(dayF==='Today') return df===0; if(dayF==='Tomorrow') return df===1; if(dayF==='Yesterday') return df===-1; if(dayF==='Day before') return df===-2; if(dayF==='Overdue') return df<0 && t.status!=='Approved'; return true; });
+    // Tree-order: a subtask (or anything else linked via the Dependency
+    // field) renders directly under its parent, indented, same
+    // corner-down-right + indent pattern the Content Repository page list
+    // already uses for nested pages (contentView()) — `dep` (parsed down to
+    // just the id) already means "linked to that task" for both the
+    // sequential-pipeline chain and Subtasks, so no new field is needed
+    // here either. A task whose dep-parent isn't in the current filtered
+    // list (filtered out, or the dep target doesn't exist) is shown as its
+    // own root rather than silently dropped.
+    const idsInList=new Set(list.map(t=>t.id));
+    const depParentId=(t)=>{ if(!t.dep||t.dep==='—') return null; const pid=String(t.dep).split(' ')[0]; return idsInList.has(pid)?pid:null; };
+    const byParent={};
+    list.forEach(t=>{ const pid=depParentId(t); if(pid) (byParent[pid]=byParent[pid]||[]).push(t); });
+    const roots=list.filter(t=>!depParentId(t));
+    const treeOrdered=[]; const seen=new Set();
+    const walkTree=(t,depth)=>{ if(seen.has(t.id)) return; seen.add(t.id); treeOrdered.push({t,depth}); (byParent[t.id]||[]).forEach(c=>walkTree(c,depth+1)); };
+    roots.forEach(t=>walkTree(t,0));
+    list.filter(t=>!seen.has(t.id)).forEach(t=>treeOrdered.push({t,depth:0}));
+    const depthById={}; treeOrdered.forEach(o=>{ depthById[o.t.id]=o.depth; });
+    list=treeOrdered.map(o=>o.t);
     // pending-first lock model for assignees
     const pendingOpen=isOwn?this.tkPendingOpen(person):[];
     const hasPending=pendingOpen.length>0;
     const pri=(p)=>({Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[p]||'var(--ink-400)');
     const tkRows=list.map(t=>{ const tn=this.tkTone(t.status); const df=this.dayDiff(t);
+      const depth=depthById[t.id]||0;
       const tmr=this.timerOf(t.id), tmSec=this.timerElapsed(t.id);
       const blockedBy=this.tkBlockedBy(t);
       const locked = isOwn && hasPending && df!==null && df>=0 && ['Assigned','In Progress'].includes(t.status) && !pendingOpen.some(p=>p.id===t.id);
       return {
+      depth, indent:(depth*26)+'px', isChild:depth>0,
       tmRunning:tmr.running, tmElapsed:this.hms(tmSec), tmHasTime:tmSec>0,
       tmShow:(t.assignee===person||['manager','team_lead','admin'].includes(rk)) && t.status!=='Approved' && t.status!=='Closed',
       tmBtnStyle:'display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid '+(tmr.running?'var(--danger-600)':'var(--line-300)')+';background:'+(tmr.running?'var(--danger-600)':'var(--paper)')+';color:'+(tmr.running?'#fff':'var(--ink-700)'),

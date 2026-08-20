@@ -326,7 +326,12 @@ Action
 <div style={{"minWidth":"0"}}>
 
 
-<div style={{"display":"flex","alignItems":"center","gap":"7px"}}>
+<div style={cssTextToObject(`display:flex;align-items:center;gap:7px;padding-left:${t.indent||'0px'}`)}>
+{Boolean(t.isChild) && (
+<React.Fragment>
+<Icon name={"corner-down-right"} style={{"width":"13px","height":"13px","color":"var(--orchid-400)","flexShrink":"0"}} />
+</React.Fragment>
+)}
 <span style={cssTextToObject(`width:7px;height:7px;border-radius:99px;background:${t.priDot};flex-shrink:0`)} />
 <span style={{"fontSize":"13.5px","fontWeight":"700","color":"var(--ink-900)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
 {t.name}
