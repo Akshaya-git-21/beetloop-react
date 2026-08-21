@@ -10718,7 +10718,7 @@ class AppRoot extends React.Component {
       const key = this.state.repoDetailKey;
       const rows = scoped(this.recordsFor(key));
       return {
-        tableCols:['Name','Type','Owner','Status','Actions'],
+        tableCols:['Name','Type','Status','Owner','Actions'],
         tableRows: rows.map(row=>({c0:row.name, c0sub:'', c1:row.type, ...tag(row.status,statusTone(row.status)), c3:row.owner,
           ...act(canEdit?'Edit':'View', canEdit?editAction(key,row):viewer, canEdit)})),
         tableBackLabel:'Back to Repositories',
