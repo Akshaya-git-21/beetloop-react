@@ -4437,7 +4437,7 @@ class AppRoot extends React.Component {
     return {
       idDrawerOpen:true,
       idD:{ id:i.id, title:i.title, status:i.status, statusBg:tn.bg, statusColor:tn.c, objective:i.objective||'—' },
-      idMeta:[['Content type',i.type],['Idea source',i.source],['Publication',(i.pubDest||'Internal')+(i.pubDest==='External'?(i.extCat?(' · '+i.extCat):''):(i.intType?(' · '+i.intType):''))],['Target URL',i.pubDest==='External'?(i.extUrl||'—'):(i.intUrl||'—')],['Working title',i.workingTitle||'—'],['Category',(i.category||'—')+(i.subCategory&&i.subCategory.indexOf('—')!==0?(' / '+i.subCategory):'')],['Priority',i.priority],['Owner',i.owner],['Service',i.service],['Campaign',i.campaign||'—'],['Effort plan',i.effortPlan||'—'],['Quarter',i.quarter],['Expected publish',i.publishMonth],['Primary keyword',i.keyword||'—'],['Secondary keywords',i.secondaryKw||'—'],['Search intent',i.intent||'—'],['Topic cluster',i.cluster||'—'],['Pillar page',i.pillar||'—'],['Audience',i.audience||'—'],['Journey stage',i.journey||'—'],['Content goal',i.goal||'—'],['Target word count',(i.wcMin||i.wcMax)?((i.wcMin||'?')+' – '+(i.wcMax||'?')+' words'):(i.wordCount||'—')],['Recommended length',i.recLength||'—'],['Reading level',i.readLevel||'—'],['Meta title',i.metaTitle||'—'],['Meta description',i.metaDesc||'—'],['URL slug',i.slug||'—'],['Featured image suggestion',i.featImg||'—'],['Internal links',i.internalLinks||'—'],['External references',i.extRefs||'—'],['Competitor URLs',i.competitorUrls||'—'],['Reason / background',i.reason||'—'],['Notes',i.notes||'—'],['Scientific references',(i.refs||[]).length?(i.refs.map(r=>r.title+(r.source?(' — '+r.source):'')+(r.year?(' ('+r.year+')'):'')).join(' · ')):'—'],['Statistics & data',(i.stats||[]).length?(i.stats.map(s=>s.stat).join(' · ')):'—'],['Trusted external resources',(i.extRes||[]).length?(i.extRes.map(x=>x.name+(x.url?(' — '+x.url):'')).join(' · ')):'—'],['Internal resources',(i.intRes||[]).length?(i.intRes.map(x=>x.name+' ('+(x.itype||'PDF')+')').join(' · ')):'—'],['Attachments & images',(i.attachments||[]).length?(i.attachments.map(a=>a.name+' ['+(a.category||a.kind)+']').join(' · ')):'—'],['Linked task',i.taskId||'Not yet moved to tasks']].map(m=>({k:m[0],v:m[1]})),
+      idMeta:[['Content type',i.type],['Idea source',i.source],['Publication',(i.pubDest||'Internal')+(i.pubDest==='External'?(i.extCat?(' · '+i.extCat):''):(i.intType?(' · '+i.intType):''))],['Target URL',i.pubDest==='External'?(i.extUrl||'—'):(i.intUrl||'—')],['Working title',i.workingTitle||'—'],['Category',(i.category||'—')+(i.subCategory&&i.subCategory.indexOf('—')!==0?(' / '+i.subCategory):'')],['Priority',i.priority],['Owner',i.owner],['Service',i.service],['Campaign',i.campaign||'—'],['Effort plan',i.effortPlan||'—'],['Quarter',i.quarter],['Expected publish',i.publishMonth],['Primary keyword',i.keyword||'—'],['Secondary keywords',i.secondaryKw||'—'],['Search intent',i.intent||'—'],['Topic cluster',i.cluster||'—'],['Pillar page',i.pillar||'—'],['Audience',i.audience||'—'],['Journey stage',i.journey||'—'],['Content goal',i.goal||'—'],['Target word count',(i.wcMin||i.wcMax)?((i.wcMin||'?')+' – '+(i.wcMax||'?')+' words'):(i.wordCount||'—')],['Recommended length',i.recLength||'—'],['Reading level',i.readLevel||'—'],['Meta title',i.metaTitle||'—'],['Meta description',i.metaDesc||'—'],['URL slug',i.slug||'—'],['Featured image suggestion',i.featImg||'—'],['Internal links',i.internalLinks||'—'],['External references',i.extRefs||'—'],['Competitor URLs',i.competitorUrls||'—'],['Reason / background',i.reason||'—'],['Notes',i.notes||'—'],['Scientific references',(i.refs||[]).length?(i.refs.map(r=>r.title+(r.source?(' — '+r.source):'')+(r.year?(' ('+r.year+')'):'')).join(' · ')):'—'],['Statistics & data',(i.stats||[]).length?(i.stats.map(s=>s.stat).join(' · ')):'—'],['Trusted external resources',(i.extRes||[]).length?(i.extRes.map(x=>x.name+(x.url?(' — '+x.url):'')).join(' · ')):'—'],['Internal resources',(i.intRes||[]).length?(i.intRes.map(x=>x.name+' ('+(x.itype||'PDF')+')').join(' · ')):'—'],['Attachments & images',(i.attachments||[]).length?(i.attachments.map(a=>a.name+' ['+(a.category||a.kind)+']').join(' · ')):'—']].map(m=>({k:m[0],v:m[1]})),
       idHasFb:!!i.qcFeedback, idFb:i.qcFeedback||'',
       idFbBg: i.status==='Rework'?'var(--danger-100)':'var(--verify-100)', idFbBorder: i.status==='Rework'?'#F1C9CF':'#BFE3D0', idFbColor: i.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
       idCanAct: canAct && i.status==='Submitted for QC',
@@ -4451,6 +4451,14 @@ class AppRoot extends React.Component {
       // Main Content → Dependent Work (SMM/GD/SEO/...). Kept as child rows
       // on THIS idea (not separate Content Ideas) so they can never drift
       // into unrelated-looking items — see ideaAddDependency.
+      // idMainRow anchors the tree: shown as the parent row with its own
+      // Assignee column so it's never ambiguous which assignee belongs to
+      // the Main Content vs. a dependency listed under it — the confusion
+      // the flat list used to cause when everything read as one level.
+      idMainRow:{ title:i.title, typeLabel:i.type||'Content', assignee:i.owner||'Unassigned',
+        statusLabel:i.status, statusBg:tn.bg, statusColor:tn.c,
+        taskId:i.taskId||'', hasTask:!!i.taskId,
+        open:i.taskId?(()=>this.setState({ ideaOpen:null, route:'tasks', tkOpen:i.taskId })):null },
       idDepTypeOptions:this.DEP_TYPES().map(t=>({v:t.key,label:t.label})),
       idDependencies:(i.dependencies||[]).map(d=>{ const st=this.ideaDepStatusTone(d.status); const qt=this.ideaDepQcTone(d.qcStatus);
         const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
@@ -4458,6 +4466,7 @@ class AppRoot extends React.Component {
           status:d.status, statusBg:st.bg, statusColor:st.c,
           qcStatus:d.qcStatus, qcBg:qt.bg, qcColor:qt.c,
           taskId:d.taskId||'', hasTask:!!d.taskId,
+          open:d.taskId?(()=>this.setState({ ideaOpen:null, route:'tasks', tkOpen:d.taskId })):null,
           statusOptions:['Pending','In Progress','Ready for QC','Done'],
           setStatus:(e)=>this.ideaUpdateDependency(i.id, d.id, {status:e.target.value}),
           remove:()=>this.ideaRemoveDependency(i.id, d.id) }; }),
