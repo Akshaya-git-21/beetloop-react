@@ -2,7 +2,8 @@ import React from 'react';
 import Icon from '../../components/Icon.jsx';
 
 export default function CreateTaskModal({ vm }) {
-  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCampaignPageOptions, tkHasCampaignPages, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortScopedToCampaign, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPage, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const { stop, tkAssigneeOptions, tkCampaignOptions, tkCampaignTypeOptions, tkCampaignTypeChecklists, tkCampaignPageOptions, tkHasCampaignPages, tkCloseNew, tkCode, tkContentTypeOptions, tkDepOptions, tkDivisionOptions, tkEffortOptions, tkEffortScopedToCampaign, tkEffortRemainingHint, tkEffortRowOptions, tkEffortRowVal, tkEpProgress, tkHasEpProgress, tkHasPlan, tkKpiOptions, tkKpiNote, tkNew, tkPlanInfo, tkReviewerOptions, tkSetAssignee, tkSetCampaign, tkSetCampaignType, tkSetContentType, tkSetDep, tkSetDepMode, tkSetDesc, tkSetDivision, tkSetEffort, tkSetEffortRow, tkSetEnd, tkSetEst, tkSetKpi, tkSetName, tkSetPage, tkSetPriority, tkSetRecurrence, tkSetReviewer, tkSetStart, tkSetStartTime, tkSetEndTime, tkSetTemplate, tkSetUnits, tkSubmitNew, tkTplChecklist, tkTplOptions, tkf } = vm;
+  const ep = tkEpProgress || {};
   return (
     <React.Fragment>
 {Boolean(tkNew) && (
@@ -358,7 +359,7 @@ Effort (from this plan)
 {Boolean(tkHasPlan) && (
 <React.Fragment>
 
-            
+
 <div style={{"display":"flex","alignItems":"center","gap":"7px","fontSize":"12px","color":"var(--ink-500)"}}>
 <Icon name={"info"} style={{"width":"13px","height":"13px","color":"var(--orchid-600)"}} />
 <span>
@@ -366,7 +367,26 @@ Effort (from this plan)
 </span>
 </div>
 
-          
+
+</React.Fragment>
+)}
+
+{Boolean(tkHasEpProgress) && (
+<React.Fragment>
+<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"12px 14px","display":"flex","flexDirection":"column","gap":"8px"}}>
+<div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","fontSize":"11.5px","fontWeight":"700","letterSpacing":".04em","textTransform":"uppercase","color":"var(--ink-400)"}}>
+<span>Effort Plan Progress</span>
+<span style={{"color":"var(--ink-700)"}}>{ep.assigned} / {ep.total} completed</span>
+</div>
+<div style={{"height":"8px","borderRadius":"99px","background":"var(--line-200)","overflow":"hidden"}}>
+<div style={{"height":"100%","borderRadius":"99px","width":ep.pct,"background":"var(--verify-500)"}} />
+</div>
+<div style={{"display":"flex","gap":"18px","fontSize":"12px","color":"var(--ink-600)"}}>
+<span><strong style={{"color":"var(--ink-900)"}}>{ep.total}</strong> total Efforts</span>
+<span><strong style={{"color":"var(--verify-600)"}}>{ep.assigned}</strong> assigned</span>
+<span><strong style={{"color":"var(--warn-600)"}}>{ep.pending}</strong> pending</span>
+</div>
+</div>
 </React.Fragment>
 )}
 

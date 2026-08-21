@@ -8192,10 +8192,24 @@ class AppRoot extends React.Component {
         // row's own `monthly` target is never mutated, so "remaining" is
         // always derivable and other rows in the same plan are untouched.
         const remainingFor=(r)=>Math.max(0,(r.monthly||0)-(r.usedUnits||0));
+        // Effort Plan Progress: how many of this plan's Efforts (rows) have
+        // at least one task ever created against them — derived live from
+        // allTasks() (not a stored counter) so it updates automatically the
+        // instant a task is created, edited off the plan, or deleted; no
+        // separate field to keep in sync.
+        const tasks=this.allTasks();
+        const epProgress=plan?(()=>{
+          const total=plan.rows.length;
+          const assigned=plan.rows.filter(r=>tasks.some(t=>t.effortPlan===plan.name && t.effortType===r.type)).length;
+          const pending=total-assigned;
+          const pct=total?Math.round((assigned/total)*100):0;
+          return { total, assigned, pending, pct:pct+'%' };
+        })():null;
         return {
           tkSetEffort:(e)=>this.setState({ tkForm:{...f, effortPlan:e.target.value, effortRow:'', units:'', estH:''} }),
           tkHasPlan:!!plan,
           tkPlanInfo: plan ? (plan.division+' · '+plan.period+' · owner: '+plan.owner) : '',
+          tkHasEpProgress:!!epProgress, tkEpProgress:epProgress,
           // Fully-utilized rows (0 remaining against target) are listed but
           // disabled rather than dropped — an assignee should still be able
           // to see where the effort went, just not pick it for new work.
