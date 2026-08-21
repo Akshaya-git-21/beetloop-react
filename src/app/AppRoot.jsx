@@ -2058,12 +2058,22 @@ class AppRoot extends React.Component {
       submitUser:()=>this.submitUser(),
       showRecordModal:this.state.showRecordModal, recordKind:this.state.recordKind, recordForm:this.state.recordForm,
       recordLabel:this._recordLabel(this.state.recordKind),
+      recordIsCustom:this._recordIsCustomKind(this.state.recordKind),
       closeRecordModal:()=>this.setState({ showRecordModal:false }),
       recordSetName:e=>this.setState({ recordForm:{...this.state.recordForm, name:e.target.value} }),
       recordSetType:e=>this.setState({ recordForm:{...this.state.recordForm, type:e.target.value} }),
       recordSetOwner:e=>this.setState({ recordForm:{...this.state.recordForm, owner:e.target.value} }),
       recordOwnerOptions:(this.state.users||[]).map(u=>u.name),
       recordSetStatus:e=>this.setState({ recordForm:{...this.state.recordForm, status:e.target.value} }),
+      recordSetDesc:e=>this.setState({ recordForm:{...this.state.recordForm, desc:e.target.value} }),
+      recordSetBrand:e=>this.setState({ recordForm:{...this.state.recordForm, brand:e.target.value} }),
+      recordBrandOptions:this.BRAND_LIST(),
+      recordSetLink:e=>this.setState({ recordForm:{...this.state.recordForm, link:e.target.value} }),
+      recordSetQc:e=>this.setState({ recordForm:{...this.state.recordForm, qc:e.target.value} }),
+      recordQcOptions:['Pending','Approved','Rework'],
+      recordAttachments:((this.state.recordForm||{}).attachments||[]).map((n,ai)=>({ name:n,
+        remove:()=>this.setState({ recordForm:{...this.state.recordForm, attachments:((this.state.recordForm||{}).attachments||[]).filter((x,xi)=>xi!==ai)} }) })),
+      recordAttachOpen:()=>this.setState({ fpTarget:'recordForm', fpTitle:'Attach files' }),
       saveRecord:()=>this._saveRecord(),
       recordEditKey:this.state.recordEditKey, deleteRecord:()=>this.confirmDelete('Delete Record?', 'Are you sure you want to delete this record? This action cannot be undone.', ()=>this._deleteRecord()),
       uf:this.state.uf,
@@ -8587,36 +8597,64 @@ class AppRoot extends React.Component {
     if(mapped.length) this.setState({ users:mapped });
   }
 
+  // Desc/Brand/Link/QC Review/Attachments only apply to a genuinely custom
+  // repository (Operations ideas and anything else the user creates) — the
+  // two original demo kinds (projects/campaigns) keep their plain Name/Type/
+  // Owner/Status shape untouched.
+  _recordIsCustomKind(kind){ return kind!=='projects' && kind!=='campaigns'; }
+  // A record loaded from Supabase (_loadRecords) carries a 'record-' prefix
+  // on its local id to keep it visibly distinct from a seed row's synthetic
+  // key ('projects#seed#0' etc.) — the real records.id column (a uuid)
+  // never has it, so any .eq('id', …) call must strip it first or Postgres
+  // rejects the string outright ("invalid input syntax for type uuid").
+  _realRecordId(id){ return String(id).indexOf('record-')===0 ? id.slice(7) : id; }
+  // desc/brand/link/qc/attachments are a later addition (schema_v31.sql) to
+  // the generic `records` table — kept as a separate best-effort write, same
+  // reasoning as _persistTaskContentType: the core insert/update above must
+  // keep working even before that migration has been applied, so a missing
+  // column only drops these extra fields silently instead of breaking
+  // record creation/editing entirely.
+  _persistRecordExtra(id, extra){
+    if(!id) return;
+    supabase.from('records').update({ description:extra.desc||'', brand:extra.brand||'', link:extra.link||'', qc_review:extra.qc||'Pending', attachments:extra.attachments||[] }).eq('id', this._realRecordId(id)).then(({error})=>{
+      if(error) console.warn('[supabase] record extra-fields save failed — has schema_v31.sql (records description/brand/link/qc_review/attachments columns) been applied?', error.message);
+    });
+  }
   _saveRecord(){
     const editKey=this.state.recordEditKey;
     if(!this.hasPerm('repositories', editKey!=null?'edit':'create')){ this.flash('You do not have permission to '+(editKey!=null?'edit':'create')+' repository records.'); return; }
     const f=this.state.recordForm||{};
     const kind=this.state.recordKind;
+    const isCustom=this._recordIsCustomKind(kind);
     if(!f.name||!f.name.trim()){ this.flash('Enter a name.'); return; }
+    if(isCustom && !(f.desc||'').trim()){ this.flash('Enter a description.'); return; }
     const label=this._recordLabel(kind);
+    const extra={ desc:f.desc||'', brand:f.brand||'', link:f.link||'', qc:f.qc||'Pending', attachments:f.attachments||[] };
 
     if(editKey==null){
       // create
-      const rec={ id:kind+'-local-'+Date.now(), kind, name:f.name.trim(), type:f.type||'', owner:f.owner||'', status:f.status||'Draft' };
+      const rec={ id:kind+'-local-'+Date.now(), kind, name:f.name.trim(), type:f.type||'', owner:f.owner||'', status:f.status||'Draft', ...(isCustom?extra:{}) };
       this.setState({ recordsAdded:[...(this.state.recordsAdded||[]), rec], showRecordModal:false });
       this.flash(label+' "'+rec.name+'" created.');
       supabase.from('records').insert({
         kind, name:rec.name, type:rec.type, owner:rec.owner, status:rec.status,
         created_by:this.state.authUser?this.state.authUser.id:null,
-      }).then(({error})=>{
-        if(error) console.warn('[supabase] record insert failed:', error.message);
+      }).select('id').then(({data,error})=>{
+        if(error){ console.warn('[supabase] record insert failed:', error.message); return; }
+        if(isCustom && data && data[0]) this._persistRecordExtra(data[0].id, extra);
       });
       return;
     }
 
     if(this.state.recordIsReal){
       // edit a Supabase-backed record
-      const recordsAdded=this.state.recordsAdded.map(r=>r.id===editKey?{...r,name:f.name.trim(),type:f.type,owner:f.owner,status:f.status}:r);
+      const recordsAdded=this.state.recordsAdded.map(r=>r.id===editKey?{...r,name:f.name.trim(),type:f.type,owner:f.owner,status:f.status, ...(isCustom?extra:{})}:r);
       this.setState({ recordsAdded, showRecordModal:false });
       this.flash(label+' "'+f.name.trim()+'" updated.');
-      supabase.from('records').update({ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status }).eq('id', editKey).then(({error})=>{
+      supabase.from('records').update({ name:f.name.trim(), type:f.type, owner:f.owner, status:f.status }).eq('id', this._realRecordId(editKey)).then(({error})=>{
         if(error) console.warn('[supabase] record update failed:', error.message);
       });
+      if(isCustom) this._persistRecordExtra(editKey, extra);
     } else {
       // Editing a demo/seed record (RECORDS_SEED) — its synthetic key
       // ('projects#seed#0' etc.) isn't a real records.id, so this upserts
@@ -8642,7 +8680,7 @@ class AppRoot extends React.Component {
     if(editKey==null) return;
     if(this.state.recordIsReal){
       this.setState({ recordsAdded:this.state.recordsAdded.filter(r=>r.id!==editKey), showRecordModal:false });
-      supabase.from('records').delete().eq('id', editKey).then(({error})=>{
+      supabase.from('records').delete().eq('id', this._realRecordId(editKey)).then(({error})=>{
         if(error) console.warn('[supabase] record delete failed:', error.message);
       });
     } else {
@@ -8666,7 +8704,8 @@ class AppRoot extends React.Component {
     // Projects/Campaigns rows (RECORDS_SEED) — those go into recordOverrides
     // keyed by that seed_key, same overlay recordsFor() already reads.
     // Genuinely new records (seed_key null) go into recordsAdded as before.
-    const mapped=rows.filter(r=>!r.seed_key).map(r=>({ id:'record-'+r.id, kind:r.kind, name:r.name, type:r.type||'', owner:r.owner||'', status:r.status||'Draft' }));
+    const mapped=rows.filter(r=>!r.seed_key).map(r=>({ id:'record-'+r.id, kind:r.kind, name:r.name, type:r.type||'', owner:r.owner||'', status:r.status||'Draft',
+      desc:r.description||'', brand:r.brand||'', link:r.link||'', qc:r.qc_review||'Pending', attachments:r.attachments||[] }));
     const overrides={};
     rows.filter(r=>r.seed_key).forEach(r=>{ overrides[r.seed_key]={ name:r.name, type:r.type, owner:r.owner, status:r.status, deleted:r.deleted }; });
     this.setState({ recordsAdded:mapped, recordOverrides:overrides });
@@ -10577,7 +10616,8 @@ class AppRoot extends React.Component {
       return { key, name:ov&&ov.name!=null?ov.name:r[0], type:ov&&ov.type!=null?ov.type:r[1], owner:ov&&ov.owner!=null?ov.owner:r[2], status:ov&&ov.status!=null?ov.status:r[3], isReal:false };
     }).filter(Boolean);
     const addedRows = (this.state.recordsAdded||[]).filter(r=>r.kind===kind && !r.deleted)
-      .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true }));
+      .map(r=>({ key:r.id, name:r.name, type:r.type||'—', owner:r.owner||'—', status:r.status, isReal:true,
+        desc:r.desc||'', brand:r.brand||'', link:r.link||'', qc:r.qc||'Pending', attachments:r.attachments||[] }));
     return addedRows.concat(seedRows);
   }
   permissionsData(){
@@ -10710,7 +10750,8 @@ class AppRoot extends React.Component {
 
     const statusTone=(s)=>({'On track':'ok','Live':'ok','In progress':'info','Scheduled':'info','Planned':'info','At risk':'warn','Draft':'draft'}[s]||'info');
     const editAction=(kind,row)=>()=>this.setState({ showRecordModal:true, recordKind:kind, recordEditKey:row.key, recordIsReal:row.isReal,
-      recordForm:{ name:row.name, type:row.type==='—'?'':row.type, owner:row.owner==='—'?'':row.owner, status:row.status } });
+      recordForm:{ name:row.name, type:row.type==='—'?'':row.type, owner:row.owner==='—'?'':row.owner, status:row.status,
+        desc:row.desc||'', brand:row.brand||'', link:row.link||'', qc:row.qc||'Pending', attachments:row.attachments||[] } });
     // A custom repository has been opened from the Repositories list — show
     // its records (reuses the same Supabase-backed records CRUD originally
     // built for Projects/Campaigns, generalized to any repository key).
@@ -10725,7 +10766,7 @@ class AppRoot extends React.Component {
         tableBackAction:()=>this.setState({ repoDetailKey:null }),
         tableAddLabel: canEdit ? ('+ Add '+this._recordLabel(key).toLowerCase()) : '',
         tableAddAction:()=>this.setState({ showRecordModal:true, recordKind:key, recordEditKey:null, recordIsReal:true,
-          recordForm:{ name:'', type:'', owner:'', status:'Draft' } }),
+          recordForm:{ name:'', type:'', owner:'', status:'Draft', desc:'', brand:'', link:'', qc:'Pending', attachments:[] } }),
       };
     }
     // repositories are real records with live counts, and Admin can create new ones
@@ -10782,6 +10823,7 @@ class AppRoot extends React.Component {
     else if(t==='ticket'){ const f=this.state.tktForm||{}; this.setState({ tktForm:{...f, files:[...(f.files||[]), ...names]} }); }
     else if(t==='ticketReply') this.setState({ tktReplyFiles:[...(this.state.tktReplyFiles||[]), ...names] });
     else if(t==='comment') this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]), ...names] });
+    else if(t==='recordForm'){ const rf=this.state.recordForm||{}; this.setState({ recordForm:{...rf, attachments:[...(rf.attachments||[]), ...names]} }); }
     else if(t==='checkin'){ const cf=this.state.ciForm||{}; this.setState({ ciForm:{...cf, files:[...(cf.files||[]), ...names]} }); }
     else if(t.indexOf('qcref:')===0){ const id=t.slice(6); const refs={...(this.state.qcRef||{})};
       const cur=refs[id]||{files:[],url:''}; refs[id]={...cur, files:[...(cur.files||[]), ...names]}; this.setState({ qcRef:refs }); }
