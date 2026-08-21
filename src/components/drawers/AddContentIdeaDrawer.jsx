@@ -1244,7 +1244,7 @@ Drag & drop files here or click to upload
 
               
 <div style={{"fontSize":"11px","color":"var(--ink-400)","marginTop":"3px"}}>
-Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG (Max 20 MB per file)
+Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG (Max 10 MB per file)
 </div>
 
             

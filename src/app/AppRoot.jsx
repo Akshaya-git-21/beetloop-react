@@ -10871,13 +10871,13 @@ class AppRoot extends React.Component {
       // Supabase (file_blobs) so this exact attachment previews/downloads
       // for every user, in any session, not just this one browser tab.
       fpFilesPicked:(e)=>{
-        const MAX_BYTES=1024*1024;
+        const MAX_BYTES=10*1024*1024;
         const picked=Array.from(e.target.files||[]);
         e.target.value='';
         if(!picked.length) return;
         const oversized=picked.filter(f=>f.size>MAX_BYTES);
         const files=picked.filter(f=>f.size<=MAX_BYTES);
-        if(oversized.length) this.flash(oversized.map(f=>f.name).join(', ')+' — over the 1 MB attachment limit. Not uploaded.');
+        if(oversized.length) this.flash(oversized.map(f=>f.name).join(', ')+' — over the 10 MB attachment limit. Not uploaded.');
         if(!files.length) return;
         const names=files.map(f=>f.name);
         this.setState({ fpTarget:null, fpSel:[], fpName:'' });
