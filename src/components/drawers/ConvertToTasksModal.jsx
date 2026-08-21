@@ -7,7 +7,7 @@ export default function ConvertToTasksModal({ vm }) {
     cvPlanOptions, cvSetPlan, cvRowOptions, cvSetRow, cvEffortInfo, cvHasRow,
     cvModeBtns, cvKpiExisting, cvKpiNew, cvKpiOptions, cvSetKpi,
     cvSetNewKpiName, cvSetNewKpiUnit, cvSetNewKpiTarget, cvPreview,
-    cvAssignees, cvSetAssignee, cvSetStart, cvSetEnd, cvReviewers, cvSetReviewer,
+    cvAssignees, cvReviewers, cvSetReviewer,
     cvCountNote, cvSave } = vm;
   const f = cvf || {};
   return (
@@ -75,21 +75,28 @@ export default function ConvertToTasksModal({ vm }) {
               </div>
               <div>
                 <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>3 · Tasks to generate</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                <div style={{ fontSize: 11.5, color: 'var(--ink-500)', marginBottom: 8 }}>Each task below is scheduled and assigned independently — Main Content and every dependency get their own Assignee, Start and End date.</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
                   {(cvPreview || []).map((p, pi) => (
-                    <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 10, padding: '8px 11px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: pi === 0 ? 'var(--verify-600)' : 'var(--orchid-700)', minWidth: 96 }}>{p.label}</span>
-                      <span style={{ fontSize: 12, color: 'var(--ink-700)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.sub}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-500)' }}>{p.who}</span>
+                    <div key={p.key || pi} style={{ background: 'var(--surface-50)', border: '1px solid var(--line-200)', borderRadius: 10, padding: '9px 11px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: pi === 0 ? 'var(--verify-600)' : 'var(--orchid-700)', minWidth: 96 }}>{p.label}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ink-700)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.sub}</span>
+                      </div>
+                      {p.locked ? (
+                        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 6 }}>Already generated — its assignee and dates were set when that task was created.</div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '.9fr 1fr 1fr', gap: 7, marginTop: 8 }}>
+                          <select value={p.assignee || ''} onChange={p.setAssignee} style={{ minWidth: 0, padding: '8px 10px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 12, background: 'var(--paper)' }}>
+                            <option value="">Assignee…</option>
+                            {(cvAssignees || []).map((a, ai) => <option key={ai} value={a}>{a}</option>)}
+                          </select>
+                          <input type="date" value={p.start || ''} onChange={p.setStart} style={{ minWidth: 0, padding: '7px 9px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 12, outline: 'none', color: 'var(--ink-700)' }} />
+                          <input type="date" value={p.end || ''} onChange={p.setEnd} style={{ minWidth: 0, padding: '7px 9px', border: '1px solid var(--line-300)', borderRadius: 9, fontSize: 12, outline: 'none', color: 'var(--ink-700)' }} />
+                        </div>
+                      )}
                     </div>
                   ))}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '.9fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <select value={f.assignee || ''} onChange={cvSetAssignee} style={{ minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, background: 'var(--paper)' }}>
-                    {(cvAssignees || []).map((a, ai) => <option key={ai} value={a}>{a}</option>)}
-                  </select>
-                  <input type="date" value={f.start || ''} onChange={cvSetStart} style={{ minWidth: 0, padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none', color: 'var(--ink-700)' }} />
-                  <input type="date" value={f.end || ''} onChange={cvSetEnd} style={{ minWidth: 0, padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, outline: 'none', color: 'var(--ink-700)' }} />
                 </div>
                 <select value={f.reviewer || ''} onChange={cvSetReviewer} style={{ width: '100%', minWidth: 0, padding: '10px 12px', border: '1px solid var(--line-300)', borderRadius: 11, fontSize: 12.5, background: 'var(--paper)' }}>
                   {(cvReviewers || []).map((r, ri) => <option key={ri} value={r}>{r}</option>)}

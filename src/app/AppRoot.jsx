@@ -4144,7 +4144,17 @@ class AppRoot extends React.Component {
     // conversion starts these blank.
     const row=plan&&i.effortRow?(plan.rows||[]).find(r=>r.type===i.effortRow):null;
     const kpiMatch=i.kpiName&&i.kpiName!=='Not linked'?this.epKpiPool().find(k=>k.kpi===i.kpiName):null;
-    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:row?row.type:'', kpiMode:'existing', kpiId:kpiMatch?kpiMatch.id:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', assignee:i.owner||this.currentPerson(), start:'', end:'', reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
+    const hasMainAlready=!!i.taskId;
+    const pendingDeps=(i.dependencies||[]).filter(d=>!d.taskId);
+    // Per-row Assignee/Start/End — Main Content and every still-pending
+    // dependency (Web Developer, SEO, ...) get their own row here, keyed
+    // by 'main' and the dependency's own id, so each generated task can be
+    // scheduled and assigned independently instead of one shared set of
+    // controls stamping the whole batch identically.
+    const rows={};
+    if(!hasMainAlready) rows.main={ assignee:i.owner||this.currentPerson(), start:'', end:'' };
+    pendingDeps.forEach(d=>{ rows[d.id]={ assignee:d.assignee||this.currentPerson(), start:'', end:'' }; });
+    this.setState({ cvIdea:i.id, cvForm:{ planId:plan?plan.id:'', rowType:row?row.type:'', kpiMode:'existing', kpiId:kpiMatch?kpiMatch.id:'', newKpiName:'', newKpiUnit:'', newKpiTarget:'', rows, reviewer:qcUser?(qcUser.name+' (QC)'):this.currentPerson() } });
   }
   convertData(){
     const iid=this.state.cvIdea; if(!iid) return { cvOpen:false };
@@ -4165,6 +4175,9 @@ class AppRoot extends React.Component {
     // dependencies are shown in the preview but skipped on save.
     const hasMainAlready=!!i.taskId;
     const pendingDeps=deps.filter(d=>!d.taskId);
+    const rows=f.rows||{};
+    const rowVal=(key)=>rows[key]||{assignee:'',start:'',end:''};
+    const setRow=(key,field)=>(e)=>this.setState({ cvForm:{...f, rows:{...rows, [key]:{...rowVal(key), [field]:e.target.value}}} });
     return {
       cvOpen:true, cvIdeaTitle:i.title, cvIdeaId:i.id, cvf:f, cvIsTopUp:hasMainAlready,
       cvClose:()=>this.setState({ cvIdea:null, cvForm:{} }),
@@ -4184,19 +4197,31 @@ class AppRoot extends React.Component {
         set:()=>this.setState({ cvForm:{...f,kpiMode:m.k} }) })),
       cvKpiOptions:[{v:'',label:'— Select a KPI —'}].concat(kpiPool.map(k=>({v:k.id,label:k.kpi+' — '+k.who+' ('+k.target+' '+k.unit+')'}))),
       cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
-      cvSetAssignee:set('assignee'), cvSetStart:set('start'), cvSetEnd:set('end'), cvSetReviewer:set('reviewer'),
+      cvSetReviewer:set('reviewer'),
       cvAssignees:(this.state.users||[]).map(u=>u.name),
       cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       // Preview of exactly what THIS run will generate — 1 Main Content task
-      // plus one task per still-missing dependency, each shown with its own
-      // type/assignee. When the main task already exists (topping up a
-      // dependency added after the first conversion), it's shown as already
-      // linked instead of "to be created", and an already-generated
-      // dependency is shown but marked done rather than re-listed as new.
-      cvPreview:(hasMainAlready?[{ label:'Main Content', sub:i.title+' (already linked — '+i.taskId+')', who:'—' }]
-          :[{ label:'Main Content', sub:i.title, who:f.assignee||i.owner||'—' }])
-        .concat(deps.map(d=>({ label:(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type,
-          sub:(d.notes||i.title)+(d.taskId?(' — already linked, '+d.taskId):''), who:d.assignee||f.assignee||'—' }))),
+      // plus one task per still-missing dependency. Each still-pending row
+      // (Main Content, Web Developer, SEO, ...) gets its own Assignee/Start/
+      // End controls here so every task can be scheduled independently
+      // instead of one shared set of fields stamping the whole batch. When
+      // the main task already exists (topping up a dependency added after
+      // the first conversion), or a dependency already has its own task, that
+      // row is shown locked/read-only instead of editable.
+      cvPreview:(hasMainAlready
+          ?[{ key:'main', label:'Main Content', sub:i.title+' (already linked — '+i.taskId+')', locked:true }]
+          :[{ key:'main', label:'Main Content', sub:i.title, locked:false,
+              assignee:rowVal('main').assignee, setAssignee:setRow('main','assignee'),
+              start:rowVal('main').start, setStart:setRow('main','start'),
+              end:rowVal('main').end, setEnd:setRow('main','end') }])
+        .concat(deps.map(d=>{
+          const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+          if(d.taskId) return { key:d.id, label:typeLabel, sub:(d.notes||i.title)+' — already linked, '+d.taskId, locked:true };
+          return { key:d.id, label:typeLabel, sub:d.notes||i.title, locked:false,
+            assignee:rowVal(d.id).assignee, setAssignee:setRow(d.id,'assignee'),
+            start:rowVal(d.id).start, setStart:setRow(d.id,'start'),
+            end:rowVal(d.id).end, setEnd:setRow(d.id,'end') };
+        })),
       cvCountNote: hasMainAlready
         ? (pendingDeps.length
           ? (pendingDeps.length+' new dependency task'+(pendingDeps.length===1?'':'s')+' will be created and linked to the existing main task '+i.taskId+' ('+pendingDeps.map(d=>(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type).join(', ')+').')
@@ -4207,6 +4232,15 @@ class AppRoot extends React.Component {
         if(!f.rowType){ this.flash('Select the effort line this content delivers.'); return; }
         if(f.kpiMode==='existing'&&!f.kpiId){ this.flash('Link a KPI, or switch to Create new KPI.'); return; }
         if(f.kpiMode==='new'&&!(f.newKpiName||'').trim()){ this.flash('Name the new KPI.'); return; }
+        // Each row being generated (Main Content, plus every still-pending
+        // dependency) needs its own assignee — no shared fallback anymore,
+        // since assignee/dates are now picked per row, not once for the
+        // whole batch.
+        if(!hasMainAlready && !(rows.main&&rows.main.assignee)){ this.flash('Choose an assignee for the Main Content task.'); return; }
+        for(const d of pendingDeps){
+          const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+          if(!(rows[d.id]&&rows[d.id].assignee)){ this.flash('Choose an assignee for the "'+typeLabel+'" task.'); return; }
+        }
         const who=this.currentPerson();
         const k=kpiPool.find(x=>x.id===f.kpiId);
         const kpiName=f.kpiMode==='new'?f.newKpiName.trim():(k?k.kpi:'Not linked');
@@ -4214,35 +4248,42 @@ class AppRoot extends React.Component {
         const kpiIdVal=f.kpiMode==='new'?'':(f.kpiId||'');
         const existingIds=this._allTaskIdsEver();
         const nextId=()=>{ const id=this._nextSeqCode('TSK-', existingIds, 3200); existingIds.push(id); return id; };
-        const start=this.fmtDate(f.start)||this.relDate(0), end=this.fmtDate(f.end)||this.relDate(14);
         // Every generated task — main and dependency alike — inherits the
         // SAME Campaign → OKR (via KPI) → Effort links from the idea, so
         // nothing has to be re-picked per task the way the old per-count
-        // generator required.
+        // generator required. Assignee/Start/End are the only per-row fields.
         const shared={ campaign:plan?plan.campaign:'—', effortPlan:plan?plan.name:'', effortPlanId:plan?plan.id:'', effortType:f.rowType, contentIdea:i.id, kpiId:kpiIdVal, kpi:kpiName, unit:kpiUnit||(row&&row.unit)||'articles', reviewer:f.reviewer||who, recurrence:'None', actH:0, evidence:[], status:'Assigned' };
         // Topping up: the main task already exists, so reuse its id as the
         // dep-link target instead of minting a second "Main Content" task
         // for the same idea.
         const mainId=hasMainAlready?i.taskId:nextId();
+        const mainRow=rows.main||{};
+        const mainStart=this.fmtDate(mainRow.start)||this.relDate(0), mainEnd=this.fmtDate(mainRow.end)||this.relDate(14);
         const mainTask=hasMainAlready?null:{ ...shared, id:mainId, name:i.title, desc:(i.objective||'Approved content idea')+' · Keyword: '+(i.keyword||'—'),
           template:'Write Article', project:i.service||'Content',
-          start, end, startDate:f.start||'', endDate:f.end||'',
-          priority:(row&&row.priority)||i.priority||'Medium', assignee:f.assignee||i.owner||who,
+          start:mainStart, end:mainEnd, startDate:mainRow.start||'', endDate:mainRow.end||'',
+          priority:(row&&row.priority)||i.priority||'Medium', assignee:mainRow.assignee||i.owner||who,
           units:1, estH:10, division:plan?plan.division:'Content', dep:'—',
           checklist:[{t:'Draft complete',done:false},{t:'SEO pass',done:false},{t:'Editor review',done:false}],
           activity:[[who,'Generated as Main Content from approved idea '+i.id,this.todayStr()]] };
         // Only dependencies still missing their own task get one — an
         // already-linked dependency (from a prior run) is left untouched.
+        // Each gets its OWN row's assignee/start/end — Web Developer, SEO,
+        // etc. no longer all inherit one shared date range.
         const depTasks=pendingDeps.map(d=>{ const typeLabel=(this.DEP_TYPES().find(t=>t.key===d.type)||{}).label||d.type;
+          const r=rows[d.id]||{};
+          const dStart=this.fmtDate(r.start)||this.relDate(0), dEnd=this.fmtDate(r.end)||this.relDate(14);
           return { ...shared, id:nextId(), name:typeLabel+' — '+i.title, desc:d.notes||('Dependent '+typeLabel+' work for "'+i.title+'".'),
             template:'Custom task', project:i.service||'Content',
-            start, end, startDate:f.start||'', endDate:f.end||'',
-            priority:i.priority||'Medium', assignee:d.assignee||f.assignee||who,
+            start:dStart, end:dEnd, startDate:r.start||'', endDate:r.end||'',
+            priority:i.priority||'Medium', assignee:r.assignee||d.assignee||who,
             units:0, estH:4, division:this.ideaDepDivision(d.type),
             // Sequential (not Parallel) — reuses the existing dep/depMode
             // blocking mechanism (tkBlockedBy) so SMM/GD/SEO work is
             // actually held until the Main Content task it depends on is
-            // QC-approved, not just labelled as related to it.
+            // QC-approved, not just labelled as related to it. This is also
+            // what makes each of these show up as a Subtask under the Main
+            // Content task in Task Details.
             dep:mainId, depMode:'Sequential', dependencyId:d.id,
             checklist:[{t:typeLabel+' draft ready',done:false},{t:'Reviewed against main content',done:false}],
             activity:[[who,'Generated as "'+typeLabel+'" dependency of '+mainId+' from approved idea '+i.id,this.todayStr()]] }; });
@@ -4250,11 +4291,16 @@ class AppRoot extends React.Component {
         this.setState({ tkAdded:[...(this.state.tkAdded||[]),...added], cvIdea:null, cvForm:{},
           tkFilter:'All', tkFilters:{status:'All',priority:'All',assignee:'All'} });
         this.ideaPatch(i.id,{ taskId:mainId, taskIds:[...(i.taskIds||[]),...added.map(t=>t.id)], effortPlan:plan?plan.name:'', effortRow:f.rowType, kpiName,
-          dependencies:(i.dependencies||[]).map(d=>{ const dt=depTasks.find(x=>x.dependencyId===d.id); return dt?{...d, taskId:dt.id}:d; }) });
+          // Keep each dependency's stored assignee in sync with whatever was
+          // actually used to generate its task, so the Content Idea's
+          // dependent-work list never shows a different assignee than the
+          // real task does.
+          dependencies:(i.dependencies||[]).map(d=>{ const dt=depTasks.find(x=>x.dependencyId===d.id); if(!dt) return d;
+            const r=rows[d.id]||{}; return {...d, taskId:dt.id, assignee:r.assignee||d.assignee}; }) });
         this.flash(hasMainAlready
           ? (depTasks.length+' new dependency task'+(depTasks.length===1?'':'s')+' generated and linked to main task '+mainId+'.')
           : (added.length+' task'+(added.length===1?'':'s')+' generated from '+i.id+' — 1 main content task'+(depTasks.length?(' + '+depTasks.length+' dependency task'+(depTasks.length===1?'':'s')):'')+', linked to effort "'+f.rowType+'" and KPI "'+kpiName+'".'));
-        added.forEach(t=>this._persistNewTask(t, f.start||null, f.end||null));
+        added.forEach(t=>this._persistNewTask(t, t.startDate||null, t.endDate||null));
       },
     };
   }
