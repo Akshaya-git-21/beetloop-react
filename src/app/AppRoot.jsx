@@ -8132,6 +8132,21 @@ class AppRoot extends React.Component {
       ...this.campaignTypeQcData(t),
     };
   }
+  // Effort Plans "linked to" a Campaign have two independent records of
+  // that relationship that can drift apart: the plan's own `campaign`
+  // field (set when the plan was created FROM the campaign's Effort lines
+  // section) and the campaign's own `efforts[].planId` (set when an effort
+  // line was added and generated from an Effort Plan's row). A plan built
+  // the second way never gets its `campaign` field back-filled, so relying
+  // on `plan.campaign` alone missed it entirely — confirmed live: "test no
+  // 4" campaign correctly listed EP-021 in its own `efforts`, but EP-021's
+  // `campaign` was blank, so Create Task's auto-fetch never found it.
+  _epPlansLinkedToCampaign(campName){
+    if(!campName || campName==='—') return [];
+    const camp=this.allCampaigns().find(x=>x.name===campName);
+    const planIds=new Set((camp&&camp.efforts||[]).map(e=>e.planId).filter(Boolean));
+    return this.allEpPlans().filter(p=>p.campaign===campName || planIds.has(p.id));
+  }
 
   tkFormData(){
     const f=this.state.tkForm||{};
@@ -8166,13 +8181,12 @@ class AppRoot extends React.Component {
         // new one, so clear it rather than leave a stale selection.
         nf.pageUrl='';
         // The Effort Plan picker (tkEffortOptions below) is scoped to plans
-        // linked to this campaign (plan.campaign === campaign name, set
-        // when the plan was created from the campaign's Effort lines
-        // section). A previously-picked plan that doesn't belong to the
-        // new campaign is no longer a valid option, so drop it; if the
-        // campaign has exactly one linked plan, fetch and pre-select it
-        // instead of leaving the assignee to find it in a now-filtered list.
-        const linkedPlans=v&&v!=='—'?this.allEpPlans().filter(p=>p.campaign===v):[];
+        // linked to this campaign (see _epPlansLinkedToCampaign). A
+        // previously-picked plan that doesn't belong to the new campaign is
+        // no longer a valid option, so drop it; if the campaign has exactly
+        // one linked plan, fetch and pre-select it instead of leaving the
+        // assignee to find it in a now-filtered list.
+        const linkedPlans=this._epPlansLinkedToCampaign(v);
         const keepPlan=linkedPlans.some(p=>p.name===nf.effortPlan);
         if(!keepPlan){
           nf.effortPlan=linkedPlans.length===1?linkedPlans[0].name:'';
@@ -8271,7 +8285,7 @@ class AppRoot extends React.Component {
       // campaign's effort lines.
       tkEffortOptions:(()=>{
         const camp=f.campaign&&f.campaign!=='—'?f.campaign:'';
-        const plans=camp?this.allEpPlans().filter(p=>p.campaign===camp):this.allEpPlans();
+        const plans=camp?this._epPlansLinkedToCampaign(camp):this.allEpPlans();
         return [{v:'',label:'None — standalone task'}].concat(plans.map(p=>({ v:p.name, label:p.name+' · '+p.division })));
       })(),
       tkEffortScopedToCampaign:!!(f.campaign&&f.campaign!=='—'),
