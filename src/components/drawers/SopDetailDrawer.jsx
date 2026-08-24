@@ -15,6 +15,7 @@ export default function SopDetailDrawer({ vm }) {
     sopGov, sopHasVersions, sopVersions,
     sopHist, sopAudit,
     sopHasComments, sopComments, sopCmt, sopSetCmt, sopCmtStep, sopSetCmtStep, sopStepOptions, sopAddComment,
+    sopCmtFiles, sopHasCmtFiles, sopAddCmtFile,
     sopNeedsAck, sopAck, sopAckList,
     sopPermLine, sopCanDownload, sopDownload, sopCanDeleteD, sopDelete,
     sopCanAuthorD, sopPublish, sopPublishLabel, sopBump, sopMarkReviewed, sopDuplicate, sopSaveAsTemplate, sopRetire, sopRetireLabel,
@@ -364,6 +365,15 @@ export default function SopDetailDrawer({ vm }) {
                             {Boolean(c.hasStep) && <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-500)' }}>on: {c.step}</span>}
                           </div>
                           <div style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{c.text}</div>
+                          {Boolean(c.hasFiles) && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                              {(c.files || []).map((f, fi) => (
+                                <button key={fi} onClick={f.open} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 999, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', cursor: 'pointer' }}>
+                                  <Icon name="paperclip" style={{ width: 11, height: 11 }} />{f.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -377,7 +387,23 @@ export default function SopDetailDrawer({ vm }) {
                       </select>
                     </div>
                     <textarea value={sopCmt} onInput={sopSetCmt} rows={2} placeholder="Ask a question or suggest a change…" style={{ width: '100%', padding: '9px 11px', border: '1px solid var(--line-300)', borderRadius: 10, fontSize: 12.5, outline: 'none', resize: 'vertical' }} />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 9 }}>
+                    {Boolean(sopHasCmtFiles) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '9px 0 0' }}>
+                        {(sopCmtFiles || []).map((f, fi) => (
+                          <span key={fi} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, padding: '5px 8px 5px 10px', borderRadius: 999, background: 'var(--orchid-100)', border: '1px solid var(--orchid-200)', color: 'var(--orchid-700)' }}>
+                            <Icon name="paperclip" style={{ width: 11, height: 11 }} />{f.name}
+                            <button onClick={f.remove} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--orchid-700)', display: 'flex', padding: 0 }}>
+                              <Icon name="x" style={{ width: 12, height: 12 }} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>
+                      <button onClick={sopAddCmtFile} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--paper)', border: '1px solid var(--line-300)', color: 'var(--ink-700)', borderRadius: 10, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                        <Icon name="paperclip" style={{ width: 13, height: 13 }} />Attach file
+                      </button>
+                      <div style={{ flex: 1 }} />
                       <button onClick={sopAddComment} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 15px', border: 'none', background: '#7A1C46', color: '#fff', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                         <Icon name="send" style={{ width: 12, height: 12 }} />Post comment
                       </button>

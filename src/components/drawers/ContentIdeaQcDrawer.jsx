@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentIdeaQcDrawer({ vm }) {
-  const { idAddCmt, idApprove, idAttachments, idAttachmentsEmpty, idCanAct, idCanConvert, idCanDelete, idClose, idCmtVal, idComments, idConvert, idD, idDelete, idDepAdd, idDepAssignees, idDepForm, idDepSetAssignee, idDepSetNotes, idDepSetType, idDepTypeOptions, idDependencies, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasComments, idHasDependencies, idHasFb, idMainRow, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
+  const { idAddCmt, idAddCmtFile, idApprove, idAttachments, idAttachmentsEmpty, idCanAct, idCanConvert, idCanDelete, idClose, idCmtFiles, idCmtVal, idComments, idConvert, idD, idDelete, idDepAdd, idDepAssignees, idDepForm, idDepSetAssignee, idDepSetNotes, idDepSetType, idDepTypeOptions, idDependencies, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasCmtFiles, idHasComments, idHasDependencies, idHasFb, idMainRow, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
   const mr = idMainRow || {};
   return (
     <React.Fragment>
@@ -409,44 +409,74 @@ Comments & feedback
 </span>
 </div>
 
-                    
+
 <div style={{"fontSize":"12.5px","color":"var(--ink-800)","lineHeight":"1.5","marginTop":"4px"}}>
 {c.text}
 </div>
 
-                  
+{Boolean(c.hasFiles) && (
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
+{(c.files || []).map((f, $index) => (
+<button key={$index} onClick={f.open} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 10px","borderRadius":"999px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","cursor":"pointer"}}>
+<Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
+{f.name}
+</button>
+))}
+</div>
+)}
+
+
 </div>
 
-                
+
 </div>
 
-              
+
 </React.Fragment>
 ))}
 
-            
+
 </div>
 
-          
+
 </React.Fragment>
 )}
 
-          
-<div style={{"display":"flex","gap":"8px","alignItems":"center"}}>
 
-            
-<input value={idCmtVal} onInput={idOnCmt} placeholder="Add a comment — reply to QC feedback, clarify scope, share references…" style={{"flex":"1","padding":"10px 13px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"12.5px","outline":"none"}} />
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"11px","padding":"10px 13px","background":"var(--paper)"}}>
 
-            
-<button onClick={idAddCmt} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 14px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<input value={idCmtVal} onInput={idOnCmt} placeholder="Add a comment — reply to QC feedback, clarify scope, share references…" style={{"width":"100%","border":"none","outline":"none","fontSize":"12.5px","background":"none"}} />
+
+{Boolean(idHasCmtFiles) && (
+<div style={{"display":"flex","flexWrap":"wrap","gap":"6px","margin":"8px 0 0"}}>
+{(idCmtFiles || []).map((f, $index) => (
+<span key={$index} style={{"display":"inline-flex","alignItems":"center","gap":"6px","fontSize":"11.5px","fontWeight":"600","padding":"5px 8px 5px 10px","borderRadius":"999px","background":"var(--orchid-100)","border":"1px solid var(--orchid-200)","color":"var(--orchid-700)"}}>
+<Icon name={"paperclip"} style={{"width":"11px","height":"11px"}} />
+{f.name}
+<button onClick={f.remove} style={{"background":"none","border":"none","cursor":"pointer","color":"var(--orchid-700)","display":"flex","padding":"0"}}>
+<Icon name={"x"} style={{"width":"12px","height":"12px"}} />
+</button>
+</span>
+))}
+</div>
+)}
+
+<div style={{"display":"flex","alignItems":"center","gap":"8px","marginTop":"8px"}}>
+<button onClick={idAddCmtFile} style={{"display":"flex","alignItems":"center","gap":"6px","background":"var(--paper)","border":"1px solid var(--line-300)","color":"var(--ink-700)","borderRadius":"10px","padding":"7px 12px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"paperclip"} style={{"width":"13px","height":"13px"}} />
+Attach file
+</button>
+<div style={{"flex":"1"}} />
+<button onClick={idAddCmt} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 15px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"send"} style={{"width":"13px","height":"13px"}} />
 Post
 </button>
-
-          
 </div>
 
-        
+
+</div>
+
+
 </div>
 
         

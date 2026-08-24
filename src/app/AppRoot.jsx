@@ -4564,13 +4564,20 @@ class AppRoot extends React.Component {
         this.ideaAddDependency(i.id, df);
         this.setState({ ideaDepForm:{ type:'SMM', assignee:'', notes:'' } });
         this.flash('Dependency added to '+i.id+'.'); },
-      idComments:(i.comments||[]).map(c=>({ who:c.who, role:c.role, text:c.text, when:c.when, initial:(c.who||'?').charAt(0) })),
+      idComments:(i.comments||[]).map(c=>({ who:c.who, role:c.role, text:c.text, when:c.when, initial:(c.who||'?').charAt(0),
+        files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 })),
       idHasComments:(i.comments||[]).length>0,
       idCmtVal:(this.state.ideaCmt||{})[i.id]||'',
       idOnCmt:(e)=>this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:e.target.value} }),
-      idAddCmt:()=>{ const txt=((this.state.ideaCmt||{})[i.id]||'').trim(); if(!txt){ this.flash('Write a comment first.'); return; }
-        this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label,text:txt,when:this.todayStr()}]});
-        this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''} }); this.flash('Comment posted on '+i.id+'.'); },
+      idCmtFiles:((this.state.ideaCmtFiles||{})[i.id]||[]).map((f,fi)=>({name:f, remove:()=>{
+        const cur=(this.state.ideaCmtFiles||{})[i.id]||[]; const a=cur.slice(); a.splice(fi,1);
+        this.setState({ ideaCmtFiles:{...(this.state.ideaCmtFiles||{}),[i.id]:a} }); } })),
+      idHasCmtFiles:((this.state.ideaCmtFiles||{})[i.id]||[]).length>0,
+      idAddCmtFile:()=>this.openFilePicker('ideaCmt:'+i.id, 'Attach to comment'),
+      idAddCmt:()=>{ const txt=((this.state.ideaCmt||{})[i.id]||'').trim(); const fls=(this.state.ideaCmtFiles||{})[i.id]||[];
+        if(!txt && !fls.length){ this.flash('Write a comment or attach a file.'); return; }
+        this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label,text:txt,when:this.todayStr(),files:fls}]});
+        this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''}, ideaCmtFiles:{...(this.state.ideaCmtFiles||{}),[i.id]:[]} }); this.flash('Comment posted on '+i.id+'.'); },
       idCanConvert: ['manager','team_lead','admin','ceo','secretary'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
       idConvert:()=>this.ideaToTask(i),
       idCanDelete: this.hasPerm('ideas','delete'),
@@ -7469,15 +7476,20 @@ class AppRoot extends React.Component {
       // comments
       sopComments:(s.comments||[]).slice().reverse().map(c=>({ by:c.by, when:c.when, text:c.text,
         step:c.step||'', hasStep:!!c.step, mine:c.by===me,
-        bg:c.by===me?'var(--orchid-100)':'var(--surface-50)' })),
+        bg:c.by===me?'var(--orchid-100)':'var(--surface-50)',
+        files:(c.files||[]).map(f=>({name:f, open:()=>this.openFilePreview(f)})), hasFiles:(c.files||[]).length>0 })),
       sopHasComments:(s.comments||[]).length>0,
       sopCmt:cmt, sopSetCmt:(e)=>this.setState({ sopCmt:e.target.value }),
       sopCmtStep:this.state.sopCmtStep||'', sopSetCmtStep:(e)=>this.setState({ sopCmtStep:e.target.value }),
       sopStepOptions:[''].concat((s.steps||[]).map(x=>x.t)),
-      sopAddComment:()=>{ const v=(this.state.sopCmt||'').trim(); if(!v){ this.flash('Type a comment first.'); return; }
-        patch({ comments:[...(s.comments||[]),{ by:me, when:this.todayStr(), step:this.state.sopCmtStep||'', text:v }] },
+      sopCmtFiles:(this.state.sopCmtFiles||[]).map((f,fi)=>({name:f, remove:()=>{ const a=(this.state.sopCmtFiles||[]).slice(); a.splice(fi,1); this.setState({sopCmtFiles:a}); } })),
+      sopHasCmtFiles:(this.state.sopCmtFiles||[]).length>0,
+      sopAddCmtFile:()=>this.openFilePicker('sopCmt','Attach to comment'),
+      sopAddComment:()=>{ const v=(this.state.sopCmt||'').trim(); const fls=this.state.sopCmtFiles||[];
+        if(!v && !fls.length){ this.flash('Type a comment or attach a file.'); return; }
+        patch({ comments:[...(s.comments||[]),{ by:me, when:this.todayStr(), step:this.state.sopCmtStep||'', text:v, files:fls }] },
           'Comment added'+(this.state.sopCmtStep?(' on “'+this.state.sopCmtStep+'”.'):'.'));
-        this.setState({ sopCmt:'', sopCmtStep:'' }); },
+        this.setState({ sopCmt:'', sopCmtStep:'', sopCmtFiles:[] }); },
       // actions
       sopAckedByMe:acked, sopNeedsAck:s.status==='Published'&&!acked,
       sopAck:()=>patch({ ack:[...(s.ack||[]), me] }, 'You acknowledged '+s.id+' '+s.version+'.'),
@@ -10879,6 +10891,9 @@ class AppRoot extends React.Component {
     else if(t==='ticket'){ const f=this.state.tktForm||{}; this.setState({ tktForm:{...f, files:[...(f.files||[]), ...names]} }); }
     else if(t==='ticketReply') this.setState({ tktReplyFiles:[...(this.state.tktReplyFiles||[]), ...names] });
     else if(t==='comment') this.setState({ tkCommentFiles:[...(this.state.tkCommentFiles||[]), ...names] });
+    else if(t==='sopCmt') this.setState({ sopCmtFiles:[...(this.state.sopCmtFiles||[]), ...names] });
+    else if(t.indexOf('ideaCmt:')===0){ const id=t.slice(8); const cur=(this.state.ideaCmtFiles||{})[id]||[];
+      this.setState({ ideaCmtFiles:{...(this.state.ideaCmtFiles||{}), [id]:[...cur, ...names]} }); }
     else if(t==='recordForm'){ const rf=this.state.recordForm||{}; this.setState({ recordForm:{...rf, attachments:[...(rf.attachments||[]), ...names]} }); }
     else if(t==='checkin'){ const cf=this.state.ciForm||{}; this.setState({ ciForm:{...cf, files:[...(cf.files||[]), ...names]} }); }
     else if(t.indexOf('qcref:')===0){ const id=t.slice(6); const refs={...(this.state.qcRef||{})};
