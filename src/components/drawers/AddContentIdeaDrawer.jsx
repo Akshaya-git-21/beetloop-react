@@ -1190,12 +1190,12 @@ Briefs, planning documents, research files and images supporting this idea.
                   
 <div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"10px","display":"flex","gap":"8px","alignItems":"center"}}>
 
-                    
-<span style={{"width":"30px","height":"30px","borderRadius":"9px","background":"var(--orchid-100)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
-<Icon name={a.icon} style={{"width":"14px","height":"14px","color":"var(--orchid-600)"}} />
-</span>
 
-                    
+<button onClick={a.open} title="Preview" style={{"width":"30px","height":"30px","borderRadius":"9px","background":"var(--orchid-100)","border":"none","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0","cursor":"pointer"}}>
+<Icon name={a.icon} style={{"width":"14px","height":"14px","color":"var(--orchid-600)"}} />
+</button>
+
+
 <input value={a.name} onInput={a.setName} style={{"width":"200px","padding":"8px 10px","border":"1px solid var(--line-300)","borderRadius":"9px","fontSize":"12px","outline":"none","background":"var(--paper)","fontFamily":"'Space Mono'"}} />
 
                     

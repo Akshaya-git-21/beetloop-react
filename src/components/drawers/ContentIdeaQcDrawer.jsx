@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function ContentIdeaQcDrawer({ vm }) {
-  const { idAddCmt, idApprove, idCanAct, idCanConvert, idCanDelete, idClose, idCmtVal, idComments, idConvert, idD, idDelete, idDepAdd, idDepAssignees, idDepForm, idDepSetAssignee, idDepSetNotes, idDepSetType, idDepTypeOptions, idDependencies, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasComments, idHasDependencies, idHasFb, idMainRow, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
+  const { idAddCmt, idApprove, idAttachments, idAttachmentsEmpty, idCanAct, idCanConvert, idCanDelete, idClose, idCmtVal, idComments, idConvert, idD, idDelete, idDepAdd, idDepAssignees, idDepForm, idDepSetAssignee, idDepSetNotes, idDepSetType, idDepTypeOptions, idDependencies, idDrawerOpen, idFb, idFbBg, idFbBorder, idFbColor, idFbVal, idHasComments, idHasDependencies, idHasFb, idMainRow, idMeta, idOnCmt, idOnFb, idRework, stop } = vm;
   const mr = idMainRow || {};
   return (
     <React.Fragment>
@@ -178,10 +178,45 @@ Idea details
 </React.Fragment>
 ))}
 
-          
+
 </div>
 
 
+</div>
+
+<div>
+<div style={{"fontSize":"11.5px","fontWeight":"700","letterSpacing":".08em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"10px"}}>
+Attachments & images
+</div>
+{Boolean(idAttachmentsEmpty) && (
+<div style={{"fontSize":"12.5px","color":"var(--ink-400)"}}>
+No files attached to this idea.
+</div>
+)}
+{Boolean(!idAttachmentsEmpty) && (
+<div style={{"display":"flex","flexDirection":"column","gap":"8px"}}>
+{(idAttachments || []).map((a, $index) => (
+<div key={$index} style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"10px","display":"flex","gap":"8px","alignItems":"center"}}>
+<span style={{"width":"28px","height":"28px","borderRadius":"8px","background":"var(--orchid-100)","display":"flex","alignItems":"center","justifyContent":"center","flexShrink":"0"}}>
+<Icon name={a.icon} style={{"width":"14px","height":"14px","color":"var(--orchid-600)"}} />
+</span>
+<button onClick={a.open} title="Preview" style={{"flex":"1","textAlign":"left","background":"none","border":"none","padding":"0","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-800)","cursor":"pointer"}}>
+{a.name}
+{Boolean(a.desc) && (
+<span style={{"fontWeight":"500","color":"var(--ink-500)"}}>
+{" — " + a.desc}
+</span>
+)}
+</button>
+{Boolean(a.category) && (
+<span style={{"fontSize":"10.5px","fontWeight":"700","padding":"3px 8px","borderRadius":"999px","background":"var(--info-100)","color":"var(--info-600)","flexShrink":"0"}}>
+{a.category}
+</span>
+)}
+</div>
+))}
+</div>
+)}
 </div>
 
 

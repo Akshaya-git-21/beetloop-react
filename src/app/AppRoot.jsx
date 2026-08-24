@@ -4354,7 +4354,7 @@ class AppRoot extends React.Component {
       // Stays available after the first conversion if a dependency added
       // later (or QC-approved later) still has no task of its own — see
       // convertData()'s hasMainAlready/pendingDeps.
-      canConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
+      canConvert: ['manager','team_lead','admin','ceo','secretary'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
       submit:(e)=>{ if(e)e.stopPropagation(); this.ideaPatch(i.id,{status:'Submitted for QC'}); this.flash(i.id+' sent to QC Review for approval.'); },
       convert:(e)=>{ if(e)e.stopPropagation(); this.ideaToTask(i); },
       reuseIdea:(e)=>{ if(e)e.stopPropagation(); const nid=this._nextIdeaId(); const clone={...i, id:nid, title:i.title+' — reuse', status:'Idea Captured', qcFeedback:'', taskId:'', reuse:0 };
@@ -4437,6 +4437,7 @@ class AppRoot extends React.Component {
         const atts=f.attachments||[];
         return { idfRefs:refs.rows, idfAddRef:refs.add, idfStats:stats.rows, idfAddStat:stats.add, idfExt:ext.rows, idfAddExt:ext.add, idfInt:intr.rows, idfAddInt:intr.add,
           idfAtts:atts.map((a,i)=>({ i, ...a, isImg:a.kind==='Image', icon:a.kind==='Image'?'image':'file-text',
+            open:()=>this.openFilePreview(a.name),
             setCategory:(e)=>{ const arr=atts.map((x,j)=>j===i?{...x,category:e.target.value}:x); this.setState({ ideaForm:{...f,attachments:arr} }); },
             setDesc:(e)=>{ const arr=atts.map((x,j)=>j===i?{...x,desc:e.target.value}:x); this.setState({ ideaForm:{...f,attachments:arr} }); },
             setName:(e)=>{ const arr=atts.map((x,j)=>j===i?{...x,name:e.target.value}:x); this.setState({ ideaForm:{...f,attachments:arr} }); },
@@ -4514,7 +4515,13 @@ class AppRoot extends React.Component {
     return {
       idDrawerOpen:true,
       idD:{ id:i.id, title:i.title, status:i.status, statusBg:tn.bg, statusColor:tn.c, objective:i.objective||'—' },
-      idMeta:[['Content type',i.type],['Idea source',i.source],['Publication',(i.pubDest||'Internal')+(i.pubDest==='External'?(i.extCat?(' · '+i.extCat):''):(i.intType?(' · '+i.intType):''))],['Target URL',i.pubDest==='External'?(i.extUrl||'—'):(i.intUrl||'—')],['Working title',i.workingTitle||'—'],['Category',(i.category||'—')+(i.subCategory&&i.subCategory.indexOf('—')!==0?(' / '+i.subCategory):'')],['Priority',i.priority],['Owner',i.owner],['Service',i.service],['Campaign',i.campaign||'—'],['Effort plan',i.effortPlan||'—'],['Quarter',i.quarter],['Expected publish',i.publishMonth],['Primary keyword',i.keyword||'—'],['Secondary keywords',i.secondaryKw||'—'],['Search intent',i.intent||'—'],['Topic cluster',i.cluster||'—'],['Pillar page',i.pillar||'—'],['Audience',i.audience||'—'],['Journey stage',i.journey||'—'],['Content goal',i.goal||'—'],['Target word count',(i.wcMin||i.wcMax)?((i.wcMin||'?')+' – '+(i.wcMax||'?')+' words'):(i.wordCount||'—')],['Recommended length',i.recLength||'—'],['Reading level',i.readLevel||'—'],['Meta title',i.metaTitle||'—'],['Meta description',i.metaDesc||'—'],['URL slug',i.slug||'—'],['Featured image suggestion',i.featImg||'—'],['Internal links',i.internalLinks||'—'],['External references',i.extRefs||'—'],['Competitor URLs',i.competitorUrls||'—'],['Reason / background',i.reason||'—'],['Notes',i.notes||'—'],['Scientific references',(i.refs||[]).length?(i.refs.map(r=>r.title+(r.source?(' — '+r.source):'')+(r.year?(' ('+r.year+')'):'')).join(' · ')):'—'],['Statistics & data',(i.stats||[]).length?(i.stats.map(s=>s.stat).join(' · ')):'—'],['Trusted external resources',(i.extRes||[]).length?(i.extRes.map(x=>x.name+(x.url?(' — '+x.url):'')).join(' · ')):'—'],['Internal resources',(i.intRes||[]).length?(i.intRes.map(x=>x.name+' ('+(x.itype||'PDF')+')').join(' · ')):'—'],['Attachments & images',(i.attachments||[]).length?(i.attachments.map(a=>a.name+' ['+(a.category||a.kind)+']').join(' · ')):'—']].map(m=>({k:m[0],v:m[1]})),
+      idMeta:[['Content type',i.type],['Idea source',i.source],['Publication',(i.pubDest||'Internal')+(i.pubDest==='External'?(i.extCat?(' · '+i.extCat):''):(i.intType?(' · '+i.intType):''))],['Target URL',i.pubDest==='External'?(i.extUrl||'—'):(i.intUrl||'—')],['Working title',i.workingTitle||'—'],['Category',(i.category||'—')+(i.subCategory&&i.subCategory.indexOf('—')!==0?(' / '+i.subCategory):'')],['Priority',i.priority],['Owner',i.owner],['Service',i.service],['Campaign',i.campaign||'—'],['Effort plan',i.effortPlan||'—'],['Quarter',i.quarter],['Expected publish',i.publishMonth],['Primary keyword',i.keyword||'—'],['Secondary keywords',i.secondaryKw||'—'],['Search intent',i.intent||'—'],['Topic cluster',i.cluster||'—'],['Pillar page',i.pillar||'—'],['Audience',i.audience||'—'],['Journey stage',i.journey||'—'],['Content goal',i.goal||'—'],['Target word count',(i.wcMin||i.wcMax)?((i.wcMin||'?')+' – '+(i.wcMax||'?')+' words'):(i.wordCount||'—')],['Recommended length',i.recLength||'—'],['Reading level',i.readLevel||'—'],['Meta title',i.metaTitle||'—'],['Meta description',i.metaDesc||'—'],['URL slug',i.slug||'—'],['Featured image suggestion',i.featImg||'—'],['Internal links',i.internalLinks||'—'],['External references',i.extRefs||'—'],['Competitor URLs',i.competitorUrls||'—'],['Reason / background',i.reason||'—'],['Notes',i.notes||'—'],['Scientific references',(i.refs||[]).length?(i.refs.map(r=>r.title+(r.source?(' — '+r.source):'')+(r.year?(' ('+r.year+')'):'')).join(' · ')):'—'],['Statistics & data',(i.stats||[]).length?(i.stats.map(s=>s.stat).join(' · ')):'—'],['Trusted external resources',(i.extRes||[]).length?(i.extRes.map(x=>x.name+(x.url?(' — '+x.url):'')).join(' · ')):'—'],['Internal resources',(i.intRes||[]).length?(i.intRes.map(x=>x.name+' ('+(x.itype||'PDF')+')').join(' · ')):'—']].map(m=>({k:m[0],v:m[1]})),
+      // Attachments & images used to be flattened into the plain idMeta
+      // grid as a joined string — no way to actually open one. Now a real
+      // list with the same click-to-preview (openFilePreview) every other
+      // attachment surface in the app already uses.
+      idAttachments:(i.attachments||[]).map(a=>{ const k=this.fileKind(a.name); return { name:a.name, desc:a.desc||'', category:a.category||a.kind||'', icon:k.icon, open:()=>this.openFilePreview(a.name) }; }),
+      idAttachmentsEmpty:(i.attachments||[]).length===0,
       idHasFb:!!i.qcFeedback, idFb:i.qcFeedback||'',
       idFbBg: i.status==='Rework'?'var(--danger-100)':'var(--verify-100)', idFbBorder: i.status==='Rework'?'#F1C9CF':'#BFE3D0', idFbColor: i.status==='Rework'?'var(--danger-600)':'var(--verify-600)',
       idCanAct: canAct && i.status==='Submitted for QC',
@@ -4564,7 +4571,7 @@ class AppRoot extends React.Component {
       idAddCmt:()=>{ const txt=((this.state.ideaCmt||{})[i.id]||'').trim(); if(!txt){ this.flash('Write a comment first.'); return; }
         this.ideaPatch(i.id,{comments:[...(i.comments||[]),{who:this.currentPerson(),role:me.label,text:txt,when:this.todayStr()}]});
         this.setState({ ideaCmt:{...(this.state.ideaCmt||{}),[i.id]:''} }); this.flash('Comment posted on '+i.id+'.'); },
-      idCanConvert: ['manager','team_lead','admin'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
+      idCanConvert: ['manager','team_lead','admin','ceo','secretary'].includes(rk) && i.status==='Approved' && (!i.taskId || (i.dependencies||[]).some(d=>!d.taskId)),
       idConvert:()=>this.ideaToTask(i),
       idCanDelete: this.hasPerm('ideas','delete'),
       idDelete:()=>this.confirmDelete('Delete Idea?', 'Are you sure you want to delete "'+(i.title||i.id)+'"? This action cannot be undone.', ()=>this._deleteIdea(i.id)),
