@@ -142,7 +142,14 @@ class AppRoot extends React.Component {
     // own submissions is not the same as being able to triage/edit others'
     // tickets, but it used to match this regex and silently granted every
     // "Own tickets" role (junior/senior/qc/dm/sales) the full triage panel.
-    const rw=isAll||/full|create|edit|assign|manage|team ticket|leads & pipeline/.test(l);
+    // Same reasoning for "Assigned only" (campaigns/content) and "Use
+    // assigned" (repositories) — both describe a role scoped to items
+    // already assigned to them, not an active assign/manage verb, but
+    // "assign" as a substring of "assign-ed" used to match anyway and
+    // silently granted senior/junior create+edit+export rights they were
+    // never meant to have.
+    const isScopedOnly=/^assigned only$|^use assigned$/.test(l);
+    const rw=!isScopedOnly && (isAll||/full|create|edit|assign|manage|team ticket|leads & pipeline/.test(l));
     const del=isAll||/full/.test(l);
     const approve=isAll||/full|review|qc|approv/.test(l);
     return { view:true, create:rw, edit:rw, delete:del, approve, export:rw||del, auditAll:false };
@@ -1921,10 +1928,15 @@ class AppRoot extends React.Component {
       config:{ eyebrow:'Administration', icon:'settings-2', title:'Configuration', sub:'Platform settings, security and integrations.' },
       profile:{ eyebrow:'Account', icon:'user', title:'My Profile', sub:'Your account details.' },
     };
-    const page = Object.assign({ canEdit:this.EDIT_LEVELS.includes(lvl) }, PAGES[route]||PAGES.dashboard);
-    // masters/users always show action for admin
-    if(route==='users') page.canEdit = ['admin','coo','ceo'].includes(rk);
-    if(route==='repositories') page.canEdit = rk==='admin';
+    // canEdit now reads the granular Permissions matrix (getPerm/hasPerm)
+    // instead of the static ACCESS level string — previously this stayed
+    // wired to the role's default level no matter what an Admin toggled in
+    // User Management → Permissions, so overriding e.g. "Create" for a role
+    // never affected whether that role actually saw a "+ New …" button.
+    // defaultPermsFromLevel derives the same default from that same level
+    // string when no override exists, so this changes nothing until an
+    // Admin actually sets one.
+    const page = Object.assign({ canEdit:this.hasPerm(route,'create') }, PAGES[route]||PAGES.dashboard);
     // 'files' (Document Repository) has no create action — it's auto-collected
     // from task evidence/QC refs/comments, not something you manually add to
     // (see the page's own "no separate upload needed" note). Without this,
@@ -1949,7 +1961,9 @@ class AppRoot extends React.Component {
       else this.flash('Draft created — opening editor…');
     };
 
-    const readOnly = !this.EDIT_LEVELS.includes(lvl) && ['campaigns','tasks','okr','repositories'].includes(route);
+    // Same fix as page.canEdit above — reads the Permissions matrix instead
+    // of the static level string.
+    const readOnly = !this.hasPerm(route,'edit') && ['campaigns','tasks','okr','repositories'].includes(route);
     const readOnlyMsg = `Your role (${role.label}) has ${lvl.toLowerCase()} access here. Actions that change data are hidden.`;
 
     // screen flags
@@ -2551,7 +2565,12 @@ class AppRoot extends React.Component {
   }
 
   qcData(rk){
-    const canAct = ['qc','team_lead','manager','admin'].includes(rk);
+    // ACCESS.qc grants ceo/secretary 'Full' review authority (secretary is
+    // meant to act with the same standing as ceo here — see
+    // HIGH_PRIVILEGE_ROLES), but this gate was never updated to match, so
+    // Approve/Rework silently stayed unavailable to both despite the
+    // permission level saying otherwise.
+    const canAct = ['qc','team_lead','manager','admin','ceo','secretary'].includes(rk);
     const K=(label,value,color)=>({label,value,iconColor:color});
     const fb=this.state.qcFb||{};
     const pri=(p)=>({Critical:'var(--danger-500)',High:'var(--warn-500)',Medium:'var(--verify-500)',Low:'var(--info-500)'}[p]||'var(--ink-400)');
@@ -4209,7 +4228,7 @@ class AppRoot extends React.Component {
       cvSetKpi:set('kpiId'), cvSetNewKpiName:set('newKpiName'), cvSetNewKpiUnit:set('newKpiUnit'), cvSetNewKpiTarget:set('newKpiTarget'),
       cvSetReviewer:set('reviewer'),
       cvAssignees:(this.state.users||[]).map(u=>u.name),
-      cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
+      cvReviewers:(this.state.users||[]).filter(u=>['manager','team_lead','qc','ceo','secretary'].includes(u.roleKey)).map(u=>u.name+' ('+u.role+')'),
       // Preview of exactly what THIS run will generate — 1 Main Content task
       // plus one task per still-missing dependency. Each still-pending row
       // (Main Content, Web Developer, SEO, ...) gets its own Assignee/Start/
@@ -4486,7 +4505,9 @@ class AppRoot extends React.Component {
     const id=this.state.ideaOpen; if(!id) return { idDrawerOpen:false };
     const i=this.allIdeas().find(x=>x.id===id); if(!i) return { idDrawerOpen:false };
     const rk=this.state.roleKey;
-    const canAct=['qc','team_lead','manager','admin'].includes(rk);
+    // Same fix as qcData() — ceo/secretary have 'Full' QC access in ACCESS
+    // but this gate never included them.
+    const canAct=['qc','team_lead','manager','admin','ceo','secretary'].includes(rk);
     const me=this.ROLES[rk];
     const tn=this.ideaTone(i.status);
     const fb=(this.state.qcFb||{})[i.id]||'';
@@ -7860,8 +7881,11 @@ class AppRoot extends React.Component {
     // QC Reviewer was missing from this list entirely (couldn't approve
     // from the drawer, only from the QC queue) — added. Never lets someone
     // approve/reassign their own submitted work, regardless of role.
-    const isApprover=['qc','manager','team_lead','admin'].includes(rk) && !isAssignee;
-    const canReassign=['manager','team_lead','admin','ceo'].includes(rk) && !isAssignee;
+    // ceo/secretary both carry 'Full' QC access in ACCESS (secretary is
+    // meant to act with ceo's standing here) but were missing from one or
+    // both of these lists.
+    const isApprover=['qc','manager','team_lead','admin','ceo','secretary'].includes(rk) && !isAssignee;
+    const canReassign=['manager','team_lead','admin','ceo','secretary'].includes(rk) && !isAssignee;
     const canEditDates=this.hasPerm('tasks','edit');
     const tn=this.tkTone(t.status);
     // t.contentType (the Content Type Master value) used to be shown here
@@ -8153,6 +8177,17 @@ class AppRoot extends React.Component {
         if(!keepPlan){
           nf.effortPlan=linkedPlans.length===1?linkedPlans[0].name:'';
           nf.effortRow=''; nf.units=''; nf.estH=''; nf.kpiId='';
+        }
+        // A Campaign can carry its own directly-linked KPI(s) (Create
+        // Campaign → section D), separate from whatever an Effort Row might
+        // later resolve — when exactly one is linked, auto-fetch it onto
+        // the task right away instead of leaving KPI blank until the
+        // assignee also picks an Effort Row. Same "exactly one, so just use
+        // it" rule as the Effort Plan auto-select just above.
+        const campKpis=(camp&&camp.kpis||[]).filter(x=>x.kpi&&x.kpi.trim());
+        if(campKpis.length===1){
+          const match=kpiPool.find(x=>x.kpi===campKpis[0].kpi);
+          if(match) nf.kpiId=match.id;
         }
       }
       this.setState({ tkForm:nf });
