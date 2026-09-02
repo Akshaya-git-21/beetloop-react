@@ -60,6 +60,7 @@ import TicketAssignModal from '../components/drawers/TicketAssignModal.jsx';
 import CreateRepositoryModal from '../components/drawers/CreateRepositoryModal.jsx';
 import ContentBulkUpdateModal from '../components/drawers/ContentBulkUpdateModal.jsx';
 import ContentImportModal from '../components/drawers/ContentImportModal.jsx';
+import ExcelImportModal from '../components/drawers/ExcelImportModal.jsx';
 import FilePickerModal from '../components/drawers/FilePickerModal.jsx';
 import TaskFilePreviewModal from '../components/drawers/TaskFilePreviewModal.jsx';
 import FloatingChatWidget from '../components/drawers/FloatingChatWidget.jsx';
@@ -418,6 +419,7 @@ export default function AppShell({ vm }) {
 <CreateRepositoryModal vm={vm} />
 <ContentBulkUpdateModal vm={vm} />
 <ContentImportModal vm={vm} />
+<ExcelImportModal vm={vm} />
 <FilePickerModal vm={vm} />
 <TaskFilePreviewModal vm={vm} />
 <ContactFormModal vm={vm} />

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function PageHead({ vm }) {
-  const { accessBg, accessBorder, accessColor, accessIcon, accessLabel, page, primaryAction, showPageHead } = vm;
+  const { accessBg, accessBorder, accessColor, accessIcon, accessLabel, page, primaryAction, secondaryAction, showPageHead } = vm;
   return (
     <React.Fragment>
 {Boolean(showPageHead) && (
@@ -45,17 +45,31 @@ export default function PageHead({ vm }) {
 {accessLabel}
 </div>
 
-            
+
+{Boolean(page.secondaryVisible && page.secondaryLabel) && (
+<React.Fragment>
+
+
+<button onClick={secondaryAction} style={{"display":"flex","alignItems":"center","gap":"7px","background":"var(--paper)","color":"var(--ink-700)","border":"1px solid var(--line-300)","padding":"10px 16px","borderRadius":"12px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={page.secondaryIcon||"upload"} style={{"width":"15px","height":"15px"}} />
+{page.secondaryLabel}
+</button>
+
+
+</React.Fragment>
+)}
+
+
 {Boolean(page.canEdit) && (
 <React.Fragment>
 
-              
+
 <button onClick={primaryAction} style={{"display":"flex","alignItems":"center","gap":"7px","background":"#7A1C46","color":"#fff","border":"none","padding":"10px 16px","borderRadius":"12px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","boxShadow":"0 8px 18px -8px rgba(122,28,70,.55)"}}>
 <Icon name={page.actionIcon} style={{"width":"15px","height":"15px"}} />
 {page.actionLabel}
 </button>
 
-            
+
 </React.Fragment>
 )}
 

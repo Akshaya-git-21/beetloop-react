@@ -44,6 +44,8 @@ class AppRoot extends React.Component {
     showDeleteConfirm: false, deleteConfirmTitle: '', deleteConfirmBody: '', deleteConfirmLabel: 'Delete', deleteConfirmAction: null,
     okrDraftKRs: [ {id:1, weight:'50'}, {id:2, weight:'50'} ], okrKRSeq: 3,
     okrFilters: { dept:'All', status:'All', priority:'All', brand:'All' }, okrSelected: [], okrMenu: null,
+    xlImpOpen:false, xlImpTarget:null, xlImpStep:'upload', xlImpFileName:'', xlImpCreateNew:false,
+    xlImpOkrRows:[], xlImpKrRows:[], xlImpKpiRows:[], xlImpPreview:[], xlImpSummary:null, xlImpBusy:false, xlImpError:'',
     ciOpen: false, ciType: null, ciCtx: null, ciForm: {}, ciAdded: {}, historyOkr: null, kpiActuals: {}, taskDone: {},
     tkUpd: {}, tkAdded: [], tkOpen: null, tkNew: false, tkForm: {}, tkFilter: 'All', tkFilters: {status:'All',priority:'All',assignee:'All'}, tkPage: 0, qcFb: {}, tkComment: '', tkCommentFiles: [],
     ttAdded: [], ttUpd: {}, ttNew: false, ttEditId: null, ttForm: {}, ttFilters: {division:'All',status:'All'}, ttTab: 'task', ttDeleted: [],
@@ -1874,8 +1876,9 @@ class AppRoot extends React.Component {
       });
   }
   _persistOkr(code, fields){
-    supabase.from('okrs').upsert({ code, ...fields }, { onConflict:'code' }).then(({error})=>{
+    return supabase.from('okrs').upsert({ code, ...fields }, { onConflict:'code' }).then(({error})=>{
       if(error) console.warn('[supabase] okr upsert failed:', error.message);
+      return !error;
     });
   }
   OKR_DATA(){ return this.allOkrs(); }
@@ -1924,7 +1927,8 @@ class AppRoot extends React.Component {
       dashboard:{ eyebrow:'Overview', icon:'layout-dashboard', title:this.dashTitle(role.bucket), sub:this.dashSub(role.bucket) },
       campaigns:{ eyebrow:'Delivery', icon:'megaphone', title:'Campaigns', sub:'Goal → audience → KPIs → effort → tasks. Every campaign is team work with one accountable owner.', actionLabel:'New campaign', actionIcon:'plus' },
       tasks:{ eyebrow:'Execution', icon:'list-checks', title:'Tasks', sub:'Work items assigned across the team.', actionLabel:'Assign task', actionIcon:'plus' },
-      templates:{ eyebrow:'Execution', icon:'layout-template', title:'Templates', sub:'Task, KPI & OKR Masters — reusable definitions to pull from everywhere.', actionLabel:{task:'New task template',kpi:'New KPI template',okr:'New OKR template'}[this.state.ttTab||'task'], actionIcon:'plus' },
+      templates:{ eyebrow:'Execution', icon:'layout-template', title:'Templates', sub:'Task, KPI & OKR Masters — reusable definitions to pull from everywhere.', actionLabel:{task:'New task template',kpi:'New KPI template',okr:'New OKR template'}[this.state.ttTab||'task'], actionIcon:'plus',
+        secondaryLabel:{task:'',kpi:'Import / Update',okr:''}[this.state.ttTab||'task'], secondaryIcon:'upload' },
       files:{ eyebrow:'Assets', icon:'folder-open', title:'Document Repository', sub:'Every document, image and video uploaded across tasks — with QC status and deadlines in one view.' },
       messages:{ eyebrow:'Collaboration', icon:'message-square', title:'Messages', sub:'Team conversations — turn any message into a task, or attach it to an existing one.' },
       sop:{ eyebrow:'Governance', icon:'book-open-check', title:'SOPs', sub:'The documented way work is done, tied to gold standards and QC.', actionLabel:'New SOP', actionIcon:'plus' },
@@ -1932,7 +1936,8 @@ class AppRoot extends React.Component {
       effort:{ eyebrow:'Planning', icon:'gauge', title:'Create Effort Plan', sub:'Define effort targets, convert them to KPIs and auto-generate tasks for the period.' },
       ideas:{ eyebrow:'Repositories', icon:'lightbulb', title:'Content Repository — Ideas', sub:'Quarterly content ideas from the writers — QC-approved ideas convert to tasks and stay stored for reuse.', actionLabel:'Add Content Idea', actionIcon:'plus' },
       qc:{ eyebrow:'Quality', icon:'shield-check', title:'QC Review', sub:'Independent quality validation and approvals.' },
-      okr:{ eyebrow:'Performance', icon:'target', title:'OKR & KPI', sub:'Objectives, key results and KPI definitions.', actionLabel:'New OKR', actionIcon:'plus' },
+      okr:{ eyebrow:'Performance', icon:'target', title:'OKR & KPI', sub:'Objectives, key results and KPI definitions.', actionLabel:'New OKR', actionIcon:'plus',
+        secondaryLabel:'Import / Update', secondaryIcon:'upload' },
       leads:{ eyebrow:'Growth', icon:'user-plus', title:'Leads', sub:'Daily lead entry and pipeline — from first enquiry to won.' },
       analytics:{ eyebrow:'Intelligence', icon:'bar-chart-3', title:'Analytics', sub:'Dashboards scoped to your level of access.' },
       repositories:{ eyebrow:'Assets', icon:'database', title:'Repositories', sub:'Shared content, SEO and asset repositories.', actionLabel:'New repository', actionIcon:'plus' },
@@ -1958,6 +1963,12 @@ class AppRoot extends React.Component {
     // that — if clicked — flashed a false "Draft created" toast and did nothing.
     if(['dashboard','analytics','masters','config','qc','content','effort','profile','files','messages'].includes(route)) page.canEdit = false;
     if(showMyKpi){ page.eyebrow='Performance'; page.icon='target'; page.title='My KPIs'; page.sub='Report your check-ins and track your own KPIs.'; page.canEdit=false; }
+    // Import/Update is deliberately visible to this specific role set rather
+    // than gated on the general 'create' permission — Manager/Team Lead/
+    // Secretary/CEO/COO/Admin need it for bulk OKR & KPI upkeep even where
+    // their level (e.g. COO's "View", Team Lead's "View" on okr) wouldn't
+    // otherwise grant the "New OKR"/"New KPI template" create button.
+    page.secondaryVisible = this.xlImportAllowedRoles().includes(rk);
 
     const primaryAction = ()=>{
       if(route==='users') this.setState({ showUserModal:true });
@@ -1973,6 +1984,11 @@ class AppRoot extends React.Component {
       else if(route==='support') this.setState({ tktNew:true, tktForm:{ cat:'software', priority:'Medium' } });
       else if(route==='repositories') this.setState({ repoNew:true, repoForm:{ cat:'Content', owner:this.currentPerson() } });
       else this.flash('Draft created — opening editor…');
+    };
+
+    const secondaryAction = ()=>{
+      if(route==='okr') this.xlOpenImport('okr');
+      else if(route==='templates' && (this.state.ttTab||'task')==='kpi') this.xlOpenImport('kpi');
     };
 
     // Same fix as page.canEdit above — reads the Permissions matrix instead
@@ -2075,7 +2091,7 @@ class AppRoot extends React.Component {
       openProfile:()=>this.setState({ route:'profile' }),
       sidebarCollapsed:!!this.state.sidebarCollapsed,
       toggleSidebar:()=>this.setState({ sidebarCollapsed:!this.state.sidebarCollapsed }),
-      route, page, primaryAction,
+      route, page, primaryAction, secondaryAction,
       accessBg:tone.bg, accessBorder:tone.bg, accessColor:tone.color, accessIcon, accessLabel,
       // screen switches
       showDash, showQC, showAnalytics, showMastersHub, showMasterDetail, showOKR, showLeads, showMyKpi, showTable, showUsersTable, showTasks2, showTemplates, showFiles, showEffort, showIdeas, showContent, showProfile, showCampaigns, showMessages, showSop, showSupport, showConfig, showPageHead, readOnly, readOnlyMsg,
@@ -2121,7 +2137,7 @@ class AppRoot extends React.Component {
         const daily=Math.max(0,Math.round((gross-((parseInt(f.breakMin,10)||60)/60))*100)/100);
         const weekly=Math.round(daily*(parseFloat(f.days)||5)*100)/100;
         return daily+' h/day · '+weekly+' h/week capacity'; })(),
-      ...this.filePickerData(), ...this.filePreviewData(), ...this.uploadTrayData(),
+      ...this.filePickerData(), ...this.filePreviewData(), ...this.uploadTrayData(), ...this.xlImportData(),
       showRoleConfirm:this.state.showRoleConfirm,
       roleConfirmLabel:this.state.roleConfirmKey?this.ROLES[this.state.roleConfirmKey].label:'',
       roleConfirmSummary:this.state.roleConfirmKey?this.roleAccessSummary(this.state.roleConfirmKey):[],
@@ -9504,6 +9520,526 @@ class AppRoot extends React.Component {
       });
     };
     reader.readAsText(file);
+  }
+
+  // ============ Excel Import / Update (OKR & KPI) ============
+  // Shared upload -> parse -> diff-preview -> confirm flow for bulk-updating
+  // existing OKRs (+ their Key Results, matched by parent OKR ID + KPI Name —
+  // the same "code::kpi" join used elsewhere, e.g. line ~898) or KPI
+  // Templates (matched by KPI ID) from a .xlsx/.xls file, and optionally
+  // creating new records for rows whose ID doesn't match anything existing.
+  // Only fields actually present (non-blank) in a row are changed — every
+  // update still goes through _persistOkr with the FULL existing field set
+  // merged in, never a partial one, because a partial okrs upsert fails on
+  // the title NOT NULL constraint even for an update-only conflict path.
+  xlImportFieldMap(){
+    return {
+      okr: [
+        {key:'title', label:'Title', col:'Title'},
+        {key:'desc', label:'Description', col:'Description'},
+        {key:'category', label:'Category', col:'Category'},
+        {key:'scope', label:'Scope', col:'Scope'},
+        {key:'dept', label:'Division', col:'Division'},
+        {key:'brand', label:'Brand', col:'Brand'},
+        {key:'status', label:'Status', col:'Status'},
+        {key:'businessUnit', label:'Business Unit', col:'Business Unit'},
+        {key:'websiteDomain', label:'Website Domain', col:'Website Domain'},
+        {key:'owner', label:'Owner', col:'Owner'},
+        {key:'reviewer', label:'Reviewer', col:'Reviewer'},
+        {key:'contributors', label:'Contributors', col:'Contributors', list:true},
+        {key:'start', label:'Start Date', col:'Start Date'},
+        {key:'due', label:'Due Date', col:'Due Date'},
+      ],
+      kr: [
+        {key:'t', label:'Key Result Text', col:'Key Result Text'},
+        {key:'kpi', label:'KPI Name', col:'KPI Name'},
+        {key:'baseline', label:'Baseline', col:'Baseline'},
+        {key:'target', label:'Target', col:'Target'},
+        {key:'current', label:'Current', col:'Current'},
+        {key:'unit', label:'Unit', col:'Unit'},
+        {key:'weight', label:'Weight', col:'Weight'},
+        {key:'who', label:'Owner', col:'Owner'},
+        {key:'freq', label:'Frequency', col:'Frequency'},
+        {key:'due', label:'Due Date', col:'Due Date'},
+        {key:'status', label:'Status', col:'Status'},
+        {key:'tool', label:'Measurement Tool', col:'Measurement Tool'},
+      ],
+      kpi: [
+        {key:'name', label:'Name', col:'Name'},
+        {key:'category', label:'Category', col:'Category'},
+        {key:'division', label:'Division', col:'Division'},
+        {key:'unit', label:'Unit', col:'Unit'},
+        {key:'direction', label:'Direction', col:'Direction'},
+        {key:'defTarget', label:'Default Target', col:'Default Target'},
+        {key:'freq', label:'Frequency', col:'Frequency'},
+        {key:'source', label:'Source', col:'Source'},
+        {key:'desc', label:'Description', col:'Description'},
+        {key:'status', label:'Status', col:'Status'},
+        {key:'owner', label:'Owner', col:'Owner'},
+      ],
+    };
+  }
+  xlImportAllowedRoles(){ return ['ceo','coo','manager','secretary','team_lead','admin']; }
+  xlOpenImport(target){
+    if(!this.xlImportAllowedRoles().includes(this.state.roleKey)){ this.flash('You do not have permission to import '+(target==='kpi'?'KPI templates':'OKRs')+'.'); return; }
+    this.setState({ xlImpOpen:true, xlImpTarget:target, xlImpStep:'upload', xlImpFileName:'',
+      xlImpCreateNew:false, xlImpOkrRows:[], xlImpKrRows:[], xlImpKpiRows:[], xlImpPreview:[], xlImpSummary:null, xlImpBusy:false, xlImpError:'' });
+  }
+  xlImportClose(){
+    this.setState({ xlImpOpen:false, xlImpTarget:null, xlImpStep:'upload', xlImpFileName:'',
+      xlImpPreview:[], xlImpSummary:null, xlImpBusy:false, xlImpError:'' });
+  }
+  async xlDownloadTemplate(){
+    const target = this.state.xlImpTarget;
+    const XLSX = await import('xlsx');
+    const wb = XLSX.utils.book_new();
+    if(target==='kpi'){
+      const cols = this.xlImportFieldMap().kpi;
+      const header = ['KPI ID', ...cols.map(c=>c.col)];
+      const sample = ['kt1','Organic Sessions','Traffic','SEO','sessions','Increase','100,000','Monthly','GA4','Total organic search sessions.','Active','Priya Nair'];
+      const ws = XLSX.utils.aoa_to_sheet([header, sample]);
+      XLSX.utils.book_append_sheet(wb, ws, 'KPI Templates');
+      XLSX.writeFile(wb, 'kpi-import-template.xlsx');
+    } else {
+      const cols = this.xlImportFieldMap().okr;
+      const header = ['OKR ID', ...cols.map(c=>c.col)];
+      const sample = ['OKR-SEO-Q1-001','Increase organic revenue','Grow organic-sourced revenue this quarter','SEO','Department','SEO','Active','Beetloop Digital','','Priya Nair','Vivek Menon','Aditi Rao, Rahul Dev','2026-01-01','2026-03-31'];
+      const ws1 = XLSX.utils.aoa_to_sheet([header, sample]);
+      XLSX.utils.book_append_sheet(wb, ws1, 'OKRs');
+      const krCols = this.xlImportFieldMap().kr;
+      const krHeader = ['Key Result ID','OKR ID', ...krCols.map(c=>c.col)];
+      const krSample = ['OKR-SEO-Q1-001::Organic Sessions','OKR-SEO-Q1-001','Grow organic sessions','Organic Sessions','80,000','100,000','82,500','sessions','40','Priya Nair','Monthly','2026-03-31','Active'];
+      const ws2 = XLSX.utils.aoa_to_sheet([krHeader, krSample]);
+      XLSX.utils.book_append_sheet(wb, ws2, 'Key Results');
+      XLSX.writeFile(wb, 'okr-import-template.xlsx');
+    }
+  }
+  xlImportPick(e){
+    const file=(e.target.files||[])[0];
+    if(!file) return;
+    this.setState({ xlImpBusy:true, xlImpError:'' });
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      try{
+        const XLSX = await import('xlsx');
+        const wb = XLSX.read(reader.result, { type:'array' });
+        const target = this.state.xlImpTarget;
+        if(target==='kpi'){
+          const wsName = wb.SheetNames.find(n=>/kpi/i.test(n)) || wb.SheetNames[0];
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wsName], { defval:'' });
+          this.setState({ xlImpFileName:file.name, xlImpKpiRows:rows, xlImpOkrRows:[], xlImpKrRows:[] }, ()=>this.xlBuildPreview());
+        } else {
+          // Real-world exports are often "role scorecards" — no OKR ID column
+          // at all, KPI rows grouped under "KRA: ... Weightage: X%" section
+          // markers, one target column per brand instead of a single Target
+          // column. Detect that shape per-sheet (every sheet that matches
+          // gets folded in — a workbook with one tab per role, like a
+          // department-wide KRA/KPI master export, is common) and adapt it
+          // into the same okrRows/krRows shape the plain two-sheet template
+          // produces, so the rest of the pipeline (diff, matching, NOT-NULL-
+          // safe persist) is identical either way.
+          let okrRows=[], krRows=[], sawScorecard=false;
+          wb.SheetNames.forEach(name=>{
+            const aoa = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, defval:'' });
+            const adapted = this._xlScorecardToRows(aoa, name);
+            if(adapted){ sawScorecard=true; okrRows=okrRows.concat(adapted.okrRows); krRows=krRows.concat(adapted.krRows); }
+          });
+          if(!sawScorecard){
+            const okrSheet = wb.SheetNames.find(n=>/^okr/i.test(n)) || wb.SheetNames[0];
+            const krSheet = wb.SheetNames.find(n=>/key\s*result/i.test(n));
+            okrRows = XLSX.utils.sheet_to_json(wb.Sheets[okrSheet], { defval:'' });
+            krRows = krSheet ? XLSX.utils.sheet_to_json(wb.Sheets[krSheet], { defval:'' }) : [];
+          }
+          this.setState({ xlImpFileName:file.name, xlImpOkrRows:okrRows, xlImpKrRows:krRows, xlImpKpiRows:[] }, ()=>this.xlBuildPreview());
+        }
+      }catch(err){
+        this.setState({ xlImpBusy:false, xlImpError:'Could not read that file — make sure it is a valid .xlsx/.xls export.' });
+      }
+    };
+    reader.onerror = ()=>this.setState({ xlImpBusy:false, xlImpError:'Could not read that file.' });
+    reader.readAsArrayBuffer(file);
+  }
+  // Sheet names in these exports map to the app's actual division names in
+  // a handful of known cases (SEO, SMM, etc already match); a generic
+  // default tab name ("Sheet1") carries no information at all, so fall back
+  // to matching known role/department keywords out of the sheet's own
+  // title-row text instead (e.g. "SEO Executive — KRA / KPI..." -> SEO).
+  // Anything unrecognized passes through as-is — Division is just a
+  // free-text tag on an OKR, so an unmapped label is harmless, just less tidy.
+  _xlScorecardDivision(sheetName, roleTitle){
+    const map={ 'content writer':'Content', 'graphic designer':'Graphics', 'web developer':'Web Developers',
+      'department kra-kpi':'Marketing', 'smm':'SMM', 'seo':'SEO' };
+    const key = String(sheetName||'').trim().toLowerCase();
+    if(map[key]) return map[key];
+    if(!/^sheet\d*$/i.test(key) && sheetName) return sheetName;
+    const roleKeywords=[['seo','SEO'],['content','Content'],['graphic','Graphics'],['web','Web Developers'],['smm','SMM'],['social','SMM'],['marketing','Marketing']];
+    const rt=String(roleTitle||'').toLowerCase();
+    const hit=roleKeywords.find(([kw])=>rt.includes(kw));
+    return hit ? hit[1] : (roleTitle||sheetName||'General');
+  }
+  // Must stay a raw ISO 'YYYY-MM-DD' string, NOT run through fmtDate() — this
+  // feeds the 'Due Date' column straight into the Postgres `due_date` date
+  // column via the same path as a hand-typed template value (f.start/f.end
+  // elsewhere in the app store the same raw ISO form-input value; fmtDate is
+  // only for display). A human-formatted "Sep 30, 2026" string here silently
+  // fails every insert with a Postgres date-parse error — the .then(error=>
+  // console.warn) pattern used everywhere in this file swallows it, so nothing
+  // surfaces beyond the console (this is exactly what happened on the first
+  // live import attempt: the modal reported success but nothing persisted).
+  _xlDefaultDueDate(){
+    const d=new Date(); const q=Math.floor(d.getMonth()/3); const end=new Date(d.getFullYear(), q*3+3, 0);
+    return end.getFullYear()+'-'+String(end.getMonth()+1).padStart(2,'0')+'-'+String(end.getDate()).padStart(2,'0');
+  }
+  // Turns one "KRA: X — Weightage: Y% of role scorecard" sheet into the same
+  // okrRows/krRows shape the plain two-sheet template produces. Matching for
+  // "is this an update?" has no ID column to key off, so it's done by
+  // (Title==KRA name, Brand) instead — the pipeline's own byCode lookup then
+  // naturally finds the real code once matched, or auto-generates one when
+  // it doesn't (see _xlApplyOkr's `/^OKR-/i` check). Returns null if the
+  // sheet doesn't look like this shape at all (no 'kra'+'kpi' header row
+  // found in the first few rows), so a plain flat sheet still round-trips
+  // through the original template path untouched.
+  _xlScorecardToRows(aoa, sheetName){
+    let hIdx=-1;
+    for(let i=0;i<Math.min(6,aoa.length);i++){
+      const cells=(aoa[i]||[]).map(c=>String(c||'').trim().toLowerCase());
+      if(cells.includes('kra') && cells.includes('kpi')){ hIdx=i; break; }
+    }
+    if(hIdx<0) return null;
+    const roleTitle = String((aoa[0]||[])[0]||'').split(/[—–]|\s-\s/)[0].trim() || sheetName || 'Imported role';
+    const headers = (aoa[hIdx]||[]).map(h=>String(h||'').replace(/\r?\n/g,' ').trim());
+    const kraIdx = headers.findIndex(h=>h.toLowerCase()==='kra');
+    const kpiIdx = headers.findIndex(h=>h.toLowerCase()==='kpi');
+    const toolIdx = headers.findIndex(h=>/measurement/i.test(h));
+    const unitIdx = headers.findIndex(h=>h.toLowerCase()==='unit');
+    const ownerIdx = headers.findIndex(h=>h.toLowerCase()==='owner');
+    // Only columns actually named "<Brand> Monthly Target" count — some role
+    // sheets (e.g. Marketing Coordinator) insert an extra "Suggested Target
+    // / Benchmark" column right after Owner, before the real per-brand ones.
+    const brandCols = headers.map((h,i)=>({i,h})).filter(({i,h})=>i>ownerIdx && /monthly target/i.test(h)).map(({i,h})=>({ index:i, brand:h.replace(/monthly target/i,'').trim() })).filter(b=>b.brand);
+    const division = this._xlScorecardDivision(sheetName, roleTitle);
+    const scope = /department/i.test(sheetName||'') ? 'Department' : 'Individual';
+    const all = this.OKR_DATA();
+    const groups = new Map();
+    for(let r=hIdx+1;r<aoa.length;r++){
+      const row=aoa[r]||[];
+      const sl=row[0];
+      if(sl===undefined||sl===''||isNaN(parseFloat(sl))) continue; // KRA section marker / blank row
+      const kra=String(row[kraIdx]||'').trim();
+      const kpi=String(row[kpiIdx]||'').trim();
+      if(!kra||!kpi) continue;
+      const tool= toolIdx>=0?String(row[toolIdx]||'').trim():'';
+      const unit= unitIdx>=0?String(row[unitIdx]||'').trim():'';
+      const owner= ownerIdx>=0?String(row[ownerIdx]||'').trim():'';
+      brandCols.forEach(bc=>{
+        const val=String(row[bc.index]||'').trim();
+        if(!val) return;
+        const key=kra+'||'+bc.brand;
+        if(!groups.has(key)) groups.set(key, { kra, brand:bc.brand, owner, krs:[] });
+        groups.get(key).krs.push({ kpi, tool, unit, owner, target:val });
+      });
+    }
+    const okrRows=[], krRows=[];
+    Array.from(groups.values()).forEach(g=>{
+      const existingMatch = all.find(o=>String(o.title||'').trim().toLowerCase()===g.kra.toLowerCase() && String(o.brand||'').trim().toLowerCase()===g.brand.toLowerCase());
+      const idForRow = existingMatch ? existingMatch.code : (g.kra+' · '+g.brand);
+      const okrRow = { 'OKR ID':idForRow, 'Title':g.kra, 'Division':division, 'Brand':g.brand, 'Owner':g.owner||roleTitle };
+      // Scope/Status/Due Date only get defaulted for genuinely new groups —
+      // supplying them unconditionally would show as spurious "changes" on
+      // a matched, already-activated OKR (e.g. silently reverting it back
+      // to Draft) every time the same sheet is re-imported.
+      if(!existingMatch){ okrRow['Scope']=scope; okrRow['Due Date']=this._xlDefaultDueDate(); }
+      okrRows.push(okrRow);
+      g.krs.forEach(kr=>{
+        const krRow = { 'OKR ID':idForRow, 'KPI Name':kr.kpi, 'Key Result Text':kr.kpi, 'Unit':kr.unit, 'Owner':kr.owner, 'Measurement Tool':kr.tool, 'Target':kr.target };
+        if(!existingMatch) krRow['Weight']=String(Math.round(100/g.krs.length));
+        krRows.push(krRow);
+      });
+    });
+    return { okrRows, krRows };
+  }
+  // Header lookup is case/space-insensitive since users retype template headers by hand.
+  _xlCell(row, col){
+    if(row[col]!==undefined) return row[col];
+    const norm=(s)=>String(s).toLowerCase().replace(/[\s_]+/g,'');
+    const wantedKey = Object.keys(row).find(k=>norm(k)===norm(col));
+    return wantedKey!==undefined ? row[wantedKey] : undefined;
+  }
+  xlBuildPreview(){
+    const target = this.state.xlImpTarget;
+    const preview = target==='kpi' ? this._xlPreviewKpi() : this._xlPreviewOkr();
+    this.setState({ xlImpPreview:preview.rows, xlImpSummary:preview.summary, xlImpStep:'preview', xlImpBusy:false });
+  }
+  _xlPreviewOkr(){
+    const fieldMap = this.xlImportFieldMap().okr;
+    const krMap = this.xlImportFieldMap().kr;
+    const all = this.OKR_DATA();
+    const byCode = new Map(all.map(o=>[String(o.code||'').trim().toLowerCase(), o]));
+    const rows=[]; let updates=0, creates=0, invalid=0, krUpdates=0, krCreates=0;
+    const okrRows = this.state.xlImpOkrRows||[];
+    okrRows.forEach((r,i)=>{
+      const excelRow = i+2;
+      const idRaw = String(this._xlCell(r,'OKR ID')||'').trim();
+      const existing = idRaw ? byCode.get(idRaw.toLowerCase()) : null;
+      if(!idRaw && !String(this._xlCell(r,'Title')||'').trim()) return; // fully blank row
+      if(existing){
+        const fields=[];
+        fieldMap.forEach(f=>{
+          const raw = this._xlCell(r, f.col);
+          if(raw===undefined || String(raw).trim()==='') return; // not provided — leave untouched
+          const excelVal = f.list ? String(raw).split(',').map(s=>s.trim()).filter(Boolean).join(', ') : String(raw).trim();
+          const existingVal = f.list ? (existing[f.key]||[]).join(', ') : String(existing[f.key]!=null?existing[f.key]:'');
+          if(excelVal!==existingVal) fields.push({ field:f.label, key:f.key, existing:existingVal||'—', excel:excelVal });
+        });
+        if(fields.length){ updates++; rows.push({ excelRow, recordId:existing.code, recordLabel:existing.title, type:'update', fields }); }
+      } else {
+        const title=String(this._xlCell(r,'Title')||'').trim();
+        const due=String(this._xlCell(r,'Due Date')||'').trim();
+        if(!title || !due){
+          invalid++; rows.push({ excelRow, recordId:idRaw||'(new)', recordLabel:title||'—', type:'invalid',
+            reason:'New record needs at least Title and Due Date.' });
+        } else {
+          creates++;
+          const fields=fieldMap.filter(f=>String(this._xlCell(r,f.col)||'').trim()!=='').map(f=>({
+            field:f.label, key:f.key, existing:'—',
+            excel:f.list?String(this._xlCell(r,f.col)).split(',').map(s=>s.trim()).filter(Boolean).join(', '):String(this._xlCell(r,f.col)).trim() }));
+          rows.push({ excelRow, recordId:idRaw||'(auto)', recordLabel:title, type:'new', fields });
+        }
+      }
+    });
+    const krRows = this.state.xlImpKrRows||[];
+    krRows.forEach((r,i)=>{
+      const excelRow = i+2;
+      const okrId = String(this._xlCell(r,'OKR ID')||'').trim();
+      const kpiName = String(this._xlCell(r,'KPI Name')||'').trim();
+      if(!okrId && !kpiName) return;
+      const parentExisting = byCode.get(okrId.toLowerCase());
+      const parentIsNewRow = okrRows.some(r2=>String(this._xlCell(r2,'OKR ID')||'').trim().toLowerCase()===okrId.toLowerCase());
+      if(!parentExisting && !parentIsNewRow){ invalid++; rows.push({ excelRow, recordId:okrId||'(blank)', recordLabel:kpiName, type:'invalid', reason:'OKR ID does not match any existing or imported OKR.' }); return; }
+      if(!kpiName){ invalid++; rows.push({ excelRow, recordId:okrId, recordLabel:'—', type:'invalid', reason:'Key Result rows need a KPI Name to match on.' }); return; }
+      const existingKr = parentExisting && (parentExisting.krs||[]).find(k=>String(k.kpi||'').trim().toLowerCase()===kpiName.toLowerCase());
+      if(existingKr){
+        const fields=[];
+        krMap.forEach(f=>{
+          const raw=this._xlCell(r,f.col);
+          if(raw===undefined||String(raw).trim()==='') return;
+          const excelVal=String(raw).trim();
+          const existingVal=String(existingKr[f.key]!=null?existingKr[f.key]:'');
+          if(excelVal!==existingVal) fields.push({ field:'KR · '+f.label, key:f.key, existing:existingVal||'—', excel:excelVal });
+        });
+        if(fields.length){ krUpdates++; rows.push({ excelRow, recordId:okrId+' · '+kpiName, recordLabel:'Key Result', type:'kr-update', okrCode:okrId, kpiName, fields }); }
+      } else {
+        krCreates++;
+        const fields=krMap.filter(f=>String(this._xlCell(r,f.col)||'').trim()!=='').map(f=>({ field:'KR · '+f.label, key:f.key, existing:'—', excel:String(this._xlCell(r,f.col)).trim() }));
+        rows.push({ excelRow, recordId:okrId+' · '+kpiName, recordLabel:'New Key Result', type:'kr-new', okrCode:okrId, kpiName, fields });
+      }
+    });
+    return { rows, summary:{ updates, creates, invalid, krUpdates, krCreates } };
+  }
+  _xlPreviewKpi(){
+    const fieldMap = this.xlImportFieldMap().kpi;
+    const all = this.allKpiTemplates();
+    const byId = new Map(all.map(t=>[String(t.id||'').trim().toLowerCase(), t]));
+    const rows=[]; let updates=0, creates=0, invalid=0;
+    (this.state.xlImpKpiRows||[]).forEach((r,i)=>{
+      const excelRow=i+2;
+      const idRaw=String(this._xlCell(r,'KPI ID')||'').trim();
+      const existing = idRaw ? byId.get(idRaw.toLowerCase()) : null;
+      const name=String(this._xlCell(r,'Name')||'').trim();
+      if(!idRaw && !name) return;
+      if(existing){
+        const fields=[];
+        fieldMap.forEach(f=>{
+          const raw=this._xlCell(r,f.col);
+          if(raw===undefined||String(raw).trim()==='') return;
+          const excelVal=String(raw).trim();
+          const existingVal=String(existing[f.key]!=null?existing[f.key]:'');
+          if(excelVal!==existingVal) fields.push({ field:f.label, key:f.key, existing:existingVal||'—', excel:excelVal });
+        });
+        if(fields.length){ updates++; rows.push({ excelRow, recordId:existing.id, recordLabel:existing.name, type:'update', fields }); }
+      } else {
+        if(!name){ invalid++; rows.push({ excelRow, recordId:idRaw||'(new)', recordLabel:'—', type:'invalid', reason:'New KPI needs at least a Name.' }); return; }
+        creates++;
+        const fields=fieldMap.filter(f=>String(this._xlCell(r,f.col)||'').trim()!=='').map(f=>({ field:f.label, key:f.key, existing:'—', excel:String(this._xlCell(r,f.col)).trim() }));
+        rows.push({ excelRow, recordId:idRaw||'(auto)', recordLabel:name, type:'new', fields });
+      }
+    });
+    return { rows, summary:{ updates, creates, invalid, krUpdates:0, krCreates:0 } };
+  }
+  xlImportRun(){
+    // A confirmed import fires many concurrent Supabase writes at once —
+    // Promise.all here is what makes "Import complete" mean the data is
+    // actually saved, not just applied to local state. Without this, closing
+    // the modal (or the user navigating away right after) can abort
+    // in-flight requests before they land, leaving nothing persisted while
+    // the UI already showed success.
+    this.setState({ xlImpBusy:true });
+    const run = this.state.xlImpTarget==='kpi' ? this._xlApplyKpi() : this._xlApplyOkr();
+    run.then(()=>this.setState({ xlImpBusy:false }));
+  }
+  async _xlApplyOkr(){
+    const preview = this.state.xlImpPreview||[];
+    const createNew = !!this.state.xlImpCreateNew;
+    const all = this.OKR_DATA();
+    const byCode = new Map(all.map(o=>[o.code, o]));
+    const krByOkr = {};
+    preview.filter(r=>r.type==='kr-update'||r.type==='kr-new').forEach(r=>{ (krByOkr[r.okrCode]=krByOkr[r.okrCode]||[]).push(r); });
+    let updated=0, created=0, skipped=0, failed=0;
+    const promises=[];
+    const okrUpd={...(this.state.okrUpd||{})};
+    const okrAdded=[...(this.state.okrAdded||[])];
+    const touchedCodes = new Set(preview.filter(r=>r.type==='update').map(r=>r.recordId).concat(Object.keys(krByOkr).filter(c=>byCode.has(c))));
+    touchedCodes.forEach(code=>{
+      const existing = byCode.get(code);
+      if(!existing) return;
+      const updateRow = preview.find(r=>r.type==='update'&&r.recordId===code);
+      const patch = {};
+      if(updateRow) updateRow.fields.forEach(f=>{ patch[f.key] = f.key==='contributors' ? f.excel.split(',').map(s=>s.trim()).filter(Boolean) : f.excel; });
+      let krs = existing.krs||[];
+      (krByOkr[code]||[]).forEach(kr=>{
+        if(kr.type==='kr-update'){
+          krs = krs.map(k=> String(k.kpi||'').trim().toLowerCase()===kr.kpiName.toLowerCase() ? {...k, ...Object.fromEntries(kr.fields.map(f=>[f.key,f.excel]))} : k);
+        } else if(kr.type==='kr-new' && createNew){
+          const rec={ t:'Key result', kpi:kr.kpiName, baseline:'0', target:'100', current:'0', unit:'units', weight:0, who:existing.owner, freq:'Monthly', due:existing.due, status:'Active', tool:'', method:'', mfreq:'', evidence:'', tsrc:'Manual', tref:'', taskLinks:[], effortLinks:[] };
+          kr.fields.forEach(f=>{ rec[f.key]=f.excel; });
+          krs=[...krs, rec];
+        }
+      });
+      const merged = { title:existing.title, desc:existing.desc, category:existing.category, scope:existing.scope, dept:existing.dept,
+        brand:existing.brand, status:existing.status, businessUnit:existing.businessUnit, websiteDomain:existing.websiteDomain, owner:existing.owner,
+        reviewer:existing.reviewer, contributors:existing.contributors, start:existing.start, due:existing.due, ...patch };
+      okrUpd[existing.id] = { ...existing, ...merged, krs };
+      promises.push(this._persistOkr(code, {
+        title:merged.title, description:merged.desc, category:merged.category, scope:merged.scope, division:merged.dept,
+        status:merged.status, key_results:krs, business_unit:merged.businessUnit, website_domain:merged.websiteDomain,
+        contributors:merged.contributors, owner:merged.owner, brand:merged.brand||null, reviewer:merged.reviewer||null,
+        start_date:merged.start||null, due_date:merged.due||null,
+      }).then(ok=>{ if(!ok) failed++; }));
+      updated++;
+    });
+    if(createNew){
+      preview.filter(r=>r.type==='new').forEach(r=>{
+        const f=Object.fromEntries(r.fields.map(x=>[x.key,x.excel]));
+        const rk=this.state.roleKey;
+        const prefix='OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-';
+        const allCodes=this.OKR_DATA().map(o=>o.code).concat(okrAdded.map(o=>o.code)).concat(this.state.okrDeleted||[]);
+        const nums=allCodes.filter(c=>c&&c.indexOf(prefix)===0).map(c=>parseInt(c.slice(prefix.length),10)||0);
+        // Only trust recordId as the literal code if it actually looks like
+        // one (a user typing a real "OKR-..." code into the generic
+        // template) — anything else (blank, or a scorecard-derived label
+        // like "Organic Search Growth · FRL") always gets a freshly minted
+        // one instead of using that label as the stored code.
+        const code = (r.recordId && /^OKR-/i.test(r.recordId)) ? r.recordId : prefix+String(Math.max(0,...nums)+1).padStart(3,'0');
+        const krs = (krByOkr[r.recordId]||[]).filter(k=>k.type==='kr-new').map(kr=>{
+          const rec={ t:'Key result', kpi:kr.kpiName, baseline:'0', target:'100', current:'0', unit:'units', weight:0, who:f.owner||this.currentPerson(), freq:'Monthly', due:f.due||'', status:'Active', tool:'', method:'', mfreq:'', evidence:'', tsrc:'Manual', tref:'', taskLinks:[], effortLinks:[] };
+          kr.fields.forEach(x=>{ rec[x.key]=x.excel; }); return rec;
+        });
+        const okr = { id:'okr-local-'+Date.now()+'-'+created, code, v:'v1.0', team:'', campaign:'', daysLeft:0, cycleElapsed:0, weight:100,
+          approver:this.currentPerson(), title:f.title, desc:f.desc||'', category:f.category||f.dept||'SEO', scope:f.scope||'Department',
+          dept:f.dept||'SEO', brand:f.brand||'', status:f.status||'Draft', businessUnit:f.businessUnit||'', websiteDomain:f.websiteDomain||'',
+          owner:f.owner||this.currentPerson(), reviewer:f.reviewer||'', contributors:f.contributors?f.contributors.split(',').map(s=>s.trim()).filter(Boolean):[],
+          start:f.start||this.todayStr(), due:f.due, krs };
+        okrAdded.push(okr);
+        promises.push(supabase.from('okrs').insert({
+          code, title:okr.title, description:okr.desc, category:okr.category, scope:okr.scope, division:okr.dept,
+          status:okr.status, key_results:krs, business_unit:okr.businessUnit, website_domain:okr.websiteDomain,
+          contributors:okr.contributors, owner:okr.owner, brand:okr.brand||null, reviewer:okr.reviewer||null,
+          start_date:okr.start||null, due_date:okr.due||null, created_by:this.state.authUser?this.state.authUser.id:null,
+        }).then(({error})=>{ if(error){ console.warn('[supabase] okr import insert failed:', error.message); failed++; } }));
+        created++;
+      });
+    } else {
+      skipped = preview.filter(r=>r.type==='new').length + preview.filter(r=>r.type==='kr-new').length;
+    }
+    await Promise.all(promises);
+    this.setState({ okrUpd, okrAdded, xlImpOpen:false, xlImpTarget:null, xlImpStep:'upload', xlImpPreview:[], xlImpSummary:null });
+    this.flash('Import complete — '+updated+' OKR'+(updated===1?'':'s')+' updated'+(createNew?(', '+created+' created'):(skipped?(', '+skipped+' new record'+(skipped===1?'':'s')+' skipped'):''))
+      +(failed?(' — '+failed+' write'+(failed===1?'':'s')+' failed, check console'):'')+'.');
+  }
+  async _xlApplyKpi(){
+    const preview = this.state.xlImpPreview||[];
+    const createNew = !!this.state.xlImpCreateNew;
+    let updated=0, created=0, skipped=0, failed=0;
+    const promises=[];
+    const ktUpd={...(this.state.ktUpd||{})};
+    const ktAdded=[...(this.state.ktAdded||[])];
+    const existingAll = this.allKpiTemplates();
+    preview.filter(r=>r.type==='update').forEach(r=>{
+      const existing = existingAll.find(t=>t.id===r.recordId);
+      if(!existing) return;
+      const patch=Object.fromEntries(r.fields.map(f=>[f.key,f.excel]));
+      const rec={...existing, ...patch, updated:this.todayStr()};
+      ktUpd[existing.id]=rec;
+      promises.push(supabase.from('templates').upsert({ id:existing.id, kind:'kpi', payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+        if(error){ console.warn('[supabase] kpi import upsert failed:', error.message); failed++; }
+      }));
+      updated++;
+    });
+    if(createNew){
+      preview.filter(r=>r.type==='new').forEach(r=>{
+        const f=Object.fromEntries(r.fields.map(x=>[x.key,x.excel]));
+        const ktIds=this.KPI_TEMPLATES().map(t=>t.id).concat(ktAdded.map(t=>t.id)).concat(this.state.ktDeleted||[]);
+        const ktNums=ktIds.map(id=>{ const m=String(id).match(/^kt(\d+)$/); return m?parseInt(m[1],10):0; });
+        const nid = (r.recordId&&r.recordId!=='(auto)') ? r.recordId : 'kt'+(Math.max(0,...ktNums)+1);
+        const rec={ id:nid, name:f.name, category:f.category||'Traffic', division:f.division||'SEO', unit:f.unit||'count',
+          direction:f.direction||'Increase', defTarget:f.defTarget||'—', freq:f.freq||'Monthly', source:f.source||'Manual',
+          desc:f.desc||'', status:f.status||'Active', owner:this.currentPerson(), updated:this.todayStr() };
+        ktAdded.push(rec);
+        promises.push(supabase.from('templates').insert({ id:nid, kind:'kpi', payload:rec, created_by:this.state.authUser?this.state.authUser.id:null }).then(({error})=>{
+          if(error){ console.warn('[supabase] kpi import insert failed:', error.message); failed++; }
+        }));
+        created++;
+      });
+    } else {
+      skipped = preview.filter(r=>r.type==='new').length;
+    }
+    await Promise.all(promises);
+    this.setState({ ktUpd, ktAdded, xlImpOpen:false, xlImpTarget:null, xlImpStep:'upload', xlImpPreview:[], xlImpSummary:null });
+    this.flash('Import complete — '+updated+' KPI template'+(updated===1?'':'s')+' updated'+(createNew?(', '+created+' created'):(skipped?(', '+skipped+' new record'+(skipped===1?'':'s')+' skipped'):''))
+      +(failed?(' — '+failed+' write'+(failed===1?'':'s')+' failed, check console'):'')+'.');
+  }
+  xlImportData(){
+    const preview = this.state.xlImpPreview||[];
+    const flatRows=[];
+    preview.forEach(r=>{
+      if(r.type==='invalid'){ flatRows.push({ excelRow:r.excelRow, record:r.recordId, field:'—', existing:'—', excelVal:'—', action:'Invalid — '+r.reason, tone:'danger' }); return; }
+      if(!r.fields.length) return;
+      r.fields.forEach((f,fi)=>{
+        flatRows.push({
+          excelRow: fi===0?r.excelRow:'', record: fi===0?r.recordId:'',
+          field:f.field, existing:f.existing, excelVal:f.excel,
+          action: r.type==='update'||r.type==='kr-update' ? 'Update' : (this.state.xlImpCreateNew ? 'Create' : 'Skip (new records off)'),
+          tone: r.type==='update'||r.type==='kr-update' ? 'update' : (this.state.xlImpCreateNew?'create':'skip'),
+        });
+      });
+    });
+    const s = this.state.xlImpSummary||{ updates:0, creates:0, invalid:0, krUpdates:0, krCreates:0 };
+    return {
+      xlImpOpen:!!this.state.xlImpOpen,
+      xlImpTarget:this.state.xlImpTarget,
+      xlImpTitle: this.state.xlImpTarget==='kpi' ? 'Import / Update KPI Templates' : 'Import / Update OKRs',
+      xlImpStep:this.state.xlImpStep||'upload',
+      xlImpFileName:this.state.xlImpFileName||'',
+      xlImpBusy:!!this.state.xlImpBusy,
+      xlImpError:this.state.xlImpError||'',
+      xlImpCreateNew:!!this.state.xlImpCreateNew,
+      xlImpSetCreateNew:e=>this.setState({ xlImpCreateNew:e.target.checked }),
+      xlImpPick:e=>this.xlImportPick(e),
+      xlImpDownloadTemplate:()=>this.xlDownloadTemplate(),
+      xlImpClose:()=>this.xlImportClose(),
+      xlImpStop:e=>e.stopPropagation(),
+      xlImpBack:()=>this.setState({ xlImpStep:'upload', xlImpPreview:[], xlImpSummary:null, xlImpFileName:'' }),
+      xlImpRun:()=>this.xlImportRun(),
+      xlImpRows:flatRows,
+      xlImpHasRows:flatRows.length>0,
+      xlImpSummaryText: s.updates+' record'+(s.updates===1?'':'s')+' to update'
+        +(s.krUpdates?(', '+s.krUpdates+' key result'+(s.krUpdates===1?'':'s')+' to update'):'')
+        +', '+s.creates+' new record'+(s.creates===1?'':'s')
+        +(s.krCreates?(' (+'+s.krCreates+' key result'+(s.krCreates===1?'':'s')+')'):'')
+        +(s.invalid?(', '+s.invalid+' invalid — skipped'):''),
+      xlImpConfirmDisabled: (s.updates+s.creates+s.krUpdates+s.krCreates)===0 || !!this.state.xlImpBusy,
+      xlImpConfirmLabel: this.state.xlImpBusy ? 'Saving…' : 'Confirm Import',
+    };
   }
 
   // Legacy categories map to their historical URL prefix; a brand-specific
