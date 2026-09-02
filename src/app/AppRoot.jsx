@@ -288,6 +288,20 @@ class AppRoot extends React.Component {
   }
 
   flash(msg){ this.setState({ toast: msg }); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({toast:''}),2400); }
+  // Scrolls `el` into view inside its nearest .blscroll ancestor. Deliberately
+  // NOT el.offsetTop (relative to whatever positioned ancestor happens to be
+  // el.offsetParent, which is often NOT the scroll container itself once a
+  // sticky header or other positioned wrapper sits in between) — that
+  // mismatch was silently over/under-scrolling every section-nav jump in
+  // panels like Create OKR. getBoundingClientRect() deltas are relative to
+  // the viewport for both elements, so this stays correct regardless of
+  // what's positioned in between.
+  _scrollIntoPanel(el, offset){
+    if(!el) return;
+    const sc=el.closest('.blscroll'); if(!sc) return;
+    const target=el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - (offset||20);
+    sc.scrollTo({ top: Math.max(0,target), behavior:'smooth' });
+  }
 
   _timeAgo(ts){
     if(!ts) return '';
@@ -10455,7 +10469,7 @@ class AppRoot extends React.Component {
     const steps = [['okrA','A','Objective details'],['okrB','B','Scope & classification'],['okrC','C','Timeline'],['okrD','D','Key results'],['okrE','E','Alignment'],['okrF','F','Progress & source'],['okrG','G','Review & governance'],['okrH','H','Risk & assumptions'],['okrI','I','Audit']];
     const cur = this.state.okrSection;
     const okrSteps = steps.map(([id,letter,name])=>{ const active=id===cur; return { id, letter, name, label:letter+' · '+name,
-      go:(e)=>{ if(e)e.preventDefault(); this.setState({ okrSection:id }); const el=document.getElementById(id); if(el){ const sc=el.closest('.blscroll'); if(sc) sc.scrollTo({ top: el.offsetTop - 20, behavior:'smooth' }); } },
+      go:(e)=>{ if(e)e.preventDefault(); this.setState({ okrSection:id }); this._scrollIntoPanel(document.getElementById(id)); },
       navStyle:'display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:2px;border-radius:10px;font-size:13px;font-weight:'+(active?'700':'600')+';text-decoration:none;'+(active?'background:var(--orchid-100);color:var(--ink-900)':'color:var(--ink-500)'),
       badgeBg: active?'var(--beet-700)':'var(--surface-50)', badgeColor: active?'#fff':'var(--ink-500)' }; });
     const reg = this.MASTERS_REG();
@@ -10646,7 +10660,16 @@ class AppRoot extends React.Component {
       okrMethodOptions:this.MEASURE_METHODS(), okrMfreqOptions:this.MEASURE_FREQ(),
       okrTaskLinkOptions:[{key:'',label:'Auto — all tasks tagged with this KPI'}].concat(taskOpts),
       okrEffortLinkOptions:[{key:'',label:'None — outcome only'}].concat(effOpts),
-      okrAddKR:()=>this.setState({ okrDraftKRs:[...this.state.okrDraftKRs,{id:this.state.okrKRSeq,weight:'0'}], okrKRSeq:this.state.okrKRSeq+1 }),
+      // A newly added KR lands below whatever's already scrolled into view —
+      // with no visual cue, it read as "only 2 show" (confirmed report: KRs
+      // beyond the first 2 saved fine, they just weren't visible without
+      // manually scrolling the panel). Scroll the new row into view the same
+      // way the section-nav links already do (offsetTop against .blscroll),
+      // so adding one is immediately confirmed on screen.
+      okrAddKR:()=>{ const newN=this.state.okrDraftKRs.length+1;
+        this.setState({ okrDraftKRs:[...this.state.okrDraftKRs,{id:this.state.okrKRSeq,weight:'0'}], okrKRSeq:this.state.okrKRSeq+1 }, ()=>{
+          this._scrollIntoPanel(document.getElementById('okrKrRow-'+newN));
+        }); },
       okrWeightTotal:wTotal, okrWeightBg: wOk?'var(--verify-100)':'var(--warn-100)', okrWeightColor: wOk?'var(--verify-600)':'var(--warn-600)',
       okrNewCode:'OKR-'+(this.ROLES[rk].bucket==='admin'?'GEN':'SEO')+'-Q1-'+String(list.length+1).padStart(3,'0'),
       okrAuditUser:this.currentPerson()+' ('+this.ROLES[rk].label+')',

@@ -444,12 +444,17 @@ Key results — KPI linked
 </span>
 </div>
 
-            
+
+<div style={{"display":"flex","alignItems":"center","gap":"8px"}}>
+<span style={{"fontSize":"11px","fontWeight":"700","padding":"3px 9px","borderRadius":"999px","background":"var(--surface-50)","border":"1px solid var(--line-300)","color":"var(--ink-600)"}}>
+{(okrDraftKRs || []).length} key result{(okrDraftKRs || []).length===1?'':'s'}
+</span>
 <span style={cssTextToObject(`font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${okrWeightBg};color:${okrWeightColor}`)}>
 Weights: {okrWeightTotal}%
 </span>
+</div>
 
-          
+
 </div>
 
           
@@ -479,10 +484,10 @@ Weights: {okrWeightTotal}%
 {(okrDraftKRs || []).map((k, $index) => (
 <React.Fragment key={$index}>
 
-              
-<div style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"14px","padding":"14px"}}>
 
-                
+<div id={"okrKrRow-"+k.n} style={{"background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"14px","padding":"14px"}}>
+
+
 <div style={{"display":"flex","alignItems":"center","justifyContent":"space-between","marginBottom":"10px"}}>
 <span style={{"fontSize":"11.5px","fontWeight":"800","color":"var(--orchid-600)"}}>
 KR {k.n}
