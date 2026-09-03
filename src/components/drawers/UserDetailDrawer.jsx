@@ -5,7 +5,7 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function UserDetailDrawer({ vm }) {
   const { umDrawerOpen, umU, umClose, umStop, umLoad, umEditing, umD, umSetStart, umSetEnd, umSetBreak, umSetDays, umDayOptions,
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
-    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend,
+    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend, umResendLabel,
     umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
     umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows, umLeadColumnRows } = vm;
   const u = umU || {};
@@ -181,7 +181,7 @@ Remove
 <Icon name={"key-round"} style={{"width":"13px","height":"13px"}} />Reset password</button>
 {Boolean(umShowResend) && (
 <button onClick={umResend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"mail"} style={{"width":"13px","height":"13px"}} />Resend invitation</button>
+<Icon name={"mail"} style={{"width":"13px","height":"13px"}} />{umResendLabel}</button>
 )}
 </div>
 )}

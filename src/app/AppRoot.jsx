@@ -5674,8 +5674,9 @@ class AppRoot extends React.Component {
         }); },
       umSuspendLabel:u.status==='Suspended'?'Reactivate account':'Suspend account',
       umResend:async()=>{
-        if(!u.email){ this.flash('No email on file for '+name+' — add one before resending.'); return; }
-        this.flash('Resending invite to '+u.email+'…');
+        if(!u.email){ this.flash('No email on file for '+name+' — add one before sending.'); return; }
+        const everSent=!!u.invitedAt;
+        this.flash((everSent?'Resending invite to ':'Sending invitation to ')+u.email+'…');
         try{
           const resp=await fetch('/api/invite-user', {
             method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -5683,13 +5684,21 @@ class AppRoot extends React.Component {
               brands:u.brands||[], reportingManager:u.reportingManager||'', teamLead:u.teamLead||'' }),
           });
           const body=await this._safeJson(resp);
-          if(!resp.ok) throw new Error(body.error||'Resend failed');
-          if(body.emailSent) this.flash('Activation link re-sent to '+u.email+'.');
+          if(!resp.ok) throw new Error(body.error||(everSent?'Resend failed':'Send failed'));
+          if(body.emailSent){
+            this.flash('Activation link '+(everSent?'re-sent':'sent')+' to '+u.email+'.');
+            const now=new Date().toISOString();
+            this.setState({ users:(this.state.users||[]).map(x=>x.id===u.id?{...x,invitedAt:now}:x) });
+            if(u.id) supabase.from('profiles').update({ invited_at:now }).eq('id', u.id).then(({error})=>{
+              if(error) console.warn('[supabase] invited_at update failed:', error.message);
+            });
+          }
           else this.flash('Link regenerated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
         }catch(err){
-          this.flash('Could not resend invite: '+err.message);
+          this.flash('Could not send invite: '+err.message);
         } },
       umShowResend:u.status==='Pending Invitation',
+      umResendLabel:u.invitedAt?'Resend invitation':'Send invitation',
     };
   }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
@@ -8690,7 +8699,7 @@ class AppRoot extends React.Component {
       mobile:p.mobile||'', team:p.team||'', reportingManager:p.reporting_manager||'', teamLead:p.team_lead||'',
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
       brands:p.brands||[], avatar_url:p.avatar_url||'', hiddenWidgets:p.dashboard_widgets||[],
-      hiddenLeadColumns:p.hidden_lead_columns||[],
+      hiddenLeadColumns:p.hidden_lead_columns||[], invitedAt:p.invited_at||null,
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -11857,19 +11866,23 @@ class AppRoot extends React.Component {
       shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5,
       reportingManager:f.manager||'', teamLead:f.lead||'', brands:f.brands||[] };
     this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
+    // sendEmail:false — creating the account (and its activation link)
+    // still happens here, but the invite email itself is no longer sent
+    // automatically. It only goes out when someone explicitly clicks "Send
+    // invitation" on the user's profile (umResend below), which calls this
+    // same endpoint again without the flag.
     try{
       const resp=await fetch('/api/invite-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
         body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation,
-          brands:f.brands||[], reportingManager:f.manager||'', teamLead:f.lead||'' }),
+          brands:f.brands||[], reportingManager:f.manager||'', teamLead:f.lead||'', sendEmail:false }),
       });
       const body=await this._safeJson(resp);
-      if(!resp.ok) throw new Error(body.error||'Invite failed');
-      if(body.emailSent) this.flash('User created — activation link sent to '+f.email+'.');
-      else this.flash('User created, but the invite email failed to send'+(body.mailError?(': '+body.mailError):'')+'. Use "Resend invite" once you\'ve confirmed mail delivery is set up.');
+      if(!resp.ok) throw new Error(body.error||'User creation failed');
+      this.flash('User added — no invitation sent yet. Open their profile and click "Send invitation" when you\'re ready to email their activation link.');
       this._loadTeam();
     }catch(err){
-      this.flash('Could not send invite ('+err.message+'). The user still appears locally.');
+      this.flash('Could not create the account ('+err.message+').');
     }
   }
   confirmRoleAssignment(){

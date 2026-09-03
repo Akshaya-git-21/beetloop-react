@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { email, fullName, roleKey, department, designation, brands, reportingManager, teamLead } = req.body || {};
+  const { email, fullName, roleKey, department, designation, brands, reportingManager, teamLead, sendEmail } = req.body || {};
   if (!email || !fullName) {
     res.status(400).json({ error: 'email and fullName are required.' });
     return;
@@ -78,6 +78,16 @@ export default async function handler(req, res) {
 
   const actionLink = data.properties && data.properties.action_link;
   const userId = data.user ? data.user.id : null;
+
+  // sendEmail:false (the default from "Add user", now that adding a user
+  // no longer auto-sends an invite) — the account + activation link above
+  // are still created either way, just not emailed. A later explicit "Send
+  // invitation" click calls this same endpoint again without the flag.
+  if (sendEmail === false) {
+    res.status(200).json({ ok: true, userId, emailSent: false, actionLink, skipped: true });
+    return;
+  }
+
   const subject = 'You’ve been invited to Beetloop';
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
