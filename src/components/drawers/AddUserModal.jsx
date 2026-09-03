@@ -244,13 +244,13 @@ Restricts this user's Brand Playbook to the selected brand(s) only (Sales Execut
 
 
 <div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"11px 14px","marginTop":"14px"}}>
-<Icon name={"mail-check"} style={{"width":"16px","height":"16px","color":"var(--verify-500)"}} />
+<Icon name={"user-plus"} style={{"width":"16px","height":"16px","color":"var(--verify-500)"}} />
 <span style={{"fontSize":"12.5px","color":"var(--ink-700)"}}>
-On save, an 
+The account is created, but
 <strong>
-activation link
+no invitation email is sent yet
 </strong>
- is emailed. Permissions inherit automatically from the selected role.
+ — open their profile afterwards and click "Send invitation" when you're ready. Permissions inherit automatically from the selected role.
 </span>
 </div>
 
@@ -267,8 +267,8 @@ Cancel
 
         
 <button onClick={submitUser} style={{"padding":"10px 20px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"11px","fontSize":"13.5px","fontWeight":"700","cursor":"pointer","display":"flex","alignItems":"center","gap":"7px"}}>
-<Icon name={"send"} style={{"width":"15px","height":"15px"}} />
-Create & send invite
+<Icon name={"user-plus"} style={{"width":"15px","height":"15px"}} />
+Create user
 </button>
 
       
