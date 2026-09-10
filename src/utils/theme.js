@@ -86,3 +86,31 @@ export function applyFavicon(branding) {
   }
   if (link.href !== branding.favicon) link.href = branding.favicon;
 }
+
+// platform_settings only loads after AppRoot mounts and its Supabase query
+// resolves — until then every screen falls back to the hardcoded "BEETLOOP"
+// demo name/logo/colors, so a real deployment visibly flashes its own
+// branding away and back on every load. Caching the last-loaded value lets
+// the boot sequence (see AppRoot.jsx's module-level call, before first
+// paint) apply the real branding immediately from cache while the fresh
+// fetch confirms/updates it in the background — the demo fallback is now
+// only ever seen on a genuinely first-ever visit with an empty cache.
+const PLATFORM_SETTINGS_CACHE_KEY = 'bl_platform_settings_cache';
+
+export function getCachedPlatformSettings() {
+  try {
+    const raw = localStorage.getItem(PLATFORM_SETTINGS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setCachedPlatformSettings(value) {
+  try {
+    localStorage.setItem(PLATFORM_SETTINGS_CACHE_KEY, JSON.stringify(value || {}));
+  } catch (e) {
+    // Storage unavailable/full — the next real fetch still updates React
+    // state normally, this cache is purely a paint-time optimization.
+  }
+}

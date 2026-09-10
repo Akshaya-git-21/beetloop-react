@@ -8,6 +8,7 @@ function parseScreenAndRoute(pathname) {
     return { screenParam: 'app', routeParam: m ? m[1] : 'dashboard' };
   }
   if (pathname.startsWith('/activate')) return { screenParam: 'activate', routeParam: null };
+  if (pathname.startsWith('/verify-email')) return { screenParam: 'verify-email', routeParam: null };
   return { screenParam: 'login', routeParam: null };
 }
 

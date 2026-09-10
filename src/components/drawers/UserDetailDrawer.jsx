@@ -7,7 +7,8 @@ export default function UserDetailDrawer({ vm }) {
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
     umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend, umResendLabel,
     umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
-    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows, umLeadColumnRows } = vm;
+    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows, umLeadColumnRows,
+    umSetEmail, umPendingEmail, umPendingEmailNote, umResendEmailChange, umCancelEmailChange } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -90,6 +91,17 @@ Remove
 <select value={umD.status} onChange={umSetStatus} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","background":"var(--paper)"}}>
 {(umStatusOptions || []).map((o, $i) => (<option key={$i} value={o}>{o}</option>))}
 </select></div>
+{Boolean(umPendingEmailNote) && (
+<div style={{"gridColumn":"1 / -1","display":"flex","alignItems":"center","gap":"9px","flexWrap":"wrap","padding":"9px 11px","border":"1px solid var(--warn-300, var(--line-300))","background":"var(--warn-100)","borderRadius":"10px","fontSize":"11.5px","color":"var(--warn-700, var(--ink-700))"}}>
+<Icon name={"mail-question"} style={{"width":"14px","height":"14px","flexShrink":"0"}} />
+<span style={{"flex":"1","minWidth":"160px"}}>{umPendingEmailNote}</span>
+<button type="button" onClick={umResendEmailChange} style={{"padding":"4px 9px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>Resend</button>
+<button type="button" onClick={umCancelEmailChange} style={{"padding":"4px 9px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"8px","fontSize":"10.5px","fontWeight":"700","cursor":"pointer"}}>Cancel</button>
+</div>
+)}
+<div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Email</label>
+<input type="email" value={umD.email} onInput={umSetEmail} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} />
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"4px"}}>Changing this sends a confirmation link to the new address — it only takes effect once they confirm it.</div></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Mobile</label>
 <input value={umD.mobile} onInput={umSetMobile} style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} /></div>
 <div><label style={{"display":"block","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"5px"}}>Designation</label>
@@ -141,6 +153,15 @@ Remove
 <button onClick={umSave} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"9px 17px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"check"} style={{"width":"13px","height":"13px"}} />Save changes</button>
 </div>
+</div>
+)}
+
+{Boolean(umPendingEmailNote) && !umEditing && (
+<div style={{"display":"flex","alignItems":"center","gap":"9px","flexWrap":"wrap","padding":"10px 13px","border":"1px solid var(--warn-300, var(--line-300))","background":"var(--warn-100)","borderRadius":"12px","fontSize":"12px","color":"var(--warn-700, var(--ink-700))"}}>
+<Icon name={"mail-question"} style={{"width":"15px","height":"15px","flexShrink":"0"}} />
+<span style={{"flex":"1","minWidth":"180px"}}>{umPendingEmailNote}</span>
+<button onClick={umResendEmailChange} style={{"padding":"5px 10px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"8px","fontSize":"11px","fontWeight":"700","cursor":"pointer"}}>Resend</button>
+<button onClick={umCancelEmailChange} style={{"padding":"5px 10px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--danger-600)","borderRadius":"8px","fontSize":"11px","fontWeight":"700","cursor":"pointer"}}>Cancel</button>
 </div>
 )}
 

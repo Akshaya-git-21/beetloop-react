@@ -1,9 +1,22 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
-import { applyTheme, applyFavicon, applyBranding } from '../utils/theme.js';
+import { applyTheme, applyFavicon, applyBranding, getCachedPlatformSettings, setCachedPlatformSettings } from '../utils/theme.js';
+
+// Applied at module-evaluation time — before AppRoot even mounts, let alone
+// its first real Supabase fetch resolves — so a repeat visit paints the
+// real branding (title/favicon/theme vars) from the start instead of
+// flashing the hardcoded "BEETLOOP" demo look first. See
+// utils/theme.js's cache helpers for why this exists.
+const cachedPlatformSettings = getCachedPlatformSettings();
+if (cachedPlatformSettings) {
+  applyTheme(cachedPlatformSettings.theme);
+  applyFavicon(cachedPlatformSettings.branding);
+  applyBranding(cachedPlatformSettings.general);
+}
 
 const LoginPage = React.lazy(() => import('../pages/LoginPage.jsx'));
 const ActivatePage = React.lazy(() => import('../pages/ActivatePage.jsx'));
+const VerifyEmailPage = React.lazy(() => import('../pages/VerifyEmailPage.jsx'));
 const AppShell = React.lazy(() => import('../layouts/AppShell.jsx'));
 
 class AppRoot extends React.Component {
@@ -16,6 +29,8 @@ class AppRoot extends React.Component {
     notifications: [], showNotifications: false,
     email: '', password: '', loginError: '',
     newPass: '', confirmPass: '', mfa: true,
+    verifyEmailStatus: 'pending', verifyEmailMessage: '', verifyEmailAddress: '',
+    platformSettings: cachedPlatformSettings || undefined,
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
     umOpen: null, umEdit: false, umDraft: {},
@@ -219,9 +234,11 @@ class AppRoot extends React.Component {
     // auth check, not just post-login inside _loadProfile().
     this._loadPlatformSettings();
 
+    if(this.props.screenParam==='verify-email') this._runVerifyEmail();
+
     supabase.auth.getSession().then(({ data:{ session } })=>{
       this.setState({ authReady:true });
-      if(session && session.user && this.state.screen!=='activate'){
+      if(session && session.user && this.state.screen!=='activate' && this.state.screen!=='verify-email'){
         this._loadProfile(session.user);
       }
       if(session && session.user && this.state.screen==='activate'){
@@ -269,6 +286,29 @@ class AppRoot extends React.Component {
       else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
     }catch(err){
       this.flash('Could not send reset email: '+err.message);
+    }
+  }
+  // Starts (or resends) a verify-before-apply email change for someone else
+  // — see api/change-email.js. Never touches profiles.email/auth email
+  // itself; it only records the request and emails a confirm link to the
+  // NEW address. Used by User Management's edit-user Save (when the email
+  // field changed) and by the "Resend verification" action.
+  async _requestEmailChange(userId, newEmail, displayName){
+    if(!userId){ this.flash('Cannot change email — this account has no linked login.'); return; }
+    this.flash('Sending verification to '+newEmail+'…');
+    try{
+      const resp=await fetch('/api/change-email', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ userId, newEmail }),
+      });
+      const body=await this._safeJson(resp);
+      if(!resp.ok) throw new Error(body.error||'Could not start email change.');
+      const users=(this.state.users||[]).map(x=>x.id===userId?{...x,pendingEmail:newEmail}:x);
+      this.setState({ users });
+      if(body.emailSent) this.flash('Verification sent to '+newEmail+' — '+displayName+'’s email updates once they confirm it.');
+      else this.flash('Verification link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
+    }catch(err){
+      this.flash('Could not start email change: '+err.message);
     }
   }
   componentDidUpdate(prevProps, prevState){
@@ -2053,6 +2093,9 @@ class AppRoot extends React.Component {
       mfaBg:this.state.mfa?'var(--verify-500)':'var(--line-300)', mfaX:this.state.mfa?'21px':'3px',
       doActivate:()=>this.doActivate(),
       ...this.pwStrength(),
+      // verify-email (confirming a pending email change from User Management)
+      verifyEmailStatus:this.state.verifyEmailStatus, verifyEmailMessage:this.state.verifyEmailMessage,
+      verifyEmailAddress:this.state.verifyEmailAddress,
       // shell
       role, roleKey:rk, nav, adminNav, hasAdmin,
       platformName:((this.state.platformSettings||{}).general||{}).companyName||'BEETLOOP',
@@ -5540,11 +5583,28 @@ class AppRoot extends React.Component {
       umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{} }),
       umStop:(e)=>e.stopPropagation(),
       umMeta:[['Role',u.role],['Department',u.dept],['Designation',u.sub],['Account status',u.status],
+        ['Email',u.email||'—'],
         ['Mobile',u.mobile||'—'],['Team',u.team||'—'],['Reporting manager',u.reportingManager||'—'],
         ['Team lead',u.teamLead||'—'],['Office location',u.officeLocation||'—'],
         ['Shift',(u.shiftStart||'09:00')+' – '+(u.shiftEnd||'18:00')],['Break',(u.breakMin||60)+' minutes'],
         ['Working days',(u.days||5)+' / week'],['Daily capacity',this.dailyCapacity(name)+' h'],
         ['Weekly capacity',wk+' h']].concat(u.role==='Sales Executive'?[['Assigned brand(s)',(u.brands||[]).join(', ')||'None']]:[]).map(x=>({k:x[0],v:x[1]})),
+      umPendingEmail:u.pendingEmail||'',
+      umPendingEmailNote:u.pendingEmail?('Verification sent to '+u.pendingEmail+' — the sign-in email updates once they confirm it.'):'',
+      umResendEmailChange:async()=>{
+        if(!u.pendingEmail) return;
+        await this._requestEmailChange(u.id, u.pendingEmail, name);
+      },
+      umCancelEmailChange:async()=>{
+        if(!u.id) return;
+        const users=(this.state.users||[]).map(x=>x.id===u.id?{...x,pendingEmail:''}:x);
+        this.setState({ users });
+        const { error } = await supabase.from('profiles').update({
+          pending_email:null, pending_email_token:null, pending_email_requested_at:null,
+        }).eq('id', u.id);
+        if(error) this.flash('Could not cancel: '+error.message);
+        else this.flash('Pending email change cancelled.');
+      },
       umLoad:{ assigned:assigned.toFixed(1)+' h assigned', cap:wk+' h capacity',
         free:(wk-assigned>=0?((wk-assigned).toFixed(1)+' h free'):(Math.abs(wk-assigned).toFixed(1)+' h over')),
         freeColor:(wk-assigned)>=0?'var(--verify-600)':'var(--danger-600)',
@@ -5562,12 +5622,14 @@ class AppRoot extends React.Component {
       umStartEdit:()=>this.setState({ umEdit:true, umDraft:{ shiftStart:u.shiftStart||'09:00', shiftEnd:u.shiftEnd||'18:00',
         breakMin:String(u.breakMin||60), days:String(u.days||5), role:u.role, dept:u.dept, status:u.status, brands:(u.brands||[]).slice(),
         mobile:u.mobile||'', designation:u.designation||'', team:u.team||'', reportingManager:u.reportingManager||'', teamLead:u.teamLead||'', officeLocation:u.officeLocation||'',
+        email:u.email||'',
         hiddenWidgets:(u.hiddenWidgets||[]).slice(), hiddenLeadColumns:(u.hiddenLeadColumns||[]).slice() } }),
       umCancelEdit:()=>this.setState({ umEdit:false, umDraft:{} }),
       umD:d, umSetStart:setD('shiftStart'), umSetEnd:setD('shiftEnd'), umSetBreak:setD('breakMin'), umSetDays:setD('days'),
       umSetRole:setD('role'), umSetDept:setD('dept'), umSetStatus:setD('status'),
       umSetMobile:setD('mobile'), umSetDesignation:setD('designation'), umSetTeam:setD('team'),
       umSetReportingManager:setD('reportingManager'), umSetTeamLead:setD('teamLead'), umSetOfficeLocation:setD('officeLocation'),
+      umSetEmail:setD('email'),
       umRoleOptions:this.ROLE_LIST(),
       umDeptOptions:this.liveDeptOptions(),
       umStatusOptions:['Active','Pending Invitation','Suspended','Locked','Inactive','Resigned (Archived)'],
@@ -5605,6 +5667,15 @@ class AppRoot extends React.Component {
       umBrandsSummary:(u.brands||[]).length?(u.brands||[]).join(', '):'No brands assigned',
       umSave:()=>{
         if(!this.hasPerm('users','edit')){ this.flash('You do not have permission to edit users.'); return; }
+        // Email is never written to profiles/auth directly from here — a
+        // changed value only starts a verification (see
+        // _requestEmailChange): the address on file updates itself once the
+        // NEW address confirms it, never on Save.
+        const newEmail=(d.email!==undefined?d.email:(u.email||'')).trim();
+        if(newEmail && newEmail.toLowerCase()!==(u.email||'').toLowerCase()){
+          if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)){ this.flash('Enter a valid email address.'); return; }
+          this._requestEmailChange(u.id, newEmail, name);
+        }
         const newRole=d.role||u.role, newDept=d.dept||u.dept, newStatus=d.status||u.status;
         const newBrands=d.brands!==undefined?d.brands:(u.brands||[]);
         const newMobile=d.mobile!==undefined?d.mobile:u.mobile;
@@ -8700,6 +8771,7 @@ class AppRoot extends React.Component {
       officeLocation:p.office_location||'', employmentType:p.employment_type||'Full-time', joiningDate:p.joining_date||'',
       brands:p.brands||[], avatar_url:p.avatar_url||'', hiddenWidgets:p.dashboard_widgets||[],
       hiddenLeadColumns:p.hidden_lead_columns||[], invitedAt:p.invited_at||null,
+      pendingEmail:p.pending_email||'',
     }));
     if(mapped.length) this.setState({ users:mapped });
   }
@@ -8999,6 +9071,7 @@ class AppRoot extends React.Component {
     applyTheme(value.theme);
     applyFavicon(value.branding);
     applyBranding(value.general);
+    setCachedPlatformSettings(value);
   }
   async _loadCustomDivisions(){
     const { data, error } = await supabase.from('custom_divisions').select('*').order('created_at', { ascending:true });
@@ -11929,6 +12002,36 @@ class AppRoot extends React.Component {
       activateIsRecovery: !!(profile && profile.status!=='Pending Invitation'),
     });
   }
+  // Confirms a pending email change (see api/change-email.js /
+  // api/verify-email.js). This is a public, token-authenticated link opened
+  // from the NEW address's inbox — no session required, so it runs
+  // unconditionally off the URL's ?uid=&token= as soon as the screen loads.
+  async _runVerifyEmail(){
+    const params = new URLSearchParams(this.props.location.search || '');
+    const userId = params.get('uid');
+    const token = params.get('token');
+    if(!userId || !token){
+      this.setState({ verifyEmailStatus:'error', verifyEmailMessage:'This link is missing information and can’t be used.' });
+      return;
+    }
+    this.setState({ verifyEmailStatus:'pending' });
+    try{
+      const resp = await fetch('/api/verify-email', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ userId, token }),
+      });
+      const body = await this._safeJson(resp);
+      if(!resp.ok) throw new Error(body.error||'Verification failed.');
+      this.setState({ verifyEmailStatus:'success', verifyEmailAddress: body.email||'' });
+      // If the person happens to already be signed in on this device under
+      // the old address, refresh their session so the header/profile show
+      // the new one immediately instead of on next login.
+      const { data:{ session } } = await supabase.auth.getSession();
+      if(session && session.user && session.user.id===userId) await this._loadProfile(session.user);
+    }catch(err){
+      this.setState({ verifyEmailStatus:'error', verifyEmailMessage: err.message });
+    }
+  }
   async doActivate(){
     if(this.state.newPass.length<12){ this.flash('Password must be at least 12 characters.'); return; }
     if(this.state.newPass!==this.state.confirmPass){ this.flash('Passwords do not match.'); return; }
@@ -12378,7 +12481,7 @@ class AppRoot extends React.Component {
   }
   _syncLocationFromState(){
     const { screen, route } = this.state;
-    const target = screen==='app' ? ('/app/'+route) : screen==='activate' ? '/activate' : '/login';
+    const target = screen==='app' ? ('/app/'+route) : screen==='activate' ? '/activate' : screen==='verify-email' ? '/verify-email' : '/login';
     if(this.props.location.pathname!==target) this.props.navigate(target);
   }
   render(){
@@ -12387,6 +12490,7 @@ class AppRoot extends React.Component {
       <React.Suspense fallback={null}>
         {this.state.screen==='login' ? <LoginPage vm={vm} />
           : this.state.screen==='activate' ? <ActivatePage vm={vm} />
+          : this.state.screen==='verify-email' ? <VerifyEmailPage vm={vm} />
           : <AppShell vm={vm} />}
       </React.Suspense>
     );
