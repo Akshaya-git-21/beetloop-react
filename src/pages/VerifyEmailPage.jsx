@@ -2,15 +2,15 @@ import React from 'react';
 import Icon from '../components/Icon.jsx';
 
 export default function VerifyEmailPage({ vm }) {
-  const { verifyEmailStatus, verifyEmailMessage, verifyEmailAddress, backToLogin } = vm;
+  const { verifyEmailStatus, verifyEmailMessage, verifyEmailAddress, backToLogin, loginPlatformName, loginLogoUrl } = vm;
   return (
     <div style={{"minHeight":"100vh","display":"flex","alignItems":"center","justifyContent":"center","padding":"40px 24px","background":"linear-gradient(160deg,var(--surface-100),#F1E9EF)"}}>
       <div style={{"width":"100%","maxWidth":"460px","background":"var(--paper)","border":"1px solid var(--line-300)","borderRadius":"24px","boxShadow":"var(--shadow-lg)","padding":"36px 34px","animation":"blrise .5s var(--ease-out)","textAlign":"center"}}>
         <div style={{"display":"flex","alignItems":"center","justifyContent":"center","gap":"10px","marginBottom":"22px"}}>
-          <div style={{"width":"34px","height":"34px","borderRadius":"10px","background":"#7A1C46","display":"flex","alignItems":"center","justifyContent":"center"}}>
-            <Icon name={"infinity"} style={{"width":"19px","height":"19px","color":"#fff"}} />
+          <div style={{"width":"34px","height":"34px","borderRadius":"10px","background":"var(--beet-700,#7A1C46)","display":"flex","alignItems":"center","justifyContent":"center","overflow":"hidden","flexShrink":"0"}}>
+            {loginLogoUrl ? (<img src={loginLogoUrl} alt={loginPlatformName} style={{"width":"100%","height":"100%","objectFit":"cover"}} />) : (<Icon name={"infinity"} style={{"width":"19px","height":"19px","color":"#fff"}} />)}
           </div>
-          <span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".14em","fontSize":"15px","color":"var(--ink-900)"}}>BEETLOOP</span>
+          <span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".14em","fontSize":"15px","color":"var(--ink-900)"}}>{loginPlatformName}</span>
         </div>
 
         {verifyEmailStatus==='pending' && (

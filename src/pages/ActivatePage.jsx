@@ -3,7 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { cssTextToObject } from '../utils/cssText.js';
 
 export default function ActivatePage({ vm }) {
-  const { activateEmail, activateRoleLabel, activateIsRecovery, authBusy, backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa } = vm;
+  const { activateEmail, activateRoleLabel, activateIsRecovery, authBusy, backToLogin, confirmPass, doActivate, mfaBg, mfaX, newPass, onConfirm, onNewPass, pw1, pw2, pw3, pw4, pwLabel, toggleMfa, loginPlatformName, loginLogoUrl } = vm;
   return (
     <React.Fragment>
 
@@ -17,13 +17,13 @@ export default function ActivatePage({ vm }) {
 <div style={{"display":"flex","alignItems":"center","gap":"10px","marginBottom":"22px"}}>
 
       
-<div style={{"width":"34px","height":"34px","borderRadius":"10px","background":"#7A1C46","display":"flex","alignItems":"center","justifyContent":"center"}}>
-<Icon name={"infinity"} style={{"width":"19px","height":"19px","color":"#fff"}} />
+<div style={{"width":"34px","height":"34px","borderRadius":"10px","background":"var(--beet-700,#7A1C46)","display":"flex","alignItems":"center","justifyContent":"center","overflow":"hidden","flexShrink":"0"}}>
+{loginLogoUrl ? (<img src={loginLogoUrl} alt={loginPlatformName} style={{"width":"100%","height":"100%","objectFit":"cover"}} />) : (<Icon name={"infinity"} style={{"width":"19px","height":"19px","color":"#fff"}} />)}
 </div>
 
-      
+
 <span style={{"fontFamily":"'Sora'","fontWeight":"800","letterSpacing":".14em","fontSize":"15px","color":"var(--ink-900)"}}>
-BEETLOOP
+{loginPlatformName}
 </span>
 
     
