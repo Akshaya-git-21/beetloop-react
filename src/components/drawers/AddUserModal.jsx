@@ -3,7 +3,7 @@ import Icon from '../../components/Icon.jsx';
 import { cssTextToObject } from '../../utils/cssText.js';
 
 export default function AddUserModal({ vm }) {
-  const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole,
+  const { closeUserModal, showUserModal, stop, submitUser, uf, ufDept, ufDesignation, ufEmail, ufFirst, ufLast, ufLead, ufManager, ufMobile, ufRole, ufPassword,
     ufShiftStart, ufShiftEnd, ufBreak, ufDays, ufCapNote, ufBrandRows, ufManagerOptions, ufLeadOptions, ufRoleOptions, ufDeptOptions } = vm;
   return (
     <React.Fragment>
@@ -207,19 +207,26 @@ Role
 </select>
 </div>
 
-          
+
 <div>
 <label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
 Account status
 </label>
-<select style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none","background":"var(--paper)"}}>
-<option>
-Pending Invitation
-</option>
-<option>
-Active
-</option>
-</select>
+<div style={{"display":"flex","alignItems":"center","gap":"7px","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","color":"var(--ink-700)","background":"var(--surface-50)"}}>
+<Icon name={"circle-check"} style={{"width":"14px","height":"14px","color":"var(--verify-500)","flexShrink":"0"}} />
+Active — ready to sign in
+</div>
+</div>
+
+
+<div style={{"gridColumn":"1 / -1"}}>
+<label style={{"display":"block","fontSize":"12.5px","fontWeight":"700","color":"var(--ink-700)","marginBottom":"6px"}}>
+Password
+</label>
+<input type="password" value={uf.password} onInput={ufPassword} placeholder="Minimum 12 characters" style={{"width":"100%","padding":"10px 12px","border":"1px solid var(--line-300)","borderRadius":"11px","fontSize":"13.5px","outline":"none"}} />
+<div style={{"fontSize":"10.5px","color":"var(--ink-500)","marginTop":"6px"}}>
+Set the account's initial sign-in password — share it with {uf.first||'them'} directly (never over email). They sign in with it right away; there's no separate activation step.
+</div>
 </div>
 
 
@@ -246,11 +253,11 @@ Restricts this user's Brand Playbook to the selected brand(s) only (Sales Execut
 <div style={{"display":"flex","alignItems":"center","gap":"9px","background":"var(--surface-50)","border":"1px solid var(--line-200)","borderRadius":"12px","padding":"11px 14px","marginTop":"14px"}}>
 <Icon name={"user-plus"} style={{"width":"16px","height":"16px","color":"var(--verify-500)"}} />
 <span style={{"fontSize":"12.5px","color":"var(--ink-700)"}}>
-The account is created, but
+The account is created active and ready to sign in immediately with the password above —
 <strong>
-no invitation email is sent yet
+nothing is emailed to them
 </strong>
- — open their profile afterwards and click "Send invitation" when you're ready. Permissions inherit automatically from the selected role.
+. Share the password yourself. Permissions inherit automatically from the selected role.
 </span>
 </div>
 

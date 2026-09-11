@@ -33,7 +33,7 @@ class AppRoot extends React.Component {
     platformSettings: cachedPlatformSettings || undefined,
     toast: '',
     dbTab: '', dbTeamF: { period:'This month', from:'', to:'', division:'All' }, dbTeamOpen: [],
-    umOpen: null, umEdit: false, umDraft: {},
+    umOpen: null, umEdit: false, umDraft: {}, umPwEdit: false, umPwValue: '',
     clFill: {}, clQc: {}, clSubmitted: {}, clTypeQc: {}, clCampaignQc: {},
     tkDeletedIds: [],
     leadsTab: 'leads', leadAdded: [], contactAdded: [], contactUpd: {}, contactDeleted: [], cnOpen: null, cnNew: false, cnForm: {},
@@ -72,7 +72,7 @@ class AppRoot extends React.Component {
     pg: {}, tblQuery: '', qcStatusF: 'All',
     showNewPage: false, npForm: {}, npTab: 0, npLinks: [{anchor:'',target:''}], npMedia: [{name:'',alt:'',type:'Image'}], cAdded: [], cUpd: {}, npEditId: null, cDeleted: [],
     umTab: 'list', rolePerms: {}, permRole: 'manager',
-    uf: { first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] },
+    uf: { first:'', last:'', email:'', password:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] },
     users: [],
     services: [
       { name:'SEO', sub:'Search engine optimization', subs:'4 sub-services', status:'Active' },
@@ -271,23 +271,9 @@ class AppRoot extends React.Component {
     if(error) this.flash('Could not start '+provider+' sign-in: '+error.message);
   }
 
-  async _forgotPassword(){
-    const em=(this.state.email||'').trim().toLowerCase();
-    if(!em){ this.flash('Enter your work email above first, then click "Forgot password?".'); return; }
-    this.flash('Sending reset link…');
-    try{
-      const resp=await fetch('/api/reset-password', {
-        method:'POST', headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ email:em }),
-      });
-      const body=await this._safeJson(resp);
-      if(!resp.ok) throw new Error(body.error||'Reset failed');
-      if(body.emailSent) this.flash('Password reset link sent to '+em+'.');
-      else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
-    }catch(err){
-      this.flash('Could not send reset email: '+err.message);
-    }
-  }
+  // Self-service password reset is intentionally gone — only Admin can set
+  // or change a password now (see umStartSetPassword). A person who's
+  // locked out contacts their Admin, not a "Forgot password?" link.
   // Starts (or resends) a verify-before-apply email change for someone else
   // — see api/change-email.js. Never touches profiles.email/auth email
   // itself; it only records the request and emails a confirm link to the
@@ -2078,10 +2064,9 @@ class AppRoot extends React.Component {
       // button with a silent failure reads as "nothing happens when I click
       // it", not as the actual error underneath.
       authBusy:!!this.state.authBusy,
-      doLogin:()=>this.doLogin(), goActivate:e=>{e&&e.preventDefault();this.setState({screen:'activate'});},
+      doLogin:()=>this.doLogin(),
       oauthGoogle:e=>{e&&e.preventDefault();this._oauthLogin('google');},
       oauthMicrosoft:e=>{e&&e.preventDefault();this._oauthLogin('azure');},
-      forgotPassword:e=>{e&&e.preventDefault();this._forgotPassword();},
       backToLogin:e=>{e&&e.preventDefault();this.setState({screen:'login'});},
       noop:e=>{e&&e.preventDefault();this.flash('Demo — connect your identity provider to enable.');},
       // activate
@@ -2164,7 +2149,7 @@ class AppRoot extends React.Component {
       saveRecord:()=>this._saveRecord(),
       recordEditKey:this.state.recordEditKey, deleteRecord:()=>this.confirmDelete('Delete Record?', 'Are you sure you want to delete this record? This action cannot be undone.', ()=>this._deleteRecord()),
       uf:this.state.uf,
-      ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufMobile:e=>this.uf('mobile',e),
+      ufFirst:e=>this.uf('first',e), ufLast:e=>this.uf('last',e), ufEmail:e=>this.uf('email',e), ufPassword:e=>this.uf('password',e), ufMobile:e=>this.uf('mobile',e),
       ufDept:e=>this.uf('dept',e), ufDesignation:e=>this.uf('designation',e), ufManager:e=>this.uf('manager',e), ufLead:e=>this.uf('lead',e), ufRole:e=>this.uf('role',e),
       ufManagerOptions:(this.state.users||[]).map(u=>u.name+' ('+u.role+')'),
       ufLeadOptions:(this.state.users||[]).map(u=>u.name+' ('+(u.designation||u.role)+')'),
@@ -5580,7 +5565,7 @@ class AppRoot extends React.Component {
         avatarUrl:u.avatar_url||'', hasAvatar:!!u.avatar_url,
         statusBg:u.statusTone==='ok'?'var(--verify-100)':'var(--warn-100)',
         statusColor:u.statusTone==='ok'?'var(--verify-600)':'var(--warn-600)' },
-      umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{} }),
+      umClose:()=>this.setState({ umOpen:null, umEdit:false, umDraft:{}, umPwEdit:false, umPwValue:'' }),
       umStop:(e)=>e.stopPropagation(),
       umMeta:[['Role',u.role],['Department',u.dept],['Designation',u.sub],['Account status',u.status],
         ['Email',u.email||'—'],
@@ -5719,23 +5704,35 @@ class AppRoot extends React.Component {
       umAvatarUrl:u.avatar_url||'', umHasAvatar:!!u.avatar_url, umAvatarBusy:!!this.state.avatarBusy,
       umUploadAvatar:(e)=>{ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(f) this.setAvatarFile(f, u.id); },
       umRemoveAvatar:()=>this.removeAvatar(u.id),
-      // Password: Admin never sets/sees the actual password — this emails the
-      // user a reset link through the same reliable pipeline invites use,
-      // which is the safer pattern (nobody but the user ever knows it).
-      umResetPassword:async()=>{
-        if(!u.email){ this.flash('No email on file for '+name+'.'); return; }
-        this.flash('Sending password reset link to '+u.email+'…');
+      // Password: Admin sets it directly now — nothing is ever emailed.
+      // Admin shares the new password with the person out-of-band. Setting
+      // one for a still-legacy 'Pending Invitation' account also activates
+      // it (see api/admin-set-password.js), since there's no other
+      // activation step left.
+      umPwEditing:!!this.state.umPwEdit,
+      umPwValue:this.state.umPwValue||'',
+      umSetPw:(e)=>this.setState({ umPwValue:e.target.value }),
+      umStartSetPassword:()=>this.setState({ umPwEdit:true, umPwValue:'' }),
+      umCancelSetPassword:()=>this.setState({ umPwEdit:false, umPwValue:'' }),
+      umSubmitSetPassword:async()=>{
+        if(!u.id){ this.flash('No linked login for '+name+'.'); return; }
+        const pw=this.state.umPwValue||'';
+        if(pw.length<12){ this.flash('Password must be at least 12 characters.'); return; }
         try{
-          const resp=await fetch('/api/reset-password', {
+          const resp=await fetch('/api/admin-set-password', {
             method:'POST', headers:{ 'Content-Type':'application/json' },
-            body:JSON.stringify({ email:u.email }),
+            body:JSON.stringify({ userId:u.id, password:pw }),
           });
           const body=await this._safeJson(resp);
-          if(!resp.ok) throw new Error(body.error||'Reset failed');
-          if(body.emailSent) this.flash('Password reset link sent to '+u.email+'.');
-          else this.flash('Reset link generated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
+          if(!resp.ok) throw new Error(body.error||'Could not set password.');
+          this.setState({ umPwEdit:false, umPwValue:'' });
+          if(body.activated){
+            const users=(this.state.users||[]).map(x=>x.id===u.id?{...x,status:'Active',statusTone:'ok'}:x);
+            this.setState({ users });
+          }
+          this.flash("Password set for "+name+" — share it with them directly."+(body.activated?' Account is now Active.':''));
         }catch(err){
-          this.flash('Could not send reset email: '+err.message);
+          this.flash('Could not set password: '+err.message);
         } },
       umSuspend:()=>{ const newStatus=u.status==='Suspended'?'Active':'Suspended';
         const users=(this.state.users||[]).map(x=>x.name===name?{...x,status:newStatus,statusTone:newStatus==='Suspended'?'warn':'ok'}:x);
@@ -5744,32 +5741,6 @@ class AppRoot extends React.Component {
           if(error) console.warn('[supabase] suspend/reactivate failed:', error.message);
         }); },
       umSuspendLabel:u.status==='Suspended'?'Reactivate account':'Suspend account',
-      umResend:async()=>{
-        if(!u.email){ this.flash('No email on file for '+name+' — add one before sending.'); return; }
-        const everSent=!!u.invitedAt;
-        this.flash((everSent?'Resending invite to ':'Sending invitation to ')+u.email+'…');
-        try{
-          const resp=await fetch('/api/invite-user', {
-            method:'POST', headers:{ 'Content-Type':'application/json' },
-            body:JSON.stringify({ email:u.email, fullName:u.name, roleKey:u.roleKey, department:u.dept, designation:u.designation,
-              brands:u.brands||[], reportingManager:u.reportingManager||'', teamLead:u.teamLead||'' }),
-          });
-          const body=await this._safeJson(resp);
-          if(!resp.ok) throw new Error(body.error||(everSent?'Resend failed':'Send failed'));
-          if(body.emailSent){
-            this.flash('Activation link '+(everSent?'re-sent':'sent')+' to '+u.email+'.');
-            const now=new Date().toISOString();
-            this.setState({ users:(this.state.users||[]).map(x=>x.id===u.id?{...x,invitedAt:now}:x) });
-            if(u.id) supabase.from('profiles').update({ invited_at:now }).eq('id', u.id).then(({error})=>{
-              if(error) console.warn('[supabase] invited_at update failed:', error.message);
-            });
-          }
-          else this.flash('Link regenerated but email delivery failed'+(body.mailError?(': '+body.mailError):'')+'.');
-        }catch(err){
-          this.flash('Could not send invite: '+err.message);
-        } },
-      umShowResend:u.status==='Pending Invitation',
-      umResendLabel:u.invitedAt?'Resend invitation':'Send invitation',
     };
   }
   campaignOpt(c){ return (c&&c!=='—')?c:'— None —'; }
@@ -11923,6 +11894,11 @@ class AppRoot extends React.Component {
     if(!f.first.trim()||!f.email.trim()){ this.flash('First name and email are required.'); return; }
     if(/@/.test(f.first)||/@/.test(f.last||'')){ this.flash('The name fields shouldn’t contain an email address — check First/Last name and put the address in "Official email" instead.'); return; }
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())){ this.flash('Enter a valid email address.'); return; }
+    // Admin sets the account's password directly at creation — there is no
+    // self-service activation step for the invited person to set their own
+    // (see api/create-user.js). Admin is expected to share it with the
+    // person out-of-band, never over email.
+    if(!f.password||f.password.length<12){ this.flash('Set a password of at least 12 characters for this account.'); return; }
     const roleEntry=Object.entries(this.ROLES).find(([,r])=>r.label===f.role);
     const roleKey=roleEntry?roleEntry[0]:'junior';
     if(this.HIGH_PRIVILEGE_ROLES.includes(roleKey)){
@@ -11935,24 +11911,23 @@ class AppRoot extends React.Component {
     const f=this.state.uf;
     const name=(f.first+' '+f.last).trim();
     const u={ name, email:f.email.trim(), sub:(f.designation||f.role)+' · '+f.dept, role:f.role, roleKey, dept:f.dept, designation:f.designation||'',
-      status:'Pending Invitation', statusTone:'warn',
+      status:'Active', statusTone:'ok',
       shiftStart:f.shiftStart||'09:00', shiftEnd:f.shiftEnd||'18:00', breakMin:parseInt(f.breakMin,10)||60, days:parseFloat(f.days)||5,
       reportingManager:f.manager||'', teamLead:f.lead||'', brands:f.brands||[] };
-    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
-    // sendEmail:false — creating the account (and its activation link)
-    // still happens here, but the invite email itself is no longer sent
-    // automatically. It only goes out when someone explicitly clicks "Send
-    // invitation" on the user's profile (umResend below), which calls this
-    // same endpoint again without the flag.
+    this.setState({ users:[u,...this.state.users], showUserModal:false, uf:{ first:'', last:'', email:'', password:'', mobile:'', dept:'SEO', designation:'', manager:'', lead:'', role:'Junior Executive', shiftStart:'09:00', shiftEnd:'18:00', breakMin:'60', days:'5', brands:[] } });
+    // The account is created ready to sign in immediately — password set by
+    // Admin above, email pre-confirmed. Nothing is emailed to the person;
+    // Admin shares the password with them directly (see submitUser's
+    // comment on why there's no self-service activation step anymore).
     try{
-      const resp=await fetch('/api/invite-user', {
+      const resp=await fetch('/api/create-user', {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ email:f.email.trim(), fullName:name, roleKey, department:f.dept, designation:f.designation,
-          brands:f.brands||[], reportingManager:f.manager||'', teamLead:f.lead||'', sendEmail:false }),
+        body:JSON.stringify({ email:f.email.trim(), password:f.password, fullName:name, roleKey, department:f.dept, designation:f.designation,
+          brands:f.brands||[], reportingManager:f.manager||'', teamLead:f.lead||'' }),
       });
       const body=await this._safeJson(resp);
       if(!resp.ok) throw new Error(body.error||'User creation failed');
-      this.flash('User added — no invitation sent yet. Open their profile and click "Send invitation" when you\'re ready to email their activation link.');
+      this.flash(name+"'s account is ready — share the password with them directly.");
       this._loadTeam();
     }catch(err){
       this.flash('Could not create the account ('+err.message+').');

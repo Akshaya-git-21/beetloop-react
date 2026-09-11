@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../components/Icon.jsx';
 
 export default function LoginPage({ vm }) {
-  const { authBusy, doLogin, email, goActivate, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, forgotPassword, loginPlatformName, loginTagline, loginLogoUrl, loginBackgroundUrl } = vm;
+  const { authBusy, doLogin, email, loginError, noop, onEmail, onPassword, password, oauthGoogle, oauthMicrosoft, loginPlatformName, loginTagline, loginLogoUrl, loginBackgroundUrl } = vm;
   return (
     <React.Fragment>
 
@@ -136,17 +136,12 @@ Work email
       
 <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","marginBottom":"7px"}}>
 
-        
+
 <label style={{"fontSize":"13px","fontWeight":"700","color":"var(--ink-700)"}}>
 Password
 </label>
 
-        
-<a href="#" onClick={forgotPassword} style={{"fontSize":"12.5px","fontWeight":"600"}}>
-Forgot password?
-</a>
 
-      
 </div>
 
       
@@ -197,14 +192,6 @@ OR
       
 </div>
 
-
-      
-<p style={{"textAlign":"center","fontSize":"13px","color":"var(--ink-500)","margin":"22px 0 0"}}>
-Received an invitation? 
-<a href="#" onClick={goActivate} style={{"fontWeight":"700"}}>
-Activate your account
-</a>
-</p>
 
 
 </div>

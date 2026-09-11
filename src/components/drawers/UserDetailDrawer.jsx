@@ -5,10 +5,11 @@ import { cssTextToObject } from '../../utils/cssText.js';
 export default function UserDetailDrawer({ vm }) {
   const { umDrawerOpen, umU, umClose, umStop, umLoad, umEditing, umD, umSetStart, umSetEnd, umSetBreak, umSetDays, umDayOptions,
     umSetRole, umRoleOptions, umSetDept, umDeptOptions, umSetStatus, umStatusOptions, umCancelEdit, umSave,
-    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel, umShowResend, umResend, umResendLabel,
+    umMeta, umHasTasks, umTasks, umTaskMore, umCanEdit, umStartEdit, umSuspend, umSuspendLabel,
     umBrandRows, umSetMobile, umSetDesignation, umSetTeam, umSetReportingManager, umSetTeamLead, umSetOfficeLocation,
-    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umResetPassword, umWidgetRows, umLeadColumnRows,
-    umSetEmail, umPendingEmail, umPendingEmailNote, umResendEmailChange, umCancelEmailChange } = vm;
+    umAvatarUrl, umHasAvatar, umAvatarBusy, umUploadAvatar, umRemoveAvatar, umWidgetRows, umLeadColumnRows,
+    umSetEmail, umPendingEmail, umPendingEmailNote, umResendEmailChange, umCancelEmailChange,
+    umPwEditing, umPwValue, umSetPw, umStartSetPassword, umCancelSetPassword, umSubmitSetPassword } = vm;
   const u = umU || {};
   return (
     <React.Fragment>
@@ -198,12 +199,23 @@ Remove
 <Icon name={"pencil"} style={{"width":"13px","height":"13px"}} />Edit user & shift</button>
 <button onClick={umSuspend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
 <Icon name={"user-x"} style={{"width":"13px","height":"13px"}} />{umSuspendLabel}</button>
-<button onClick={umResetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"key-round"} style={{"width":"13px","height":"13px"}} />Reset password</button>
-{Boolean(umShowResend) && (
-<button onClick={umResend} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
-<Icon name={"mail"} style={{"width":"13px","height":"13px"}} />{umResendLabel}</button>
+{!umPwEditing && (
+<button onClick={umStartSetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"10px 16px","border":"1px solid var(--line-300)","background":"var(--paper)","color":"var(--ink-700)","borderRadius":"11px","fontSize":"12.5px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"key-round"} style={{"width":"13px","height":"13px"}} />Set password</button>
 )}
+</div>
+)}
+
+{Boolean(umCanEdit) && Boolean(umPwEditing) && (
+<div style={{"border":"1px solid var(--line-300)","borderRadius":"14px","padding":"14px 16px"}}>
+<div style={{"fontSize":"11px","fontWeight":"800","letterSpacing":".06em","textTransform":"uppercase","color":"var(--ink-400)","marginBottom":"10px"}}>Set new password</div>
+<input type="password" value={umPwValue} onInput={umSetPw} placeholder="Minimum 12 characters" style={{"width":"100%","padding":"9px 11px","border":"1px solid var(--line-300)","borderRadius":"10px","fontSize":"13px","outline":"none"}} />
+<div style={{"fontSize":"10.5px","color":"var(--ink-400)","marginTop":"6px"}}>Share this password with them directly — nothing is emailed.</div>
+<div style={{"display":"flex","justifyContent":"flex-end","gap":"9px","marginTop":"12px"}}>
+<button onClick={umCancelSetPassword} style={{"padding":"8px 14px","border":"1px solid var(--line-300)","background":"var(--paper)","borderRadius":"10px","fontSize":"12px","fontWeight":"700","color":"var(--ink-700)","cursor":"pointer"}}>Cancel</button>
+<button onClick={umSubmitSetPassword} style={{"display":"flex","alignItems":"center","gap":"6px","padding":"8px 15px","border":"none","background":"#7A1C46","color":"#fff","borderRadius":"10px","fontSize":"12px","fontWeight":"700","cursor":"pointer"}}>
+<Icon name={"check"} style={{"width":"12px","height":"12px"}} />Set password</button>
+</div>
 </div>
 )}
 
