@@ -9006,15 +9006,27 @@ class AppRoot extends React.Component {
     });
     this.setState({ repoAdded:custom, repoUpd:upd, repoHiddenBuiltin:hidden });
   }
-  // Real bytes for every device-picked attachment (task evidence, QC refs,
-  // messages, tickets, comments, check-ins, idea references) — loaded once
-  // at login so every attachment previews/downloads for every user, not
-  // just in the browser tab that originally picked the file.
+  // Which device-picked attachments (task evidence, QC refs, messages,
+  // tickets, comments, check-ins, idea references) actually have real
+  // bytes on file, loaded once at login for every user — deliberately
+  // WITHOUT their content (see _ensureFileBlobContent for that). This used
+  // to select data_url here too, pulling every attachment's full base64
+  // content for the whole system on every login; once real usage produced
+  // ~90 files including several MB-sized docx exports, that single query
+  // took 20-30+ seconds. Nobody waits that long before clicking Preview,
+  // so fileBlobs was still empty for any file whose real content hadn't
+  // finished downloading yet — indistinguishable from "never uploaded",
+  // which is exactly the bug: files that clearly *did* upload (visible in
+  // the DB with real content) showed "no file content is stored for this
+  // one" simply because this fetch hadn't caught up. Loading just the
+  // names/metadata is a tiny, fast query; the actual bytes are fetched
+  // on demand, one file at a time, only when actually previewed or
+  // downloaded.
   async _loadFileBlobs(){
-    const { data, error } = await supabase.from('file_blobs').select('name, data_url, mime, size');
+    const { data, error } = await supabase.from('file_blobs').select('name, mime, size');
     if(error){ console.warn('[supabase] file blobs load failed:', error.message); return; }
     const blobs={};
-    (data||[]).forEach(r=>{ blobs[r.name]={ dataUrl:r.data_url, type:r.mime, size:r.size }; });
+    (data||[]).forEach(r=>{ blobs[r.name]={ dataUrl:null, type:r.mime, size:r.size }; });
     this.setState(s=>({ fileBlobs:{...blobs, ...(s.fileBlobs||{})} }));
   }
   async _loadEffortPlans(){
@@ -11495,6 +11507,32 @@ class AppRoot extends React.Component {
   }
   openFilePicker(target, title){ this.setState({ fpTarget:target, fpTitle:title||'Attach files',
     fpTab:'browse', fpSel:[], fpQuery:'', fpType:'All', fpName:'', fpKind:'PDF' }); }
+  // Persists one file's actual bytes to Supabase (file_blobs) so it
+  // previews/downloads for every user, not just this browser tab — see
+  // _loadFileBlobs(). Split out from fpFilesPicked so a failed save (bad
+  // connection, a transient Supabase hiccup) can be retried with the bytes
+  // already sitting in fileBlobs, instead of asking the person to re-pick
+  // the file. A failed row in the Upload Tray now stays put — attaching a
+  // file used to *look* successful (the name is added to the
+  // comment/task/etc immediately, optimistically) even when this save
+  // silently failed in the background, which is exactly how a real
+  // attachment could end up permanently unpreviewable: the name was
+  // recorded, but its bytes never made it into file_blobs.
+  _saveFileBlob(name, dataUrl, type, size){
+    this.setState(s=>({ fpUploading:{...(s.fpUploading||{}), [name]:{ pct:100, phase:'saving' }} }));
+    supabase.from('file_blobs').upsert({
+      name, data_url:dataUrl, mime:type, size,
+      created_by:this.state.authUser?this.state.authUser.id:null,
+    }).then(({error})=>{
+      if(error) console.warn('[supabase] file blob save failed:', error.message);
+      this.setState(s=>({ fpUploading:{...(s.fpUploading||{}), [name]:{ pct:100, phase:error?'error':'done', error:error?error.message:'' }} }));
+      if(!error){
+        setTimeout(()=>{
+          this.setState(s=>{ const p={...(s.fpUploading||{})}; delete p[name]; return { fpUploading:p }; });
+        }, 2200);
+      }
+    });
+  }
   applyPickedFiles(target, names){
     if(!names.length) return;
     const t=String(target||'');
@@ -11624,18 +11662,8 @@ class AppRoot extends React.Component {
           reader.onload=()=>{
             this.setState(s=>({
               fileBlobs:{...(s.fileBlobs||{}), [file.name]:{ dataUrl:reader.result, type:file.type, size:file.size } },
-              fpUploading:{...(s.fpUploading||{}), [file.name]:{ pct:100, phase:'saving' }},
             }));
-            supabase.from('file_blobs').upsert({
-              name:file.name, data_url:reader.result, mime:file.type, size:file.size,
-              created_by:this.state.authUser?this.state.authUser.id:null,
-            }).then(({error})=>{
-              if(error) console.warn('[supabase] file blob save failed:', error.message);
-              this.setState(s=>({ fpUploading:{...(s.fpUploading||{}), [file.name]:{ pct:100, phase:error?'error':'done' }} }));
-              setTimeout(()=>{
-                this.setState(s=>{ const p={...(s.fpUploading||{})}; delete p[file.name]; return { fpUploading:p }; });
-              }, 2200);
-            });
+            this._saveFileBlob(file.name, reader.result, file.type, file.size);
           };
           reader.readAsDataURL(file);
         });
@@ -11647,21 +11675,45 @@ class AppRoot extends React.Component {
       name, pct:info.pct||0,
       label: info.phase==='reading'?('Reading '+(info.pct||0)+'%')
         : info.phase==='saving'?'Saving to database…'
-        : info.phase==='error'?'Failed to save — check connection and retry'
+        : info.phase==='error'?('Failed to save'+(info.error?(': '+info.error):'')+' — the name was attached, but it won\'t preview or download until this succeeds.')
         : 'Saved',
       barColor: info.phase==='error'?'var(--danger-500)':(info.phase==='done'?'var(--verify-500)':'var(--orchid-500)'),
       barPct: (info.phase==='reading')?(info.pct||0):100,
       done: info.phase==='done', error: info.phase==='error',
+      retry: info.phase==='error'?()=>{
+        const blob=(this.state.fileBlobs||{})[name];
+        if(blob) this._saveFileBlob(name, blob.dataUrl, blob.type, blob.size);
+      }:null,
+      dismiss: info.phase==='error'?()=>{
+        this.setState(s=>{ const p={...(s.fpUploading||{})}; delete p[name]; return { fpUploading:p }; });
+      }:null,
     }));
     return { utRows:rows, utHasRows:rows.length>0 };
   }
-  openFilePreview(name){ this.setState({ fpvFile:name }); }
+  openFilePreview(name){ this.setState({ fpvFile:name }); this._ensureFileBlobContent(name); }
+  // Fetches one file's actual bytes on first use (preview or download) —
+  // _loadFileBlobs() only preloads names/metadata now, not content (see
+  // its comment). fileBlobs[name] existing-but-dataUrl-null means "has
+  // real content, not fetched yet"; this is a no-op if it's already
+  // loaded, already loading, or genuinely doesn't exist (legacy name-only
+  // attachment).
+  async _ensureFileBlobContent(name){
+    const cur=(this.state.fileBlobs||{})[name];
+    if(!cur || cur.dataUrl || cur.loading) return;
+    this.setState(s=>({ fileBlobs:{...(s.fileBlobs||{}), [name]:{...s.fileBlobs[name], loading:true} } }));
+    const { data, error } = await supabase.from('file_blobs').select('data_url').eq('name', name).maybeSingle();
+    if(error) console.warn('[supabase] file blob content load failed:', error.message);
+    this.setState(s=>{ const prev=(s.fileBlobs||{})[name]; if(!prev) return {};
+      return { fileBlobs:{...s.fileBlobs, [name]:{...prev, loading:false, dataUrl:(data&&data.data_url)||prev.dataUrl} } }; });
+  }
   // Quick-download from a chip/row without opening the modal first — falls
   // back to the preview modal's "no content stored" explainer for
   // legacy name-only attachments that never had a real device file picked.
-  downloadFile(name){
-    const blob=(this.state.fileBlobs||{})[name];
+  async downloadFile(name){
+    let blob=(this.state.fileBlobs||{})[name];
     if(!blob){ this.openFilePreview(name); return; }
+    if(!blob.dataUrl){ await this._ensureFileBlobContent(name); blob=(this.state.fileBlobs||{})[name]; }
+    if(!blob || !blob.dataUrl){ this.openFilePreview(name); return; }
     const a=document.createElement('a');
     a.href=blob.dataUrl; a.download=name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -11713,19 +11765,23 @@ class AppRoot extends React.Component {
   filePreviewData(){
     const name=this.state.fpvFile; if(!name) return { fpvOpen:false };
     const blob=(this.state.fileBlobs||{})[name];
+    // blob present but dataUrl not fetched yet = really has content, just
+    // still loading it (see _ensureFileBlobContent) — a different, later
+    // state than "no record at all" (a legacy name-only attachment).
+    const loaded=!!blob && !!blob.dataUrl;
     const k=this.fileKind(name);
     const ext=String(name).split('.').pop().toLowerCase();
-    const isSheet=!!blob && k.t==='Spreadsheet';
-    const isDocx=!!blob && ext==='docx';
-    const isText=!!blob && ['txt','md'].includes(ext);
+    const isSheet=loaded && k.t==='Spreadsheet';
+    const isDocx=loaded && ext==='docx';
+    const isText=loaded && ['txt','md'].includes(ext);
     return {
       fpvOpen:true, fpvName:name, fpvKind:k.t, fpvIcon:k.icon, fpvIconBg:k.bg, fpvIconColor:k.color,
-      fpvHasContent:!!blob,
-      fpvIsImage:!!blob && k.t==='Image',
-      fpvIsPdf:!!blob && k.t==='PDF',
+      fpvHasContent:!!blob, fpvLoading:!!blob && !loaded,
+      fpvIsImage:loaded && k.t==='Image',
+      fpvIsPdf:loaded && k.t==='PDF',
       fpvIsSheet:isSheet, fpvIsDocx:isDocx, fpvIsText:isText,
-      fpvIsOther:!!blob && k.t!=='Image' && k.t!=='PDF' && !isSheet && !isDocx && !isText,
-      fpvDataUrl:blob?blob.dataUrl:'',
+      fpvIsOther:loaded && k.t!=='Image' && k.t!=='PDF' && !isSheet && !isDocx && !isText,
+      fpvDataUrl:loaded?blob.dataUrl:'',
       fpvSize:blob?(blob.size>1048576?(Math.round(blob.size/104857.6)/10+' MB'):(Math.round(blob.size/102.4)/10+' KB')):'',
       fpvClose:()=>this.setState({ fpvFile:null }),
       fpvStop:(e)=>e.stopPropagation(),

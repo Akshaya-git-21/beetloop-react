@@ -64,7 +64,7 @@ function TextPreview({ dataUrl }) {
 }
 
 export default function TaskFilePreviewModal({ vm }) {
-  const { fpvOpen, fpvName, fpvKind, fpvIcon, fpvIconBg, fpvIconColor, fpvHasContent,
+  const { fpvOpen, fpvName, fpvKind, fpvIcon, fpvIconBg, fpvIconColor, fpvHasContent, fpvLoading,
     fpvIsImage, fpvIsPdf, fpvIsSheet, fpvIsDocx, fpvIsText, fpvIsOther, fpvDataUrl, fpvSize, fpvClose, fpvStop, fpvGoRepo } = vm;
   return (
     <React.Fragment>
@@ -84,7 +84,13 @@ export default function TaskFilePreviewModal({ vm }) {
               </button>
             </div>
             <div style={{ padding: 20 }}>
-              {Boolean(fpvHasContent) && (
+              {Boolean(fpvLoading) && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 40, color: 'var(--ink-500)' }}>
+                  <Icon name="loader-circle" style={{ width: 18, height: 18, color: 'var(--orchid-600)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Loading file content…</span>
+                </div>
+              )}
+              {Boolean(fpvHasContent) && !fpvLoading && (
                 <React.Fragment>
                   {Boolean(fpvIsImage) && (
                     <img src={fpvDataUrl} alt={fpvName} style={{ width: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 12, border: '1px solid var(--line-200)', background: 'var(--surface-50)' }} />
